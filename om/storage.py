@@ -9,6 +9,7 @@ from __future__ import annotations
 import hashlib
 import hmac
 import itertools
+import json
 import os
 import re
 import socket
@@ -511,11 +512,237 @@ class RedisKV:
         return self._cmd("ZCARD", f"q:{name}")
 
 
+# --------------------------------------------------------------------------- analytics DB (DuckDB optional)
+
+try:  # DuckDB is optional (MIT, D-018); SQLite is the graceful fallback.
+    import duckdb as _duckdb  # type: ignore
+except Exception:  # pragma: no cover - depends on environment
+    _duckdb = None
+
+_IDENT = re.compile(r"^[A-Za-z_][A-Za-z0-9_]{0,62}$")
+
+
+def duckdb_available() -> bool:
+    return _duckdb is not None
+
+
+def _ident(name) -> str:
+    if not isinstance(name, str) or not _IDENT.match(name):
+        raise StorageError(f"invalid SQL identifier {name!r}")
+    return name
+
+
+def _integrity_errors() -> tuple:
+    errs = [sqlite3.IntegrityError]
+    if _duckdb is not None:
+        errs.append(_duckdb.ConstraintException)
+    return tuple(errs)
+
+
+class AnalyticsDB:
+    """Embedded analytics store: DuckDB when importable (and `prefer="duckdb"`), otherwise SQLite.
+    SQL uses `?` placeholders on both backends. The connection is opened lazily on first use.
+
+    Thread safety: DuckDB connections must not be shared across threads unguarded, so one connection is
+    shared and every operation (including fetching its result) runs under a single re-entrant lock.
+    Concurrent writers are therefore serialised, which is correct for both backends and cheap at grid scale.
+    Integrity/CHECK violations surface as `StorageError`."""
+
+    def __init__(self, path: str = ":memory:", prefer: str = "duckdb"):
+        if prefer not in ("duckdb", "sqlite"):
+            raise StorageError(f"unknown analytics backend {prefer!r}")
+        self.backend = "duckdb" if (prefer == "duckdb" and _duckdb is not None) else "sqlite"
+        self.path = path
+        self._lock = threading.RLock()
+        self._conn = None
+        self._closed = False
+
+    def _c(self):
+        if self._closed:
+            raise StorageError("AnalyticsDB is closed")
+        if self._conn is None:
+            if self.path != ":memory:":
+                os.makedirs(os.path.dirname(os.path.abspath(self.path)), exist_ok=True)
+            if self.backend == "duckdb":
+                self._conn = _duckdb.connect(self.path)
+            else:
+                c = sqlite3.connect(self.path, check_same_thread=False, timeout=30)
+                c.execute("PRAGMA busy_timeout=30000")
+                if self.path != ":memory:":
+                    c.execute("PRAGMA journal_mode=WAL")
+                self._conn = c
+        return self._conn
+
+    def _run(self, fn):
+        try:
+            return fn()
+        except _integrity_errors() as e:
+            raise StorageError(f"constraint violation: {e}") from e
+
+    def execute(self, sql: str, params=()) -> None:
+        with self._lock:
+            c = self._c()
+            self._run(lambda: c.execute(sql, list(params or ())))
+            if self.backend == "sqlite":
+                c.commit()
+
+    def executemany(self, sql: str, seq) -> None:
+        seq = [list(p) for p in seq]
+        if not seq:
+            return
+        with self._lock:
+            c = self._c()
+            self._run(lambda: c.executemany(sql, seq))
+            if self.backend == "sqlite":
+                c.commit()
+
+    def query(self, sql: str, params=()) -> list:
+        with self._lock:
+            cur = self._c().execute(sql, list(params or ()))
+            if cur.description is None:
+                return []
+            cols = [d[0] for d in cur.description]
+            return [dict(zip(cols, r)) for r in cur.fetchall()]
+
+    def table_exists(self, table: str) -> bool:
+        _ident(table)
+        if self.backend == "duckdb":
+            sql = "SELECT 1 FROM information_schema.tables WHERE table_name = ?"
+        else:
+            sql = "SELECT 1 FROM sqlite_master WHERE type='table' AND name = ?"
+        return bool(self.query(sql, [table]))
+
+    def _coltype(self, v) -> str:
+        d = self.backend == "duckdb"
+        if isinstance(v, bool):
+            return "BOOLEAN" if d else "INTEGER"
+        if isinstance(v, int):
+            return "BIGINT" if d else "INTEGER"
+        if isinstance(v, float):
+            return "DOUBLE" if d else "REAL"
+        return "VARCHAR" if d else "TEXT"
+
+    @staticmethod
+    def _val(v):
+        return json.dumps(v, sort_keys=True) if isinstance(v, (dict, list, tuple)) else v
+
+    def _prep(self, table, rows, pk=None):
+        _ident(table)
+        rows = list(rows)
+        if not rows:
+            return None, None, []
+        cols = [_ident(k) for k in rows[0].keys()]
+        for r in rows:
+            extra = set(r) - set(cols)
+            if extra:
+                raise StorageError(f"row has columns not in first row: {sorted(extra)}")
+        if pk:
+            for k in pk:
+                if _ident(k) not in cols:
+                    raise StorageError(f"key column {k!r} missing from rows")
+        if not self.table_exists(table):
+            defs = []
+            for c in cols:
+                first = next((r[c] for r in rows if r.get(c) is not None), None)
+                defs.append(f"{c} {self._coltype(first)}")
+            if pk:
+                defs.append("PRIMARY KEY (" + ", ".join(pk) + ")")
+            self.execute(f"CREATE TABLE {table} ({', '.join(defs)})")
+        data = [[self._val(r.get(c)) for c in cols] for r in rows]
+        return cols, data, rows
+
+    def insert_rows(self, table: str, rows: list) -> int:
+        with self._lock:
+            cols, data, rows = self._prep(table, rows)
+            if not rows:
+                return 0
+            self.executemany(f"INSERT INTO {table} ({', '.join(cols)}) VALUES ({', '.join('?' * len(cols))})", data)
+            return len(rows)
+
+    def upsert_rows(self, table: str, rows: list, key_cols) -> int:
+        key_cols = [_ident(k) for k in ([key_cols] if isinstance(key_cols, str) else key_cols)]
+        if not key_cols:
+            raise StorageError("upsert_rows needs at least one key column")
+        with self._lock:
+            cols, data, rows = self._prep(table, rows, key_cols)
+            if not rows:
+                return 0
+            rest = [c for c in cols if c not in key_cols]
+            action = ("DO UPDATE SET " + ", ".join(f"{c} = excluded.{c}" for c in rest)) if rest else "DO NOTHING"
+            self.executemany(
+                f"INSERT INTO {table} ({', '.join(cols)}) VALUES ({', '.join('?' * len(cols))}) "
+                f"ON CONFLICT ({', '.join(key_cols)}) {action}", data)
+            return len(rows)
+
+    def close(self) -> None:
+        with self._lock:
+            if self._conn is not None:
+                try:
+                    self._conn.close()
+                finally:
+                    self._conn = None
+            self._closed = True
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, *exc):
+        self.close()
+        return False
+
+
+def ensure_grid_schema(db: AnalyticsDB) -> None:
+    """Create the document-grid tables (S5.2). Idempotent. bbox values are page-relative fractions in [0, 1]."""
+    d = db.backend == "duckdb"
+    txt, real, big = ("VARCHAR", "DOUBLE", "BIGINT") if d else ("TEXT", "REAL", "INTEGER")
+    box = ",\n    ".join(f"CHECK ({c} IS NULL OR ({c} >= 0 AND {c} <= 1))"
+                         for c in ("bbox_x0", "bbox_y0", "bbox_x1", "bbox_y1"))
+    db.execute(f"""CREATE TABLE IF NOT EXISTS grid_cells (
+    grid_id {txt} NOT NULL, doc_id {txt} NOT NULL, question_id {txt} NOT NULL,
+    answer {txt}, exact_quote {txt}, page {big},
+    bbox_x0 {real}, bbox_y0 {real}, bbox_x1 {real}, bbox_y1 {real},
+    confidence {real}, cost_usd {real}, content_hash {txt}, updated_at {txt},
+    PRIMARY KEY (grid_id, doc_id, question_id),
+    {box},
+    CHECK (confidence IS NULL OR (confidence >= 0 AND confidence <= 1)),
+    CHECK (cost_usd IS NULL OR cost_usd >= 0)
+)""")
+    db.execute(f"""CREATE TABLE IF NOT EXISTS grid_runs (
+    run_id {txt} PRIMARY KEY, grid_id {txt} NOT NULL, n_docs {big}, n_questions {big}, n_cells {big},
+    est_cost_usd {real}, actual_cost_usd {real}, status {txt}, created_at {txt}, finished_at {txt}
+)""")
+
+
+def _analytics_from_dsn(dsn: str) -> AnalyticsDB:
+    m = re.match(r"(?i)duckdb://(.*)$", dsn)
+    if m:
+        rest = m.group(1)
+        if rest in ("", ":memory:", "/:memory:"):
+            path = ":memory:"
+        elif rest.startswith("//"):
+            path = urllib.parse.unquote(rest[1:])  # duckdb:////abs -> /abs
+        else:
+            path = urllib.parse.unquote(rest[1:] if rest.startswith("/") else rest)  # duckdb:///rel -> rel
+        if _duckdb is None and path != ":memory:" and path.endswith(".duckdb"):
+            path = path[: -len(".duckdb")] + ".sqlite"  # never write SQLite bytes into a .duckdb file
+        return AnalyticsDB(path, prefer="duckdb")
+    path = dsn
+    if dsn.startswith("sqlite:"):
+        path = urllib.parse.unquote(urllib.parse.urlsplit(dsn).path)
+        if dsn.startswith("sqlite:///") and not dsn.startswith("sqlite:////"):
+            path = path[1:]
+        path = path or ":memory:"
+    return AnalyticsDB(path, prefer="sqlite")
+
+
 # --------------------------------------------------------------------------- relational DB
 
 def connect(dsn: str = "storage/acretia.sqlite"):
-    """SQLite (WAL, foreign keys, busy timeout) for `sqlite:///path` or a plain path; Postgres for
+    """SQLite (WAL, foreign keys, busy timeout) for `sqlite:///path` or a plain path; an `AnalyticsDB` for `duckdb:///path` / `duckdb://:memory:` (SQLite
+    fallback when duckdb is not installed); Postgres for
     `postgres://` / `postgresql://` only when psycopg is importable."""
+    if re.match(r"(?i)duckdb://", dsn):
+        return _analytics_from_dsn(dsn)
     if re.match(r"(?i)postgres(ql)?://", dsn):
         try:
             import psycopg  # type: ignore
@@ -540,12 +767,13 @@ def connect(dsn: str = "storage/acretia.sqlite"):
     return db
 
 
-Storage = namedtuple("Storage", "blobs kv db")
+Storage = namedtuple("Storage", "blobs kv db analytics", defaults=(None,))
 
 
 def from_env(env=None, connect_db: bool = True) -> Storage:
     """Build adapters from ACRETIA_BLOB_BACKEND (local|s3), ACRETIA_BLOB_ROOT, ACRETIA_S3_ENDPOINT/BUCKET/
-    REGION/ACCESS_KEY/SECRET_KEY, ACRETIA_KV (sqlite|redis), ACRETIA_KV_PATH, ACRETIA_REDIS_URL, ACRETIA_DB."""
+    REGION/ACCESS_KEY/SECRET_KEY, ACRETIA_KV (sqlite|redis), ACRETIA_KV_PATH, ACRETIA_REDIS_URL, ACRETIA_DB, ACRETIA_ANALYTICS (default duckdb:///storage/grid.duckdb, or storage/grid.sqlite
+    without duckdb; opened lazily)."""
     e = os.environ if env is None else env
     backend = e.get("ACRETIA_BLOB_BACKEND", "local").lower()
     if backend == "local":
@@ -567,4 +795,8 @@ def from_env(env=None, connect_db: bool = True) -> Storage:
     else:
         raise StorageError(f"unknown ACRETIA_KV {kvb!r}")
     db = connect(e.get("ACRETIA_DB", "storage/acretia.sqlite")) if connect_db else None
-    return Storage(blobs, kv, db)
+    analytics = None
+    if connect_db:
+        default = "duckdb:///storage/grid.duckdb" if _duckdb is not None else "storage/grid.sqlite"
+        analytics = _analytics_from_dsn(e.get("ACRETIA_ANALYTICS", default))
+    return Storage(blobs, kv, db, analytics)

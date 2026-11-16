@@ -1,0 +1,45 @@
+{
+  "family": "claude",
+  "match": [
+    "^(anthropic[/.])?claude",
+    "^(us|eu)\\.anthropic\\."
+  ],
+  "context_window": 200000,
+  "supports_vision": true,
+  "supports_json_schema": true,
+  "max_output_tokens": 8192,
+  "recommended": {
+    "default": {
+      "planner": "claude-sonnet-5-5",
+      "worker": "claude-haiku-5-5",
+      "verifier": "claude-sonnet-5-5",
+      "critic": "claude-sonnet-5-5"
+    },
+    "extraction": {
+      "planner": "claude-sonnet-5-5",
+      "worker": "claude-haiku-5-5",
+      "verifier": "claude-sonnet-5-5",
+      "critic": "claude-sonnet-5-5"
+    },
+    "modeling": {
+      "planner": "claude-sonnet-5-5",
+      "worker": "claude-sonnet-5-5",
+      "verifier": "claude-sonnet-5-5",
+      "critic": "claude-sonnet-5-5"
+    }
+  },
+  "prompt_quirks": {
+    "caching": "explicit_breakpoints (cache_control ephemeral on the system block)",
+    "tool_calling": "native, parallel, strict schemas",
+    "edit_format": "exact_replace",
+    "sampling": {
+      "temperature": 0.0
+    },
+    "style": "numbered method, minimal examples"
+  },
+  "price_per_mtok": {
+    "input": 3.0,
+    "output": 15.0
+  },
+  "notes": "price_per_mtok is list price in USD per million tokens, approximate; update before relying on cost reports."
+}

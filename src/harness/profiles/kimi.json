@@ -1,0 +1,30 @@
+{
+  "family": "kimi",
+  "match": [
+    "^(moonshot(ai)?[/-])?kimi",
+    "^moonshot"
+  ],
+  "context_window": 256000,
+  "supports_vision": false,
+  "supports_json_schema": false,
+  "max_output_tokens": 8192,
+  "recommended": {
+    "default": {
+      "planner": "kimi-k2",
+      "worker": "kimi-k2",
+      "verifier": "kimi-k2",
+      "critic": "kimi-k2"
+    }
+  },
+  "prompt_quirks": {
+    "caching": "automatic_prefix",
+    "sampling": "newer kimi models reject the temperature parameter (400); omit it",
+    "tool_calling": "native, parallel",
+    "json_mode": "json_object; validate output locally"
+  },
+  "price_per_mtok": {
+    "input": 0.6,
+    "output": 2.5
+  },
+  "notes": "price_per_mtok is list price in USD per million tokens, approximate; update before relying on cost reports."
+}
