@@ -1,0 +1,8 @@
+{
+  "ticker": "DEMOA",
+  "entity": "Demo Peer A (synthetic)",
+  "synthetic": true,
+  "as_of": "2027-02-15",
+  "source_url": "synthetic: tests/test_model3.py::synthetic_companyfacts scaled x0.6",
+  "licence": "synthetic test data, not a real company"
+}
