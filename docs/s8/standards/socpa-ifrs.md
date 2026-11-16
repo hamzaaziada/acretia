@@ -6,14 +6,15 @@
 **Jurisdictions:** Saudi Arabia
 
 ## Summary
-Full IFRS for listed companies and many others since 2017, with one carve-out: zakat and income tax are not accounted for under IAS 12 and IFRIC 21 but follow SOCPA and ZATCA guidance. Zakat on Saudi and GCC owners is therefore shown as its own line and profit is quoted before zakat and income tax. Statements are in SAR, often bilingual, mostly by function, with current/non-current ordering.
+IFRS as endorsed by SOCPA for publicly accountable entities, with SOCPA's own requirements for matters IFRS does not cover, zakat being the example. Zakat (2.5 percent on the zakat base, charged on the Saudi and GCC owners' share) sits outside IAS 12, while income tax at 20 percent applies to the non-Saudi share. Zakat is therefore its own line and profit is commonly quoted before zakat and income tax. Statements are in SAR, often bilingual, mostly by function, with current/non-current ordering.
 
 ## Relationship to full IFRS
 Full IFRS except the zakat and tax carve-out; IFRS for SMEs for small entities.
 
 ## Effective dates and caveats
-- Full IFRS for listed companies: periods from 1 Jan 2017 (UNVERIFIED: exact SOCPA circular)
-- Zakat recognised in profit or loss rather than retained earnings: from 2019 (UNVERIFIED)
+- SOCPA amended its zakat accounting standard to align with IFRS, applying to fiscal years beginning on or after 1 January 2017 (EY tax alert)
+- Cost model required for listed companies' PPE and investment property until fiscal years starting 2022; fair value or revaluation allowed after (IFRS profile)
+- UNVERIFIED: whether and from when zakat moved from retained earnings to profit or loss
 
 ## Presentation
 - **Profit or loss layout:** By function is typical; profit before zakat and income tax is a standard subtotal.
@@ -83,13 +84,22 @@ Full IFRS except the zakat and tax carve-out; IFRS for SMEs for small entities.
 - `diff-leases-net-debt` (leases): recipe `lease_adjusted_net_debt`
 - `diff-revenue-ifrs15-asc606-eas48` (revenue): recipe `revenue_principal_agent_net`
 - `diff-inventory-lifo` (inventory): recipe `lifo_to_fifo`
+- `diff-revaluation` (revaluation): recipe `revaluation_reverse`
 - `diff-associates-jvs` (associates_jvs): recipe `associates_share_strip`
 - `diff-fx-translation` (fx_translation): recipe `fx_translate_period_end_average`
 - `diff-fx-devaluation-ias21` (fx_devaluation): recipe `devaluation_fx_loss_normalise`
 - `diff-zakat-vs-income-tax` (zakat_tax): recipe `zakat_as_tax`
-- `diff-eosb-gcc-egypt` (end_of_service): recipe `eosb_as_debt_like`
+- `diff-eosb-ksa` (end_of_service): recipe `eosb_as_debt_like`
 - `diff-government-grants` (government_grants): recipe `gov_grant_gross_up`
 
+**Verified facts**
+- Zakat outside IAS 12; Saudi/GCC portion zakat, non-Saudi portion IAS 12 income tax: <https://www.ifrs.org/content/dam/ifrs/meetings/2026/march/asaf/ap10-socpa-presentation-zakat.pdf>
+- Revaluation and fair value models allowed from fiscal years starting 2022: <https://www.ifrs.org/use-around-the-world/use-of-ifrs-standards-by-jurisdiction/view-jurisdiction.html/saudi-arabia/>
+
+**Unverified facts**
+- Profit or loss versus retained earnings treatment of zakat and its start date
+
 ## Sources
-- SOCPA endorsement of IFRS, Framework adoption and zakat/tax carve-out: <https://socpa.org.sa/>
-- IFRS adoption by jurisdiction, Saudi Arabia profile: <https://www.ifrs.org/use-around-the-world/use-of-ifrs-standards-by-jurisdiction/>
+- IFRS jurisdiction profile: Saudi Arabia, Endorsement, zakat, revaluation timing: <https://www.ifrs.org/use-around-the-world/use-of-ifrs-standards-by-jurisdiction/view-jurisdiction.html/saudi-arabia/>
+- SOCPA presentation to IFRS ASAF, Zakat and IAS 12: <https://www.ifrs.org/content/dam/ifrs/meetings/2026/march/asaf/ap10-socpa-presentation-zakat.pdf>
+- EY Tax Alert 2016-2063, Amended SOCPA zakat standard: <https://taxnews.ey.com/news/2016-2063>

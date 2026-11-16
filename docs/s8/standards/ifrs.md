@@ -103,16 +103,21 @@ This is the reference framework; every other entry in the base is described by i
 - `diff-fx-devaluation-ias21` (fx_devaluation): recipe `devaluation_fx_loss_normalise`
 - `diff-zakat-vs-income-tax` (zakat_tax): recipe `zakat_as_tax`
 - `diff-eosb-gcc-egypt` (end_of_service): recipe `eosb_as_debt_like`
+- `diff-eosb-ksa` (end_of_service): recipe `eosb_as_debt_like`
 - `diff-government-grants` (government_grants): recipe `gov_grant_gross_up`
 - `diff-presentation-by-nature-function` (presentation): recipe `by_nature_ebit`
 - `diff-cash-flow-classification` (presentation): recipe `ifrs16_to_pre16_ebitda`
 - `diff-eas-ifrs-new-standards` (eas_ifrs_mapping): recipe `eas_to_ifrs_map`
 - `diff-eas-ifrs-legacy-map` (eas_ifrs_mapping): recipe `eas_to_ifrs_map`
 - `diff-uae-corporate-tax` (zakat_tax): recipe `zakat_as_tax`
+- `diff-uae-dmtt-pillar-two` (zakat_tax): recipe `zakat_as_tax`
 - `diff-egypt-income-tax` (zakat_tax): recipe `zakat_as_tax`
 - `diff-ind-as-carveouts` (presentation): recipe `by_nature_ebit`
 - `diff-frs102-vs-ifrs` (presentation): recipe `capitalise_operating_leases`
 - `diff-ecl-ifrs9-eas47-cecl` (credit_losses): recipe `eas_to_ifrs_map`
+- `diff-leases-indas116` (leases): recipe `ifrs16_to_pre16_ebitda`
+- `diff-indas-applicability` (presentation): recipe `eas_to_ifrs_map`
+- `diff-eas17-separate-fs` (associates_jvs): recipe `associates_share_strip`
 
 ## Sources
 - IAS 1, paras 54, 82 (minimum line items): <https://www.ifrs.org/issued-standards/list-of-standards/ias-1-presentation-of-financial-statements/>

@@ -1,5 +1,7 @@
 """S8.1 standards knowledge base: schema, coverage, citations, no-copy guard and retrieval (offline)."""
 import re
+import subprocess
+import sys
 import unittest
 from pathlib import Path
 
@@ -107,6 +109,52 @@ class StandardsKB(unittest.TestCase):
         text = (base / "differences.md").read_text(encoding="utf-8")
         for d in self.kb.differences:
             self.assertIn(d["id"], text)
+
+    def test_docs_match_generator(self):
+        r = subprocess.run([sys.executable, str(ROOT / "scripts/gen_standards_docs.py"), "--check"], capture_output=True, text=True)
+        self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
+
+    def test_verification_fields(self):
+        for e in list(self.kb.differences) + list(self.kb.frameworks.values()):
+            for v in e.get("verified_facts", []):
+                self.assertTrue(v["fact"] and v["url"].startswith("https://"), e["id"] if "id" in e else e["name"])
+            if e["confidence"] == "verified":
+                self.assertFalse(e.get("unverified_facts"), e.get("id"))
+            if e.get("unverified_facts"):
+                self.assertEqual(e["confidence"], "unverified")
+        flipped = {"diff-zakat-vs-income-tax", "diff-uae-corporate-tax", "diff-uae-dmtt-pillar-two", "diff-egypt-income-tax",
+                   "diff-hyperinflation-ias29", "diff-eosb-ksa", "diff-leases-indas116", "diff-indas-applicability"}
+        by = {d["id"]: d for d in self.kb.differences}
+        for i in flipped:
+            self.assertEqual(by[i]["confidence"], "verified", i)
+            self.assertTrue(by[i]["verified_facts"], i)
+
+    def test_new_entries_and_facts(self):
+        ids = {d["id"] for d in self.kb.differences}
+        self.assertTrue({"diff-leases-indas116", "diff-eas17-separate-fs", "diff-indas-applicability", "diff-uae-dmtt-pillar-two"} <= ids)
+        txt = " ".join(d["summary"] for d in self.kb.differences)
+        for needle in ("2.5 percent", "20 percent", "AED 375,000", "15 percent", "EUR 750 million", "INR 250 crore"):
+            self.assertIn(needle, txt)
+        std = {s["standard"]: s["summary"] for s in self.kb.standards}
+        for k, words in {"IFRS 9": ["stage", "forward-looking"], "IAS 12": ["balance-sheet liability", "substantively enacted"],
+                         "IAS 16": ["cost model", "revaluation model"], "IAS 19": ["projected unit credit", "OCI"],
+                         "IAS 23": ["qualifying asset", "substantial period"], "IAS 36": ["higher of", "cash-generating"],
+                         "IAS 37": ["probable", "contingent liabilities"], "IAS 38": ["technical feasibility", "Research"],
+                         "IAS 40": ["cost model", "fair value model"], "IFRS 8": ["10 percent", "75 percent", "CODM"],
+                         "IAS 24": ["Key management"], "IAS 33": ["dilutive", "antidilutive"],
+                         "IFRS 15": ["five-step", "contracts with customers"], "IFRS 16": ["right-of-use asset", "lease liability"]}.items():
+            for w in words:
+                self.assertIn(w.lower(), std[k].lower(), (k, w))
+
+    def test_more_answers(self):
+        cases = [("What is the UAE Domestic Minimum Top-up Tax rate?", "diff-uae-dmtt-pillar-two"),
+                 ("When does Ind AS apply to a company with net worth of INR 250 crore?", "diff-indas-applicability"),
+                 ("Ind AS 116 differences from IFRS 16", "diff-leases-indas116"),
+                 ("equity method in separate financial statements in Egypt EAS 17", "diff-eas17-separate-fs"),
+                 ("Saudi end of service award calculation", "diff-eosb-ksa"),
+                 ("how do I strip devaluation FX losses out of recurring EBITDA", "diff-fx-devaluation-ias21")]
+        for q, want in cases:
+            self.assertIn(want, [e["id"] for e in self.kb.answer(q).entries], q)
 
     def test_find(self):
         self.assertTrue(self.kb.find(topic="leases"))

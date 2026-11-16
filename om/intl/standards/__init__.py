@@ -51,6 +51,12 @@ CONCEPTS = [
     ("c_credit", r"\becl\b|\bcecl\b|credit loss|ifrs 9|eas 47|loss allowance|financial instrument"),
     ("c_netdebt", r"net debt|leverage|enterprise value|\bev\b"),
     ("c_ebitda", r"ebitda"),
+    ("c_pillar", r"pillar two|\bdmtt\b|top up tax|minimum tax|globe"),
+    ("c_segment", r"segment|\bcodm\b|ifrs 8|operating decision maker"),
+    ("c_eps", r"\beps\b|earnings per share|dilut|ias 33"),
+    ("c_related", r"related part|key management|ias 24"),
+    ("c_separate", r"separate financial|ias 27|eas 17|standalone accounts"),
+    ("c_applicability", r"applicab|net worth|crore|roadmap"),
     ("c_mapping", r"eas \d+|map|equivalent|correspond"),
 ]
 _CONCEPTS = [(c, re.compile(p)) for c, p in CONCEPTS]

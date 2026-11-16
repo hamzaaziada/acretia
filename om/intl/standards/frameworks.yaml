@@ -41,6 +41,16 @@ common:
     frs102: &u_frs102 "https://www.frc.org.uk/library/standards-codes-policy/accounting-and-reporting/uk-and-ireland-standards/frs-102/"
     indas: &u_indas "https://www.mca.gov.in/content/mca/global/en/acts-rules/ebooks/accounting-standards.html"
     fra: &u_fra "https://fra.gov.eg/"
+    fra_dec: &u_fradec "https://fra.gov.eg/en/?p=13760728"
+    fra_636: &u_fra636 "https://fra.gov.eg/wp-content/uploads/2024/07/Decree-no-636_.pdf"
+    ifrs_egypt: &u_ifrsegypt "https://www.ifrs.org/use-around-the-world/use-of-ifrs-standards-by-jurisdiction/view-jurisdiction/egypt/"
+    ifrs_saudi: &u_ifrssaudi "https://www.ifrs.org/use-around-the-world/use-of-ifrs-standards-by-jurisdiction/view-jurisdiction.html/saudi-arabia/"
+    socpa_asaf: &u_socpaasaf "https://www.ifrs.org/content/dam/ifrs/meetings/2026/march/asaf/ap10-socpa-presentation-zakat.pdf"
+    ey_socpa: &u_eysocpa "https://taxnews.ey.com/news/2016-2063"
+    mof_ct: &u_mofct "https://mof.gov.ae/en/news/ministry-of-finance-confirms-applicable-taxable-income-threshold-for-corporate-tax-abu-dhabi-uae/"
+    ey_dmtt: &u_eydmtt "https://www.ey.com/en_gl/technical/tax-alerts/uae-issues-domestic-minimum-top-up-tax-legislation"
+    taxguru_indas: &u_taxguruindas "https://taxguru.in/company-law/applicability-indian-accounting-standard-ind.html"
+    kpmg_indas116: &u_kpmgindas116 "https://alumni.in.kpmg.com/downloads/Publications/Accounting_Publications/firstnotes-leases-standard-ind-as-116-notified-mca.pdf"
     socpa: &u_socpa "https://socpa.org.sa/"
     ifrs_adoption: &u_adopt "https://www.ifrs.org/use-around-the-world/use-of-ifrs-standards-by-jurisdiction/"
 
@@ -108,8 +118,9 @@ frameworks:
       devaluations and can defer or capitalise FX differences.
     relationship_to_ifrs: Not full IFRS. Lag in standards, some choices removed or added, and temporary special treatments that have no IFRS counterpart (FX relief annexes).
     effective_dates:
-      - "EAS 47 financial instruments, EAS 48 revenue, EAS 49 leases: issued 2019, effective dates were postponed more than once (UNVERIFIED: exact decree and dates)"
-      - "EAS 13 special FX treatment: issued after the Nov 2016 float and reissued for 2022-2024 devaluations (UNVERIFIED: decree numbers)"
+      - "EAS issued July 2015, amended 2019 and 2023 (IFRS Foundation profile)"
+      - "EAS 47 financial instruments, EAS 48 revenue, EAS 49 lease contracts: issued 2019 (FRA decisions list). UNVERIFIED: effective dates and postponements"
+      - "EAS 13 special FX treatment: appendices tied to the 2016 and 2022 devaluations (FRA Decision 843/2022, amended 1378/2022; PM Decisions 1568/2022 and 4706/2022). EAS 13, 17 and 34 were substituted by PM Decree 636/2024"
     presentation:
       pnl_layout: Mostly by function (revenue, cost of sales, gross profit, administrative and selling expenses); by nature occurs.
       balance_sheet_order: Current/non-current split. Statements are often bilingual (Arabic and English) with Arabic as legal text.
@@ -125,7 +136,7 @@ frameworks:
         dividends_paid: Financing.
         dividends_received: Operating or investing.
     measurement_bases:
-      - Historical cost; revaluation model for PPE was removed in the 2015 reissue (UNVERIFIED: confirm current position)
+      - Historical cost; the revaluation model for PPE, intangibles and investment property was not permitted until January 2023 and is allowed since
       - Amortised cost with ECL under EAS 47 for entities that adopted it; older incurred-loss rules before
       - Foreign currency monetary items at closing rate with EAS 13 special treatment where elected
     key_disclosures:
@@ -133,8 +144,15 @@ frameworks:
       - Related parties and board remuneration
       - Segment note for listed entities
       - Lease commitments and right-of-use movement after EAS 49
+    verified_facts:
+      - {fact: "EAS issued 2015, amended 2019 and 2023; EAS not full IFRS; revaluation barred until January 2023", url: *u_ifrsegypt}
+      - {fact: "EAS 47, 48, 49 issued in 2019; EAS 13 appendix decisions 843/1378/1568/4706 of 2022", url: *u_fradec}
+      - {fact: "PM Decree 636/2024 substituted EAS 13, 17 and 34", url: *u_fra636}
+    unverified_facts: ["Effective dates of EAS 47/48/49", "Scope of each EAS 13 appendix"]
     citations:
-      - {standard: "Egyptian Accounting Standards", ref: "Index of issued standards, EAS 1 Presentation, EAS 13 FX", url: *u_fra}
+      - {standard: "Egyptian Accounting Standards", ref: "FRA decisions list (2019, 2022, 2023, 2024)", url: *u_fradec}
+      - {standard: "IFRS jurisdiction profile: Egypt", ref: "EAS versus IFRS differences", url: *u_ifrsegypt}
+      - {standard: "PM Decree 636 of 2024", ref: "Article 1", url: *u_fra636}
     authored: acretia
     confidence: unverified
 
@@ -143,14 +161,15 @@ frameworks:
     jurisdictions: [Saudi Arabia]
     issuer: SOCPA (Saudi Organization for Chartered and Professional Accountants)
     summary: >-
-      Full IFRS for listed companies and many others since 2017, with one carve-out: zakat and income tax are not
-      accounted for under IAS 12 and IFRIC 21 but follow SOCPA and ZATCA guidance. Zakat on Saudi and GCC owners
-      is therefore shown as its own line and profit is quoted before zakat and income tax. Statements are in SAR, often
+      IFRS as endorsed by SOCPA for publicly accountable entities, with SOCPA's own requirements for matters IFRS does not cover,
+      zakat being the example. Zakat (2.5 percent on the zakat base, charged on the Saudi and GCC owners' share) sits outside IAS 12, while income tax at
+      20 percent applies to the non-Saudi share. Zakat is therefore its own line and profit is commonly quoted before zakat and income tax. Statements are in SAR, often
       bilingual, mostly by function, with current/non-current ordering.
     relationship_to_ifrs: Full IFRS except the zakat and tax carve-out; IFRS for SMEs for small entities.
     effective_dates:
-      - "Full IFRS for listed companies: periods from 1 Jan 2017 (UNVERIFIED: exact SOCPA circular)"
-      - "Zakat recognised in profit or loss rather than retained earnings: from 2019 (UNVERIFIED)"
+      - "SOCPA amended its zakat accounting standard to align with IFRS, applying to fiscal years beginning on or after 1 January 2017 (EY tax alert)"
+      - "Cost model required for listed companies' PPE and investment property until fiscal years starting 2022; fair value or revaluation allowed after (IFRS profile)"
+      - "UNVERIFIED: whether and from when zakat moved from retained earnings to profit or loss"
     presentation:
       pnl_layout: By function is typical; profit before zakat and income tax is a standard subtotal.
       balance_sheet_order: Current/non-current split; zakat payable appears as a liability.
@@ -175,8 +194,13 @@ frameworks:
       - End-of-service benefit actuarial assumptions
       - IFRS 16 lease disclosures, often large for retailers
     citations:
-      - {standard: "SOCPA endorsement of IFRS", ref: "Framework adoption and zakat/tax carve-out", url: *u_socpa}
-      - {standard: "IFRS adoption by jurisdiction", ref: "Saudi Arabia profile", url: *u_adopt}
+      - {standard: "IFRS jurisdiction profile: Saudi Arabia", ref: "Endorsement, zakat, revaluation timing", url: *u_ifrssaudi}
+      - {standard: "SOCPA presentation to IFRS ASAF", ref: "Zakat and IAS 12", url: *u_socpaasaf}
+      - {standard: "EY Tax Alert 2016-2063", ref: "Amended SOCPA zakat standard", url: *u_eysocpa}
+    verified_facts:
+      - {fact: "Zakat outside IAS 12; Saudi/GCC portion zakat, non-Saudi portion IAS 12 income tax", url: *u_socpaasaf}
+      - {fact: "Revaluation and fair value models allowed from fiscal years starting 2022", url: *u_ifrssaudi}
+    unverified_facts: ["Profit or loss versus retained earnings treatment of zakat and its start date"]
     authored: acretia
     confidence: unverified
 
@@ -186,12 +210,14 @@ frameworks:
     issuer: Local securities regulators and commercial company laws; IASB standards used unmodified
     summary: >-
       Listed and most regulated entities in the UAE apply full IFRS as issued by the IASB with no local carve-outs.
-      Federal corporate tax (9 percent above a threshold) began for financial years starting on or after 1 June 2023,
-      so earlier years show no income tax for most UAE entities and later years need deferred tax. Gratuity under the
+      Federal corporate tax (9 percent above AED 375,000) began for financial years starting on or after 1 June 2023,
+      so earlier years show no income tax for most UAE entities and later years need deferred tax. Large multinational
+      groups also face a 15 percent Domestic Minimum Top-up Tax from 2025. Gratuity under the
       labour law is a defined benefit item.
     relationship_to_ifrs: Full IFRS, unmodified. GCC states differ on local tax and labour law, not on the standards.
     effective_dates:
-      - "UAE federal corporate tax: financial years starting on or after 1 June 2023 (UNVERIFIED: confirm decree text)"
+      - "UAE federal corporate tax: 9 percent above AED 375,000, financial years starting on or after 1 June 2023"
+      - "UAE Domestic Minimum Top-up Tax: 15 percent for groups with revenue of EUR 750m or more, fiscal years from 1 January 2025 (Cabinet Decision 142 of 2024)"
     presentation:
       pnl_layout: By function typical; real estate developers often show revenue and direct costs.
       balance_sheet_order: Current/non-current; some developers present a liquidity ordering.
@@ -215,9 +241,13 @@ frameworks:
       - Contract liabilities and escrow balances for developers
       - Related party balances with government-linked shareholders
     citations:
-      - {standard: "IFRS adoption by jurisdiction", ref: "UAE profile", url: *u_adopt}
+      - {standard: "UAE Ministry of Finance", ref: "Corporate tax rate and threshold", url: *u_mofct}
+      - {standard: "Cabinet Decision 142 of 2024", ref: "DMTT", url: *u_eydmtt}
+    verified_facts:
+      - {fact: "9 percent above AED 375,000, from 1 June 2023 financial years", url: *u_mofct}
+      - {fact: "DMTT 15 percent, EUR 750m, from 1 Jan 2025", url: *u_eydmtt}
     authored: acretia
-    confidence: unverified
+    confidence: verified
 
   - id: FRS102
     name: UK FRS 102 (The Financial Reporting Standard applicable in the UK and Republic of Ireland)
@@ -263,12 +293,15 @@ frameworks:
     issuer: Ministry of Corporate Affairs on advice of the National Financial Reporting Authority; ICAI drafts
     summary: >-
       Converged with IFRS but not identical. Notified under the Companies (Indian Accounting Standards) Rules 2015 and
-      mandatory in phases for larger and listed companies. Differences are called carve-outs: investment property uses
+      mandatory in phases: from 1 April 2016 for listed companies and unlisted companies with net worth of INR 500 crore or more,
+      and from 1 April 2017 for all other listed companies and unlisted companies with net worth of INR 250 crore up to 500 crore
+      (SME-exchange companies and those below INR 250 crore stay on the older standards). Differences are called carve-outs: investment property uses
       cost only, business combinations under common control use pooling of interests, and a few presentation and
       measurement options differ. Reporting is in INR, with a fiscal year ending 31 March.
     relationship_to_ifrs: Substantially converged with carve-outs (investment property, common-control combinations, some financial instrument and employee benefit details).
     effective_dates:
-      - "Phased adoption from fiscal 2016-17 for listed and large companies"
+      - "Phased adoption: net worth of INR 500 crore or more from fiscal 2016-17; INR 250 crore and all listed companies from fiscal 2017-18"
+      - "Ind AS 116 leases: annual periods beginning on or after 1 April 2019"
     presentation:
       pnl_layout: Schedule III of the Companies Act prescribes a by-nature statement of profit and loss.
       balance_sheet_order: Schedule III prescribed current/non-current format.
@@ -293,6 +326,8 @@ frameworks:
       - Related parties and CSR spending
     citations:
       - {standard: "Ind AS", ref: "Ind AS 1, 40, 103 (Appendix C), 116", url: *u_indas}
+      - {standard: "Companies (Indian Accounting Standards) Rules 2015", ref: "Rule 4 applicability phases", url: *u_taxguruindas}
+      - {standard: "Ind AS 116", ref: "Differences from IFRS 16", url: *u_kpmgindas116}
     authored: acretia
     confidence: verified
 

@@ -30,6 +30,19 @@ urls:
   uae_labour: &uaelab "https://u.ae/en/information-and-services/jobs/end-of-service-benefits-gratuity"
   ksa_labour: &ksalab "https://hrsd.gov.sa/en/knowledge-center/laws-and-regulations"
   egy_tax: &egytax "https://www.incometax.gov.eg/"
+  fra_dec: &fradec "https://fra.gov.eg/en/?p=13760728"
+  fra_636: &fra636 "https://fra.gov.eg/wp-content/uploads/2024/07/Decree-no-636_.pdf"
+  ifrs_egypt: &ifrsegypt "https://www.ifrs.org/use-around-the-world/use-of-ifrs-standards-by-jurisdiction/view-jurisdiction/egypt/"
+  ifrs_saudi: &ifrssaudi "https://www.ifrs.org/use-around-the-world/use-of-ifrs-standards-by-jurisdiction/view-jurisdiction.html/saudi-arabia/"
+  socpa_asaf: &socpaasaf "https://www.ifrs.org/content/dam/ifrs/meetings/2026/march/asaf/ap10-socpa-presentation-zakat.pdf"
+  pwc_sa: &pwcsa "https://taxsummaries.pwc.com/saudi-arabia/corporate/taxes-on-corporate-income"
+  pwc_eg: &pwceg "https://taxsummaries.pwc.com/egypt/corporate/taxes-on-corporate-income"
+  bdo_hyper: &bdohyper "https://www.bdo.global/en-gb/insights/ifrs-and-corporate-reporting/2026/ifrb-2026-07-year-end-hyperinflationary-economies-update"
+  ey_dmtt: &eydmtt "https://www.ey.com/en_gl/technical/tax-alerts/uae-issues-domestic-minimum-top-up-tax-legislation"
+  mof_ct: &mofct "https://mof.gov.ae/en/news/ministry-of-finance-confirms-applicable-taxable-income-threshold-for-corporate-tax-abu-dhabi-uae/"
+  hrsd: &hrsd "https://www.hrsd.gov.sa/en/knowledge-centre/articles/317-0"
+  taxguru_indas: &taxguruindas "https://taxguru.in/company-law/applicability-indian-accounting-standard-ind.html"
+  kpmg_indas116: &kpmgindas116 "https://alumni.in.kpmg.com/downloads/Publications/Accounting_Publications/firstnotes-leases-standard-ind-as-116-notified-mca.pdf"
   cbe: &cbe "https://www.cbe.org.eg/en/economic-research/statistics/exchange-rates"
 
 differences:
@@ -72,15 +85,22 @@ differences:
     topic: leases
     frameworks: [EAS, IFRS]
     summary: >-
-      EAS 49 mirrors IFRS 16 for lessees. Before it took effect, Egyptian companies used the older leasing rules where
-      operating lease rentals were an expense and only finance leases appeared on the balance sheet. Some Egyptian reports
-      will show a transition in the first year of EAS 49 with a modified retrospective effect on retained earnings.
+      EAS 49 (lease contracts, issued in 2019 as part of the update that added standards based on IFRS 9, 15 and 16) mirrors IFRS 16
+      for lessees. Before it, Egyptian companies used the older leasing rules where operating lease rentals were an
+      expense and only finance leases appeared on the balance sheet. Expect a transition-year step in EBITDA, lease
+      liabilities and retained earnings in the first EAS 49 year. The effective date and transition options were
+      adjusted by later decisions and are not confirmed here.
     analyst_impact: >-
-      Before adoption treat operating lease commitments as debt-like using the disclosed future rentals; after adoption use the lease liability line directly. Check the adoption year for a step in EBITDA.
+      Before adoption treat operating lease commitments as debt-like using the disclosed future rentals; after adoption use the
+      lease liability line directly and compare EBITDA on a pre-16 basis. Check the adoption year for a step.
     adjustment: capitalise_operating_leases
-    keywords: [eas 49, egypt, lease, operating lease, rou, adoption, transition]
+    keywords: [eas 49, egypt, lease, operating lease, rou, adoption, transition, right-of-use, lease liability]
+    verified_facts:
+      - {fact: "EAS 49 Lease Contracts was issued in 2019", url: *fradec}
+      - {fact: "The 2019 EAS update added standards based on IFRS 9, 15 and 16", url: *ifrsegypt}
+    unverified_facts: ["EAS 49 effective date, transition method and paragraph numbers"]
     citations:
-      - {standard: "EAS 49 Leases", ref: "Scope, lessee model and transition (UNVERIFIED paragraph numbers)", url: *fra}
+      - {standard: "EAS 49 Lease Contracts", ref: "Decisions made in 2019 (list), implementation guide listed", url: *fradec}
       - {standard: "IFRS 16", ref: "paras C1-C19 (transition)", url: *ifrs16}
     authored: acretia
     confidence: unverified
@@ -124,7 +144,7 @@ differences:
     topic: inventory
     frameworks: [IFRS, USGAAP, EAS, FRS102, IndAS, SOCPA-IFRS, UAE-IFRS]
     summary: >-
-      IFRS, EAS, FRS 102 and Ind AS ban last-in first-out. US GAAP allows it, and US companies using LIFO in rising
+      IFRS, EAS, FRS 102 and Ind AS ban last-in first-out. US GAAP permits it, and US companies using LIFO in rising
       prices show lower profit and inventory than FIFO peers. LIFO users disclose a LIFO reserve, the cumulative gap to FIFO.
     analyst_impact: >-
       Convert LIFO inventory to FIFO by adding the LIFO reserve and adjust cost of sales by the change in reserve before comparing margins or working capital with IFRS peers.
@@ -140,7 +160,7 @@ differences:
     topic: development_costs
     frameworks: [IFRS, USGAAP, FRS102, IndAS, EAS]
     summary: >-
-      IFRS requires capitalising development costs once defined criteria are met. US GAAP expenses research and
+      IFRS requires capitalising development costs once defined criteria are met. US GAAP generally expenses research and
       development as incurred, with exceptions for certain software costs. FRS 102 lets entities choose to capitalise or
       expense. Capitalised development appears in intangible assets, with amortisation later.
     analyst_impact: >-
@@ -156,19 +176,24 @@ differences:
 
   - id: diff-revaluation
     topic: revaluation
-    frameworks: [IFRS, USGAAP, FRS102, IndAS, EAS, UAE-IFRS]
+    frameworks: [IFRS, USGAAP, FRS102, IndAS, EAS, SOCPA-IFRS, UAE-IFRS]
     summary: >-
       IFRS allows revaluing whole classes of PPE (and intangibles with active markets) to fair value, with the increase held in
-      a revaluation surplus in OCI. US GAAP prohibits upward revaluation. Ind AS allows revaluation of PPE but not
-      fair value for investment property. Egypt removed the option in its 2015 reissue (UNVERIFIED).
+      a revaluation surplus in OCI. US GAAP prohibits upward revaluation. Ind AS allows revaluation of PPE but not the fair
+      value model for investment property. Egypt did not permit revaluation of PPE, intangibles or investment property until
+      January 2023. Saudi Arabia kept the cost model for listed companies until fiscal years starting 2022 and allows
+      fair value or revaluation after that.
     analyst_impact: >-
-      Revalued assets lift equity and depreciation base; reverse the surplus and extra depreciation for return-on-capital comparisons across jurisdictions.
+      Revalued assets lift equity and the depreciation base; reverse the surplus and the extra depreciation for return-on-capital
+      comparisons across jurisdictions, and treat Egypt and Saudi periods before the change as cost-based.
     adjustment: revaluation_reverse
     keywords: [revaluation, revaluation surplus, fair value model, ppe, investment property, ias 16, ias 40]
     citations:
       - {standard: "IAS 16", ref: "paras 31-42", url: *ias16}
       - {standard: "IAS 40", ref: "paras 33-55", url: *ias40}
       - {standard: "Ind AS 40", ref: "Cost model only for investment property", url: *indas}
+      - {standard: "IFRS jurisdiction profile: Egypt", ref: "Revaluation not permitted under EAS until January 2023", url: *ifrsegypt}
+      - {standard: "IFRS jurisdiction profile: Saudi Arabia", ref: "Cost model for fiscal years before 2022; fair value or revaluation after", url: *ifrssaudi}
     authored: acretia
     confidence: verified
 
@@ -178,7 +203,7 @@ differences:
     summary: >-
       IFRS lets a company reverse an earlier impairment of PPE, intangibles other than goodwill and investments when the
       reasons fade, up to the depreciated cost that would have existed. Goodwill impairment is never reversed. US GAAP
-      forbids reversing an impairment of assets held for use.
+      prohibits reversing an impairment of assets held and used; written-down cost becomes the new basis.
     analyst_impact: >-
       Reversals inflate IFRS earnings in recoveries (commodities, shipping). Remove reversals from normalised profit before comparing with US peers.
     adjustment: impairment_reversal_strip
@@ -231,17 +256,22 @@ differences:
     summary: >-
       IAS 29 requires restating a hyperinflationary entity's statements by a price index and reporting a net monetary gain or
       loss. US GAAP does not restate; it requires the remeasurement of the foreign subsidiary using the parent's currency as
-      functional currency when cumulative three-year inflation is about 100 percent. Egypt's inflation was high in 2023-2024
-      but the country was not on the commonly published IAS 29 country list at the time of writing (UNVERIFIED).
+      functional currency when cumulative three-year inflation is about 100 percent. Argentina and Turkey are on the current lists of
+      economies where IAS 29 applies. Egypt is not treated as hyperinflationary at the end of 2025 but sits on a watchlist
+      with Angola, Myanmar, Nigeria and Syria.
     analyst_impact: >-
-      Restate or at least flag results in hyperinflationary economies (Argentina, Turkey, Lebanon, Ethiopia); use constant-currency and avoid mixing indexed and unindexed periods.
+      Restate or at least flag results in hyperinflationary economies (Argentina, Turkey and others on the current list); use
+      constant-currency and avoid mixing indexed and unindexed periods. For Egypt keep the status under review rather than assuming IAS 29.
     adjustment: ias29_restate
-    keywords: [ias 29, hyperinflation, hyperinflationary, price index, monetary gain, inflation accounting, turkey, argentina, egypt inflation]
+    keywords: [ias 29, hyperinflation, hyperinflationary, price index, monetary gain, inflation accounting, turkey, argentina, egypt inflation, watchlist]
+    verified_facts:
+      - {fact: "Egypt not hyperinflationary at 31 Dec 2025; on watchlist with Angola, Myanmar, Nigeria, Syria; Argentina and Turkey on the IAS 29 list", url: *bdohyper}
     citations:
       - {standard: "IAS 29", ref: "paras 3-8, 11-34", url: *ias29}
       - {standard: "ASC 830", ref: "830-10-45-11", url: *asc}
+      - {standard: "BDO IFRB 2026/07", ref: "Year-end hyperinflationary economies update (Egypt on watchlist)", url: *bdohyper}
     authored: acretia
-    confidence: unverified
+    confidence: verified
 
   - id: diff-fx-translation
     topic: fx_translation
@@ -264,15 +294,24 @@ differences:
     topic: fx_devaluation
     frameworks: [IFRS, EAS, SOCPA-IFRS, UAE-IFRS]
     summary: >-
-      When a currency is devalued, monetary items in foreign currency (debt, payables, cash) are retranslated at the new closing
-      rate and the full difference hits profit or loss under IAS 21. Importers with USD debt show big losses, exporters with USD
-      cash show gains. Egypt floated the pound in November 2016, and had further steps in 2022, early 2023 and March 2024.
+      When a currency is devalued, monetary items in foreign currency (debt, payables, cash) are retranslated at the new
+      closing rate and the full difference hits profit or loss under IAS 21. Importers with USD debt show big losses,
+      exporters with USD cash show gains. Egypt had devaluations in 2016 and 2022 (recognised in the IFRS Foundation
+      jurisdiction profile) and further steps in 2023 and March 2024 (not confirmed here). Revenue in local currency
+      also steps up as prices are reset, so a single year mixes a one-off translation loss with a changed operating base.
     analyst_impact: >-
-      Normalise FX gains and losses out of operating performance, and check the unhedged USD debt that remains. Pre- and post-devaluation periods have different revenue levels in EGP because of repricing.
+      Strip devaluation FX losses out of recurring EBITDA and earnings. Take the FX gain or loss line (and any FX embedded in finance
+      costs or cost of sales) out of operating profit, tax-effect it, and show adjusted net income beside reported. Where an
+      entity capitalised or deferred FX loss under EAS 13 special treatment, add the deferred charge back so the period carries its
+      economic cost. Then check the unhedged USD debt still outstanding, since the next devaluation repeats the effect.
     adjustment: devaluation_fx_loss_normalise
-    keywords: [devaluation, float, egyptian pound, egp, fx loss, usd debt, 2016, 2022, 2023, 2024, exchange loss]
+    keywords: [devaluation, float, egyptian pound, egp, fx loss, usd debt, 2016, 2022, 2023, 2024, exchange loss, recurring ebitda, normalised earnings]
+    verified_facts:
+      - {fact: "Egypt applied special translation treatment after the 2016 and 2022 devaluations", url: *ifrsegypt}
+    unverified_facts: ["Devaluation steps in 2023 and March 2024"]
     citations:
       - {standard: "IAS 21", ref: "paras 23, 28", url: *ias21}
+      - {standard: "IFRS jurisdiction profile: Egypt", ref: "Foreign currency translation differences", url: *ifrsegypt}
       - {standard: "Central Bank of Egypt", ref: "Official exchange rate history", url: *cbe}
     authored: acretia
     confidence: unverified
@@ -281,16 +320,25 @@ differences:
     topic: fx_devaluation
     frameworks: [EAS]
     summary: >-
-      Egypt has issued special accounting treatments in annexes to EAS 13 after devaluations. In general these let an entity
-      recognise part of the loss on foreign currency items either in the cost of related assets or as a deferred item amortised
-      over a period instead of full immediate recognition in profit. They apply to specified items and dates and carry
-      disclosure duties. Exact scope, decree numbers and amortisation periods differ by round (2016, 2022, 2023, 2024).
+      Egypt added special accounting treatments for devaluations to EAS 13: an appendix tied to the 2016 liberalisation and
+      later appendices B (Prime Ministerial Decision 1568 of 2022) and C (Prime Ministerial Decision 4706 of 2022), alongside
+      FRA Decision 843 of 2022 as amended by Decision 1378 of 2022. In general they let an entity put part of the loss on
+      foreign currency items into the cost of related assets or defer it, instead of taking it all to profit; the IFRS
+      Foundation profile notes this was a one-time application extended to the end of 2023 and affects depreciation of
+      remeasured assets. A Prime Ministerial decree of 2024 (No. 636) then replaced EAS 13 itself.
     analyst_impact: >-
-      Reported earnings in EAS reports can be flattered by deferred FX loss. Add the deferred balance back as a charge, reduce asset cost by capitalised FX loss, and compare to IFRS peers.
+      Reported earnings under special treatment can be flattered by deferral. Add the deferred balance back as a charge, remove capitalised FX loss
+      from asset cost and the extra depreciation, and compare to IFRS peers on a normalised basis.
     adjustment: devaluation_fx_loss_normalise
-    keywords: [eas 13, special treatment, annex, fx deferral, capitalised exchange loss, egypt devaluation, decree]
+    keywords: [eas 13, special treatment, annex, appendix, fx deferral, capitalised exchange loss, egypt devaluation, decree, 843, 4706, 1568]
+    verified_facts:
+      - {fact: "Decision 843/2022 (amended by 1378/2022), Appendix B PM Decision 1568/2022 and Appendix C PM Decision 4706/2022 exist as listed by FRA", url: *fradec}
+      - {fact: "PM Decree 636/2024 substituted EAS 13, EAS 17 and EAS 34", url: *fra636}
+      - {fact: "One-time application extended to end of 2023; affects depreciation of remeasured assets", url: *ifrsegypt}
+    unverified_facts: ["Exact scope and amortisation periods of each appendix", "Effective dates of the 2023 and 2024 rounds"]
     citations:
-      - {standard: "EAS 13", ref: "Effects of changes in foreign exchange rates, special treatment annexes (UNVERIFIED decree numbers)", url: *fra}
+      - {standard: "EAS 13", ref: "Appendices A, B, C (special treatment)", url: *fradec}
+      - {standard: "PM Decree 636 of 2024", ref: "Article 1 (replacement of EAS 13, 17, 34)", url: *fra636}
     authored: acretia
     confidence: unverified
 
@@ -298,38 +346,65 @@ differences:
     topic: zakat_tax
     frameworks: [SOCPA-IFRS, IFRS]
     summary: >-
-      In Saudi Arabia zakat is levied on Saudi and GCC owners' share of a company, based largely on a zakat base of equity and
-      long-term funding less certain assets (rate 2.5 percent), while income tax at 20 percent applies to the foreign owners' share.
-      SOCPA's endorsement keeps zakat outside IAS 12, so it is a separate line, not an income tax expense, and there is
-      no deferred tax on zakat. Profit is quoted before zakat and income tax.
+      In Saudi Arabia zakat is a 2.5 percent charge on the zakat base (broadly net worth as computed for zakat) and falls on the Saudi
+      and GCC owners' share, while income tax at 20 percent of adjusted profit applies to the share held by non-Saudi, non-GCC owners.
+      Mixed-ownership companies bear both in proportion. SOCPA's position is that zakat sits outside IAS 12, so it is
+      accounted for under its own endorsed requirements and IAS 8 rather than as an IAS 12 income tax, and there is no deferred tax on
+      zakat. A live IFRS 18 debate concerns whether zakat is presented together with income tax or in operating results.
     analyst_impact: >-
-      Compare KSA companies with others on a pre-zakat basis, or treat zakat as a tax by adding it to tax expense. Effective tax rates are not comparable, and net income to owners is after zakat.
+      Compare KSA companies on a pre-zakat and pre-tax basis, or treat zakat as a tax by adding it to tax expense (recipe zakat_as_tax).
+      Effective tax rates are not comparable across ownership structures, and net income to owners is after zakat. Do not leave zakat in operating costs.
     adjustment: zakat_as_tax
-    keywords: [zakat, zatca, gazt, income tax, zakat base, saudi, ksa, profit before zakat, tax rate]
+    keywords: [zakat, zatca, gazt, income tax, zakat base, saudi, ksa, profit before zakat, tax rate, 2.5%, 20%, mixed ownership]
     citations:
-      - {standard: "ZATCA zakat rules", ref: "Implementing regulations on zakat and income tax", url: *zatca}
-      - {standard: "SOCPA IFRS endorsement", ref: "Zakat and tax carve-out from IAS 12/IFRIC 21", url: *socpa}
+      - {standard: "PwC Tax Summaries Saudi Arabia", ref: "Zakat 2.5 percent, income tax 20 percent, ownership split", url: *pwcsa}
+      - {standard: "SOCPA presentation to IFRS ASAF", ref: "Zakat outside IAS 12; two taxation systems by ownership", url: *socpaasaf}
+      - {standard: "IFRS jurisdiction profile: Saudi Arabia", ref: "Zakat covered by separately endorsed SOCPA requirements", url: *ifrssaudi}
+    verified_facts:
+      - {fact: "Zakat 2.5 percent on zakat base; income tax 20 percent on non-Saudi/non-GCC share", url: *pwcsa}
+      - {fact: "Zakat applies to Saudi/GCC portion, IAS 12-type tax to non-Saudi portion; no IFRS specific to zakat", url: *socpaasaf}
     authored: acretia
-    confidence: unverified
+    confidence: verified
 
   - id: diff-eosb-gcc-egypt
     topic: end_of_service
-    frameworks: [SOCPA-IFRS, UAE-IFRS, EAS, IFRS]
+    frameworks: [UAE-IFRS, EAS, IFRS]
     summary: >-
-      Saudi and UAE labour laws oblige an employer to pay a gratuity on leaving, scaled to salary and years of service (in Saudi Arabia
-      roughly half a month per year for the first five years and a full month after; in the UAE about 21 days per year for the first
-      five years and 30 days after, capped at two years of pay). IAS 19 treats these as defined benefit plans, so companies should
-      have actuarial valuations. Egyptian private employers lean on social insurance, with contractual schemes treated case by case (UNVERIFIED).
+      The UAE labour law obliges private employers to pay a gratuity on leaving, in the order of 21 days of basic pay per year for the
+      first five years and 30 days per year afterwards, capped at about two years of pay (secondary sources only). IAS 19
+      treats these as defined benefit plans, so companies should have actuarial valuations with remeasurements in OCI.
+      Egyptian private employers lean on social insurance, with contractual schemes treated case by case.
     analyst_impact: >-
       The end-of-service provision is debt-like but rarely in reported net debt. Add it to adjusted debt when material, and watch the discount rate and cash payout in the cash flow.
     adjustment: eosb_as_debt_like
-    keywords: [eosb, end of service, gratuity, termination benefit, indemnity, labour law, employee benefits, ias 19]
+    keywords: [eosb, end of service, gratuity, termination benefit, indemnity, labour law, employee benefits, ias 19, uae, egypt]
+    unverified_facts: ["UAE gratuity tiers, cap and decree-law article numbers (no official source read)", "Egypt end-of-service position"]
     citations:
       - {standard: "IAS 19", ref: "paras 57-62, 67-69", url: *ias19}
-      - {standard: "Saudi Labour Law", ref: "End-of-service award articles (UNVERIFIED article numbers)", url: *ksalab}
       - {standard: "UAE labour law", ref: "End-of-service gratuity", url: *uaelab}
     authored: acretia
     confidence: unverified
+
+  - id: diff-eosb-ksa
+    topic: end_of_service
+    frameworks: [SOCPA-IFRS, IFRS]
+    summary: >-
+      Under the Saudi Labour Law an employer pays an end-of-service award on termination: half a month of the last wage for each of the
+      first five years and a full month for each later year, with part years pro-rated. When the worker resigns the award is reduced:
+      nothing under two years, one third from two to under five years, two thirds from five to under ten, in full after ten.
+      Saudi reports treat the obligation as a defined benefit plan under IAS 19, valued actuarially, with remeasurements in OCI.
+    analyst_impact: >-
+      Treat the end-of-service provision as debt-like when material and add it to adjusted net debt; note it grows with headcount and
+      wage inflation and is paid out in cash on exits, so check the movement note for payouts versus current service cost.
+    adjustment: eosb_as_debt_like
+    keywords: [eosb, end of service, saudi, labour law, award, gratuity, ias 19, resignation, half month]
+    verified_facts:
+      - {fact: "Award of half a month per year for the first five years, a month per year after; resignation scaling", url: *hrsd}
+    citations:
+      - {standard: "Saudi Labour Law (HRSD guidance)", ref: "End-of-service award calculation", url: *hrsd}
+      - {standard: "IAS 19", ref: "paras 57-62, 67-69, 120", url: *ias19}
+    authored: acretia
+    confidence: verified
 
   - id: diff-government-grants
     topic: government_grants
@@ -372,7 +447,8 @@ differences:
     frameworks: [IFRS, USGAAP, EAS, IndAS]
     summary: >-
       IFRS lets entities place interest and dividends received or paid in different sections; US GAAP fixes them (interest received and paid and
-      dividends received in operating, dividends paid in financing). Ind AS generally puts interest paid in financing for non-finance entities.
+      dividends received in operating, dividends paid in financing). Ind AS 116 always puts the interest part of lease payments in financing,
+      and Ind AS usually shows interest paid in financing for non-finance entities.
     analyst_impact: >-
       Align cash flow from operations by moving interest to a single section before comparing free cash flow.
     adjustment: ifrs16_to_pre16_ebitda
@@ -380,6 +456,7 @@ differences:
     citations:
       - {standard: "IAS 7", ref: "paras 31-34", url: *ias7}
       - {standard: "ASC 230", ref: "230-10-45-16 to 45-17", url: *asc}
+      - {standard: "Ind AS 116", ref: "Lease interest classified in financing", url: *kpmgindas116}
     authored: acretia
     confidence: verified
 
@@ -388,15 +465,20 @@ differences:
     frameworks: [EAS, IFRS]
     summary: >-
       The newer Egyptian standards copy IFRS: EAS 47 corresponds to IFRS 9 financial instruments, EAS 48 to IFRS 15 revenue, EAS 49 to IFRS 16 leases.
-      Differences come from effective dates, transition options and special treatments granted by Egyptian regulation. Early
-      adopters and late adopters make years non-comparable inside the same market.
+      All three were issued in 2019 (the FRA lists them under its 2019 decisions); an appendix to EAS 47 was added in 2023 (Prime Ministerial Decision 4575
+      of 2023). Differences come from effective dates, transition options and special treatments granted by Egyptian regulation.
+      Early and late adopters make years non-comparable inside the same market.
     analyst_impact: >-
       Map EAS lines to the matching IFRS concepts and flag the adoption year and transition method; do not blend pre- and post-adoption years without restatement.
     adjustment: eas_to_ifrs_map
     keywords: [eas 47, eas 48, eas 49, ifrs 9, ifrs 15, ifrs 16, egypt, mapping, adoption]
+    verified_facts:
+      - {fact: "EAS 47, 48 and 49 issued in 2019; EAS 47 appendix C added 2023", url: *fradec}
+      - {fact: "2019 update added standards based on IFRS 9, 15 and 16", url: *ifrsegypt}
+    unverified_facts: ["Effective dates and postponement decisions for EAS 47/48/49", "Issuing decision number (reported as Minister of Investment Decision 69 of 2019 in secondary sources only)"]
     citations:
-      - {standard: "EAS 47, 48, 49", ref: "Corresponding IFRS 9, 15 and 16 (UNVERIFIED effective dates)", url: *fra}
-      - {standard: "IFRS 9, 15, 16", ref: "Standards pages", url: *ifrs9}
+      - {standard: "EAS 47, 48, 49", ref: "FRA decisions list (2019, 2023)", url: *fradec}
+      - {standard: "IFRS jurisdiction profile: Egypt", ref: "EAS issued 2015, amended 2019 and 2023", url: *ifrsegypt}
     authored: acretia
     confidence: unverified
 
@@ -404,16 +486,21 @@ differences:
     topic: eas_ifrs_mapping
     frameworks: [EAS, IFRS]
     summary: >-
-      Older Egyptian standards line up with IAS: EAS 1 with IAS 1 presentation, EAS 2 with IAS 2 inventories, EAS 4 with IAS 7 cash flows,
-      EAS 10 with IAS 16 PPE, EAS 12 with IAS 23 borrowing costs, EAS 13 with IAS 21 foreign exchange, EAS 22 with IAS 33 earnings per share,
-      EAS 24 with IAS 12 income taxes, EAS 31 with IAS 36 impairment, EAS 38 with IAS 19 employee benefits. Numbers in this list should be checked against the
-      current FRA text before use in a client deliverable.
+      Older Egyptian standards line up with IAS. Confirmed by the titles in the 2024 FRA decree: EAS 1 presentation (IAS 1), EAS 5 accounting
+      policies, estimates and errors (IAS 8), EAS 13 foreign exchange effects (IAS 21), EAS 17 separate financial statements (IAS 27), EAS 23
+      intangible assets (IAS 38), EAS 24 deferred tax (IAS 12), EAS 34 real estate investment (IAS 40). Other pairings, believed but not
+      checked: EAS 2 with IAS 2 inventories, EAS 4 with IAS 7 cash flows, EAS 10 with IAS 16 PPE, EAS 22 with IAS 33 earnings per share,
+      EAS 31 with IAS 36 impairment, EAS 38 with IAS 19 employee benefits.
     analyst_impact: >-
-      Use as a first-pass concept map when reading Egyptian notes; confirm each pairing in the current standards text and flag where Egyptian options differ.
+      Use as a first-pass concept map when reading Egyptian notes; confirm each unchecked pairing in the current standards text and flag where Egyptian options differ.
     adjustment: eas_to_ifrs_map
-    keywords: [eas 1, eas 2, eas 10, eas 12, eas 13, eas 24, eas 31, eas 38, mapping, ias equivalents]
+    keywords: [eas 1, eas 2, eas 5, eas 10, eas 13, eas 17, eas 23, eas 24, eas 31, eas 34, eas 38, mapping, ias equivalents]
+    verified_facts:
+      - {fact: "Titles of EAS 1, 5, 13, 17, 23, 24, 34, 47, 48 as named in Decree 636/2024", url: *fra636}
+    unverified_facts: ["EAS 2, 4, 10, 22, 31, 38 numbering"]
     citations:
-      - {standard: "Egyptian Accounting Standards", ref: "Index (UNVERIFIED numbering)", url: *fra}
+      - {standard: "PM Decree 636 of 2024", ref: "Article 1 and Explanation 2 references", url: *fra636}
+      - {standard: "Egyptian Accounting Standards", ref: "FRA standards index", url: *fradec}
     authored: acretia
     confidence: unverified
 
@@ -421,34 +508,58 @@ differences:
     topic: zakat_tax
     frameworks: [UAE-IFRS, IFRS]
     summary: >-
-      The UAE introduced federal corporate tax at 9 percent on profit above a threshold for financial years starting on or after
-      1 June 2023, so IAS 12 current and deferred tax appear for many UAE groups from 2024 reports. Free zone companies may be taxed at 0 percent on qualifying income.
-      Earlier years show almost no income tax, so effective tax rates are not comparable.
+      The UAE corporate tax charges 9 percent on taxable income above AED 375,000 (nothing below it) from the first financial year
+      starting on or after 1 June 2023, so IAS 12 current and deferred tax appear for UAE groups from their 2024 reports.
+      Qualifying free zone income may be taxed at 0 percent. Earlier years show almost no income tax, so effective tax rates are not
+      comparable across the change.
     analyst_impact: >-
-      Compare after-tax profit on a normalised tax rate; adjust prior years or use pre-tax profit when mixing periods.
+      Compare after-tax profit on a normalised tax rate; use pre-tax profit when mixing periods and expect a one-off deferred tax effect in the transition year.
     adjustment: zakat_as_tax
-    keywords: [uae corporate tax, 9 percent, free zone, deferred tax, effective tax rate, federal decree-law]
+    keywords: [uae corporate tax, 9 percent, aed 375000, free zone, deferred tax, effective tax rate, federal decree-law, 1 june 2023]
+    verified_facts:
+      - {fact: "9 percent above AED 375,000, from first financial year starting on or after 1 June 2023", url: *mofct}
     citations:
-      - {standard: "UAE Corporate Tax Law", ref: "Federal Decree-Law on Corporate Tax (UNVERIFIED number)", url: *uaetax}
+      - {standard: "UAE Ministry of Finance", ref: "Corporate tax rate, threshold (Cabinet Decision 116 of 2022) and effective date", url: *mofct}
       - {standard: "IAS 12", ref: "paras 47-52", url: *ias12}
     authored: acretia
-    confidence: unverified
+    confidence: verified
+
+  - id: diff-uae-dmtt-pillar-two
+    topic: zakat_tax
+    frameworks: [UAE-IFRS, IFRS]
+    summary: >-
+      For multinational groups with consolidated revenue of EUR 750 million or more in at least two of the last four years, the UAE
+      applies a Domestic Minimum Top-up Tax (Cabinet Decision 142 of 2024) for fiscal years starting on or after 1 January 2025. It tops UAE
+      profit up to a 15 percent minimum effective rate, so the 9 percent headline rate is not the final rate for large groups.
+    analyst_impact: >-
+      Model large UAE-based groups at up to 15 percent after tax from 2025 rather than 9 percent, and treat top-up tax as a recurring tax line, not a one-off.
+    adjustment: zakat_as_tax
+    keywords: [dmtt, domestic minimum top-up tax, pillar two, 15 percent, globe, 750 million, uae, cabinet decision 142]
+    verified_facts:
+      - {fact: "15 percent minimum, EUR 750m revenue in two of four years, fiscal years beginning on or after 1 Jan 2025, Cabinet Decision 142 of 2024", url: *eydmtt}
+    citations:
+      - {standard: "Cabinet Decision 142 of 2024 (UAE DMTT)", ref: "Scope, rate and effective date", url: *eydmtt}
+    authored: acretia
+    confidence: verified
 
   - id: diff-egypt-income-tax
     topic: zakat_tax
     frameworks: [EAS, IFRS]
     summary: >-
-      Egyptian companies pay corporate income tax at a standard rate (22.5 percent in recent years) under the income tax law, with
-      special regimes for oil and some sectors. Under EAS 24 deferred tax follows the IAS 12 approach. Tax assessments can be open for several years.
+      Egyptian companies pay corporate income tax at a standard 22.5 percent of net taxable profit. Oil exploration companies face
+      about 40.55 percent, and the Suez Canal Authority, the Egyptian Petroleum Authority and the central bank 40 percent. Deferred
+      tax follows the IAS 12 balance-sheet approach under the Egyptian deferred tax standard. Tax assessments can stay open for several years.
     analyst_impact: >-
-      Check the tax rate reconciliation and open assessments; treat disputed tax as debt-like.
+      Check the tax rate reconciliation and open assessments; treat disputed tax as debt-like, and normalise the rate for sector regimes.
     adjustment: zakat_as_tax
-    keywords: [egypt tax, corporate income tax, 22.5, eas 24, deferred tax, tax authority]
+    keywords: [egypt tax, corporate income tax, 22.5, eas 24, deferred tax, tax authority, oil 40.55]
+    verified_facts:
+      - {fact: "Standard rate 22.5 percent; oil exploration 40.55 percent; SCA, EGPC and CBE 40 percent", url: *pwceg}
     citations:
-      - {standard: "Egyptian Income Tax Law", ref: "Corporate tax rate and regimes (UNVERIFIED article)", url: *egytax}
+      - {standard: "PwC Tax Summaries Egypt", ref: "Taxes on corporate income", url: *pwceg}
       - {standard: "IAS 12", ref: "paras 79-88", url: *ias12}
     authored: acretia
-    confidence: unverified
+    confidence: verified
 
   - id: diff-ind-as-carveouts
     topic: presentation
@@ -471,15 +582,17 @@ differences:
     topic: presentation
     frameworks: [FRS102, IFRS]
     summary: >-
-      FRS 102 permits policy choices that IFRS removes: expensing development, expensing borrowing costs, a cost
-      option for investment property in some cases, and goodwill amortisation over a limited life. Until 2026 leases of lessees stayed
-      off balance sheet if operating. After the 2024 amendments, revenue and leases follow an IFRS-like approach.
+      FRS 102 permits policy choices that IFRS removes: expensing or capitalising development, expensing or capitalising borrowing costs,
+      and amortising goodwill over its useful life (a maximum of ten years when the life cannot be estimated reliably) where IFRS tests goodwill
+      for impairment each year and never amortises it. Until 2026 operating leases of lessees stayed off balance sheet. After the 2024
+      amendments (periods from 1 January 2026), revenue and leases follow an IFRS 15 and IFRS 16 like approach.
     analyst_impact: >-
-      Compare UK private company accounts with IFRS peers after adding back goodwill amortisation and pre-2026 lease commitments.
+      Compare UK private company accounts with IFRS peers after adding back goodwill amortisation and pre-2026 lease commitments, and decide a common development and borrowing cost policy.
     adjustment: capitalise_operating_leases
-    keywords: [frs 102, uk gaap, goodwill amortisation, operating lease commitments, small company, companies act]
+    keywords: [frs 102, uk gaap, goodwill amortisation, ten years, operating lease commitments, small company, companies act]
     citations:
-      - {standard: "FRS 102", ref: "Sections 18, 19, 20, 23", url: *frs102}
+      - {standard: "FRS 102", ref: "Sections 18, 19 (goodwill amortisation), 20, 23", url: *frs102}
+      - {standard: "IAS 36", ref: "para 90 (annual goodwill test)", url: *ias36}
     authored: acretia
     confidence: verified
 
@@ -499,3 +612,72 @@ differences:
       - {standard: "ASC 326", ref: "326-20", url: *asc}
     authored: acretia
     confidence: verified
+
+  - id: diff-leases-indas116
+    topic: leases
+    frameworks: [IndAS, IFRS]
+    summary: >-
+      Ind AS 116 is close to IFRS 16: lessees put nearly all leases on the balance sheet, depreciate the right-of-use asset and
+      accrue interest on the lease liability, and it applies to annual periods beginning on or after 1 April 2019. Carve-outs and
+      differences are small. Ind AS 116 does not allow the fair value model for a right-of-use asset that meets the
+      investment property definition, and it always classes the interest part of lease payments in financing cash flows. The
+      old Ind AS 17 exemption from straight-lining lessor income for inflation-linked rent was dropped, matching IFRS 16.
+    analyst_impact: >-
+      Treat Indian EBITDA as post-16, as for IFRS; convert to pre-16 by deducting lease payments, and remember lease interest is outside operating cash flow.
+      Fiscal years end 31 March, so calendarise before comparing with December reporters.
+    adjustment: ifrs16_to_pre16_ebitda
+    keywords: [ind as 116, india, lease, right-of-use, 1 april 2019, financing cash flow, lessor, straight line]
+    verified_facts:
+      - {fact: "Effective 1 April 2019; no fair value model for investment-property ROU; lease interest always financing; inflation exemption for lessors removed", url: *kpmgindas116}
+    citations:
+      - {standard: "Ind AS 116", ref: "Effective date and differences from IFRS 16", url: *kpmgindas116}
+      - {standard: "IFRS 16", ref: "paras 22-38, 47-60", url: *ifrs16}
+    authored: acretia
+    confidence: verified
+
+  - id: diff-indas-applicability
+    topic: presentation
+    frameworks: [IndAS, IFRS]
+    summary: >-
+      Ind AS is mandatory in phases under the Companies (Indian Accounting Standards) Rules. From the year starting 1 April 2016, listed
+      companies and unlisted companies with net worth of INR 500 crore or more must apply it, together with their parents, subsidiaries, associates and
+      joint ventures. From 1 April 2017 it extends to all listed companies and unlisted companies with net worth of INR 250 crore up to 500
+      crore. Companies on SME exchanges and those under INR 250 crore stay on the older Accounting Standards. Net worth is
+      measured on standalone statements, and once Ind AS applies it continues even if net worth falls. Banks, insurers and NBFCs follow later dates.
+    analyst_impact: >-
+      Check which accounting regime an Indian company uses before comparing: pre-2016 or smaller companies are not on Ind AS, so
+      leases, financial instruments and business combinations differ from IFRS peers.
+    adjustment: eas_to_ifrs_map
+    keywords: [ind as applicability, net worth, 250 crore, 500 crore, listed companies, phase, rule 4, sme exchange, nbfc, india]
+    verified_facts:
+      - {fact: "Phase thresholds INR 500 crore (FY2016-17) and 250 crore (FY2017-18), SME exemption, standalone net worth", url: *taxguruindas}
+    citations:
+      - {standard: "Companies (Indian Accounting Standards) Rules 2015", ref: "Rule 4 (roadmap), as summarised", url: *taxguruindas}
+      - {standard: "Ind AS", ref: "MCA accounting standards page", url: *indas}
+    authored: acretia
+    confidence: verified
+
+  - id: diff-eas17-separate-fs
+    topic: associates_jvs
+    frameworks: [EAS, IFRS]
+    summary: >-
+      In separate financial statements IAS 27 lets a parent carry subsidiaries, associates and joint ventures at cost, at fair value under
+      IFRS 9, or using the equity method. The IFRS Foundation profile for Egypt (January 2024) says the equity method was not an
+      alternative under EAS in separate statements. Prime Ministerial Decree 636 of 2024 replaced EAS 17 (separate financial
+      statements); secondary summaries say the new text adds the equity method as an option, which has not been confirmed.
+      Egyptian holding companies therefore often show investments at cost in the separate set and only the consolidated set carries equity-accounted results.
+    analyst_impact: >-
+      Use consolidated statements for valuation; in the separate set, investment income is dividends, not share of profit. Check which
+      method was used before comparing parent-only profit or equity across years or with IFRS peers.
+    adjustment: associates_share_strip
+    keywords: [eas 17, separate financial statements, ias 27, cost method, equity method, subsidiaries, associates, holding company, egypt]
+    verified_facts:
+      - {fact: "Equity method not an alternative in separate FS under EAS (profile, Jan 2024)", url: *ifrsegypt}
+      - {fact: "Decree 636/2024 substituted EAS 17", url: *fra636}
+    unverified_facts: ["Whether the 2024 EAS 17 adds an equity-method option", "Effective date of the 2024 EAS 17"]
+    citations:
+      - {standard: "EAS 17 Separate financial statements", ref: "Substituted by PM Decree 636 of 2024", url: *fra636}
+      - {standard: "IFRS jurisdiction profile: Egypt", ref: "Separate financial statements and the equity method", url: *ifrsegypt}
+      - {standard: "IAS 27", ref: "para 10 (cost, IFRS 9 or equity method)", url: "https://www.ifrs.org/issued-standards/list-of-standards/ias-27-separate-financial-statements/"}
+    authored: acretia
+    confidence: unverified
