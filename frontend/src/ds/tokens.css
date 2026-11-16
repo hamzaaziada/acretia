@@ -1,0 +1,155 @@
+/* Acretia design tokens. Colour values mirror tokens.ts (checked by scripts/check-tokens.mjs). */
+:root {
+  --acr-bg: #F3F5F8;
+  --acr-surface: #FFFFFF;
+  --acr-surface-2: #ECF0F5;
+  --acr-surface-hover: #E4E9F0;
+  --acr-border: #D5DCE5;
+  --acr-border-strong: #B7C2D0;
+  --acr-text: #0E1A29;
+  --acr-text-2: #42536A;
+  --acr-text-3: #586A82;
+  --acr-accent: #0B6B63;
+  --acr-accent-hover: #085650;
+  --acr-accent-contrast: #FFFFFF;
+  --acr-accent-subtle: #E1F2F0;
+  --acr-accent-text: #0B6B63;
+  --acr-positive: #14632F;
+  --acr-positive-bg: #E4F4EA;
+  --acr-warning: #8A3D07;
+  --acr-warning-bg: #FDF0DC;
+  --acr-negative: #B01E1E;
+  --acr-negative-bg: #FCE9E9;
+  --acr-info: #1F4FA8;
+  --acr-info-bg: #E6EEFB;
+  --acr-chrome: #0B1F33;
+  --acr-chrome-text: #C6D2E1;
+  --acr-chrome-text-muted: #93A5BC;
+  --acr-chrome-active: #FFFFFF;
+  --acr-chrome-active-bg: #16314D;
+  --acr-chrome-border: #1C3652;
+  --acr-chrome-accent: #3CC9BA;
+
+  --acr-focus: var(--acr-accent);
+  --acr-overlay: rgba(8, 18, 28, 0.5);
+  --acr-shadow-1: 0 1px 2px rgba(14, 26, 41, 0.06);
+  --acr-shadow-2: 0 4px 16px rgba(14, 26, 41, 0.12), 0 1px 3px rgba(14, 26, 41, 0.08);
+  --acr-shadow-3: 0 12px 40px rgba(14, 26, 41, 0.22), 0 2px 6px rgba(14, 26, 41, 0.1);
+
+  /* spacing: 4px grid */
+  --acr-s-1: 4px;
+  --acr-s-2: 8px;
+  --acr-s-3: 12px;
+  --acr-s-4: 16px;
+  --acr-s-5: 20px;
+  --acr-s-6: 24px;
+  --acr-s-8: 32px;
+  --acr-s-10: 40px;
+  --acr-s-12: 48px;
+
+  --acr-radius-sm: 3px;
+  --acr-radius: 4px;
+  --acr-radius-lg: 6px;
+
+  /* type scale 11/12/13/15/20/28 */
+  --acr-fs-11: 11px;
+  --acr-fs-12: 12px;
+  --acr-fs-13: 13px;
+  --acr-fs-15: 15px;
+  --acr-fs-20: 20px;
+  --acr-fs-28: 28px;
+  --acr-font-sans: 'Inter', 'IBM Plex Sans Arabic', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --acr-font-mono: 'JetBrains Mono', ui-monospace, 'SFMono-Regular', Menlo, Consolas, monospace;
+
+  --acr-row-h: 28px;
+  --acr-control-h: 28px;
+  --acr-control-h-lg: 34px;
+  --acr-sidebar-w: 224px;
+  --acr-topbar-h: 44px;
+  --acr-dir: 1;
+  --acr-ease: cubic-bezier(0.2, 0, 0, 1);
+  color-scheme: light;
+}
+
+/* @dark */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) {
+    --acr-bg: #08121C;
+    --acr-surface: #0E1B2A;
+    --acr-surface-2: #142536;
+    --acr-surface-hover: #1A2E43;
+    --acr-border: #22364A;
+    --acr-border-strong: #35506B;
+    --acr-text: #E8EEF5;
+    --acr-text-2: #AEBCCD;
+    --acr-text-3: #8D9FB4;
+    --acr-accent: #2DC5B5;
+    --acr-accent-hover: #52D6C8;
+    --acr-accent-contrast: #032320;
+    --acr-accent-subtle: #0F2E2D;
+    --acr-accent-text: #4FD8CA;
+    --acr-positive: #4CD48A;
+    --acr-positive-bg: #10301F;
+    --acr-warning: #F2B347;
+    --acr-warning-bg: #35260C;
+    --acr-negative: #FF8A8A;
+    --acr-negative-bg: #3A1618;
+    --acr-info: #8FB4F5;
+    --acr-info-bg: #14264A;
+    --acr-chrome: #060E17;
+    --acr-chrome-text: #B3C2D4;
+    --acr-chrome-text-muted: #8496AD;
+    --acr-chrome-active: #FFFFFF;
+    --acr-chrome-active-bg: #13293E;
+    --acr-chrome-border: #16293C;
+    --acr-chrome-accent: #3CC9BA;
+    --acr-overlay: rgba(0, 0, 0, 0.62);
+    --acr-shadow-1: 0 1px 2px rgba(0, 0, 0, 0.4);
+    --acr-shadow-2: 0 4px 16px rgba(0, 0, 0, 0.5), 0 1px 3px rgba(0, 0, 0, 0.4);
+    --acr-shadow-3: 0 12px 40px rgba(0, 0, 0, 0.6), 0 2px 6px rgba(0, 0, 0, 0.4);
+    color-scheme: dark;
+  }
+}
+
+/* @dark */
+:root[data-theme='dark'] {
+  --acr-bg: #08121C;
+  --acr-surface: #0E1B2A;
+  --acr-surface-2: #142536;
+  --acr-surface-hover: #1A2E43;
+  --acr-border: #22364A;
+  --acr-border-strong: #35506B;
+  --acr-text: #E8EEF5;
+  --acr-text-2: #AEBCCD;
+  --acr-text-3: #8D9FB4;
+  --acr-accent: #2DC5B5;
+  --acr-accent-hover: #52D6C8;
+  --acr-accent-contrast: #032320;
+  --acr-accent-subtle: #0F2E2D;
+  --acr-accent-text: #4FD8CA;
+  --acr-positive: #4CD48A;
+  --acr-positive-bg: #10301F;
+  --acr-warning: #F2B347;
+  --acr-warning-bg: #35260C;
+  --acr-negative: #FF8A8A;
+  --acr-negative-bg: #3A1618;
+  --acr-info: #8FB4F5;
+  --acr-info-bg: #14264A;
+  --acr-chrome: #060E17;
+  --acr-chrome-text: #B3C2D4;
+  --acr-chrome-text-muted: #8496AD;
+  --acr-chrome-active: #FFFFFF;
+  --acr-chrome-active-bg: #13293E;
+  --acr-chrome-border: #16293C;
+  --acr-chrome-accent: #3CC9BA;
+  --acr-overlay: rgba(0, 0, 0, 0.62);
+  --acr-shadow-1: 0 1px 2px rgba(0, 0, 0, 0.4);
+  --acr-shadow-2: 0 4px 16px rgba(0, 0, 0, 0.5), 0 1px 3px rgba(0, 0, 0, 0.4);
+  --acr-shadow-3: 0 12px 40px rgba(0, 0, 0, 0.6), 0 2px 6px rgba(0, 0, 0, 0.4);
+  color-scheme: dark;
+}
+
+[dir='rtl'] {
+  --acr-dir: -1;
+  --acr-font-sans: 'IBM Plex Sans Arabic', 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
+}
