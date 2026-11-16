@@ -91,6 +91,7 @@ Full IFRS, unmodified. GCC states differ on local tax and labour law, not on the
 - `diff-uae-corporate-tax` (zakat_tax): recipe `zakat_as_tax`
 - `diff-uae-dmtt-pillar-two` (zakat_tax): recipe `zakat_as_tax`
 - `diff-uae-ifrs-requirement` (framework_adoption): recipe `eas_to_ifrs_map`
+- `diff-uae-ct-year-ends` (zakat_tax): recipe `zakat_as_tax`
 
 **Verified facts**
 - 9 percent above AED 375,000, from 1 June 2023 financial years: <https://mof.gov.ae/en/news/ministry-of-finance-confirms-applicable-taxable-income-threshold-for-corporate-tax-abu-dhabi-uae/>

@@ -248,6 +248,32 @@ def ocr_pdf(path, pages=None, dpi=300, langs="ara+eng", psm=6):
 
 
 # -------------------------------------------------- numeric cell re-OCR
+def _reread(png_bytes, bbox_norm, langs, whitelist, psm=7, pad=0.004, scale=3):
+    """Crop one cell and read it with tesseract (whitelist, psm). Returns (text, conf 0..1)."""
+    from PIL import Image, ImageOps
+    im = Image.open(io.BytesIO(png_bytes)).convert("L")
+    w, h = im.size
+    x0, y0, x1, y1 = bbox_norm
+    box = (max(0, int((x0 - pad) * w)), max(0, int((y0 - pad / 2) * h)),
+           min(w, int((x1 + pad) * w) + 1), min(h, int((y1 + pad / 2) * h) + 1))
+    crop = im.crop(box)
+    crop = crop.resize((crop.size[0] * scale, crop.size[1] * scale), Image.LANCZOS)
+    crop = ImageOps.expand(ImageOps.autocontrast(crop, cutoff=1), border=24, fill=255)
+    extra = ["-c", "tessedit_char_whitelist=" + whitelist] if whitelist else []
+    rows = _tesseract_tsv(crop, langs, psm, extra=extra)
+    parts = []
+    for row in rows[1:]:
+        c = row.split("\t")
+        if len(c) >= 12 and c[0] == "5" and _clean(c[11]):
+            try:
+                parts.append((_clean(c[11]), float(c[10]) / 100.0))
+            except ValueError:
+                pass
+    if not parts:
+        return "", 0.0
+    return "".join(p[0] for p in parts), min(1.0, max(0.0, min(p[1] for p in parts)))
+
+
 def reocr_number(png_bytes, bbox_norm, text, conf, langs="ara+eng", pad=0.004, scale=3):
     """Re-read one numeric cell with a digits whitelist (psm 7).
 

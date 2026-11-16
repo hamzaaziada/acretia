@@ -16,6 +16,25 @@ from pathlib import Path
 import yaml
 
 HERE = Path(__file__).parent
+FIELDS = ("scope", "recognition", "measurement_initial", "measurement_subsequent", "presentation", "key_disclosures",
+          "key_judgements", "recent_amendments", "analyst_effect")
+FIELD_LABELS = {"scope": "Scope", "recognition": "Recognition", "measurement_initial": "Initial measurement",
+                "measurement_subsequent": "Subsequent measurement", "presentation": "Presentation",
+                "key_disclosures": "Key disclosures", "key_judgements": "Key judgements",
+                "recent_amendments": "Recent amendments", "analyst_effect": "Analyst effect"}
+# question intent -> fields the answer should pull from a standard-level entry
+INTENTS = [
+    (r"\bscope\b|apply to|applies to|covered by|within the scope|excluded", ("scope",)),
+    (r"recogni[sz]|derecogni|when (is|are|should|does|do)\b|criteria|capitali[sz]|qualif|condition", ("recognition",)),
+    (r"measur|valu(e|ation)|fair value|carrying|cost model|initial|subsequent|discount|depreciat|amorti[sz]|remeasur|impair",
+     ("measurement_initial", "measurement_subsequent")),
+    (r"present|show|statement|line item|classif|offset|face of", ("presentation",)),
+    (r"disclos|\bnote\b|report", ("key_disclosures",)),
+    (r"judg|estimate|assumption|constraint|indicator|pitfall|trap|ceiling|threshold|burn", ("key_judgements",)),
+    (r"amend|recent|latest|202\d|2019|effective", ("recent_amendments",)),
+    (r"ebitda|net debt|\beps\b|cash flow|analyst|adjust|compar|leverage|normali[sz]|impact|effect", ("analyst_effect",)),
+]
+IFRS_BASE = "https://www.ifrs.org/issued-standards/list-of-standards/"
 RECIPE_IDS = (
     "ifrs16_to_pre16_ebitda", "lease_adjusted_net_debt", "capitalise_operating_leases", "zakat_as_tax", "by_nature_ebit",
     "ias29_restate", "fx_translate_period_end_average", "devaluation_fx_loss_normalise", "eosb_as_debt_like",
@@ -112,10 +131,11 @@ class Answer:
 
 
 class KB:
-    def __init__(self, frameworks: dict, differences: list, standards: list):
+    def __init__(self, frameworks: dict, differences: list, standards: list, eas: list | None = None):
         self.frameworks = frameworks
         self.differences = differences
         self.standards = standards
+        self.eas = eas or []
         self._entries = self._build_entries()
         self._index()
 
@@ -130,6 +150,15 @@ class KB:
             out.append({**d, "kind": "difference"})
         for s in self.standards:
             out.append({**s, "kind": "standard", "topic": s.get("title", s["standard"]), "frameworks": ["IFRS"]})
+        for r in self.eas:
+            src = r.get("source") or "https://fra.gov.eg/en/?p=13760728"
+            out.append({"id": r["id"], "kind": "eas", "standard": f"EAS {r['number']}", "topic": f"EAS {r['number']} {r['title']}",
+                        "frameworks": ["EAS"], "adjustment": "eas_to_ifrs_map",
+                        "summary": f"EAS {r['number']} ({r['title']}) is the Egyptian counterpart of {r['ifrs']}. {r['differs']}",
+                        "analyst_impact": "Map the line items to the IFRS counterpart and flag where Egyptian options differ.",
+                        "citations": [{"standard": f"EAS {r['number']}", "ref": f"{r['title']}; counterpart {r['ifrs']}", "url": src}],
+                        "authored": "acretia", "confidence": "verified" if r.get("verified") else "unverified",
+                        "keywords": [f"eas {r['number']}", r["ifrs"], r["title"], "egypt", "egyptian accounting standard"]})
         for fid, f in self.frameworks.items():
             pres = f.get("presentation", {})
             text = " ".join([f["summary"], f.get("relationship_to_ifrs", ""), str(pres.get("pnl_layout", "")),
@@ -161,7 +190,8 @@ class KB:
         for e in self._entries:
             head = " ".join([e["id"], e.get("topic", ""), " ".join(map(str, e.get("keywords", []))), e.get("standard", ""),
                              " ".join(c["standard"] for c in e["citations"])])
-            body = " ".join([e["summary"], e.get("analyst_impact", ""), " ".join(e.get("disclosures", []) or [])])
+            body = " ".join([e["summary"], e.get("analyst_impact", ""), " ".join(e.get("disclosures", []) or [])]
+                            + [str(e.get(f, "")) for f in FIELDS])
             t_head, t_body = set(tokens(head)), set(tokens(body))
             self._tok.append((t_head, t_body))
             self._con.append((concepts(head), concepts(body)))
@@ -196,6 +226,14 @@ class KB:
             s *= 0.6
         return s
 
+    @staticmethod
+    def _mentions(e: dict, std: dict) -> bool:
+        """Does entry e talk about the named standard (by name in its text, keywords or citations)?"""
+        name = normalise(std["standard"])
+        hay = normalise(" ".join([e["summary"], " ".join(map(str, e.get("keywords", []))), e.get("topic", ""),
+                                  " ".join(c["standard"] for c in e["citations"])]))
+        return f" {name} " in f" {hay} "
+
     def answer(self, question: str, k: int = 3) -> Answer:
         """Compose from the best standard-level entry (always, when the question names or strongly matches a standard),
         then the best difference/framework entries (up to k), full summaries, plus verified facts that match the query."""
@@ -213,18 +251,22 @@ class KB:
         for s, i in top:
             if self._entries[i]["kind"] != "standard":
                 continue
-            if i in named or s >= 0.5 * best:
+            if i in named or s >= 0.7 * best:
                 std_idx = i
                 break
         std_candidates = [i for s, i in top if i in named]
         if std_candidates:
             std_idx = std_candidates[0]
         picked_idx = [std_idx] if std_idx is not None else []
+        named_eas = [i for s_, i in top if self._entries[i]["kind"] == "eas" and f" {normalise(self._entries[i]['standard'])} " in qn]
+        picked_idx += named_eas[:1]
         best_other = next((s for s, i in top if self._entries[i]["kind"] != "standard"), best)
         for s, i in top:
-            if len(picked_idx) >= k + (1 if std_idx is not None else 0):
+            if len(picked_idx) >= k + (1 if std_idx is not None else 0) + len(named_eas[:1]):
                 break
             if i in picked_idx or self._entries[i]["kind"] == "standard":
+                continue
+            if named and std_idx in named and not self._mentions(self._entries[i], self._entries[std_idx]):
                 continue
             if s >= 0.6 * best_other:
                 picked_idx.append(i)
@@ -232,12 +274,23 @@ class KB:
             picked_idx = [top[0][1]]
         picked = [self._entries[i] for i in picked_idx]
         qset = set(q_tok)
+        fields = []
+        for pat, fs in INTENTS:
+            if re.search(pat, normalise(question)):
+                fields += [f for f in fs if f not in fields]
+        if not fields and named:
+            fields = ["recognition", "measurement_initial", "measurement_subsequent"]
+        fields = [f for f in FIELDS if f in fields]
         parts, cits, seen = [], [], set()
         for e in picked:
             label = e["topic"].replace("_", " ") if e["kind"] != "standard" else f"{e['standard']} ({e['topic']})"
             part = f"{label} [{', '.join(e['frameworks'])}]: {_fold(e['summary'])}"
             if e.get("analyst_impact"):
                 part += f" Analyst impact: {_fold(e['analyst_impact'])}"
+            if e["kind"] == "standard":
+                for f in fields:
+                    if e.get(f) and not str(e[f]).startswith("Not applicable"):
+                        part += f" {FIELD_LABELS[f]}: {_fold(e[f])}"
             if e.get("adjustment"):
                 part += f" Adjustment recipe: {e['adjustment']}."
             kw = " ".join(map(str, e.get("keywords", [])))
@@ -292,6 +345,33 @@ def _topic_match(tn: str, tc: set, e: dict) -> bool:
 _CACHE: KB | None = None
 
 
+def _merge_detail(standards: list, detail: list) -> list:
+    by = {st["id"]: st for st in standards}
+    out = list(standards)
+    for r in detail:
+        e = by.get(r["id"])
+        if e is None:
+            e = {"id": r["id"], "standard": r["standard"], "title": r["title"], "authored": "acretia", "keywords": []}
+            e["citations"] = [{"standard": r["standard"], "ref": r["ref"], "url": f"{IFRS_BASE}{r['slug']}/"}]
+            e["summary"] = f"{r['scope']} {r['recognition']}"
+            e["disclosures"] = [r["key_disclosures"]]
+            out.append(e)
+        for f in FIELDS:
+            e[f] = r[f]
+        if not e.get("analyst_impact"):
+            e["analyst_impact"] = r["analyst_effect"]
+        if r.get("adjustment"):
+            e.setdefault("adjustment", r["adjustment"])
+        e["keywords"] = list(e.get("keywords", [])) + list(r.get("keywords", []))
+        # D-S8-05: standard-level fields are reference-based (cited paragraphs), not page-read
+        e["basis"] = "standard-reference"
+        e["confidence"] = "unverified"
+    return out
+
+
+_CACHE: KB | None = None
+
+
 def load(force: bool = False) -> KB:
     global _CACHE
     if _CACHE is not None and not force:
@@ -299,8 +379,9 @@ def load(force: bool = False) -> KB:
     def rd(name, key):
         return yaml.safe_load((HERE / name).read_text(encoding="utf-8"))[key]
     fw = {f["id"]: f for f in rd("frameworks.yaml", "frameworks")}
-    _CACHE = KB(fw, rd("differences.yaml", "differences"), rd("ifrs_standards.yaml", "standards"))
+    std = _merge_detail(rd("ifrs_standards.yaml", "standards"), rd("standards_detail.yaml", "detail"))
+    _CACHE = KB(fw, rd("differences.yaml", "differences"), std, rd("eas_standards.yaml", "eas"))
     return _CACHE
 
 
-__all__ = ["load", "KB", "Answer", "RECIPE_IDS", "normalise", "tokens", "concepts"]
+__all__ = ["load", "KB", "Answer", "RECIPE_IDS", "FIELDS", "normalise", "tokens", "concepts"]
