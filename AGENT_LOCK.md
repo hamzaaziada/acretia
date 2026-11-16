@@ -6,7 +6,6 @@ One row per active claim. Claim a packet before you touch its files, commit the 
 |---|---|---|---|---|
 | S1.2 deck teardowns | worker | claude/dreamy-ramanujan-k8p2xt | 2026-11-16 | docs/teardowns/deck-*.md, docs/teardowns/briefs/* |
 | S1.3 excel/grid/research teardowns | worker | claude/dreamy-ramanujan-k8p2xt | 2026-11-16 | docs/teardowns/excel-*.md, docs/teardowns/grid-*.md, docs/teardowns/research-*.md |
-| S2.1 adapter | worker | claude/dreamy-ramanujan-k8p2xt | 2026-11-16 | src/harness/adapter.py, src/harness/ledger.py, om/llm.py, tests/test_adapter.py, tests/fixtures/adapter/* |
 | S2.4 MCP | worker | claude/dreamy-ramanujan-k8p2xt | 2026-11-16 | src/harness/mcp/*, tests/test_mcp.py |
 | S2.5 connectors | worker | claude/dreamy-ramanujan-k8p2xt | 2026-11-16 | src/harness/connectors/*, tests/test_connectors_harness.py, tests/fixtures/connectors/* |
 | S5.1 parser (session D) | worker | main | 2026-11-16 | om/docparse.py, om/parse_services.py, tests/test_docparse.py, tests/fixtures/docparse/*, docs/s5/parser-*.md |
@@ -42,3 +41,4 @@ One row per active claim. Claim a packet before you touch its files, commit the 
 - 2026-11-16: S2.2, S2.3 done (pending S2 gate); rows released.
 - 2026-11-16: Session D claimed S5.1–S5.4 and the S5 gate.
 - 2026-11-16: session B claimed S3 wave 1 (core, fit/RTL, spec/ghost, validator, visuals) and the S3 gate.
+- 2026-11-16: S2.1 adapter landed on main (e988e01); row released.
