@@ -10,12 +10,11 @@ One row per active claim. Claim a packet before you touch its files, commit the 
 | S5 gate (session D) | gate-writer worker | main | 2026-11-17 | scripts/verify_s5.py |
 | S5 docs (session D) | Boss | main | 2026-11-16 | docs/s5/* |
 | S1 gate | Boss | claude/dreamy-ramanujan-k8p2xt | 2026-11-16 | scripts/verify_s1.py |
-| S3.3a archetypes: text/structure + registry examples | session B worker | claude/upbeat-mccarthy-viqjuo | 2026-11-16 | om/deck/archetypes/__init__.py, om/deck/archetypes/core.py, om/deck/archetypes/text.py, tests/test_deck_arch_text.py |
-| S3.3b archetypes: charts + renderer chart polish | session B worker | claude/upbeat-mccarthy-viqjuo | 2026-11-16 | om/deck/archetypes/charts.py, om/deck/render.py, tests/test_deck_arch_charts.py, tests/test_deck_render.py |
-| S3.3c archetypes: tables/frameworks | session B worker | claude/upbeat-mccarthy-viqjuo | 2026-11-16 | om/deck/archetypes/frameworks.py, tests/test_deck_arch_frameworks.py |
-| S3.int engine entry + adapter switch + provenance/telemetry | session B worker | claude/upbeat-mccarthy-viqjuo | 2026-11-16 | om/deck/engine.py, om/deck/provenance.py, om/deck/ghost.py, om/deck/visuals/generate.py, om/deck/visuals/probe.py, om/deck/visuals/score.py, tests/test_deck_engine.py, tests/test_deck_ghost.py, tests/test_deck_visuals.py, open_multiples.py (deck subcommand only) |
-| S3.fix-env deck deps + font discovery + clean skips | session B worker | claude/upbeat-mccarthy-viqjuo | 2026-11-16 | requirements.txt (deck lines only), om/deck/metrics.py, tests/test_deck_fit.py, tests/test_deck_rtl.py, tests/test_deck_spec.py, tests/test_validate_pptx.py, tests/test_deck_critic.py, tests/test_deck_clone.py, tests/test_deck_sync.py |
-| S3 gate + docs | session B Boss | claude/upbeat-mccarthy-viqjuo | 2026-11-16 | scripts/verify_s3.py, docs/deck-engine.md, PROGRESS.md (S3 row only) |
+| FP-S3-a renderer native shapes/connectors + chart plot layout | session B worker | claude/upbeat-mccarthy-viqjuo | 2026-11-16 | om/deck/render.py, om/deck/model.py, tests/test_deck_render.py |
+| FP-S3-b archetype keys, sourced examples, derived provenance, citation markers, positive token | session B worker | claude/upbeat-mccarthy-viqjuo | 2026-11-16 | om/deck/archetypes/*.py, om/deck/provenance.py, om/deck/theme.py, tests/test_deck_arch_*.py, tests/test_deck_engine.py |
+| S3.12 revisions: per-slide edit, annotations, versions, rollback | session B worker | claude/upbeat-mccarthy-viqjuo | 2026-11-16 | om/deck/revise.py, om/deck/versions.py, tests/test_deck_revise.py |
+| S3 gate script (independent writer) | session B gate worker | claude/upbeat-mccarthy-viqjuo | 2026-11-16 | scripts/verify_s3.py |
+| S3 gate + docs | session B Boss | claude/upbeat-mccarthy-viqjuo | 2026-11-16 | docs/s3/*, docs/deck-engine.md, PROGRESS.md (S3 row only) |
 | S8.1 standards KB (session E) | worker | main | 2026-11-16 | om/intl/standards/**, docs/s8/standards/**, scripts/gen_standards_docs.py, tests/test_intl_standards.py |
 | S8.2 concepts + bilingual labels (session E) | worker | main | 2026-11-16 | om/intl/concepts.py, om/intl/labels.py, om/intl/data/labels/**, tests/test_intl_concepts.py, tests/test_intl_labels.py |
 | S8.3a numbers + OCR service + synthetic fixtures (session E) | worker | main | 2026-11-16 | om/intl/numparse.py, om/intl/ocr.py, scripts/make_intl_fixtures.py, tests/fixtures/intl/**, tests/test_intl_numparse.py, tests/test_intl_ocr.py, license-and-repo-ledger.csv (S8 rows only) |
@@ -74,3 +73,4 @@ One row per active claim. Claim a packet before you touch its files, commit the 
 - 2026-11-17: S5.1, S5.2, S5.3 verified on main and released. Claimed S5.fix1, S5.5a; S5.4a resumed; S5 gate writer dispatched (session D).
 - 2026-11-16: session A: S1.3, FP-R4, S2 connector gate done; S1-fin claimed.
 - 2026-11-16: session A: S7.5a CI on main (a6c1b2b); S1 grader findings → FP-S1a/b/c claimed.
+- 2026-11-16: session B: S3.3a/b/c, S3.int, S3.fix-env merged and released; wave 3 claimed (FP-S3-a, FP-S3-b, S3.12, S3 gate script).

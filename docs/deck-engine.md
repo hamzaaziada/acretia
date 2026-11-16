@@ -169,3 +169,16 @@ appends to `data/deck_styles/scores.jsonl` and `library.weights()` prefers winne
 type_sizes|banned_phrase|punctuation|xml|house_title_rule|house_footer|house_eyebrow|theme_font|
 theme_color|whitespace|slop|variety|...", "slide": int, "shape_id": int|None, "shape_name": str|None,
 "message": str}`. `scripts/validate_pptx.py deck.pptx [--json]` exits 1 on any critical finding.
+
+## Additions (wave 3)
+
+- Element kinds `shape` (`shape={"prst": "chevron|homePlate|diamond|ellipse|triangle|downTriangle|rect"}`,
+  fill/line tokens, optional text) and `connector` (`connector={"type": "elbow|straight", "start": [x, y],
+  "end": [x, y], "arrow": bool}`) render as native PowerPoint autoshapes/connectors (FP-S3-a).
+- Reserved spec keys apply to archetype blocks too: data coordinates use `xv`/`yv`, option columns use
+  `a`/`b` (D-S3-10).
+- Provenance: archetype-computed figures (medians, totals, CAGR, implied values) are declared by the
+  archetype in `SolvedSlide.meta["derived"] = [{"value": float, "from": [paths]}]` and count as sourced;
+  prose numbers must appear in a sourced data block of the same slide or any slide of the deck (D-S3-11).
+- Citations (#19): a slide's `sources` list (or single `source`) renders as `Source: [1] ...; [2] ...`
+  in the note line; text/cells may carry `[n]` markers that must resolve to that list.
