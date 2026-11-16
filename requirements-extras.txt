@@ -1,1 +1,3 @@
 pdfplumber>=0.11  # om/pdfdoc.py optional backend (words, font sizes, rulings)
+duckdb>=1.1  # om/grid.py Matrix store (S5.2); sqlite3 fallback when missing
+docling>=2.100  # om/docparse.py default parser (S5.1); om.pdfdoc fallback when missing (pulls torch CPU + HF weights)
