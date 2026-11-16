@@ -235,8 +235,11 @@ class KB:
         return f" {name} " in f" {hay} "
 
     def answer(self, question: str, k: int = 3) -> Answer:
-        """Compose from the best standard-level entry (always, when the question names or strongly matches a standard),
-        then the best difference/framework entries (up to k), full summaries, plus verified facts that match the query."""
+        """Deterministic composition:
+        1. the best-matching standard entry, with all nine structured fields (intent only orders them, targeted first);
+        2. a second standard entry in full when it scores at least 0.7 of the best standard;
+        3. up to k difference/framework/EAS entries that mention one of those standards (else the best-scoring ones);
+        4. verified facts matching the query. No truncation: every field is emitted whole."""
         q_tok = tokens(question)
         q_con = concepts(question)
         q_fw = _question_frameworks(question)
@@ -247,40 +250,47 @@ class KB:
         best = top[0][0]
         qn = " " + normalise(question) + " "
         named = {i for i, e in enumerate(self._entries) if e["kind"] == "standard" and f" {normalise(e['standard'])} " in qn}
-        std_idx = None
-        for s, i in top:
-            if self._entries[i]["kind"] != "standard":
-                continue
-            if i in named or s >= 0.7 * best:
-                std_idx = i
-                break
-        std_candidates = [i for s, i in top if i in named]
-        if std_candidates:
-            std_idx = std_candidates[0]
-        picked_idx = [std_idx] if std_idx is not None else []
+        score_of = {i: s for s, i in top}
+        std_ranked = [i for s, i in top if self._entries[i]["kind"] == "standard"]
+        std_list = []
+        named_ranked = [i for i in std_ranked if i in named]
+        if named_ranked:
+            std_list = named_ranked[:2]
+        elif std_ranked and score_of[std_ranked[0]] >= 0.7 * best:
+            std_list = [std_ranked[0]]
+        if std_list:
+            lead = score_of[std_list[0]]
+            for i in std_ranked:
+                if len(std_list) >= 2:
+                    break
+                if i not in std_list and score_of[i] >= 0.7 * lead:
+                    std_list.append(i)
         named_eas = [i for s_, i in top if self._entries[i]["kind"] == "eas" and f" {normalise(self._entries[i]['standard'])} " in qn]
-        picked_idx += named_eas[:1]
-        best_other = next((s for s, i in top if self._entries[i]["kind"] != "standard"), best)
-        for s, i in top:
-            if len(picked_idx) >= k + (1 if std_idx is not None else 0) + len(named_eas[:1]):
+        others = [(s, i) for s, i in top if self._entries[i]["kind"] != "standard" and i not in named_eas[:1]]
+        best_other = others[0][0] if others else best
+        want = k + len(named_eas[:1])
+        linked = [i for s, i in others if std_list and any(self._mentions(self._entries[i], self._entries[j]) for j in std_list)
+                  and s >= 0.3 * best_other]
+        picked_other = list(named_eas[:1])
+        for i in linked:
+            if len(picked_other) >= want:
                 break
-            if i in picked_idx or self._entries[i]["kind"] == "standard":
-                continue
-            if named and std_idx in named and not self._mentions(self._entries[i], self._entries[std_idx]):
-                continue
-            if s >= 0.6 * best_other:
-                picked_idx.append(i)
+            picked_other.append(i)
+        if not linked:  # nothing ties to the standard(s): fall back to the best-scoring neighbours
+            for s, i in others:
+                if len(picked_other) >= want:
+                    break
+                if s >= 0.6 * best_other:
+                    picked_other.append(i)
+        picked_idx = std_list + picked_other
         if not picked_idx:
             picked_idx = [top[0][1]]
         picked = [self._entries[i] for i in picked_idx]
         qset = set(q_tok)
-        fields = []
+        targeted = []
         for pat, fs in INTENTS:
             if re.search(pat, normalise(question)):
-                fields += [f for f in fs if f not in fields]
-        if not fields and named:
-            fields = ["recognition", "measurement_initial", "measurement_subsequent"]
-        fields = [f for f in FIELDS if f in fields]
+                targeted += [f for f in fs if f not in targeted]
         parts, cits, seen = [], [], set()
         for e in picked:
             label = e["topic"].replace("_", " ") if e["kind"] != "standard" else f"{e['standard']} ({e['topic']})"
@@ -289,10 +299,12 @@ class KB:
                 part += f" Analyst impact: {_fold(e['analyst_impact'])}"
             if e["kind"] == "standard":
                 sum_tok = set(tokens(e["summary"]))
-                extra = [f for f in FIELDS if f not in fields and e.get(f)
+                extra = [f for f in FIELDS if f not in targeted and e.get(f)
                          and any(self._idf.get(w, 0) >= 2.0 and w not in sum_tok for w in qset & set(tokens(e[f])))]
-                for f in [x for x in FIELDS if x in fields or x in extra]:
-                    if e.get(f) and not str(e[f]).startswith("Not applicable"):
+                order = [f for f in FIELDS if f in targeted] + [f for f in FIELDS if f in extra]
+                order += [f for f in FIELDS if f not in order]
+                for f in order:
+                    if e.get(f):
                         part += f" {FIELD_LABELS[f]}: {_fold(e[f])}"
             if e.get("adjustment"):
                 part += f" Adjustment recipe: {e['adjustment']}."

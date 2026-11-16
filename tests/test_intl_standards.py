@@ -168,7 +168,7 @@ class StandardsKB(unittest.TestCase):
             a = self.kb.answer(q)
             ids = [e["id"] for e in a.entries]
             self.assertEqual(ids[0], std, (q, ids))
-            self.assertLessEqual(len(ids), 4)
+            self.assertLessEqual(len(ids), 5)
             for w in words:
                 self.assertIn(w.lower(), a.text.lower(), (q, w))
             for e in a.entries:  # full summaries, never truncated
@@ -280,6 +280,41 @@ class StandardsKB(unittest.TestCase):
         by = {d["id"]: d for d in self.kb.differences}
         self.assertEqual(by["diff-zakat-base-components"]["confidence"], "verified")
         self.assertEqual(by["diff-uae-ct-year-ends"]["confidence"], "unverified")
+
+    def test_d_s8_05_confidence(self):
+        for e in list(self.kb.differences) + list(self.kb.frameworks.values()) + list(self.kb.standards):
+            if e["confidence"] == "verified":
+                self.assertTrue(e.get("verified_facts"), e.get("id", e.get("name")))
+            else:
+                self.assertTrue(e.get("basis") == "standard-reference" or e.get("unverified_facts"), e.get("id", e.get("name")))
+
+    def test_answer_all_fields_and_second_standard(self):
+        from om.intl.standards import FIELDS, FIELD_LABELS
+        a = self.kb.answer("How is IFRS 16 lease liability measured initially?")
+        e0 = a.entries[0]
+        self.assertEqual(e0["id"], "std-ifrs16")
+        for f in FIELDS:  # all nine fields present even though the question targets measurement
+            self.assertIn(FIELD_LABELS[f] + ": " + " ".join(e0[f].split()), a.text)
+        # targeted fields come first
+        self.assertLess(a.text.index("Initial measurement:"), a.text.index("Scope:"))
+        # unusual phrasing still gets the content
+        a = self.kb.answer("What trips analysts up with IFRS 15?")
+        self.assertIn("constraint", a.text)
+        # two standards straddled: software as intangible or PPE
+        a = self.kb.answer("Is software an intangible asset under IAS 38 or property, plant and equipment under IAS 16?")
+        ids = [e["id"] for e in a.entries]
+        self.assertEqual(set(ids[:2]), {"std-ias38", "std-ias16"})
+        self.assertIn("cloud computing", a.text)
+        # IFRS vs US GAAP contrast: standard first, then differences that mention it
+        a = self.kb.answer("Is LIFO allowed under IAS 2 and how does US GAAP differ?")
+        ids = [e["id"] for e in a.entries]
+        self.assertEqual(ids[0], "std-ias2")
+        self.assertIn("diff-inventory-lifo", ids)
+        kinds = [e["kind"] for e in a.entries]
+        self.assertEqual(kinds, sorted(kinds, key=lambda k: k != "standard"))  # standards precede others
+        self.assertEqual(a.text, self.kb.answer("Is LIFO allowed under IAS 2 and how does US GAAP differ?").text)
+        for e in a.entries:
+            self.assertIn(" ".join(e["summary"].split()), a.text)
 
     def test_find(self):
         self.assertTrue(self.kb.find(topic="leases"))

@@ -1,6 +1,6 @@
 # Indian Accounting Standards (Ind AS)
 
-*Generated from `om/intl/standards/frameworks.yaml`. Authored by Acretia in its own words. Confidence: verified.*
+*Generated from `om/intl/standards/frameworks.yaml`. Authored by Acretia in its own words. Confidence: unverified.*
 
 **Issuer:** Ministry of Corporate Affairs on advice of the National Financial Reporting Authority; ICAI drafts  
 **Jurisdictions:** India
