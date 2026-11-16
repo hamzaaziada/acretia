@@ -45,7 +45,6 @@ One row per active claim. Claim a packet before you touch its files, commit the 
 | FP-S2b adapter/ledger/PII/router | worker (session A) | claude/dreamy-ramanujan-k8p2xt | 2026-11-17 | src/harness/adapter.py, src/harness/ledger.py, src/harness/router.py, src/harness/profiles/*, om/pii.py, om/replay.py, tests/test_adapter.py, tests/test_harness_router.py, tests/test_llm_router.py |
 | FP-S2c evidence/deals/queue | worker (session A) | claude/dreamy-ramanujan-k8p2xt | 2026-11-17 | src/harness/evidence.py, om/deals.py, om/storage.py, tests/test_evidence.py, tests/test_deal_memory.py, tests/test_storage.py |
 | FP-S2d unpack/crawler | worker (session A) | claude/dreamy-ramanujan-k8p2xt | 2026-11-17 | src/harness/connectors/unpack.py, src/harness/connectors/web.py, tests/test_connectors_harness.py |
-| FP-CI1 CI concurrency on main | worker (session A) | claude/dreamy-ramanujan-k8p2xt | 2026-11-17 | .github/workflows/ci.yml |
 
 ## Log
 - 2026-11-16: created; no active claims.
@@ -82,3 +81,4 @@ One row per active claim. Claim a packet before you touch its files, commit the 
 - 2026-11-17: S5.fix1 and S5.5a verified on main and released; S5.4b and S5.5b claimed (session D).
 - 2026-11-16: session A: FP-CI1 claimed (main CI runs all cancelled by cancel-in-progress).
 - 2026-11-16: session E: S8.2, S8.3a, S8.4, S8.6a landed (S8.4/S8.6a/S8.2 rows released; S8.3a row kept for the Eastern-digit fix). S8.3b claimed.
+- 2026-11-16: session A: FP-CI1 landed.
