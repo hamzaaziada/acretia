@@ -10,9 +10,6 @@ One row per active claim. Claim a packet before you touch its files, commit the 
 | S5.3 VDR gap/risk (session D) | worker | main | 2026-11-16 | om/vdr_risk.py, tests/test_vdr_risk.py, tests/fixtures/vdr/* |
 | S5.4 evals (session D) | worker | main | 2026-11-16 | evals/tenk/*, evals/odl_bench/*, scripts/build_tenk_corpus.py, scripts/eval_s5.py, tests/test_s5_evals.py, scorecard.csv (S5 rows only) |
 | S5 gate (session D) | Boss | main | 2026-11-16 | scripts/verify_s5.py, docs/s5/* |
-| FP-R1 router hermeticity + OCR test | worker | claude/dreamy-ramanujan-k8p2xt | 2026-11-16 | om/llm.py, tests/test_llm_router.py, src/harness/adapter.py, tests/test_adapter.py, tests/test_pdfdoc.py |
-| FP-R3 gate hardening (gate-writer) | worker | claude/dreamy-ramanujan-k8p2xt | 2026-11-16 | scripts/verify_s1.py, scripts/verify_m1.py, scripts/verify_s2.py |
-| S6.0 research job interface | worker | claude/dreamy-ramanujan-k8p2xt | 2026-11-16 | src/harness/research/__init__.py, src/harness/research/api.py, src/harness/research/jobs.py, docs/interfaces.md (section 'Research agent jobs' only), tests/test_research_api.py |
 | S1 gate | Boss | claude/dreamy-ramanujan-k8p2xt | 2026-11-16 | scripts/verify_s1.py |
 | S4.2 three-engine recalc | worker (session C) | claude/busy-knuth-i3ewp5 | 2026-11-16 | om/recalc.py, om/formula.py, tests/test_recalc.py, tests/test_formula_ext.py |
 | S4.3a LBO | worker (session C) | claude/busy-knuth-i3ewp5 | 2026-11-16 | om/lbo.py, tests/test_lbo.py |
@@ -42,6 +39,8 @@ One row per active claim. Claim a packet before you touch its files, commit the 
 | SF.3 e2e journeys + product gate (session F) | session F gate worker | main | 2026-11-16 | e2e/**, scripts/verify_product.py |
 | SF.4 TSB + reliability harness (session F, D-032) | session F workers | main | 2026-11-16 | eval/tsb/**, eval/reliability/** |
 | S4.7b polish layer + model3 dashboard | worker (session C) | claude/busy-knuth-i3ewp5 | 2026-11-16 | om/polish.py, om/model3.py, tests/test_polish.py |
+| FP-R4 ledger rows for new imports | worker (session A) | claude/dreamy-ramanujan-k8p2xt | 2026-11-16 | license-and-repo-ledger.csv, docs/ledger-notes.md |
+| S2-gate-conn connector gate section | gate-writer (session A) | claude/dreamy-ramanujan-k8p2xt | 2026-11-16 | scripts/verify_s2.py |
 
 ## Log
 - 2026-11-16: created; no active claims.
@@ -62,3 +61,4 @@ One row per active claim. Claim a packet before you touch its files, commit the 
 - 2026-11-16: session A restored session C/F rows that de1725b dropped by mistake, and removed the stale S4.1/S4.5/S4.7a rows it had re-added.
 - 2026-11-16: session B: S3 wave 1 merged (core, fit/RTL, spec/ghost, validator, visuals); wave 2 claimed (archetypes a/b/c, critic, cloner+sync).
 - 2026-11-16: Session F claimed eval/tsb/ and eval/reliability/ (D-032 measurement harness).
+- 2026-11-16: session A: FP-R1, FP-R3, S6.0 landed on main (f8bc923); FP-R4 and S2 connector gate section claimed.
