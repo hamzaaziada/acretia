@@ -1,0 +1,1 @@
+pdfplumber>=0.11  # om/pdfdoc.py optional backend (words, font sizes, rulings)

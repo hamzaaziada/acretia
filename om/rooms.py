@@ -8,10 +8,13 @@ from __future__ import annotations
 
 import hashlib
 import json
+import os
 import shutil
+import threading
 import time
 import zipfile
-from dataclasses import dataclass
+from concurrent.futures import ThreadPoolExecutor
+from dataclasses import dataclass, field
 from pathlib import Path, PurePosixPath
 
 from .docs import DocRef, passages
@@ -21,6 +24,8 @@ ROOMS_SCHEMA = """
 CREATE TABLE IF NOT EXISTS rooms(id INTEGER PRIMARY KEY, name TEXT UNIQUE, description TEXT, created_at REAL,
                                  connectors TEXT DEFAULT '[]');
 CREATE TABLE IF NOT EXISTS room_events(id INTEGER PRIMARY KEY, room_id INTEGER, at REAL, kind TEXT, detail TEXT);
+CREATE TABLE IF NOT EXISTS ingest_state(room_id INTEGER, path TEXT, sha256 TEXT, status TEXT, reason TEXT, at REAL,
+                                        PRIMARY KEY(room_id, path));
 """
 SKIP_PARTS = {"__MACOSX", ".DS_Store", "Thumbs.db"}
 MAX_FILE_BYTES = 200 * 1024 * 1024
@@ -39,8 +44,23 @@ class ImportResult:
         return {**self.__dict__, "warnings": (self.warnings or [])[:50]}
 
 
+@dataclass
+class IngestReport:
+    added: int = 0
+    duplicates: int = 0
+    skipped: int = 0
+    failed: list = field(default_factory=list)      # [(name, reason)]
+    elapsed_s: float = 0.0
+    files_per_s: float = 0.0
+    interrupted: bool = False
+
+    def as_dict(self):
+        return {**self.__dict__, "failed": [list(f) for f in self.failed[:200]]}
+
+
 class Rooms:
     def __init__(self, index, data_dir: Path):
+        self._lock = threading.RLock()
         self.index = index
         self.db = index.db
         self.root = Path(data_dir) / "rooms"
@@ -170,6 +190,137 @@ class Rooms:
                 self.add_file(room_id, str(f.relative_to(path)), f.read_bytes(), source=source, modified=f.stat().st_mtime, res=res)
         return res
 
+    # ------------------------------------------------------------------ concurrent ingest
+    def ingest(self, room, paths_or_dir, workers: int = 8, progress=None, *, max_bytes: int = MAX_FILE_BYTES,
+               stop_after: int | None = None, source: str = "ingest") -> IngestReport:
+        """Ingest many files: hash and extract in a thread pool, commit from this thread only (single writer).
+
+        Content-hash dedupe within the room, idempotent re-runs (no writes when nothing is new) and resumable:
+        each file's outcome is committed with its document, so an interrupted run continues where it stopped.
+        progress(done, total, rel_path, status) is called after each file; an exception it raises aborts the run
+        (finished files stay committed). stop_after=k stops cleanly after k files (test/resume hook)."""
+        t0 = time.time()
+        room_id = self.get(room)["id"]
+        rep = IngestReport()
+        items, rejected = _scan(paths_or_dir)
+        total = len(items) + len(rejected)
+        done = 0
+
+        def tick(rel, status):
+            nonlocal done
+            done += 1
+            if progress:
+                progress(done, total, rel, status)
+
+        def fail(rel, sha, reason):
+            rep.failed.append((rel, reason))
+            with self._lock:
+                row = self.db.execute("SELECT status, reason FROM ingest_state WHERE room_id=? AND path=?", (room_id, rel)).fetchone()
+                if not row or (row["status"], row["reason"]) != ("failed", reason):
+                    self._state(room_id, rel, sha, "failed", reason)
+                    self.db.commit()
+            tick(rel, "failed")
+
+        def finish():
+            rep.elapsed_s = round(time.time() - t0, 4)
+            rep.files_per_s = round(done / rep.elapsed_s, 2) if rep.elapsed_s > 0 else float(done)
+            if rep.added:
+                self.log(room_id, "ingest", {"added": rep.added, "duplicates": rep.duplicates, "skipped": rep.skipped,
+                                             "failed": len(rep.failed)})
+            return rep
+
+        with ThreadPoolExecutor(max_workers=max(1, workers)) as pool:
+            try:
+                for rel, reason in rejected:
+                    fail(rel, None, reason)
+                # phase 1: hash in parallel (cheap), classify deterministically in path order
+                def hash_one(it):
+                    rel, path = it
+                    ext = PurePosixPath(rel).suffix.lower()
+                    if ext not in SUPPORTED:
+                        return rel, None, f"unsupported file type {ext or '(none)'}"
+                    size = path.stat().st_size
+                    if size == 0:
+                        return rel, None, "empty file"
+                    if size > max_bytes:
+                        return rel, None, f"larger than {max_bytes // 2**20} MB"
+                    h = hashlib.sha256()
+                    with open(path, "rb") as f:
+                        for block in iter(lambda: f.read(1 << 20), b""):
+                            h.update(block)
+                    return rel, h.hexdigest(), None
+                hashed = []
+                for it, fut in zip(items, [pool.submit(_guard, hash_one, it) for it in items]):
+                    hashed.append((it[1], *fut.result()))
+                with self._lock:
+                    known = {r["sha256"] for r in self.db.execute("SELECT sha256 FROM documents WHERE room_id=? AND sha256 IS NOT NULL", (room_id,))}
+                    state = {r["path"]: (r["sha256"], r["status"]) for r in self.db.execute(
+                        "SELECT path, sha256, status FROM ingest_state WHERE room_id=?", (room_id,))}
+                    docs = {r["path"]: r["sha256"] for r in self.db.execute("SELECT path, sha256 FROM documents WHERE room_id=?", (room_id,))}
+                plan, seen = [], set()
+                for path, rel, sha, err in hashed:
+                    if err:
+                        plan.append((rel, path, sha, "fail", err))
+                    elif docs.get(rel) == sha or state.get(rel) in ((sha, "done"), (sha, "duplicate")):
+                        plan.append((rel, path, sha, "skip", None))
+                    elif sha in known or sha in seen:
+                        plan.append((rel, path, sha, "dup", None))
+                    else:
+                        seen.add(sha)
+                        plan.append((rel, path, sha, "new", None))
+                # phase 2: extract the new, unique files in parallel; commit in order
+                futs = {rel: pool.submit(_guard, _extract_one, path) for rel, path, sha, kind, _ in plan if kind == "new"}
+                for rel, path, sha, kind, err in plan:
+                    if stop_after is not None and done - len(rejected) >= stop_after:
+                        rep.interrupted = True
+                        break
+                    if kind == "fail":
+                        fail(rel, sha, err)
+                    elif kind == "skip":
+                        rep.skipped += 1
+                        tick(rel, "skipped")
+                    elif kind == "dup":
+                        with self._lock:
+                            self._state(room_id, rel, sha, "duplicate", None)
+                            self.db.commit()
+                        rep.duplicates += 1
+                        tick(rel, "duplicate")
+                    else:
+                        ex = futs[rel].result()
+                        if isinstance(ex, Exception):
+                            fail(rel, sha, f"extract failed: {ex}")
+                            continue
+                        self._commit_ingested(room_id, rel, path, sha, ex, source)
+                        rep.added += 1
+                        tick(rel, "added")
+            finally:
+                pool.shutdown(wait=True, cancel_futures=True)
+        return finish()
+
+    def _state(self, room_id, rel, sha, status, reason):
+        self.db.execute("INSERT OR REPLACE INTO ingest_state(room_id, path, sha256, status, reason, at) VALUES(?,?,?,?,?,?)",
+                        (room_id, rel, sha, status, reason, time.time()))
+
+    def _commit_ingested(self, room_id, rel, path: Path, sha, ex, source):
+        with self._lock:
+            dest = self.root / str(room_id) / "files" / rel
+            dest.parent.mkdir(parents=True, exist_ok=True)
+            shutil.copyfile(path, dest)
+            url = f"room://{room_id}/{rel}"
+            old = self.db.execute("SELECT doc_id FROM documents WHERE url=?", (url,)).fetchone()
+            if old:  # changed content under the same path, or a half-written doc from an interrupted run
+                self._delete_doc(old["doc_id"])
+            ps, n = passages(ex.text, paged=True)
+            filed = time.strftime("%Y-%m-%d", time.localtime(path.stat().st_mtime))
+            ref = DocRef(cik=0, ticker=None, company=self.get(room_id)["name"], form=ex.kind.upper(), filed=filed,
+                         report_date=None, accession=sha[:20], file=PurePosixPath(rel).name, url=url,
+                         title=PurePosixPath(rel).name, items=None)
+            self.index.add(ref, ps, n)
+            self.db.execute("UPDATE documents SET room_id=?, source=?, path=?, pages=?, sha256=?, warnings=? WHERE url=?",
+                            (room_id, source, rel, ex.pages, sha, json.dumps(ex.warnings) if ex.warnings else None, url))
+            self._state(room_id, rel, sha, "done", None)
+            self.db.commit()
+
     def remove(self, doc_id: int) -> None:
         p = self.file_path(doc_id)
         self._delete_doc(doc_id)
@@ -189,3 +340,65 @@ def _safe_rel(p: str) -> str | None:
     if not parts or any(x == ".." for x in parts):
         return None
     return str(PurePosixPath(*parts))
+
+
+def _guard(fn, *a):
+    try:
+        return fn(*a)
+    except Exception as e:  # per-file failures are data, not control flow
+        return e if fn is _extract_one else (a[0][0], None, f"{type(e).__name__}: {e}")
+
+
+def _extract_one(path: Path):
+    return extract(path)
+
+
+def _hidden(parts) -> bool:
+    return any(x in SKIP_PARTS or x.startswith(".") for x in parts)
+
+
+def _scan(paths_or_dir) -> tuple[list, list]:
+    """-> ([(rel, real_path)], [(rel, reason)]). Regular files only; hidden/__MACOSX skipped; symlinks must stay inside the root."""
+    inputs = [paths_or_dir] if isinstance(paths_or_dir, (str, os.PathLike)) else list(paths_or_dir)
+    items, rejected, names = [], [], set()
+
+    def add(rel, p):
+        if rel not in names:
+            names.add(rel)
+            items.append((rel, p))
+    for inp in inputs:
+        top = Path(inp).expanduser()
+        prefix = top.name if len(inputs) > 1 else ""
+        if top.is_file():
+            if not _hidden([top.name]):
+                add(top.name if not prefix else f"{top.parent.name}/{top.name}", top.resolve())
+            continue
+        base = top.resolve()
+        for dp, dns, fns in os.walk(top, followlinks=False):
+            rel_dir = Path(dp).relative_to(top)
+            keep = []
+            for d in sorted(dns):
+                if _hidden([d]):
+                    continue
+                if (Path(dp) / d).is_symlink():
+                    rejected.append((str(PurePosixPath(*rel_dir.parts, d)), "symlinked directory not followed"))
+                else:
+                    keep.append(d)
+            dns[:] = keep
+            for fn in sorted(fns):
+                f = Path(dp) / fn
+                rel = str(PurePosixPath(*rel_dir.parts, fn))
+                if _hidden(PurePosixPath(rel).parts):
+                    continue
+                if prefix:
+                    rel = f"{prefix}/{rel}"
+                real = f.resolve()
+                if f.is_symlink() and base not in real.parents:
+                    rejected.append((rel, "symlink points outside the ingest folder"))
+                elif not real.is_file():
+                    continue
+                elif base != real.parent and base not in real.parents:
+                    rejected.append((rel, "path escapes the ingest folder"))
+                else:
+                    add(rel, real)
+    return sorted(items), rejected
