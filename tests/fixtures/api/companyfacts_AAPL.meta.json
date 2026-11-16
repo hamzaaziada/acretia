@@ -1,0 +1,12 @@
+{
+  "ticker": "AAPL",
+  "entity": "Apple Inc.",
+  "cik": 320193,
+  "synthetic": false,
+  "source_url": "https://data.sec.gov/api/xbrl/companyfacts/CIK0000320193.json",
+  "fetched_on": "2026-11-16",
+  "as_of": "2026-11-03",
+  "as_of_note": "latest 10-K in the file (FY ended 2026-09-26) was filed 2026-11-03",
+  "trimmed": "only the concepts om.statements/om.concepts use plus dei EntityPublicFloat and EntityCommonStockSharesOutstanding; 10-K facts with end >= 2019-09-01",
+  "licence": "SEC EDGAR public data (no restriction)"
+}
