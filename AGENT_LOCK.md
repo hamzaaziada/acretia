@@ -5,8 +5,8 @@ One row per active claim. Claim a packet before you touch its files, commit the 
 | Packet | Agent / session | Branch | Claimed (UTC) | Files |
 |---|---|---|---|---|
 | S5.4a 10-K corpus (session D) | worker | main | 2026-11-16 | evals/tenk/*, scripts/build_tenk_corpus.py, tests/test_s5_evals.py |
-| S5.fix1 docparse clean-machine (session D) | worker | main | 2026-11-17 | om/docparse.py, tests/test_docparse.py, requirements.txt (pdf lines only) |
-| S5.5a grid parity engine (session D) | worker | main | 2026-11-17 | om/grid.py, tests/test_grid.py, tests/test_grid_parity.py, tests/fixtures/grid/* |
+| S5.4b evals + VDR50 (session D) | worker | main | 2026-11-17 | evals/vdr50/*, evals/odl_bench/*, evals/out/*, scripts/build_vdr50.py, scripts/eval_s5.py, tests/test_s5_eval_runner.py, scorecard.csv (S5 rows only) |
+| S5.5b grid export (session D) | worker | main | 2026-11-17 | om/grid_export.py, tests/test_grid_export.py |
 | S5 gate (session D) | gate-writer worker | main | 2026-11-17 | scripts/verify_s5.py |
 | S5 docs (session D) | Boss | main | 2026-11-16 | docs/s5/* |
 | S1 gate | Boss | claude/dreamy-ramanujan-k8p2xt | 2026-11-16 | scripts/verify_s1.py |
@@ -80,3 +80,4 @@ One row per active claim. Claim a packet before you touch its files, commit the 
 - 2026-11-17: S4.fix1, S4.6b merged and released; S4.fix2 claimed.
 - 2026-11-16: session A: FP-S1a/b, S6.1b, S6.3 done; S6.1 workflows, S6.4, S6.5a, S6.5b claimed (parity items 24-33, 58-63).
 - 2026-11-16: session A: S2 specialist review FAIL (1C/7H); FP-S2a-d claimed.
+- 2026-11-17: S5.fix1 and S5.5a verified on main and released; S5.4b and S5.5b claimed (session D).
