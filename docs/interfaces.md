@@ -106,3 +106,38 @@ session, never from client input). Another org's `job_id` behaves exactly like a
 Additive changes only: new optional fields, new event `data` keys, new event types (clients must ignore unknown
 types), new outputs kinds. Existing field names, meanings and the status lifecycle do not change within `"v": 1`. A
 breaking change bumps `v`; this build rejects any payload with another `v`.
+
+## Annual-report reading (S8, session E)
+
+One stable call turns an annual-report PDF into tied, cited statements plus a review queue. The PDF may be native or
+scanned, and in Arabic, English or both. The implementation lands with S8.3b; this signature is the contract now.
+
+```python
+from om.intl.pipeline import read_report, ReportResult
+
+res: ReportResult = read_report(
+    pdf,                      # path or bytes; native or scanned; Arabic, English or bilingual
+    *, company=None,          # optional name/ticker hint
+    hints=None,               # optional {"currency": "EGP", "unit_scale": 1e3, "fiscal_year_end_month": 6, "standard": "EAS",
+                              #           "pages": {"IS": 7, "BS": 6, "CF": 9}}
+    prior=None,               # optional ReportResult or PDF of the previous year's report (comparatives tie)
+    strict=True,              # strict: statements is None unless every hard tie passes
+)
+res.statements      # om.intl.types.IntlStatements | None (subclass of om.statements.Statements; om.model3.build accepts it)
+res.extracted       # om.intl.types.ExtractedStatements (every printed figure, released or not)
+res.tie_report      # om.intl.tieout.TieReport (passed, ties[name, period, lhs, rhs, diff, passed, figures])
+res.review          # list[om.intl.review.ReviewItem]: figure, reasons, page, bbox_norm, crop_png (highlighted)
+res.blocked         # bool: True when strict release was refused (statements is None, review explains why)
+res.telemetry       # {"wall_seconds", "steps": [{"name", "started_at", "finished_at", "seconds", "tokens", "cost_usd", "engine"}],
+                    #  "pages", "scanned", "language", "flags", "review_minutes"}  (docs/product/SPEC.md "Telemetry")
+res.to_json()       # {"v": 1, ...} with the review crops as file paths or base64
+```
+
+Guarantees:
+- Every figure carries page, bbox_norm in [0, 1] and confidence in [0, 1].
+- A figure that fails a tie, or falls below the confidence threshold without corroboration, is in `review` and never
+  in `statements`.
+- The data layer is deterministic: the same bytes give the same numbers.
+- No model call is made, so `tokens` and `cost_usd` are 0.
+
+Stability: fields are only added within `"v": 1`.

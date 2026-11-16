@@ -164,3 +164,10 @@ English and Arabic (`٣٠ يونيو ٢٠٢٤`).
    `om.model3.build`, with balance and cash checks = 0 and every Filings-sheet figure's comment carrying page and bbox.
    Runs when the anchor PDFs are cached in `data/raw/intl/`; otherwise uses the committed synthetic SAR fixture and
    prints SKIP for the live part with the reason.
+
+**Graders (D-033): no ✅ until all three pass**
+1. This deterministic gate.
+2. A specialist reviewer: a Sonnet "IFRS/EAS accountant" who is not an author, has the pdf/xlsx skills loaded, and
+   grades all 9 anchors against the source reports. It grades figure accuracy, classification, the "how to read"
+   notes, the analyst Q&A, and the model workbook. The score must be ≥ 8.5, recorded in `docs/s8/specialist-review.md`.
+3. Four Haiku personas (IB analyst, EM, PE principal, MENA PE/IB associate), each ≥ 8.5, in `docs/s8/personas.md`.
