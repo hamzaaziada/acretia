@@ -4,7 +4,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
-from om.intl.standards import load
+from om.intl.standards import load, FIELDS, FIELD_LABELS
 kb = load(force=True)
 out = ROOT / "docs/s8/standards"
 out.mkdir(parents=True, exist_ok=True)
@@ -39,10 +39,13 @@ for fid, f in kb.frameworks.items():
 # IFRS standards page
 L = ["# IFRS standards the analyst reads", "", "*Generated from `om/intl/standards/ifrs_standards.yaml`. Own words, no copied standard text.*", ""]
 for s in kb.standards:
-    L += [f"## {s['standard']}: {s['title']}", fold(s["summary"]), "", "**Disclosures:** " + "; ".join(s.get("disclosures", [])), "",
-          "**Analyst impact:** " + fold(s["analyst_impact"]), ""]
+    L += [f"## {s['standard']}: {s['title']}", fold(s["summary"]), ""]
+    for f in FIELDS:
+        if s.get(f): L += [f"- **{FIELD_LABELS[f]}:** {fold(s[f])}"]
+    L += ["", "**Analyst impact:** " + fold(s["analyst_impact"]), ""]
     if s.get("adjustment"): L += [f"**Recipe:** `{s['adjustment']}`", ""]
-    L += [cites(s["citations"]), ""]
+    L += [f"*Basis: {s.get('basis', 'n/a')}; confidence: {s['confidence']}*", "", cites(s["citations"]), ""]
+files["eas-standards.md"] = "\n".join(["# Egyptian Accounting Standards and their IFRS counterparts", "", "*Generated from `om/intl/standards/eas_standards.yaml`. Numbering marked unverified is from the 2015 reissue as recalled; confirm against FRA text.*", "", "| EAS | Title | IFRS counterpart | What differs | Confidence |", "|---|---|---|---|---|"] + [f"| {r['number']} | {r['title']} | {r['ifrs']} | {fold(r['differs'])} | {'verified' if r.get('verified') else 'unverified'} |" for r in kb.eas] + [""])
 files["ifrs-standards.md"] = "\n".join(L)
 # differences page
 L = ["# Differences and analyst adjustment recipes", "", "*Generated from `om/intl/standards/differences.yaml`.*", ""]
@@ -58,7 +61,7 @@ for t, ds in topics.items():
 files["differences.md"] = "\n".join(L)
 rd = ["# S8.1 Accounting-standards knowledge base", "",
       "Machine-readable data lives in `om/intl/standards/*.yaml`; load it with `om.intl.standards.load()`. Everything is paraphrased; no standard text is copied. Entries marked `unverified` hold jurisdiction details (decree numbers, effective dates, article numbers) that have not been confirmed against the issuer text.", "",
-      "## Pages", ""] + [f"- [{kb.frameworks[k]['name']}]({k.lower()}.md)" for k in kb.frameworks] + ["- [IFRS standards depth](ifrs-standards.md)", "- [Differences and recipes](differences.md)", "",
+      "## Pages", ""] + [f"- [{kb.frameworks[k]['name']}]({k.lower()}.md)" for k in kb.frameworks] + ["- [IFRS standards depth](ifrs-standards.md)", "- [EAS list and IFRS counterparts](eas-standards.md)", "- [Differences and recipes](differences.md)", "",
       "## API", "", "`load() -> KB`; `KB.frameworks`, `KB.differences`, `KB.find(topic, framework)`, `KB.answer(question) -> Answer(text, citations, entries)`. Retrieval is deterministic: tokenise, concept synonym table (English and some Arabic), IDF scoring, compose the answer from top entries.", "",
       "## Regenerating", "", "These pages are generated from the YAML; edit the YAML, not the pages.", ""]
 files["README.md"] = "\n".join(rd)

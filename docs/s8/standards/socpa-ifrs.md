@@ -93,6 +93,8 @@ Full IFRS except the zakat and tax carve-out; IFRS for SMEs for small entities.
 - `diff-eosb-ksa` (end_of_service): recipe `eosb_as_debt_like`
 - `diff-government-grants` (government_grants): recipe `gov_grant_gross_up`
 - `diff-socpa-ifrs-adoption` (framework_adoption): recipe `eas_to_ifrs_map`
+- `diff-zakat-base-components` (zakat_tax): recipe `zakat_as_tax`
+- `diff-eosb-ksa-actuarial-vs-nominal` (end_of_service): recipe `eosb_as_debt_like`
 
 **Verified facts**
 - Listed companies on IFRS from 1 January 2017; others for periods after 1 January 2018: <https://www.arabnews.com/corporate-and-sponsored-content/kpmg-to-make-private-sector-ready-for-upcoming-ifrs-1137586>
