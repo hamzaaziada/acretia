@@ -38,6 +38,45 @@ Each journey is scripted as an end-to-end browser test (Playwright, Apache-2.0, 
 | P-J7 Firm setup | An admin uploads templates and sample decks, defines Adjusted EBITDA and Net Debt, adds users and roles, connects SharePoint/Drive/VDR | House style cloned and applied everywhere; definitions used in every model; RBAC enforced |
 | P-J8 Agent library | Picks a pre-built agent (comps, DCF, LBO, merger, CIM summary, teaser, buyer list, earnings recap, IC memo) or saves their own prompt chain | Repeatable runs, shareable within the org, run history |
 
+### North-star metrics: claims we must be able to defend (goal: Hebbia/Rogo parity)
+
+We claim what Rogo and Hebbia claim, time saved, reliability and usefulness, **only when measured**.
+
+1. **Time-saved benchmark (TSB).** For each catalogue task:
+   - **Catalogue tasks:**
+     - trading comps
+     - precedents
+     - 3-statement from 10-K or annual report
+     - DCF
+     - LBO
+     - merger model
+     - CIM / VDR first-pass review (per 50 docs)
+     - company profile / one-pager
+     - pitchbook section
+     - teaser
+     - IC memo
+     - earnings model update
+     - earnings recap
+     - buyer list
+   - **Measure** `T_h`, the human baseline: sourced ranges in `docs/time-saved-baselines.md`, later validated with timed analysts.
+   - **Measure** `T_a` = wall-clock to deliverable + review-and-fix time to client-ready.
+   - **Client-ready** means: every deterministic gate passes, the personas score ≥ 8.5, and the remaining edits are logged.
+   - **Review-and-fix time:** first estimated from the persona's "edits needed" list × a published minutes-per-edit table, then replaced by real reviewer timings from a pilot of 3–5 analysts.
+   - **Report** `1 − T_a/T_h` per task (median, IQR, n ≥ 10 companies or briefs) in `eval/tsb/report.md`.
+   - **Claim** a figure only when it is human-validated and at or above the published competitor claim for that task (sources in the baselines doc).
+2. **Reliability SLOs**, on scripted runs of every journey across ≥ 100 varied companies and briefs (US, IFRS, MENA):
+   - task success ≥ 97%;
+   - **zero silent wrong numbers**: every figure is either tied to a source or flagged;
+   - identical inputs give identical numbers (the data layer is deterministic);
+   - 100% of failed jobs resume cleanly;
+   - p95 latency and cost per deliverable published.
+3. **Usefulness.** The whole catalogue runs end to end from the command bar and the agent library. The PE-principal persona says "would pay $10K+/seat" on each deliverable type.
+
+**Ownership:**
+- the product session builds the TSB/reliability harness (`eval/tsb/`, job telemetry);
+- live measurement runs on the user's Mac with the Keychain key (D-021);
+- the independent reviewer re-checks the numbers before any claim.
+
 **Production bar:**
 - multi-tenant auth with roles; audit log of every action and agent step;
 - streamed progress; cost shown per task; resumable jobs; notifications;
