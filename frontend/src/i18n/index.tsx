@@ -57,8 +57,11 @@ function makeFormatters(locale: Locale, arabicDigits: boolean): Formatters {
   return {
     number: (n, opts) => new Intl.NumberFormat(tag, opts).format(n),
     integer: (n) => new Intl.NumberFormat(tag, { maximumFractionDigits: 0 }).format(n),
+    // USD keeps the "$" prefix in every locale (Arabic locales otherwise print "US$" after the number), isolated as LTR.
     currency: (n, currency = 'USD', d = 2) =>
-      new Intl.NumberFormat(tag, { style: 'currency', currency, minimumFractionDigits: d, maximumFractionDigits: d }).format(n),
+      currency === 'USD'
+        ? '⁦$' + new Intl.NumberFormat(tag, { minimumFractionDigits: d, maximumFractionDigits: d }).format(n) + '⁩'
+        : new Intl.NumberFormat(tag, { style: 'currency', currency, minimumFractionDigits: d, maximumFractionDigits: d }).format(n),
     percent: (n, d = 1) => new Intl.NumberFormat(tag, { style: 'percent', minimumFractionDigits: d, maximumFractionDigits: d }).format(n),
     date: (v, opts) => new Intl.DateTimeFormat(tag, opts ?? { year: 'numeric', month: 'short', day: 'numeric' }).format(toDate(v)),
     dateTime: (v) => new Intl.DateTimeFormat(tag, { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }).format(toDate(v)),

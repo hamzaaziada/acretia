@@ -117,7 +117,7 @@ export default function Home() {
         </section>
       )}
 
-      <div className="acr-home__cols">
+      <div className="acr-home__cols acr-home__cols--stack">
         <Panel title={t('home.recentRuns')} flush className="acr-home__runs">
           <div data-testid="recent-runs">
             {jobs.loading && !jobs.data ? (

@@ -74,7 +74,7 @@ export const IconCollapse = make(<path d="M4 6h16M4 12h10M4 18h16" />);
 
 export const IconThumbUp = make(<><path d="M8 20V10l4-7c1.7 0 2.5 1.2 2.2 2.8L13.6 9H19a1.5 1.5 0 0 1 1.5 1.8l-1.6 7.6A2 2 0 0 1 17 20z" /><path d="M3.5 10H8v10H3.5z" /></>);
 export const IconThumbDown = make(<><path d="M16 4v10l-4 7c-1.7 0-2.5-1.2-2.2-2.8L10.4 15H5a1.5 1.5 0 0 1-1.5-1.8l1.6-7.6A2 2 0 0 1 7 4z" /><path d="M20.5 14H16V4h4.5z" /></>);
-export const IconPin = make(<><path d="m14 4 6 6-2.5.8-3.5 3.5.5 4-1.5 1.5-3.5-3.5L5 21l-0-0 5.7-5.5L7.2 12 8.7 10.5l4 .5 3.5-3.5z" /></>);
+export const IconPin = make(<><path d="M9 4h6l-.8 5.2L18 13H6l3.8-3.8z" /><path d="M12 13v7" /></>);
 export const IconStop = make(<rect x="6" y="6" width="12" height="12" rx="1.5" />);
 export const IconLibrary = make(<><path d="M5 4v16M10 4v16M15 5l4 .8-3 14.4-4-.8" /></>);
 export const IconArrowUp = make(<path d="M12 19V5M6 11l6-6 6 6" />);

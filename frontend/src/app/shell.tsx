@@ -343,7 +343,7 @@ function Topbar({ onNav }: { onNav: () => void }) {
       <button type="button" className="acr-cmdtrigger" onClick={() => openPalette()} aria-label={t('palette.open')} aria-keyshortcuts="Control+K Meta+K">
         <IconSearch size={14} />
         <span className="acr-cmdtrigger__text">{t('palette.trigger')}</span>
-        <span className="acr-cmdtrigger__keys">
+        <span className="acr-cmdtrigger__keys" dir="ltr">
           <Kbd>{modKey}</Kbd>
           <Kbd>K</Kbd>
         </span>
