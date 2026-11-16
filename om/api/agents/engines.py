@@ -530,7 +530,7 @@ def prior_model(cx):
     from om import model3
     d = _dt.date.fromisoformat(s.filings[-1]["filed"] or s.years[-1].isoformat()) - _dt.timedelta(days=30)
     old, cf2, _ = get_statements(cx.state, r["ticker"], as_of=d)
-    if len(old.years) >= len(s.years):
+    if old.years[-1] >= s.years[-1]:
         raise StepFailed("No earlier model exists to roll forward.", "Build a model first (e.g. 'three-statement model for Apple'), then run the update when new results are filed.")
     data, _meta = model3.build(old)
     art = cx.put(f"{r['ticker']}_prior_model.xlsx", "xlsx", data, internal=True)

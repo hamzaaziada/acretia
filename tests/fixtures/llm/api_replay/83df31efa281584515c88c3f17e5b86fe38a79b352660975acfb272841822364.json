@@ -1,0 +1,12 @@
+{
+  "data": {
+    "text": "# Situation\nApple Inc. (ticker AAPL) reported FY2026 revenue of $478.8 billion, +15.1% on the prior year, per the 10-K filed 2026-11-03.\n# Financial profile\nOperating income was $158.1 billion, a 33.0% operating margin. Net income was $132.2 billion and operating cash flow was $145.1 billion.\n# Valuation view\nValuation is not drafted in this canned text. See the DCF and trading comps workbooks in the deal library for the sourced valuation ranges.\n# Key risks\nConcentration in a small number of product lines, supply-chain dependence and regulatory exposure should be tested in diligence.\n# Next steps\nConfirm the figures above against the filing, agree the valuation approach with the deal team and list the diligence requests."
+  },
+  "key": "83df31efa281584515c88c3f17e5b86fe38a79b352660975acfb272841822364",
+  "model": "claude-sonnet-replay",
+  "task": "adapter:auto",
+  "usage": {
+    "input_tokens": 420,
+    "output_tokens": 380
+  }
+}
