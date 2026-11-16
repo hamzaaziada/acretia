@@ -80,3 +80,5 @@ Newest last. Each entry gives the choice and why. Agents add entries here instea
   - single-writer artifacts;
   - cascade-on-failure routing;
   - harness evals with silent-error rate as the headline metric and CI gating.
+- **D-S6-01 (2026-11-17) One scorecard schema.** `scorecard.csv` keeps the header session E created: `stage,eval,n,score,notes`. Research rows use `stage=S6`, `eval=research/<suite>/<metric>`, `score` blank unless the run is real, and `notes` carrying `mode=<replay|live>; ran_live=<yes|no>; date=<ISO>; <free text>`. A replay row never overwrites a live row. Other sessions append their own rows with the same five columns.
+- **D-S6-02 (2026-11-17) Eval datasets are fetched at runtime, never vendored.** Vals v1/v2 public sets (MIT repos), FinanceBench (CC-BY-NC-4.0, local scoring only) and BankerToolBench tasks (CC-BY-4.0 with a `noai` tag: evaluation only, never training data; canary string kept intact) are downloaded into `data/evals/` with checksums in `eval/research/manifest.json`.
