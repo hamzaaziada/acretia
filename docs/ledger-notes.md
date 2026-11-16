@@ -72,6 +72,7 @@ Every third-party (non-stdlib) module imported under `om/`, `src/`, `scripts/` a
 | `lxml` | `lxml/lxml` | adopt (BSD-3-Clause; om/deck/*) |
 | `yaml` | `yaml/pyyaml` | adopt (MIT; om/deck/spec.py) |
 | `fontTools` | `fonttools/fonttools` | adopt (MIT, optional textfit extra) |
+| `wasmtime` | `bytecodealliance/wasmtime-py` | adopt (Apache-2.0 WITH LLVM-exception; declared in requirements-extras.txt, formulon's WASM runtime) |
 | `uno` | `LibreOffice/core` | isolated_service (MPL-2.0; lazy import in om/recalc.py from the system soffice Python, never vendored) |
 | `com` | `LibreOffice/core` | isolated_service (`com.sun.star.*` UNO bindings, om/recalc.py) |
 
@@ -97,6 +98,7 @@ Declared in `requirements.txt` / `requirements-extras.txt`:
 - duckdb → duckdb/duckdb
 - docling → docling-project/docling
 - formulon → libraz/formulon
+- wasmtime → bytecodealliance/wasmtime-py
 
 Imported or pulled in, not declared in a requirements file:
 

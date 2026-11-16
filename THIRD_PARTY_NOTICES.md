@@ -694,3 +694,23 @@ available under the Apache 2.0 license (https://github.com/puppeteer/puppeteer/b
   - Copyright (c) 2013-2025, John McNamara <jmcnamara@cpan.org>
 - Reason in ledger: Declared in requirements.txt (XlsxWriter==3.2.9, matches tag RELEASE_3.2.9) as python-pptx's chart-workbook dependency; no direct import in om/, src/ or scripts/ (grep xlsxwriter finds only requirements.txt), it is used inside om/deck chart embedding via pptx.chart; LICENSE.txt at the pinned commit is BSD 2-Clause (Copyright (c) 2013-2025 John McNamara); keep notice
 
+
+## bytecodealliance/wasmtime-py
+
+- Repository: https://github.com/bytecodealliance/wasmtime-py
+- Pinned commit: ddefd495a9a4892d45fa60b8017ba3dde00e1ec5
+- SPDX licence: Apache-2.0 WITH LLVM-exception  (ledger: Apache-2.0 WITH LLVM-exception)
+- Ledger decision: adopt
+- Copyright:
+  - LICENSE is the unmodified Apache-2.0 text with the LLVM Exceptions; the appendix placeholder "Copyright [yyyy] [name of copyright owner]" is unfilled and there is no NOTICE file at this commit
+- Reason in ledger: Declared in requirements-extras.txt (wasmtime==49.0.0) as formulon's WASM runtime (S4); keep notice
+
+## numpy/numpy
+
+- Repository: https://github.com/numpy/numpy
+- Pinned commit: dd88c0c19b54ad9ed3533224221285bf0873249a
+- SPDX licence: BSD-3-Clause  (ledger: BSD-3-Clause)
+- Ledger decision: adopt
+- Copyright:
+  - Copyright (c) 2005-2025, NumPy Developers.
+- Reason in ledger: Used only by scripts/make_intl_fixtures.py to add scan noise to synthetic fixtures (numpy 2.5.3); keep notice
