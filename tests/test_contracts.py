@@ -267,12 +267,11 @@ class S22(Base):
         self.bad(EvidenceRecord, {**evidence(), "args_sha256": "abc"}, "EvidenceRecord.args_sha256")
         self.bad(EvidenceRecord, {**evidence(), "timestamp": "2026-01-02T03:04:05+00:00"}, "EvidenceRecord.timestamp")
         self.bad(EvidenceRecord, {**evidence(), "timestamp": "2026-13-02T03:04:05Z"}, "EvidenceRecord.timestamp")
-        with self.assertRaises(ContractError):
-            EvidenceRecord.seal(**{**evidence(seq=1, prev_hash=H), "prev_hash": "0" * 64, "record_hash": None})
-        with self.assertRaises(ContractError):
-            EvidenceRecord.seal(**{k: v for k, v in evidence(seq=0).items() if k != "record_hash"}, ) \
-                if False else EvidenceRecord.seal(**{**{k: v for k, v in evidence().items() if k != "record_hash"},
-                                                      "prev_hash": H})
+        body = {k: v for k, v in evidence().items() if k != "record_hash"}
+        with self.assertRaises(ContractError):                  # seq 0 must have the genesis prev_hash
+            EvidenceRecord.seal(**{**body, "prev_hash": H})
+        with self.assertRaises(ContractError):                  # seq > 0 must not use the genesis prev_hash
+            EvidenceRecord.seal(**{**body, "seq": 1})
         # validate() on a mutated object catches tampering too
         r = EvidenceRecord.from_dict(evidence())
         r.tool = "other"

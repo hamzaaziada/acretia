@@ -221,7 +221,8 @@ def _verbish(tok):
     t = tok.lower()
     if not t.isalpha():
         return False
-    cands = {t, t[:-1], t[:-2], t[:-3], t[:-3] + "e", t[:-2] + "e", t[:-3] + "y", t[:-1] + "e"}
+    cands = {t, t[:-1], t[:-2], t[:-3], t[:-3] + "e", t[:-2] + "e", t[:-3] + "y"}
+    cands.discard("")
     if cands & _VERBS:
         return True
     return len(t) >= 5 and t.endswith(("ed", "ing")) or t.endswith(("ize", "ise", "ify")) and len(t) >= 6
@@ -231,7 +232,7 @@ def _has_emoji(s):
     return any(ord(c) >= 0x1F000 or c in "\u200d\ufe0f" or unicodedata.category(c) == "So" for c in s)
 
 
-def action_title(x, p):
+def action_title_lint(x, p):
     """Action title: a one-sentence claim. Rules (all deterministic):
 
     * <= 15 words and <= 110 characters, no leading/trailing space, single line;
@@ -459,14 +460,14 @@ class SlideSpec(Contract):
     citations: list = _list()
     data: dict = _dict()
     archetype: str | None = None         # [a-z0-9_]+ ; the layout engine picks geometry from this
-    action_title: str | None = None      # one-sentence claim, see ``action_title`` lint
+    action_title: str | None = None      # one-sentence claim, see ``action_title_lint``
     blocks: list = _list()               # typed content blocks, see ``BLOCK_TYPES``
     sources: list = _list()              # Citations backing the slide
     as_of: str | None = None             # YYYY-MM-DD
     SCHEMA: ClassVar = {
         "id": ID, "layout": enum(*SLIDE_LAYOUTS), "title": string(0), "bullets": listing(string(0)),
         "notes": string(0), "citations": listing(nested(Citation)), "data": mapping(string(), json_value),
-        "archetype": optional(ARCHETYPE), "action_title": optional(action_title),
+        "archetype": optional(ARCHETYPE), "action_title": optional(action_title_lint),
         "blocks": listing(block), "sources": listing(nested(Citation)), "as_of": optional(iso_date)}
 
     @classmethod
@@ -685,7 +686,7 @@ class GhostTitle(Contract):
     action_title: str
     supporting_point: str = ""
     archetype_hint: str | None = None
-    SCHEMA: ClassVar = {"id": ID, "action_title": action_title, "supporting_point": string(0),
+    SCHEMA: ClassVar = {"id": ID, "action_title": action_title_lint, "supporting_point": string(0),
                         "archetype_hint": optional(ARCHETYPE)}
 
 
