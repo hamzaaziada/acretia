@@ -32,14 +32,18 @@
 - Before dispatching, add one row per packet to `AGENT_LOCK.md`, listing **every file or glob it may write**. Two active rows may never overlap. If they would, run those packets one after the other.
 - Workers may write **only** the files in their row. A file a worker discovers it needs that belongs to another row goes back to the Boss as a blocker in its Receipt.
 - Give each worker its own git worktree (`isolation: "worktree"`) when packets are large. The Boss merges, re-runs the full suite, then releases the rows.
-- Commit lock changes immediately (`lock: claim S3.3, S3.4`) so other sessions see them. Pull before claiming.
+- **Other sessions build other stages at the same time** (PLAN.md §2b). Push lock claims and releases to `main` straight away as small rebased commits (`lock: claim S3.3, S3.4`), not only to your session branch, so the other sessions see them. Pull before claiming. Never edit another session's locked files or its stage row in PROGRESS.md. Name your decisions `D-S<N>-xx`.
 
 ## Binding rules
 
 - **Licence ledger first** (PLAN.md §0.1).
   - No dependency, vendored file or borrowed design without a ledger row: pinned 40-hex commit, licence, decision, reason.
   - GPL and AGPL code runs only as isolated services. Source-available code: ideas only, no copying.
-- **One model adapter** (`src/harness/adapter.py`). No provider SDK anywhere else (CI checks the imports). Models fill specs; code owns layout, metrics, formulas and numbers.
+- **One model adapter** (`src/harness/adapter.py`). No provider SDK anywhere else (CI checks the imports).
+- **Generative creativity, deterministic polish** (PLAN.md §0.3, S3.11).
+  - Visuals and art direction are generated and varied. Ask for cool visuals whenever the image model answers; otherwise use the SVG designer. Never stamp the same look on every slide.
+  - Code owns geometry, metrics, contrast, formulas, numbers and charts.
+  - Everything shipped must look ultra-polished, in decks and in Excel alike.
 - **Deterministic gates before any LLM or VLM gate:**
   - formulas: `om.formula`
   - workbooks: `om.modelcheck` / `validate_xlsx.py`
