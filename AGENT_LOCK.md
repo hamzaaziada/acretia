@@ -25,6 +25,7 @@ One row per active claim. Claim a packet before you touch its files, commit the 
 | S3.3c archetypes: tables/frameworks | session B worker | claude/upbeat-mccarthy-viqjuo | 2026-11-16 | om/deck/archetypes/frameworks.py, tests/test_deck_arch_frameworks.py |
 | S3.8 vision critic loop | session B worker | claude/upbeat-mccarthy-viqjuo | 2026-11-16 | om/deck/critic.py, tests/test_deck_critic.py |
 | S3.9 template cloner + manifest sync | session B worker | claude/upbeat-mccarthy-viqjuo | 2026-11-16 | om/deck/house_clone.py, om/deck/sync.py, tests/test_deck_clone.py, tests/test_deck_sync.py |
+| S3.int engine entry + adapter switch + provenance/telemetry | session B worker | claude/upbeat-mccarthy-viqjuo | 2026-11-16 | om/deck/engine.py, om/deck/provenance.py, om/deck/ghost.py, om/deck/visuals/generate.py, om/deck/visuals/probe.py, om/deck/visuals/score.py, tests/test_deck_engine.py, tests/test_deck_ghost.py, tests/test_deck_visuals.py, open_multiples.py (deck subcommand only) |
 | S3 gate + docs | session B Boss | claude/upbeat-mccarthy-viqjuo | 2026-11-16 | scripts/verify_s3.py, docs/deck-engine.md, PROGRESS.md (S3 row only) |
 | S8.1 standards KB (session E) | worker | main | 2026-11-16 | om/intl/standards/**, docs/s8/standards/**, tests/test_intl_standards.py |
 | S8.2 concepts + bilingual labels (session E) | worker | main | 2026-11-16 | om/intl/concepts.py, om/intl/labels.py, om/intl/data/labels/**, tests/test_intl_concepts.py, tests/test_intl_labels.py |
