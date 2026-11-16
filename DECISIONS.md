@@ -79,3 +79,6 @@ Newest last. Each entry gives the choice and why. Agents add entries here instea
   - single-writer artifacts;
   - cascade-on-failure routing;
   - harness evals with silent-error rate as the headline metric and CI gating.
+- **D-S3-10 Reserved keys apply inside archetype blocks.** Data coordinates use `xv`/`yv`, option columns `a`/`b`, so the schema-level ban on geometry keys has no exceptions.
+- **D-S3-11 Provenance rule.** Every figure on a slide must trace to a sourced data block (same slide or any slide in the deck), a ModelManifest value, chart series, or an archetype-declared derived value (`meta["derived"]` with its input paths). Prose and model output never count as a source.
+- **D-S3-12 Accessible positive colour in the v2 deck theme.** The v1 house green #0F8A5F misses 4.5:1 with white at small sizes; `Theme.house()` uses a darker green that passes. v1 `om/house.py` is unchanged.
