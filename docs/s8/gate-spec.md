@@ -137,3 +137,23 @@ English and Arabic (`٣٠ يونيو ٢٠٢٤`).
    manifest with a generator of ours, and regenerating with `scripts/make_intl_fixtures.py --check` reproduces the
    ground truth.
 2. Secret scan over S8 files: no API keys, tokens or passwords.
+
+**G11 North-star (D-032)**
+1. Telemetry: every extraction run writes a record to `evals/intl/telemetry.jsonl` with `doc_sha256`, `pages`,
+   `scanned`, `language`, `wall_seconds`, per-step seconds (`parse`, `ocr`, `extract`, `tieout`, `review`),
+   `tokens` (0 when no model is called), `cost_usd` (0.0 when no model is called), `engine` and `flags`, using the
+   step field names of docs/product/SPEC.md "Telemetry". p95 wall time ≤ 10 min per annual-report FS (≤ 120 pages)
+   on this container's CPU; the median is reported.
+2. Reliability is reported as three separate numbers per eval set (anchors, MENA, XBRL gold) and in `scorecard.csv`:
+   tie-out pass rate (documents whose hard ties all pass), figure accuracy of released figures against gold, and
+   flag rate (figures sent to review ÷ all figures). Zero silent wrong numbers: no released figure differs from gold
+   beyond rounding without a review flag. The gate fails on any silent wrong number in any set.
+3. Review time: each document's record has `review_minutes = Σ flags × minutes_per_flag(reason)` from
+   `evals/intl/review_minutes.csv` (reason classes: low_ocr_conf, tie_fail, unmapped_label, comparative_mismatch,
+   unit_ambiguous; each row cites a source or is marked `[INFERENCE]` with the reasoning), so `eval/tsb/` can add it
+   to review-and-fix time.
+4. Hand-off: `python3 open_multiples.py intl-model <pdf> --out <xlsx>` (or the equivalent `om.intl.pipeline.model_from_report`)
+   turns Almarai's latest annual FS into a tied three-statement workbook through `release()` and an unchanged
+   `om.model3.build`, with balance and cash checks = 0 and every Filings-sheet figure's comment carrying page and bbox.
+   Runs when the anchor PDFs are cached in `data/raw/intl/`; otherwise uses the committed synthetic SAR fixture and
+   prints SKIP for the live part with the reason.
