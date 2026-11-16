@@ -416,3 +416,79 @@ def _():
     s = a.chat([{"role": "user", "content": [{"type": "text", "text": "see"}, part]}], stream=True)
     assert "".join(s) == "Hello"
     return "ok"
+
+
+# ------------------------------------------------------------------------- MCP
+import subprocess  # noqa: E402
+
+
+@check("MCP: stdio subprocess — initialize, tools/list, tools/call, evidence chain")
+def _():
+    from src.harness.mcp.client import MCPClient, MCPError
+    with tempfile.TemporaryDirectory() as d:
+        dbp = os.path.join(d, "grid.duckdb")
+        with S.AnalyticsDB(dbp) as db:
+            S.ensure_grid_schema(db)
+            db.upsert_rows("grid_cells", [{"grid_id": "g1", "doc_id": "10k", "question_id": "rev", "answer": "391,035",
+                                           "exact_quote": "Total net sales 391,035", "page": 28, "bbox_x0": .1,
+                                           "bbox_y0": .2, "bbox_x1": .6, "bbox_y1": .25, "confidence": .95,
+                                           "cost_usd": .001, "content_hash": H,
+                                           "updated_at": "2026-11-16T00:00:00Z"}],
+                           ["grid_id", "doc_id", "question_id"])
+        ev = os.path.join(d, "mcpjob.jsonl")
+        env = dict(os.environ, ACRETIA_MCP_ROOT=d, ACRETIA_GRID_DB=dbp, ACRETIA_EVIDENCE_PATH=ev,
+                   PYTHONPATH=ROOT)
+        c = MCPClient.spawn([sys.executable, "-m", "src.harness.mcp.grid_server"], env=env, timeout=60, cwd=ROOT)
+        try:
+            c.initialize()
+            names = {t["name"] for t in c.list_tools()}
+            assert {"grid_query", "grid_cell", "grid_schema"} <= names, names
+            cell = c.call_tool("grid_cell", {"grid_id": "g1", "doc_id": "10k", "question_id": "rev"})
+            assert "391,035" in json.dumps(cell), cell
+            rows = c.call_tool("grid_query", {"sql": "SELECT answer, page FROM grid_cells WHERE doc_id = ?",
+                                              "params": ["10k"]})
+            assert "391,035" in json.dumps(rows)
+            evil = ["SELECT 1; DROP TABLE grid_cells", "ATTACH '/etc/passwd' AS x", "COPY grid_cells TO 'x.csv'",
+                    "PRAGMA table_info(grid_cells)", "SELECT * FROM read_csv('/etc/passwd')",
+                    "DELETE FROM grid_cells", "SELECT * FROM '/etc/passwd'", "SELECT 1 -- x"]
+            for q in evil:
+                expect_error(lambda: c.call_tool("grid_query", {"sql": q}), MCPError)
+            expect_error(lambda: c.call_tool("nope", {}), MCPError)
+            expect_error(lambda: c.call_tool("grid_cell", {"grid_id": 1}), MCPError)
+            after = c.call_tool("grid_query", {"sql": "SELECT count(*) AS n FROM grid_cells"})
+            assert '1' in json.dumps(after)
+        finally:
+            c.close()
+        r = E.verify(ev)
+        assert r.ok and r.n_records >= 3, r
+    return f"{len(evil)} injections refused; {r.n_records} evidence records"
+
+
+@check("MCP: protocol errors (-32700/-32601/-32602) and path confinement")
+def _():
+    from src.harness.mcp import protocol as Pr  # noqa: F401
+    from src.harness.mcp.server import MCPServer
+    reg = R.ToolRegistry()
+    reg.register("echo", lambda s: s, {"type": "object", "properties": {"s": {"type": "string"}}, "required": ["s"]})
+    srv = MCPServer("t", reg)
+    assert srv.handle({"jsonrpc": "2.0", "id": 1, "method": "nope"})["error"]["code"] == -32601
+    assert srv.handle({"jsonrpc": "2.0", "id": 2, "method": "tools/call",
+                       "params": {"name": "echo", "arguments": {"s": 3}}})["error"]["code"] == -32602
+    assert srv.handle({"jsonrpc": "2.0", "method": "tools/call",
+                       "params": {"name": "echo", "arguments": {"s": "x"}}}) is None
+    p = subprocess.run([sys.executable, "-m", "src.harness.mcp.grid_server"], input=b"{not json\n",
+                       capture_output=True, timeout=60, cwd=ROOT, env=dict(os.environ, PYTHONPATH=ROOT))
+    first = json.loads(p.stdout.decode().splitlines()[0])
+    assert first["error"]["code"] == -32700, first
+    from src.harness.mcp.client import MCPClient, MCPError
+    with tempfile.TemporaryDirectory() as d:
+        os.symlink("/etc", os.path.join(d, "esc"))
+        env = dict(os.environ, ACRETIA_MCP_ROOT=d, PYTHONPATH=ROOT)
+        c = MCPClient.spawn([sys.executable, "-m", "src.harness.mcp.excel_server"], env=env, timeout=60, cwd=ROOT)
+        try:
+            c.initialize()
+            for bad in ("../../etc/passwd", "/etc/passwd", "esc/passwd"):
+                expect_error(lambda: c.call_tool("xlsx_evaluate", {"path": bad, "cells": ["S!A1"]}), MCPError)
+        finally:
+            c.close()
+    return "ok"

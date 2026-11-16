@@ -26,8 +26,8 @@ _FORBIDDEN = {
 
 
 def _strip_literals(sql: str) -> str:
-    """Replace '...' string literals with '' so keywords inside data are not mistaken for SQL."""
-    return re.sub(r"'(?:[^']|'')*'", "''", sql)
+    """Replace '...' string literals with a placeholder so keywords inside data are not mistaken for SQL."""
+    return re.sub(r"'(?:[^']|'')*'", "\x01", sql)
 
 
 def check_select(sql) -> str:
@@ -43,7 +43,7 @@ def check_select(sql) -> str:
         raise ToolFailure("only a single statement is allowed (no ';')")
     if "--" in bare or "/*" in bare or "*/" in bare:
         raise ToolFailure("SQL comments are not allowed")
-    if re.search(r"\b(from|join)\s*(\(\s*)?['\"`]", bare, re.I) or re.search(r"\b(from|join)\s+\$", bare, re.I):
+    if re.search(r"\b(from|join)\s*(\(\s*)?['\"`\x01]", bare, re.I) or re.search(r"\b(from|join)\s+\$", bare, re.I):
         raise ToolFailure("file or string table sources are not allowed")
     words = re.findall(r"[A-Za-z_][A-Za-z_0-9]*", bare.lower())
     if not words or words[0] not in ("select", "with"):
