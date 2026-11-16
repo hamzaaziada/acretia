@@ -164,3 +164,20 @@ English and Arabic (`٣٠ يونيو ٢٠٢٤`).
    `om.model3.build`, with balance and cash checks = 0 and every Filings-sheet figure's comment carrying page and bbox.
    Runs when the anchor PDFs are cached in `data/raw/intl/`; otherwise uses the committed synthetic SAR fixture and
    prints SKIP for the live part with the reason.
+
+**G12 Parity citation items (docs/parity-spec.md 15–17, 20)**
+1. `om.intl.pipeline.locate(figure_or_citation) -> {"doc_sha256", "page", "bbox_norm", "png"}` returns the
+   highlighted page crop in ≤ 2 s (p95 over 50 random figures, scanned Arabic included; timed in the gate).
+2. Every Filings-sheet cell of an intl model carries a comment with doc, page and bbox, plus a link to the source URL
+   when there is one (item 20).
+3. Trace test: the specialist reviewer picks 10 random figures per anchor from `docs/samples/s8/<ticker>/` and traces
+   each to the source page; the median time is < 2 min, recorded in `docs/s8/specialist-review.md` (item 17).
+4. Clean machine: `python3 -m venv` + `pip install -r requirements.txt` + the S8 tests + `verify_s8.py` pass, with
+   tesseract/poppler installed as documented system packages.
+
+**Graders (D-033): no ✅ until all three pass**
+1. This deterministic gate.
+2. A specialist reviewer: a Sonnet "IFRS/EAS accountant" who is not an author, has the pdf/xlsx skills loaded, and
+   grades all 9 anchors against the source reports. It grades figure accuracy, classification, the "how to read"
+   notes, the analyst Q&A, and the model workbook. The score must be ≥ 8.5, recorded in `docs/s8/specialist-review.md`.
+3. Four Haiku personas (IB analyst, EM, PE principal, MENA PE/IB associate), each ≥ 8.5, in `docs/s8/personas.md`.

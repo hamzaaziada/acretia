@@ -1,0 +1,95 @@
+# IFRS as endorsed in the Kingdom of Saudi Arabia (SOCPA)
+
+*Generated from `om/intl/standards/frameworks.yaml`. Authored by Acretia in its own words. Confidence: unverified.*
+
+**Issuer:** SOCPA (Saudi Organization for Chartered and Professional Accountants)  
+**Jurisdictions:** Saudi Arabia
+
+## Summary
+Full IFRS for listed companies and many others since 2017, with one carve-out: zakat and income tax are not accounted for under IAS 12 and IFRIC 21 but follow SOCPA and ZATCA guidance. Zakat on Saudi and GCC owners is therefore shown as its own line and profit is quoted before zakat and income tax. Statements are in SAR, often bilingual, mostly by function, with current/non-current ordering.
+
+## Relationship to full IFRS
+Full IFRS except the zakat and tax carve-out; IFRS for SMEs for small entities.
+
+## Effective dates and caveats
+- Full IFRS for listed companies: periods from 1 Jan 2017 (UNVERIFIED: exact SOCPA circular)
+- Zakat recognised in profit or loss rather than retained earnings: from 2019 (UNVERIFIED)
+
+## Presentation
+- **Profit or loss layout:** By function is typical; profit before zakat and income tax is a standard subtotal.
+- **Balance sheet order:** Current/non-current split; zakat payable appears as a liability.
+- **OCI:** As IFRS, including defined benefit remeasurements of end-of-service obligations.
+
+### Required line items
+**IS**
+
+- Revenue
+- Finance costs
+- Share of profit or loss of associates and joint ventures
+- Tax expense
+- Post-tax result of discontinued operations
+- Profit or loss for the period
+- Profit attributable to owners and to non-controlling interests
+
+**BS**
+
+- Property, plant and equipment
+- Investment property
+- Intangible assets
+- Goodwill
+- Investments accounted for using the equity method
+- Other financial assets
+- Inventories
+- Trade and other receivables
+- Cash and cash equivalents
+- Assets held for sale
+- Trade and other payables
+- Provisions
+- Financial liabilities (borrowings, lease liabilities)
+- Current tax assets and liabilities
+- Deferred tax assets and liabilities
+- Non-controlling interests (within equity)
+- Issued capital and reserves attributable to owners
+
+**CF**
+
+- Cash flows from operating activities
+- Cash flows from investing activities
+- Cash flows from financing activities
+- Net change in cash and cash equivalents
+- Effect of exchange rate changes on cash
+- Cash and cash equivalents at start and end of period
+
+### Cash flow choices
+- Method: Indirect.
+- Interest paid: Usually financing or operating, per policy.
+- Interest received: Operating or investing.
+- Dividends paid: Financing.
+- Dividends received: Operating or investing.
+
+## Measurement bases
+- As IFRS
+- Zakat measured on the zakat base under ZATCA rules, not as temporary-difference tax
+- End-of-service benefits as defined benefit plan under IAS 19 with actuarial valuation
+
+## Key disclosures an analyst reads
+- Zakat and income tax charge split between Saudi/GCC and foreign shareholders
+- Zakat assessment status with ZATCA
+- End-of-service benefit actuarial assumptions
+- IFRS 16 lease disclosures, often large for retailers
+
+## Difference entries involving this framework
+- `diff-leases-ifrs16-asc842` (leases): recipe `ifrs16_to_pre16_ebitda`
+- `diff-leases-net-debt` (leases): recipe `lease_adjusted_net_debt`
+- `diff-revenue-ifrs15-asc606-eas48` (revenue): recipe `revenue_principal_agent_net`
+- `diff-inventory-lifo` (inventory): recipe `lifo_to_fifo`
+- `diff-associates-jvs` (associates_jvs): recipe `associates_share_strip`
+- `diff-fx-translation` (fx_translation): recipe `fx_translate_period_end_average`
+- `diff-fx-devaluation-ias21` (fx_devaluation): recipe `devaluation_fx_loss_normalise`
+- `diff-zakat-vs-income-tax` (zakat_tax): recipe `zakat_as_tax`
+- `diff-eosb-gcc-egypt` (end_of_service): recipe `eosb_as_debt_like`
+- `diff-government-grants` (government_grants): recipe `gov_grant_gross_up`
+
+## Sources
+- SOCPA endorsement of IFRS, Framework adoption and zakat/tax carve-out: <https://socpa.org.sa/>
+- IFRS adoption by jurisdiction, Saudi Arabia profile: <https://www.ifrs.org/use-around-the-world/use-of-ifrs-standards-by-jurisdiction/>

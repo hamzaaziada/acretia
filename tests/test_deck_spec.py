@@ -4,6 +4,11 @@ import sys
 import unittest
 from pathlib import Path
 
+try:
+    import pptx, PIL, fontTools, yaml  # noqa: F401
+except ImportError as e:
+    raise unittest.SkipTest(f"deck deps missing: {e}")
+
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from om.deck import spec  # noqa: E402

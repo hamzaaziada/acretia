@@ -149,12 +149,12 @@ def _normalise_text(text: str) -> str:
     return unicodedata.normalize("NFKC", text)
 
 
-def extract_numbers(text) -> list[tuple[float, str]]:
-    """All numbers in ``text`` as ``(value_in_base_units, unit_hint)``. See module docstring for conventions."""
+def _extract_full(text):
+    """-> list[(value, hint, magnitude_applied)]; the shared core of :func:`extract_numbers`."""
     if not isinstance(text, str):
         return []
     t = _normalise_text(text)
-    out: list[tuple[float, str]] = []
+    out = []
     for m in _NUM_RE.finditer(t):
         first = m.start()
         while first < len(t) and t[first].isspace():
@@ -163,7 +163,7 @@ def extract_numbers(text) -> list[tuple[float, str]]:
         has_lead = any(m.group(g) for g in ("open", "sign", "cur", "sign2"))
         if not has_lead and (prev.isalnum() or prev in "_."):
             continue                      # glued to a word / decimal tail: "Q3", "FY24", "v1.2"
-        suf = (m.group("suf1") or m.group("suf2") or "").lower().replace(" ", "")
+        suf = re.sub(r"\s+", "", (m.group("suf1") or m.group("suf2") or "").lower())
         nxt = t[m.end("num")] if m.end("num") < len(t) else " "
         if not suf and nxt.isalpha():
             continue                      # "5th", "3Q"
@@ -179,19 +179,22 @@ def extract_numbers(text) -> list[tuple[float, str]]:
             neg = True
         if neg:
             v = -v
-        hint = _CUR.get((m.group("cur") or "").lower(), "")
-        if suf in ("%", "percent", "percent"):
-            hint = "%"
-        elif suf in ("percent", "per cent", "percent") or suf.startswith("percent") or suf == "percent":
+        hint, mag = _CUR.get((m.group("cur") or "").lower(), ""), False
+        if suf in ("%", "percent"):
             hint = "%"
         elif suf in ("bps", "bp") or suf.startswith("basispoint"):
             hint = "bps"
-        elif suf in ("x", "×"):
+        elif suf in ("x", "\u00d7"):
             hint = "x"
         elif suf in _SCALE_WORD:
-            v *= _SCALE_WORD[suf]
-        out.append((v, hint))
+            v, mag = v * _SCALE_WORD[suf], True
+        out.append((v, hint, mag))
     return out
+
+
+def extract_numbers(text) -> list[tuple[float, str]]:
+    """All numbers in ``text`` as ``(value_in_base_units, unit_hint)``. See module docstring for conventions."""
+    return [(v, h) for v, h, _ in _extract_full(text)]
 
 
 # --------------------------------------------------------------------------------------------- units / scale
@@ -309,26 +312,15 @@ def _v_xbrl(fig, resolver, tol, kind, scale):
 
 
 def _quote_numbers(quote: str, context: str):
-    """Numbers of the quote normalised to comparable form, plus scale notes. -> (list[(norm, hint, raw)], ambiguous)"""
-    qscales = _declared_scales(quote)
-    cscales = qscales or _declared_scales(context)
+    """Numbers of the quote as (comparable value, hint, stated value) and whether the scale is ambiguous. A unitless
+    number is multiplied by the quote's (else the page's) declared table scale; explicit magnitude words win."""
+    cscales = _declared_scales(quote) or _declared_scales(context)
     ambiguous = len(cscales) > 1
     scale = next(iter(cscales)) if len(cscales) == 1 else 1.0
-    t = _normalise_text(quote)
     res = []
-    # A number written with its own magnitude word is already scaled by extract_numbers; detect that by comparing
-    # with the version of the text that has the magnitude words stripped is overkill: instead re-extract per match.
-    for m in _NUM_RE.finditer(t):
-        sub = extract_numbers(m.group(0))
-        if not sub:
-            continue
-        v, hint = sub[0]
-        suffixed = bool(m.group("suf1") or m.group("suf2")) and hint in ("", "USD", "EUR", "GBP", "JPY", "CHF") \
-            and abs(v) != abs(float(re.sub(r"[^\d.]", "", m.group("num").replace(",", "")) or 0)) or False
-        raw_v = v
-        if hint in ("", "USD", "EUR", "GBP", "JPY", "CHF") and not suffixed:
-            v = v * scale
-        res.append((v, hint, raw_v))
+    for v, hint, mag in _extract_full(quote):
+        plain = hint in ("", "USD", "EUR", "GBP", "JPY", "CHF") and not mag
+        res.append((v * scale if plain else v, hint, v))
     return res, ambiguous
 
 
@@ -532,8 +524,7 @@ def _slide_numbers(node, ctx, out, path, slide_ctx):
     if isinstance(node, str):
         s = _ISO_DATE.sub(" ", node)
         for v, hint in extract_numbers(s):
-            unit = bool(re.search(r"[$€£¥%]|\d\s?(?:bn|mn|mm|[kmbt]|x)\b", s, re.I))
-            if _is_exempt(v, hint, unit and False):
+            if _is_exempt(v, hint, False):
                 continue
             out.append((path, v, hint, True, " ".join([s] + ctx + slide_ctx), s))
     elif isinstance(node, bool):

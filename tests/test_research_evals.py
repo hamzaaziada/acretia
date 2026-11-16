@@ -18,6 +18,11 @@ FX = datasets.FIXTURES
 H = "a" * 64
 
 
+def read_rows(p):
+    with open(p, newline="") as fh:
+        return list(csv.DictReader(fh))
+
+
 def fig(value, units="USD_m", cited=True, label="Revenue", page=41, quote=""):
     c = {"doc_id": "EXMP_2022_10K", "sha256_span_hash": H if cited else "", "page": page, "quote": quote, "as_of": "2023-01-01"}
     return {"label": label, "value": value, "units": units, "period": "FY2022", "citation": c}
@@ -86,8 +91,7 @@ class Scoring(NoNetwork):
         self.assertTrue(numbers_match(parse_numbers("$1.5 billion")[0], normalise_figure(1500, "USD_m")))
         self.assertTrue(numbers_match(parse_numbers("12.5%")[0], normalise_figure(12.5, "pct")))
         self.assertTrue(numbers_match(parse_numbers("80bps")[0], normalise_figure(0.8, "pct")))
-        self.assertTrue(numbers_match(parse_numbers("(5.2)")[0] | {"value": -5.2} if False else parse_numbers("-5.2")[0],
-                                      normalise_figure(-5.2, "x")))
+        self.assertTrue(numbers_match(parse_numbers("-5.2")[0], normalise_figure(-5.2, "x")))
         self.assertEqual(parse_numbers("FY 2024 Q4"), [])                        # years / quarter labels are not numbers
 
     def test_tolerance_and_exact_counts(self):
@@ -135,14 +139,14 @@ class Scorecard(NoNetwork):
                                          "ran_live": "yes" if live else "no", "date": "2026-11-16", "notes": "n"}
             update_scorecard(p, [row("research/vals-v1", "strict_accuracy", "", False),     # replay must not clobber live
                                  row("research/btb", "items_run", "", False)])
-            rows = list(csv.DictReader(p.open()))
+            rows = read_rows(p)
             self.assertEqual(rows[0]["extra"], "x1")
             self.assertEqual(rows[0]["notes"], "keep me")
             live = [r for r in rows if r["suite"] == "research/vals-v1"][0]
             self.assertEqual((live["value"], live["ran_live"]), ("0.5", "yes"))
             self.assertTrue(any(r["suite"] == "research/btb" for r in rows))
             update_scorecard(p, [row("research/vals-v1", "strict_accuracy", "0.6", True)])   # live may update live
-            rows = list(csv.DictReader(p.open()))
+            rows = read_rows(p)
             self.assertEqual([r["value"] for r in rows if r["suite"] == "research/vals-v1"], ["0.6"])
             self.assertEqual(len(rows), 3)
 
@@ -187,7 +191,7 @@ class Runner(NoNetwork):
             self.assertEqual(s["suites"]["btb"]["n_unscorable"], 2)
             summ = json.loads((Path(d) / "out" / "summary.json").read_text())
             self.assertEqual(summ["mode"], "replay")
-            rows = list(csv.DictReader(card.open()))
+            rows = read_rows(card)
             self.assertTrue(rows and all(r["ran_live"] == "no" and r["value"] == "" for r in rows))
             self.assertTrue(all("not run live (D-021)" in r["notes"] for r in rows))
             self.assertEqual({r["suite"] for r in rows}, {"research/vals-v1", "research/vals-v2", "research/financebench",

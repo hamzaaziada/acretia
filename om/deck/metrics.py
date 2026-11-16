@@ -1,13 +1,15 @@
 """Real glyph metrics for text fitting (fontTools cmap + hmtx), PowerPoint-style greedy wrap.
 
 Measurement only: fonts are metric-compatible proxies (Arial->Liberation Sans, Calibri->Carlito,
-Cambria->Caladea/Liberation Serif, Arabic->Noto Sans Arabic). Missing fonts fall back to DejaVu
-with a warning, never a crash. Line breaking stays in logical order; python-bidi is not used.
+Cambria->Caladea/Liberation Serif, Arabic->Noto Sans Arabic); on macOS/Windows the real Arial, Calibri,
+Cambria etc. are found by file name. Missing fonts fall back to DejaVu, then to a constant-width
+estimate, with a warning, never a crash. ACRETIA_FONT_DIRS overrides the search roots. Line breaking stays in logical order; python-bidi is not used.
 """
 from __future__ import annotations
 
 import os
 import re
+import shutil
 import subprocess
 import warnings
 from dataclasses import dataclass
@@ -19,15 +21,50 @@ LINE_FACTOR = 1.2      # line height = 1.2 x size x line_spacing
 HOUSE_FONTS = {"major": "Cambria", "minor": "Arial"}
 _ARABIC_RE = re.compile(r"[؀-ۿݐ-ݿࢠ-ࣿﭐ-﷿ﹰ-﻿]")
 
-_DIRS = ["/usr/share/fonts/truetype", "/usr/share/fonts", "/Library/Fonts", "/System/Library/Fonts"]
-# family key -> (fc-match proxy name, known file names; regular and bold variants by "Bold" in name)
+# Search roots, in order. ACRETIA_FONT_DIRS (os.pathsep-separated) replaces the list and disables
+# fc-match, so a macOS or Windows layout can be simulated on Linux.
+_DEFAULT_DIRS = [
+    "/usr/share/fonts", "/usr/local/share/fonts", "~/.fonts", "~/.local/share/fonts",   # Linux
+    "/System/Library/Fonts/Supplemental", "/System/Library/Fonts", "/Library/Fonts", "~/Library/Fonts",  # macOS
+    "C:/Windows/Fonts",                                                                  # Windows
+]
+# key -> (fc-match proxy, ((regular files...), (bold files...))); real fonts and proxies, first hit wins
 _PROXY = {
-    "arial": ("Liberation Sans", ("LiberationSans-Regular.ttf", "LiberationSans-Bold.ttf", "Arial.ttf", "Arial Bold.ttf")),
-    "calibri": ("Carlito", ("Carlito-Regular.ttf", "Carlito-Bold.ttf", "Calibri.ttf", "Calibri Bold.ttf")),
-    "cambria": ("Caladea", ("Caladea-Regular.ttf", "Caladea-Bold.ttf", "LiberationSerif-Regular.ttf", "LiberationSerif-Bold.ttf")),
-    "arabic": ("Noto Sans Arabic", ("NotoSansArabic-Regular.ttf", "NotoSansArabic-Bold.ttf")),
-    "dejavu": ("DejaVu Sans", ("DejaVuSans.ttf", "DejaVuSans-Bold.ttf")),
+    "arial": ("Liberation Sans", (
+        ("LiberationSans-Regular.ttf", "Arial.ttf", "arial.ttf"),
+        ("LiberationSans-Bold.ttf", "Arial Bold.ttf", "arialbd.ttf"))),
+    "calibri": ("Carlito", (
+        ("Carlito-Regular.ttf", "Calibri.ttf", "calibri.ttf"),
+        ("Carlito-Bold.ttf", "Calibri Bold.ttf", "calibrib.ttf"))),
+    "cambria": ("Caladea", (
+        ("Caladea-Regular.ttf", "Cambria.ttf", "cambria.ttc", "LiberationSerif-Regular.ttf", "Times New Roman.ttf", "times.ttf"),
+        ("Caladea-Bold.ttf", "Cambria Bold.ttf", "cambriab.ttf", "LiberationSerif-Bold.ttf", "Times New Roman Bold.ttf", "timesbd.ttf"))),
+    "arabic": ("Noto Sans Arabic", (
+        ("NotoSansArabic-Regular.ttf", "NotoSansArabic[wdth,wght].ttf", "NotoSansArabic.ttf", "Arial.ttf", "arial.ttf",
+         "GeezaPro.ttc", "Geeza Pro.ttc", "Tahoma.ttf", "tahoma.ttf", "DejaVuSans.ttf"),
+        ("NotoSansArabic-Bold.ttf", "NotoSansArabic[wdth,wght].ttf", "NotoSansArabic.ttf", "Arial Bold.ttf", "arialbd.ttf",
+         "GeezaPro.ttc", "Geeza Pro.ttc", "Tahoma Bold.ttf", "tahomabd.ttf", "DejaVuSans-Bold.ttf"))),
+    "dejavu": ("DejaVu Sans", (("DejaVuSans.ttf",), ("DejaVuSans-Bold.ttf",))),
 }
+
+
+def _dirs() -> list[str]:
+    env = os.environ.get("ACRETIA_FONT_DIRS")
+    raw = [d for d in env.split(os.pathsep) if d] if env is not None else _DEFAULT_DIRS
+    return [os.path.expanduser(d) for d in raw]
+
+
+@lru_cache(maxsize=None)
+def _index(dirs: tuple[str, ...]) -> dict[str, str]:
+    """Lower-cased basename -> path over all font roots (earlier roots win)."""
+    out: dict[str, str] = {}
+    for d in dirs:
+        if not os.path.isdir(d):
+            continue
+        for root, _, files in os.walk(d):
+            for n in files:
+                out.setdefault(n.lower(), os.path.join(root, n))
+    return out
 
 
 @dataclass
@@ -44,24 +81,17 @@ class Measure:
     line_texts: list[str]
 
 
-def _find_file(names: tuple[str, ...], bold: bool) -> str | None:
-    want = [n for n in names if ("Bold" in n) == bold]
-    for d in _DIRS:
-        if not os.path.isdir(d):
-            continue
-        for root, _, files in os.walk(d):
-            for n in want:
-                if n in files:
-                    return os.path.join(root, n)
+def _find_file(names: tuple[str, ...]) -> str | None:
+    idx = _index(tuple(_dirs()))
+    for n in names:
+        if n.lower() in idx:
+            return idx[n.lower()]
     return None
 
 
-@lru_cache(maxsize=None)
-def _resolve(family: str, bold: bool) -> str | None:
-    key = family.lower()
-    if key in ("major", "minor"):
-        key = HOUSE_FONTS[key].lower()
-    proxy, names = _PROXY.get(key, (family, ()))
+def _fc_match(proxy: str, bold: bool) -> str | None:
+    if os.environ.get("ACRETIA_FONT_DIRS") is not None or not shutil.which("fc-match"):
+        return None
     try:
         out = subprocess.run(["fc-match", "-f", "%{file}|%{family}", f"{proxy}:{'bold' if bold else 'regular'}"],
                              capture_output=True, text=True, timeout=5).stdout
@@ -70,13 +100,63 @@ def _resolve(family: str, bold: bool) -> str | None:
             return path
     except Exception:
         pass
-    return _find_file(names, bold) if names else None
+    return None
 
 
 @lru_cache(maxsize=None)
-def _load(path: str) -> tuple[dict[int, str], dict[str, int], int]:
+def _resolve(family: str, bold: bool) -> str | None:
+    """Exact resolution only (no fallback): fc-match proxy, then known file names in the search roots."""
+    key = family.lower()
+    if key in ("major", "minor"):
+        key = HOUSE_FONTS[key].lower()
+    if key in _PROXY:
+        proxy, (reg, bld) = _PROXY[key]
+        return _fc_match(proxy, bold) or _find_file(bld if bold else reg)
+    base = family.strip()
+    return _find_file((f"{base} Bold.ttf", f"{base}.ttf") if bold else (f"{base}.ttf",))
+
+
+_WARNED: set[str] = set()
+
+
+def font_path(font: str, bold: bool = False, arabic: bool = False) -> str | None:
+    """Path of the font file used to measure `font` (real font, else metric proxy, else DejaVu), or None."""
+    fam = "arabic" if arabic else font
+    path = _resolve(fam, bold)
+    if path is None:
+        path = _resolve("dejavu", bold)
+        if f"{fam}|{path}" not in _WARNED:
+            _WARNED.add(f"{fam}|{path}")
+            warnings.warn(f"font {fam!r} not found; falling back to DejaVu Sans", stacklevel=3)
+    return path
+
+
+def available() -> dict:
+    """Which proxies were found: {key: {"regular": path|None, "bold": path|None}}."""
+    return {k: {"regular": _resolve(k, False), "bold": _resolve(k, True)} for k in _PROXY}
+
+
+def _pick_face(path: str, bold: bool) -> int:
+    """Index of the upright regular/bold face inside a .ttc collection (0 when none matches)."""
+    from fontTools.ttLib import TTCollection
+    coll = TTCollection(path)
+    try:
+        for i, f in enumerate(coll.fonts):
+            sub = (f["name"].getDebugName(2) or "").lower()
+            if "italic" not in sub and "oblique" not in sub and ("bold" in sub) == bold:
+                return i
+        return 0
+    finally:
+        coll.close()
+
+
+@lru_cache(maxsize=None)
+def _load(path: str, bold: bool = False) -> tuple[dict[int, str], dict[str, int], int]:
     from fontTools.ttLib import TTFont
-    f = TTFont(path)
+    if path.lower().endswith((".ttc", ".otc")):
+        f = TTFont(path, fontNumber=_pick_face(path, bold))
+    else:
+        f = TTFont(path)
     try:
         adv = {g: m[0] for g, m in f["hmtx"].metrics.items()}
         return f.getBestCmap(), adv, f["head"].unitsPerEm
@@ -86,13 +166,15 @@ def _load(path: str) -> tuple[dict[int, str], dict[str, int], int]:
 
 @lru_cache(maxsize=None)
 def _font(family: str, bold: bool) -> tuple[dict[int, str], dict[str, int], int]:
-    path = _resolve(family, bold)
-    if path is None:
-        warnings.warn(f"font {family!r} not found; falling back to DejaVu Sans", stacklevel=3)
-        path = _resolve("dejavu", bold)
-    if path is None:
-        raise RuntimeError("no usable fonts found for measurement")
-    return _load(path)
+    path = font_path(family, bold)
+    if path is not None:
+        try:
+            return _load(path, bold)
+        except Exception as e:   # unreadable font file: degrade, never crash
+            warnings.warn(f"font file {path} unreadable ({e}); using constant-width estimate", stacklevel=3)
+    else:
+        warnings.warn("no usable fonts found; using constant-width estimate", stacklevel=3)
+    return {}, {}, 2   # every glyph 0.5 em, the same estimate used for unmapped characters
 
 
 def family_for(font: str, theme: Theme | None = None) -> str:

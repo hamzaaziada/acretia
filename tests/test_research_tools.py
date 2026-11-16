@@ -165,7 +165,7 @@ class WebTools(Base):
 
     def test_parse_amount(self):
         self.assertEqual(T.parse_amount("$1,234.5 million"), (1234.5, "USD million"))
-        self.assertEqual(T.parse_amount("(12.5)%"), (-12.5, "%"))
+        self.assertEqual(T.parse_amount("(12.5%)"), (-12.5, "%"))
         self.assertEqual(T.parse_amount("1,000"), (1000.0, "number"))
         self.assertIsNone(T.parse_amount("about 5 million"))
         self.assertIsNone(T.parse_amount("n/a"))

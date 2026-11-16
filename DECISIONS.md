@@ -72,3 +72,11 @@ Newest last. Each entry gives the choice and why. Agents add entries here instea
 - **D-S3-08 Offline visuals stay generative.** With no image endpoint and no key (cloud CI), the SVG designer cannot run either, so a seeded procedural generator per art direction produces the candidates; seeds are random per run, scoring and the variety rules stay deterministic. The image model is probed on every run and used whenever it answers (D-025).
 - **D-S3-09 Model calls go through `src/harness/adapter.py`** (D-027, landed in S2.1): the vision critic and the integration packet use it; earlier wave-1 modules that used `om/llm.py` are switched in the integration packet.
 - **D-S1-02 (2026-11-16) pyuno client import is allowed, narrowly.** `om/recalc.py` (session C) imports `uno`/`com.sun.star`, LibreOffice's MPL-2.0 Python bridge, in-process. It only talks over a socket to a separate headless `soffice` process, so the LibreOffice engine (MPL-2.0 with some GPL/LGPL components) still runs isolated. Importing an unmodified MPL-2.0 module is permitted. The S1 gate allows exactly `(om/recalc.py, uno)` and `(om/recalc.py, com)`; any other in-process import of an `isolated_service` row still fails.
+- **D-033 (2026-11-16) Parity is the acceptance bar, with real graders (user direction).** Anything below Hebbia/Rogo parity in UX, UI, features, quality or speed is rejected. Every stage needs three independent graders: a deterministic gate written by a different worker, a specialist reviewer (Sonnet, with skills, judging rendered outputs), and the buyer personas. Sessions must use the best skills installed in their environment.
+- **D-034 (2026-11-16) Harness lab (user direction).** A dedicated session G owns the agent runtime (S9). The design follows `docs/harness-research.md`:
+  - hybrid fixed workflows with bounded agent steps;
+  - the evidence ledger with `{{ev:id}}` references, so no model-written numbers;
+  - a deterministic verifier ladder plus a cross-family critic;
+  - single-writer artifacts;
+  - cascade-on-failure routing;
+  - harness evals with silent-error rate as the headline metric and CI gating.

@@ -1,4 +1,10 @@
 """S3.11 generative visual layer: probe, procedural art, candidate fall-through, scoring, variety rules, learning log."""
+import unittest
+
+try:
+    import pptx, PIL, fontTools  # noqa: F401,E401
+except ImportError as e:
+    raise unittest.SkipTest(f"deck deps missing: {e}")
 import io
 import os
 import random
@@ -33,6 +39,18 @@ class Probe(unittest.TestCase):
         self.assertTrue(st["reason"])
         with _fresh(), mock.patch.object(socket, "socket", boom):
             self.assertFalse(probe.image_endpoint(force=True)["available"])
+
+    def test_adapter_replay_and_offline_flag_make_no_call(self):
+        def boom(*a, **k):
+            raise AssertionError("transport used")
+        class Rep:
+            mode = "replay"
+        with _fresh({"OM_IMAGE_MODEL": "openai", "OPENAI_API_KEY": "k"}):
+            a = probe.image_endpoint(adapter=Rep(), transport=boom, force=True)
+            b = probe.image_endpoint(transport=boom, force=True, offline=True)
+        self.assertFalse(a["available"])
+        self.assertFalse(b["available"])
+        self.assertIn("replay", a["reason"])
 
     def test_gateway_path_not_exposed(self):
         calls = []
@@ -89,13 +107,14 @@ class Procedural(unittest.TestCase):
 
 
 class Raising:
-    def complete_json(self, *a, **k):
+    """Adapter whose every call fails (replay miss)."""
+    def chat(self, *a, **k):
         raise RuntimeError("replay miss")
 
 
 class Candidates(unittest.TestCase):
     def test_falls_through_to_procedural(self):
-        cs = generate.candidates("risk map", "isometric_system", 3, router=Raising(), image_status={"available": False}, seed=5)
+        cs = generate.candidates("risk map", "isometric_system", 3, adapter=Raising(), image_status={"available": False}, seed=5)
         self.assertEqual({c.source for c in cs}, {"procedural"})
         self.assertEqual(len(cs), 3)
         self.assertEqual(len({c.prompt for c in cs}), 3)
@@ -112,22 +131,22 @@ class Candidates(unittest.TestCase):
         class Bad:
             def generate(self, *a, **k):
                 raise RuntimeError("down")
-        cs = generate.candidates("x", "data_art", 2, router=Raising(), image_status={"available": True, "client": Bad()}, seed=1)
+        cs = generate.candidates("x", "data_art", 2, adapter=Raising(), image_status={"available": True, "client": Bad()}, seed=1)
         self.assertEqual({c.source for c in cs}, {"procedural"})
 
     def test_svg_designer(self):
         svg = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 90"><rect width="80" height="90" fill="#1F3C88"/></svg>'
 
         class R:
-            def complete_json(self, stage, system, parts, schema, **kw):
-                from om.llm import Result
-                return Result({"svg": svg})
+            def chat(self, messages, *, json_schema=None, job_id=None, **kw):
+                from types import SimpleNamespace
+                return SimpleNamespace(data={"svg": svg})
         png = procedural.render("data_art", seed=2)[0]
         with mock.patch("om.images.render_svg", return_value=png):
-            cs = generate.candidates("x", "data_art", 2, router=R(), image_status={"available": False}, seed=1)
+            cs = generate.candidates("x", "data_art", 2, adapter=R(), image_status={"available": False}, seed=1)
         self.assertEqual({c.source for c in cs}, {"svg_designer"})
         with mock.patch("om.images.render_svg", return_value=None):   # no renderer installed -> procedural
-            cs = generate.candidates("x", "data_art", 1, router=R(), image_status={"available": False}, seed=1)
+            cs = generate.candidates("x", "data_art", 1, adapter=R(), image_status={"available": False}, seed=1)
         self.assertEqual(cs[0].source, "procedural")
 
 
@@ -147,17 +166,20 @@ class Scoring(unittest.TestCase):
         self.assertLess(score.score(buf.getvalue())["accent"], 6)
 
     def test_choose_and_vlm(self):
-        cs = generate.candidates("x", "duotone_hero", 3, router=None, seed=9)
+        cs = generate.candidates("x", "duotone_hero", 3, adapter=None, seed=9)
         best, scores = score.choose(cs)
         self.assertIn(best.id, scores)
         self.assertEqual(max(s["final"] for s in scores.values()), scores[best.id]["final"])
         self.assertIsNone(score.vlm_score(cs[0], Raising()))
 
         class Crit:
-            def complete_task(self, task, system, parts, schema, **kw):
-                from om.llm import Result
-                return Result({"score": 10.0 if parts[0].image == cs[2].png else 0.0})
-        best, scores = score.choose(cs, router=Crit())
+            def chat(self, messages, *, json_schema=None, job_id=None, **kw):
+                from types import SimpleNamespace
+                url = messages[1]["content"][1]["image_url"]["url"]
+                import base64
+                png = base64.b64decode(url.split(",", 1)[1])
+                return SimpleNamespace(data={"score": 10.0 if png == cs[2].png else 0.0})
+        best, scores = score.choose(cs, adapter=Crit())
         self.assertAlmostEqual(scores[cs[2].id]["final"], (scores[cs[2].id]["overall"] + 10) / 2, places=1)
 
 

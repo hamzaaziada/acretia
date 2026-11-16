@@ -23,6 +23,7 @@ from __future__ import annotations
 from datetime import date
 
 from . import statements as stm
+from .polish import finish, football_field, section, trend, waterfall
 from .xlsx import BLUE, GREEN, GREY, NAVY, Workbook, col_letter, quote_sheet, ref
 
 F = 5                       # forecast years
@@ -491,6 +492,13 @@ def build_workbook(s: stm.Statements, *, assumptions: dict | None = None, circ: 
     CK.line("c_debt", "Term debt and revolver are not negative", None, lambda p: ok(f"AND({DT.at('debt_end', p)}>=-Tol,{DT.at('rev_end', p)}>=-Tol)"), fmt="text")
     CK.line("c_min", "Cash at or above the minimum", None, lambda p: ok(f"{BS.at('cash', p)}>={DT.at('min_cash', p)}-Tol"), fmt="text")
     CK.line("c_ppe", "PP&E roll-forward ties", None, lambda p: ok(f"ABS({SC.at('ppe_end', p)}-{BS.at('ppe', p)})<Tol"), fmt="text")
+    bt, bl = COV["bridge"] + 1, COV["bridge"] + BRIDGE_STEPS
+    CK.line("c_bridge", "Dashboard bridge (EBITDA to unlevered FCF) ties to the DCF", None,
+            lambda p: ok(f"ABS(SUM(Cover!$C${bt}:$C${bl - 1})-Cover!$C${bl})<Tol") if p == H else None, fmt="text")
+    fl_, fh_ = COV["ff"] + 1, COV["ff"] + 2
+    CK.line("c_ff", "Dashboard football-field ranges bracket the base value per share", None,
+            lambda p: ok(f"AND(Cover!$C${fl_}<=DCF!$C${DCF_PS_ROW}+Tol,DCF!$C${DCF_PS_ROW}<=Cover!$D${fl_}+Tol,"
+                         f"Cover!$C${fh_}<=DCF!$D${DCF_PS_ROW}+Tol,DCF!$D${DCF_PS_ROW}<=Cover!$D${fh_}+Tol)") if p == H else None, fmt="text")
     CK.section("Ties to the filing (actuals)")
     CK.line("c_eps", "Diluted EPS = reported (within 2% or half a cent)", lambda p: (
         ok(f"ABS({IS.at('eps', p)}-{FL.at('eps_diluted', p)})<=MAX(TolEPS*ABS({FL.at('eps_diluted', p)}),TolCents)") if s.get("eps_diluted", p) else None),
@@ -544,14 +552,18 @@ def build_workbook(s: stm.Statements, *, assumptions: dict | None = None, circ: 
     m.ctx = ""
 
     _dcf(m, DCF, IS, BS, CF, A)
-    _cover(m, cover, IS, CF, CK)
+    _cover(m, cover, IS, CF, CK, DT)
     # sheet order: Cover first, Filings last
     order = ["Cover", "Assumptions", "IS", "BS", "CF", "Schedules", "Debt", "DCF", "Checks", "Filings"]
     wb.sheets.sort(key=lambda sh: order.index(sh.name))
     from .formula import calculate_workbook
     eng = calculate_workbook(wb)
+    blocks = {"hist": (C0, C0 + H - 1), "proj": (C0 + H, C0 + H + F - 1)}
+    finish(wb, model_name=f"{s.name} integrated model", source="Source: company filings (SEC EDGAR)",
+           period_sheets={nm: dict(blocks) for nm in ("Assumptions", "IS", "BS", "CF", "Schedules", "Debt", "Checks", "Filings")})
     meta = {"converged": eng.converged, "iterations": eng.iterations, "ticker": s.ticker, "name": s.name, "years": [y.isoformat() for y in s.years], "forecast_years": F,
-            "warnings": s.warnings, "defaults": d, "rows": {g.name: g.rows for g in (IS, BS, CF, SC, DT, CK, A, FL)}}
+            "warnings": s.warnings, "defaults": d, "rows": {g.name: g.rows for g in (IS, BS, CF, SC, DT, CK, A, FL)},
+            "charts": [{"sheet": "Cover", "kind": c["kind"], "title": c["title"]} for c in cover.charts]}
     return wb, meta
 
 
@@ -686,12 +698,20 @@ def _dcf(m: _Model, sh, IS: _Grid, BS: _Grid, CF: _Grid, A: _Grid) -> None:
 
 
 # --------------------------------------------------------------------------- cover
-def _cover(m: _Model, sh, IS: _Grid, CF: _Grid, CK: _Grid) -> None:
+# Fixed dashboard layout (rows) so the Checks sheet can tie out the chart tables before the Cover is written.
+COV = dict(kpi=13, summary=23, charts1=33, charts2=52, data=71, bridge=73, ff=82)
+BRIDGE_STEPS = 6                     # EBITDA, taxes, capex, working capital, other, unlevered FCF
+DCF_PS_ROW = 48                      # DCF value-per-share row (C = perpetuity growth, D = exit multiple)
+DCF_GRIDS = ("$D$58:$H$62", "$D$68:$H$72")
+
+
+def _cover(m: _Model, sh, IS: _Grid, CF: _Grid, CK: _Grid, DT: _Grid) -> None:
     s, H = m.s, m.H
     m.ctx = "Cover"
+    n = H + F
     sh.width("A", 3)
     sh.width("B", 40)
-    for cc in range(3, 3 + H + F):
+    for cc in range(3, 15):
         sh.width(cc, 11.5)
     sh.set("B2", f"{s.name} ({s.ticker})", kind="title", size=18)
     sh.set("B3", "Integrated three-statement model and DCF, built from SEC filings", kind="note")
@@ -703,34 +723,95 @@ def _cover(m: _Model, sh, IS: _Grid, CF: _Grid, CK: _Grid) -> None:
     sh.set("B10", "Interest circularity", bold=True); sh.set("C10", '=IF(Circ=1,"On (iterative calculation)","Off (opening balances)")')
     sh.set("B11", "MASTER CHECK", bold=True); sh.set("C11", f"={CK.at('master', 0)}", bold=True)
     sh.ok_error("C11")
-    sh.set("B13", "Summary", bold=True, color=NAVY, bottom=True)
-    for p in range(H + F):
-        sh.set((13, 3 + p), m.period_label(p), bold=True, align="right", bottom=True)
+
+    # ---- key metrics
+    k0 = COV["kpi"]
+    section(sh, k0, "Key metrics", 2, 4)
+    lh, lf = H - 1, H + F - 1
+    fy = lambda p: m.period_label(p)
+    kpis = [(f"Revenue, {fy(lh)}", f"={IS.at('rev', lh)}", "num0", "latest actual"),
+            (f"Revenue CAGR, {fy(lh)}–{fy(lf)}", f"=({IS.at('rev', lf)}/{IS.at('rev', lh)})^(1/COLUMNS({IS.rng('rev', H, lf)}))-1", "pct", "forecast period"),
+            (f"EBITDA margin, {fy(lh)}", f"={IS.at('ebitda_m', lh)}", "pct", "latest actual"),
+            (f"EBITDA margin, {fy(lf)}", f"={IS.at('ebitda_m', lf)}", "pct", "final forecast year"),
+            (f"Free cash flow, {fy(H)}", f"={CF.at('fcf', H)}", "num0", "first forecast year"),
+            (f"Total debt / EBITDA, {fy(lh)}", f"={DT.at('lev', lh)}", "x", "latest actual"),
+            ("DCF value per share, perpetuity growth", f"=DCF!{ref(DCF_PS_ROW, 3)}", "usd2", "base case"),
+            ("DCF value per share, exit multiple", f"=DCF!{ref(DCF_PS_ROW, 4)}", "usd2", "base case")]
+    for i, (label, f, fmt, note) in enumerate(kpis):
+        sh.set((k0 + 1 + i, 2), label)
+        sh.set((k0 + 1 + i, 3), f, fmt=fmt, bold=True)
+        sh.set((k0 + 1 + i, 4), note, kind="note")
+
+    # ---- summary (chart source rows)
+    s0 = COV["summary"]
+    sh.set((s0, 2), "Summary", bold=True, color=NAVY, bottom=True)
+    for p in range(n):
+        sh.set((s0, C0 + p), f"=IS!{ref(5, C0 + p)}", bold=True, align="right", bottom=True)
     rows = [("Revenue", IS, "rev", "num0"), ("% growth", IS, "rev_g", "pct"), ("EBITDA", IS, "ebitda", "num0"), ("% margin", IS, "ebitda_m", "pct"),
             ("Net income", IS, "ni", "num0"), ("Diluted EPS", IS, "eps", "usd2"), ("Free cash flow", CF, "fcf", "num0")]
+    srow = {}
     for i, (label, g, k, fmt) in enumerate(rows):
-        sh.set((14 + i, 2), label, indent=1 if label.startswith("%") else 0, italic=label.startswith("%"))
-        for p in range(H + F):
+        srow[k] = s0 + 1 + i
+        sh.set((s0 + 1 + i, 2), label, indent=1 if label.startswith("%") else 0, italic=label.startswith("%"))
+        for p in range(n):
             if k == "rev_g" and p == 0:
                 continue
-            sh.set((14 + i, 3 + p), f"={g.at(k, p)}", fmt=fmt)
-    sh.set("B23", "Colour code", bold=True, color=NAVY, bottom=True)
-    sh.set("B24", "Hard-coded input or figure as filed", color=BLUE)
-    sh.set("B25", "Formula on this sheet")
-    sh.set("B26", "Link to another sheet", color=GREEN)
-    sh.set("B28", "Contents", bold=True, color=NAVY, bottom=True)
+            sh.set((s0 + 1 + i, 3 + p), f"={g.at(k, p)}", fmt=fmt)
+
+    # ---- charts
+    row_rng = lambda r, c1=0: f"Cover!{ref(r, C0 + c1, True, True)}:{ref(r, C0 + n - 1, True, True)}"
+    cats = row_rng(s0)
+    c1, c2 = COV["charts1"], COV["charts2"]
+    section(sh, c1 - 1, "Charts", 2, 14)
+    trend(sh, title="Revenue and EBITDA", cats=cats, series=[("Revenue", row_rng(srow["rev"])),
+                                                              ("EBITDA", row_rng(srow["ebitda"]))],
+          anchor=(f"B{c1}", f"F{c1 + 17}"), y_format="num0")
+    trend(sh, title="EBITDA margin and revenue growth", cats=cats, kind="line", y_format="pct",
+          series=[("EBITDA margin", row_rng(srow["ebitda_m"])),
+                  ("Revenue growth", row_rng(srow["rev_g"], 1), row_rng(s0, 1))],
+          anchor=(f"H{c1}", f"N{c1 + 17}"))
+
+    # ---- chart data: bridge and football field
+    d0 = COV["data"]
+    section(sh, d0, "Chart data", 2, 8)
+    sh.set((d0 + 1, 2), "Formula-driven tables behind the charts above; every cell links to the model.", kind="note")
+    dc = lambda r: f"DCF!{ref(r, C0 + H)}"
+    steps = [(f"EBITDA, {fy(H)}", f"={IS.at('ebitda', H)}"),
+             ("(−) Taxes on EBIT", f"={dc(9)}"),
+             ("(−) Capex", f"={dc(12)}"),
+             ("(−) Increase in working capital", f"={dc(13)}"),
+             ("(±) Other (EBITDA vs EBIT + D&A)", f"={dc(8)}+{dc(11)}-{IS.at('ebitda', H)}"),
+             ("Unlevered free cash flow", f"={dc(14)}")]
+    assert len(steps) == BRIDGE_STEPS
+    waterfall(sh, top_left=(COV["bridge"], 2), steps=steps, title=f"EBITDA to unlevered free cash flow, {fy(H)}",
+              anchor=(f"B{c2}", f"F{c2 + 17}"), y_format="num0")
+    grids = [f"DCF!{g}" for g in DCF_GRIDS]
+    football_field(sh, top_left=(COV["ff"], 2), title="DCF value per share (sensitivity range)", anchor=(f"H{c2}", f"N{c2 + 17}"),
+                   rows=[("DCF, perpetuity growth", f"=MIN({grids[0]})", f"=MAX({grids[0]})"),
+                         ("DCF, exit multiple", f"=MIN({grids[1]})", f"=MAX({grids[1]})")],
+                   marker=f"=DCF!{ref(DCF_PS_ROW, 3)}", marker_label="Base value per share (perpetuity growth)", x_format="usd2")
+
+    # ---- legend, contents, sources
+    r = COV["ff"] + 6
+    sh.set((r, 2), "Colour code", bold=True, color=NAVY, bottom=True)
+    sh.set((r + 1, 2), "Hard-coded input or figure as filed", color=BLUE)
+    sh.set((r + 2, 2), "Formula on this sheet")
+    sh.set((r + 3, 2), "Link to another sheet", color=GREEN)
+    r += 5
+    sh.set((r, 2), "Contents", bold=True, color=NAVY, bottom=True)
     for i, (name, what) in enumerate([("Assumptions", "scenario and circularity switches, every forecast driver"), ("IS", "income statement"),
                                       ("BS", "balance sheet"), ("CF", "cash flow statement"), ("Schedules", "PP&E roll-forward, working capital"),
                                       ("Debt", "term debt, revolver, interest"), ("DCF", "valuation and sensitivities"),
                                       ("Checks", "integrity checks and the master check"), ("Filings", "every historical figure as filed, with its source")]):
-        sh.set((29 + i, 2), name, link=f"'{name}'!A1", color=BLUE, underline=True)
-        sh.set((29 + i, 3), what, kind="note")
-    sh.set("B39", "Sources", bold=True, color=NAVY, bottom=True)
+        sh.set((r + 1 + i, 2), name, link=f"'{name}'!A1", color=BLUE, underline=True)
+        sh.set((r + 1 + i, 3), what, kind="note")
+    r += 11
+    sh.set((r, 2), "Sources", bold=True, color=NAVY, bottom=True)
     for i, f in enumerate(s.filings):
-        sh.set((40 + i, 2), f"FY{f['end'][:4]}: {f['form']} filed {f['filed']}, accession {f['accn']}", link=f["url"] or None,
+        sh.set((r + 1 + i, 2), f"FY{f['end'][:4]}: {f['form']} filed {f['filed']}, accession {f['accn']}", link=f["url"] or None,
                color=BLUE if f["url"] else None, underline=bool(f["url"]))
     if s.warnings:
-        r0 = 41 + len(s.filings)
+        r0 = r + 2 + len(s.filings)
         sh.set((r0, 2), "Mapping notes", bold=True, color=NAVY, bottom=True)
         for i, w in enumerate(s.warnings[:12]):
             sh.set((r0 + 1 + i, 2), w, kind="note")
