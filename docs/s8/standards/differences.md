@@ -54,6 +54,19 @@
 **Verified facts**
 - Effective 1 April 2019; no fair value model for investment-property ROU; lease interest always financing; inflation exemption for lessors removed: <https://alumni.in.kpmg.com/downloads/Publications/Accounting_Publications/firstnotes-leases-standard-ind-as-116-notified-mca.pdf>
 
+### `diff-eas49-ebitda-effect`
+- **Frameworks:** EAS, IFRS
+- **Confidence:** unverified
+- **Summary:** Moving to EAS 49, the lessee records a right-of-use asset and a lease liability, depreciates the asset and accrues interest on the liability. Rent that was an operating expense becomes depreciation and interest, so EBITDA and EBIT rise (EBIT by the interest element only), operating cash flow rises and financing outflows include lease principal. Debt and total assets increase by the lease liability and asset.
+- **Analyst impact:** For Egyptian retailers, real estate and logistics firms, build a pre-EAS 49 EBITDA by deducting lease payments (principal and interest), and add lease liabilities to net debt only when EBITDA is on the post-adoption basis.
+- **Adjustment recipe:** `ifrs16_to_pre16_ebitda`
+- **Citations:**
+  - EAS 49 Lease Contracts, Lessee model (same as IFRS 16 paras 22-38): <https://fra.gov.eg/en/?p=13760728>
+  - IFRS 16, paras 22-38: <https://www.ifrs.org/issued-standards/list-of-standards/ifrs-16-leases/>
+
+**Unverified facts**
+- EAS 49 effective date and transition method by company
+
 ## revenue
 
 ### `diff-revenue-ifrs15-asc606-eas48`
@@ -243,13 +256,29 @@
 - Exact scope and amortisation periods of each appendix
 - Effective dates of the 2023 and 2024 rounds
 
+### `diff-eas-fx-relief-comparatives`
+- **Frameworks:** EAS, IFRS
+- **Confidence:** unverified
+- **Summary:** After the special FX treatment appendices expired at the end of 2023 and EAS 13 was replaced in 2024, comparatives are not like for like: 2022 and 2023 figures may carry capitalised or deferred FX losses (with extra depreciation or amortisation later) while 2024 figures recognise movements in profit or loss under the aligned text. The FX relief is a one-time application, so a company that used it reports lower expenses in the relief years and higher charges in later years.
+- **Analyst impact:** Restate comparatives to a single basis: reverse the deferred FX balance and its amortisation, add back FX capitalised into asset cost and the extra depreciation, and show EBITDA and net income before and after relief so that 2022 to 2024 trends are comparable.
+- **Adjustment recipe:** `devaluation_fx_loss_normalise`
+- **Citations:**
+  - IFRS jurisdiction profile: Egypt, FX translation differences treatment: <https://www.ifrs.org/use-around-the-world/use-of-ifrs-standards-by-jurisdiction/view-jurisdiction/egypt/>
+  - PM Decree 636 of 2024, Article 1 (EAS 13 replaced): <https://fra.gov.eg/wp-content/uploads/2024/07/Decree-no-636_.pdf>
+
+**Verified facts**
+- One-time FX relief application extended to end of 2023; affects depreciation of remeasured assets: <https://www.ifrs.org/use-around-the-world/use-of-ifrs-standards-by-jurisdiction/view-jurisdiction/egypt/>
+
+**Unverified facts**
+- Detail of which items each appendix covered and exact amortisation periods
+
 ## zakat_tax
 
 ### `diff-zakat-vs-income-tax`
 - **Frameworks:** SOCPA-IFRS, IFRS
 - **Confidence:** verified
 - **Summary:** In Saudi Arabia zakat is a 2.5 percent charge on the zakat base (broadly net worth as computed for zakat) and falls on the Saudi and GCC owners' share, while income tax at 20 percent of adjusted profit applies to the share held by non-Saudi, non-GCC owners. Mixed-ownership companies bear both in proportion. SOCPA's position is that zakat sits outside IAS 12, so it is accounted for under its own endorsed requirements and IAS 8 rather than as an IAS 12 income tax, and there is no deferred tax on zakat. A live IFRS 18 debate concerns whether zakat is presented together with income tax or in operating results.
-- **Analyst impact:** Compare KSA companies on a pre-zakat and pre-tax basis, or treat zakat as a tax by adding it to tax expense (recipe zakat_as_tax). Effective tax rates are not comparable across ownership structures, and net income to owners is after zakat. Do not leave zakat in operating costs.
+- **Analyst impact:** Compare KSA companies on a pre-zakat and pre-tax basis, or treat zakat as a tax by adding it to tax expense. Effective tax rates are not comparable across ownership structures, and net income to owners is after zakat. Do not leave zakat in operating costs.
 - **Adjustment recipe:** `zakat_as_tax`
 - **Citations:**
   - PwC Tax Summaries Saudi Arabia, Zakat 2.5 percent, income tax 20 percent, ownership split: <https://taxsummaries.pwc.com/saudi-arabia/corporate/taxes-on-corporate-income>
@@ -298,6 +327,37 @@
 **Verified facts**
 - Standard rate 22.5 percent; oil exploration 40.55 percent; SCA, EGPC and CBE 40 percent: <https://taxsummaries.pwc.com/egypt/corporate/taxes-on-corporate-income>
 
+### `diff-zakat-base-components`
+- **Frameworks:** SOCPA-IFRS
+- **Confidence:** verified
+- **Summary:** Zakat is 2.5 percent of the zakat base for a Hijri year (prorated by days when the fiscal year differs). A company with legal accounts adds property rights and their equivalents (equity, reserves and provisions treated as equity), partners' loans and allocations, the gap between adjusted and book net profit, and liabilities that are effectively long-term funding (non-current debt, end-of-service and leave provisions, deferred tax liability, lease liabilities, negative derivatives). It deducts net fixed assets, intangibles, qualifying investments, materials not for sale, statutory deposits and deferred tax assets, with caps that tie the liabilities added to the assets deducted. A minimum base applies: the base cannot fall below adjusted net profit, and if the result is negative with no adjusted profit there is no zakat base.
+- **Analyst impact:** Zakat is driven by balance sheet items, not just profit, so asset-light and highly capitalised companies pay different effective rates; forecast zakat from equity plus long-term funding less fixed assets and investments, with adjusted profit as a floor, and treat it as a tax-like charge below operating profit.
+- **Adjustment recipe:** `zakat_as_tax`
+- **Citations:**
+  - ZATCA Implementing Regulations for Zakat Collection (1445H, Ministerial Decision 1007, amended by 1248), Articles 15, 23, 26, 27, 29: <https://zatca.gov.sa/en/RulesRegulations/Documents/ZAKAT%20COLLECTION.pdf>
+
+**Verified facts**
+- Zakat 2.5 percent of the base for the Hijri year, prorated by days (Article 15): <https://zatca.gov.sa/en/RulesRegulations/Documents/ZAKAT%20COLLECTION.pdf>
+- Added items: property rights, partners' loans, profit difference; liabilities incl. non-current debt, end-of-service and leave provisions, deferred tax liability, lease obligations, negative derivatives (Articles 23, 29): <https://zatca.gov.sa/en/RulesRegulations/Documents/ZAKAT%20COLLECTION.pdf>
+- Deductions: net fixed assets, intangibles, qualifying investments, non-sale materials, statutory deposits, deferred tax assets (Article 26); minimum base by adjusted net profit (Article 27): <https://zatca.gov.sa/en/RulesRegulations/Documents/ZAKAT%20COLLECTION.pdf>
+
+### `diff-uae-ct-year-ends`
+- **Frameworks:** UAE-IFRS
+- **Confidence:** unverified
+- **Summary:** UAE corporate tax applies from the first financial year starting on or after 1 June 2023, so the first taxable period depends on the year end. A calendar-year company starts on 1 January 2024 (no tax in 2023). A company with a 31 May or 30 June year end starts on the first financial year beginning on or after 1 June 2023: 1 June 2023 to 31 May 2024 in one case and 1 July 2023 to 30 June 2024 in the other. The federal authority accepts a first period of six to eighteen months, the 375,000 threshold is not pro-rated, and returns are due nine months after period end.
+- **Analyst impact:** Normalise effective tax rates by year end: non-calendar companies show tax a half-year earlier than calendar ones; use pre-tax profit when comparing the transition year and add a one-off deferred tax effect.
+- **Adjustment recipe:** `zakat_as_tax`
+- **Citations:**
+  - UAE Ministry of Finance, Effective date of the corporate tax regime: <https://mof.gov.ae/en/news/ministry-of-finance-confirms-applicable-taxable-income-threshold-for-corporate-tax-abu-dhabi-uae/>
+  - UAE Corporate Tax FAQs, Tax period and first period: <https://mof.gov.ae/?p=19308>
+
+**Verified facts**
+- Corporate Tax effective for financial years starting on or after 1 June 2023: <https://mof.gov.ae/en/news/ministry-of-finance-confirms-applicable-taxable-income-threshold-for-corporate-tax-abu-dhabi-uae/>
+
+**Unverified facts**
+- Worked examples for 31 May and 30 June year ends are inferences from the rule, not read in an official example
+- First-period length range and nine-month filing window from secondary sources
+
 ## end_of_service
 
 ### `diff-eosb-gcc-egypt`
@@ -326,6 +386,22 @@
 
 **Verified facts**
 - Award of half a month per year for the first five years, a month per year after; resignation scaling: <https://www.hrsd.gov.sa/en/knowledge-centre/articles/317-0>
+
+### `diff-eosb-ksa-actuarial-vs-nominal`
+- **Frameworks:** SOCPA-IFRS, IFRS
+- **Confidence:** unverified
+- **Summary:** The Saudi end-of-service award is a statutory amount based on final wage and years of service (a nominal, accrual-style figure: what would be paid if everyone left at the reporting date). IAS 19 treats it as a defined benefit plan and requires the projected unit credit method: project future salary, attrition and retirement, discount at high-quality bond yields, and put remeasurements in OCI. Smaller reporters sometimes book the nominal amount; listed companies are expected to use an actuarial valuation, and the zakat base adds the provision as a long-term liability.
+- **Analyst impact:** The actuarial liability is usually lower than the nominal amount because of attrition and discounting; check which method is used before comparing, and treat the provision as debt-like with the nominal amount as the upper bound.
+- **Adjustment recipe:** `eosb_as_debt_like`
+- **Citations:**
+  - IAS 19, paras 67-69 (projected unit credit), 120: <https://www.ifrs.org/issued-standards/list-of-standards/ias-19-employee-benefits/>
+  - ZATCA Implementing Regulations for Zakat Collection, Article 29(1)(b): <https://zatca.gov.sa/en/RulesRegulations/Documents/ZAKAT%20COLLECTION.pdf>
+
+**Verified facts**
+- Provisions for end-of-service benefits are added to the zakat base as stable debt to non-owners (Article 29): <https://zatca.gov.sa/en/RulesRegulations/Documents/ZAKAT%20COLLECTION.pdf>
+
+**Unverified facts**
+- How widespread nominal-method accounting is among listed Saudi companies
 
 ## government_grants
 

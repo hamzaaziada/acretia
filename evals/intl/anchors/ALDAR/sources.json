@@ -1,0 +1,80 @@
+[
+  {
+    "doc_type": "annual_fs",
+    "period_end": "2025-12-31",
+    "fiscal_year_end_month": 12,
+    "language": "en",
+    "scanned": false,
+    "url": "https://vazeno.files.cmp.optimizely.com/download/assets/English+Signed+FS+31+Dec+2025+-+Aldar+Properties+PJSC-vf.pdf/fc35b8142c2d11f19f9b4a3c2454f4e7",
+    "host": "vazeno.files.cmp.optimizely.com",
+    "sha256": "b002b1ec31e66489e6dc8d3c345f5474eae7e464814ed9b89b24bf0cf7679dcf",
+    "bytes": 2219573,
+    "pages": 134,
+    "retrieved": "2026-11-16",
+    "terms_url": "https://www.aldar.com/en/investor-terms",
+    "committed": false,
+    "primary_statement_pages": {
+      "IS": 13,
+      "BS": 11,
+      "CF": 17,
+      "OCI": 14,
+      "EQ": 15
+    },
+    "currency": "AED",
+    "unit": "AED million",
+    "notes": "Aldar CDN (Optimizely); directors report + audited FS",
+    "local_path": "anchors/ALDAR/Aldar_Signed_FS_31Dec2025_EN.pdf"
+  },
+  {
+    "doc_type": "annual_fs",
+    "period_end": "2024-12-31",
+    "fiscal_year_end_month": 12,
+    "language": "en",
+    "scanned": false,
+    "url": "https://cdn.aldar.com/-/media/project/aldar-tenant/aldar2/fy-2024-results/english-financial-statement-dec-24.pdf?rev=bf3178f15d0d4ca3a217d3df2f9488bd",
+    "host": "cdn.aldar.com",
+    "sha256": "9dd8c299b70091a52917ab3ecb8c77b051d88afd42db8c14646cf5c14db2e164",
+    "bytes": 1967867,
+    "pages": 138,
+    "retrieved": "2026-11-16",
+    "terms_url": "https://www.aldar.com/en/investor-terms",
+    "committed": false,
+    "primary_statement_pages": {
+      "IS": 12,
+      "BS": 10,
+      "CF": 16,
+      "OCI": 13,
+      "EQ": 14
+    },
+    "currency": "AED",
+    "unit": "AED million",
+    "notes": "Aldar CDN; directors report + audited FS",
+    "local_path": "anchors/ALDAR/english-financial-statement-dec-24.pdf"
+  },
+  {
+    "doc_type": "earnings_release",
+    "period_end": "2026-09-30",
+    "fiscal_year_end_month": 12,
+    "language": "en",
+    "scanned": false,
+    "url": "https://vazeno.files.cmp.optimizely.com/download/assets/261027+Aldar+-+9M+Q3+2026+Financial+Results+Press+Release+-+English+FINAL+%282%29.pdf/bdbff8a8d1d511f1b425e6b9c61b93c2",
+    "host": "vazeno.files.cmp.optimizely.com",
+    "sha256": "b4d3e687ff68ef5780f27e75ce7c64c96dd79b143d617caa7d22da5181c311bd",
+    "bytes": 200180,
+    "pages": 8,
+    "retrieved": "2026-11-16",
+    "terms_url": "https://www.aldar.com/en/investor-terms",
+    "committed": false,
+    "primary_statement_pages": {
+      "IS": null,
+      "BS": null,
+      "CF": null,
+      "OCI": null,
+      "EQ": null
+    },
+    "currency": "AED",
+    "unit": "AED million",
+    "notes": "9M/Q3 2026 results press release linked from https://www.aldar.com/en/news-and-media/aldar-delivers-robust-q3-performance-with-net-profit-rising-19-to-aed-7-1-billion-in-first-nine-months-of-2026",
+    "local_path": "anchors/ALDAR/Aldar_9M_2026_Press_Release_EN.pdf"
+  }
+]

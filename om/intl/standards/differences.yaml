@@ -51,6 +51,8 @@ urls:
   regtomorrow: &regtomorrow "https://www.regulationtomorrow.com/2026/01/uae-sca-renamed-cma-and-other-landmark-legislations/"
   ifrs3: &ifrs3 "https://www.ifrs.org/issued-standards/list-of-standards/ifrs-3-business-combinations/"
   ias37: &ias37 "https://www.ifrs.org/issued-standards/list-of-standards/ias-37-provisions-contingent-liabilities-and-contingent-assets/"
+  zatca_regs: &zatcaregs "https://zatca.gov.sa/en/RulesRegulations/Documents/ZAKAT%20COLLECTION.pdf"
+  mof_ct_faq: &mofctfaq "https://mof.gov.ae/?p=19308"
   cbe: &cbe "https://www.cbe.org.eg/en/economic-research/statistics/exchange-rates"
 
 differences:
@@ -367,7 +369,7 @@ differences:
       accounted for under its own endorsed requirements and IAS 8 rather than as an IAS 12 income tax, and there is no deferred tax on
       zakat. A live IFRS 18 debate concerns whether zakat is presented together with income tax or in operating results.
     analyst_impact: >-
-      Compare KSA companies on a pre-zakat and pre-tax basis, or treat zakat as a tax by adding it to tax expense (recipe zakat_as_tax).
+      Compare KSA companies on a pre-zakat and pre-tax basis, or treat zakat as a tax by adding it to tax expense.
       Effective tax rates are not comparable across ownership structures, and net income to owners is after zakat. Do not leave zakat in operating costs.
     adjustment: zakat_as_tax
     keywords: [zakat, zatca, gazt, income tax, zakat base, saudi, ksa, profit before zakat, tax rate, 2.5%, 20%, mixed ownership]
@@ -788,3 +790,112 @@ differences:
       - {standard: "ASC 450", ref: "450-20-25 (loss contingencies)", url: *asc}
     authored: acretia
     confidence: verified
+
+  - id: diff-zakat-base-components
+    topic: zakat_tax
+    frameworks: [SOCPA-IFRS]
+    summary: >-
+      Zakat is 2.5 percent of the zakat base for a Hijri year (prorated by days when the fiscal year differs). A company with legal accounts adds
+      property rights and their equivalents (equity, reserves and provisions treated as equity), partners' loans and allocations, the gap between
+      adjusted and book net profit, and liabilities that are effectively long-term funding (non-current debt, end-of-service and leave provisions,
+      deferred tax liability, lease liabilities, negative derivatives). It deducts net fixed assets, intangibles, qualifying investments,
+      materials not for sale, statutory deposits and deferred tax assets, with caps that tie the liabilities added to the assets deducted. A minimum base
+      applies: the base cannot fall below adjusted net profit, and if the result is negative with no adjusted profit there is no zakat base.
+    analyst_impact: >-
+      Zakat is driven by balance sheet items, not just profit, so asset-light and highly capitalised companies pay different effective rates; forecast zakat
+      from equity plus long-term funding less fixed assets and investments, with adjusted profit as a floor, and treat it as a tax-like charge below operating profit.
+    adjustment: zakat_as_tax
+    keywords: [zakat base, zakat calculation, equity, provisions, long-term liabilities, adjusted net profit, fixed assets deduction, minimum base, hijri year, deductible investments]
+    verified_facts:
+      - {fact: "Zakat 2.5 percent of the base for the Hijri year, prorated by days (Article 15)", url: *zatcaregs}
+      - {fact: "Added items: property rights, partners' loans, profit difference; liabilities incl. non-current debt, end-of-service and leave provisions, deferred tax liability, lease obligations, negative derivatives (Articles 23, 29)", url: *zatcaregs}
+      - {fact: "Deductions: net fixed assets, intangibles, qualifying investments, non-sale materials, statutory deposits, deferred tax assets (Article 26); minimum base by adjusted net profit (Article 27)", url: *zatcaregs}
+    citations:
+      - {standard: "ZATCA Implementing Regulations for Zakat Collection (1445H, Ministerial Decision 1007, amended by 1248)", ref: "Articles 15, 23, 26, 27, 29", url: *zatcaregs}
+    authored: acretia
+    confidence: verified
+
+  - id: diff-eosb-ksa-actuarial-vs-nominal
+    topic: end_of_service
+    frameworks: [SOCPA-IFRS, IFRS]
+    summary: >-
+      The Saudi end-of-service award is a statutory amount based on final wage and years of service (a nominal, accrual-style figure: what would be
+      paid if everyone left at the reporting date). IAS 19 treats it as a defined benefit plan and requires the projected unit credit method: project future salary,
+      attrition and retirement, discount at high-quality bond yields, and put remeasurements in OCI. Smaller reporters sometimes book the nominal
+      amount; listed companies are expected to use an actuarial valuation, and the zakat base adds the provision as a long-term liability.
+    analyst_impact: >-
+      The actuarial liability is usually lower than the nominal amount because of attrition and discounting; check which method is used before comparing, and treat the
+      provision as debt-like with the nominal amount as the upper bound.
+    adjustment: eosb_as_debt_like
+    keywords: [eosb actuarial, nominal method, projected unit credit, saudi end of service, discount rate, attrition, ias 19 saudi]
+    unverified_facts: ["How widespread nominal-method accounting is among listed Saudi companies"]
+    verified_facts:
+      - {fact: "Provisions for end-of-service benefits are added to the zakat base as stable debt to non-owners (Article 29)", url: *zatcaregs}
+    citations:
+      - {standard: "IAS 19", ref: "paras 67-69 (projected unit credit), 120", url: *ias19}
+      - {standard: "ZATCA Implementing Regulations for Zakat Collection", ref: "Article 29(1)(b)", url: *zatcaregs}
+    authored: acretia
+    confidence: unverified
+
+  - id: diff-uae-ct-year-ends
+    topic: zakat_tax
+    frameworks: [UAE-IFRS]
+    summary: >-
+      UAE corporate tax applies from the first financial year starting on or after 1 June 2023, so the first taxable period depends on the year end. A
+      calendar-year company starts on 1 January 2024 (no tax in 2023). A company with a 31 May or 30 June year end starts on the first financial year
+      beginning on or after 1 June 2023: 1 June 2023 to 31 May 2024 in one case and 1 July 2023 to 30 June 2024 in the other. The federal authority accepts a first
+      period of six to eighteen months, the 375,000 threshold is not pro-rated, and returns are due nine months after period end.
+    analyst_impact: >-
+      Normalise effective tax rates by year end: non-calendar companies show tax a half-year earlier than calendar ones; use pre-tax profit when comparing the transition year and
+      add a one-off deferred tax effect.
+    adjustment: zakat_as_tax
+    keywords: [uae corporate tax year end, first tax period, 30 june, 31 december, transition, nine months, threshold not prorated]
+    verified_facts:
+      - {fact: "Corporate Tax effective for financial years starting on or after 1 June 2023", url: *mofct}
+    unverified_facts: ["Worked examples for 31 May and 30 June year ends are inferences from the rule, not read in an official example", "First-period length range and nine-month filing window from secondary sources"]
+    citations:
+      - {standard: "UAE Ministry of Finance", ref: "Effective date of the corporate tax regime", url: *mofct}
+      - {standard: "UAE Corporate Tax FAQs", ref: "Tax period and first period", url: *mofctfaq}
+    authored: acretia
+    confidence: unverified
+
+  - id: diff-eas-fx-relief-comparatives
+    topic: fx_devaluation
+    frameworks: [EAS, IFRS]
+    summary: >-
+      After the special FX treatment appendices expired at the end of 2023 and EAS 13 was replaced in 2024, comparatives are not like for like: 2022 and 2023
+      figures may carry capitalised or deferred FX losses (with extra depreciation or amortisation later) while 2024 figures recognise movements in profit
+      or loss under the aligned text. The FX relief is a one-time application, so a company that used it reports lower expenses in the relief years and
+      higher charges in later years.
+    analyst_impact: >-
+      Restate comparatives to a single basis: reverse the deferred FX balance and its amortisation, add back FX capitalised into asset cost and
+      the extra depreciation, and show EBITDA and net income before and after relief so that 2022 to 2024 trends are comparable.
+    adjustment: devaluation_fx_loss_normalise
+    keywords: [fx relief, special treatment comparatives, eas 13 appendix, deferred fx loss, capitalised exchange loss, restated comparatives, 2022 2023 2024]
+    verified_facts:
+      - {fact: "One-time FX relief application extended to end of 2023; affects depreciation of remeasured assets", url: *ifrsegypt}
+    unverified_facts: ["Detail of which items each appendix covered and exact amortisation periods"]
+    citations:
+      - {standard: "IFRS jurisdiction profile: Egypt", ref: "FX translation differences treatment", url: *ifrsegypt}
+      - {standard: "PM Decree 636 of 2024", ref: "Article 1 (EAS 13 replaced)", url: *fra636}
+    authored: acretia
+    confidence: unverified
+
+  - id: diff-eas49-ebitda-effect
+    topic: leases
+    frameworks: [EAS, IFRS]
+    summary: >-
+      Moving to EAS 49, the lessee records a right-of-use asset and a lease liability, depreciates the asset and accrues interest on the liability. Rent that was an
+      operating expense becomes depreciation and interest, so EBITDA and EBIT rise (EBIT by the interest element only), operating cash flow rises and financing outflows
+      include lease principal. Debt and total assets increase by the lease liability and asset.
+    analyst_impact: >-
+      For Egyptian retailers, real estate and logistics firms, build a pre-EAS 49 EBITDA by deducting lease payments (principal and interest), and add lease liabilities to net debt only when EBITDA
+      is on the post-adoption basis.
+    adjustment: ifrs16_to_pre16_ebitda
+    keywords: [eas 49 ebitda, lease adoption, right-of-use, lease liability, egypt ebitda, pre-ifrs 16]
+    unverified_facts: ["EAS 49 effective date and transition method by company"]
+    citations:
+      - {standard: "EAS 49 Lease Contracts", ref: "Lessee model (same as IFRS 16 paras 22-38)", url: *fradec}
+      - {standard: "IFRS 16", ref: "paras 22-38", url: *ifrs16}
+    authored: acretia
+    confidence: unverified
