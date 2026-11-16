@@ -30,13 +30,43 @@ PLAN_REPOS = ["docling", "openbb", "crawl4ai", "edgartools", "financetoolkit", "
 COPYLEFT_IMPORTS = {"fitz", "pymupdf", "marker", "magic_pdf", "mineru", "openbb", "ghostscript", "pdftotext",
                     "camelot"}
 
-# pip distribution -> substring expected in a ledger repo id.
-DIST_TO_REPO = {"python-pptx": "python-pptx", "pptx": "python-pptx", "fonttools": "fonttools", "pillow": "pillow",
-                "arabic-reshaper": "arabic-reshaper", "python-bidi": "python-bidi", "duckdb": "duckdb",
-                "docling": "docling", "edgartools": "edgartools", "financetoolkit": "financetoolkit",
-                "crawl4ai": "crawl4ai", "openpyxl": "openpyxl", "pdfplumber": "pdfplumber",
-                "pypdfium2": "pypdfium2", "pdfminer.six": "pdfminer", "anthropic": "anthropic",
-                "gpt-researcher": "gpt-researcher", "unstructured": "unstructured", "mcp": "python-sdk"}
+# pip distribution -> ledger repo. A value without '/' is matched EXACTLY against the repo *name* component
+# (last path segment, parenthetical suffix dropped, case-insensitive, '-'/'_' equivalent). A value with '/' is
+# matched against the full owner/name id. Never a substring match (F1: 'anthropic' must not hit 'anthropics/skills').
+DIST_TO_REPO = {"python-pptx": "scanny/python-pptx", "pptx": "scanny/python-pptx", "fonttools": "fonttools/fonttools",
+                "pillow": "python-pillow/Pillow", "arabic-reshaper": "mpcabd/python-arabic-reshaper",
+                "python-bidi": "MeirKriheli/python-bidi", "duckdb": "duckdb/duckdb", "docling": "docling-project/docling",
+                "edgartools": "dgunning/edgartools", "financetoolkit": "JerBouma/FinanceToolkit",
+                "crawl4ai": "unclecode/crawl4ai", "openpyxl": "openpyxl/openpyxl", "pdfplumber": "jsvine/pdfplumber",
+                "pypdfium2": "pypdfium2-team/pypdfium2", "pdfminer.six": "pdfminer/pdfminer.six",
+                "anthropic": "anthropics/anthropic-sdk-python", "gpt-researcher": "assafelovic/gpt-researcher",
+                "unstructured": "Unstructured-IO/unstructured", "mcp": "modelcontextprotocol/python-sdk",
+                "formulon": "libraz/formulon", "pyyaml": "yaml/pyyaml", "lxml": "lxml/lxml",
+                "xlsxwriter": "jmcnamara/XlsxWriter", "pypdf": "py-pdf/pypdf", "psycopg": "psycopg/psycopg",
+                "pymupdf": "pymupdf/PyMuPDF", "fitz": "pymupdf/PyMuPDF"}
+
+
+def norm(s: str) -> str:
+    return s.strip().lower().replace("_", "-")
+
+
+def repo_id(repo: str) -> str:
+    """Normalised full id of a ledger repo cell: parenthetical suffix dropped, e.g. 'facebook/react (react@18)'."""
+    return norm(re.sub(r"\s*\(.*\)\s*$", "", repo.strip()))
+
+
+def repo_name(repo: str) -> str:
+    """Normalised repo *name* component (last path segment)."""
+    return repo_id(repo).rstrip("/").split("/")[-1]
+
+
+def row_matches(target: str, rows) -> list:
+    """Ledger rows matching target exactly: 'owner/name' -> full id (or same name under a different host path),
+    bare 'name' -> repo name component. Never substring."""
+    t = norm(target)
+    if "/" in t:
+        return [r for r in rows if repo_id(r[0]) == t or repo_id(r[0]).endswith("/" + t)]
+    return [r for r in rows if repo_name(r[0]) == t]
 
 
 def check(name):
@@ -141,16 +171,57 @@ def pyproject_optional_dists(txt: str) -> set[str]:
     return out
 
 
-@check("ledger: every declared dependency has a ledger row")
+def _notes_map(heading_re, skip_headers):
+    """Parse a '<heading>' section of docs/ledger-notes.md (arrow lines or a markdown table) into {lhs: rhs}."""
+    p = os.path.join(ROOT, "docs", "ledger-notes.md")
+    out: dict[str, str] = {}
+    if not os.path.exists(p):
+        return out
+    txt = open(p, encoding="utf-8").read()
+    m = re.search(r"^#+[^\n]*" + heading_re + r"[^\n]*\n(.*?)(?=^#+\s|\Z)", txt, re.I | re.M | re.S)
+    if not m:
+        return out
+    for ln in m.group(1).splitlines():
+        ln = ln.strip()
+        if re.match(r"^\|[\s:|-]+\|?$", ln):
+            continue
+        if ln.startswith("|"):
+            cells = [c.strip(" `*") for c in ln.strip("|").split("|")]
+            if len(cells) >= 2 and cells[0].lower() not in skip_headers:
+                out[norm(cells[0])] = cells[1].split()[0].lower() if cells[1] else ""
+            continue
+        a = re.match(r"^[-*]?\s*[`*]*([A-Za-z0-9_.\-]+)[`*]*\s*(?:→|->)\s*[`*]*([A-Za-z0-9_.\-/]+)", ln)
+        if a:
+            out[norm(a.group(1))] = a.group(2).lower()
+    return {k: v for k, v in out.items() if v}
+
+
+def import_map_table():
+    """'Import-name -> ledger row map' section of docs/ledger-notes.md."""
+    return _notes_map(r"import-name", ("import", "import name", "import-name", "import_name", "name"))
+
+
+def dist_map_table():
+    """Optional 'Distribution -> ledger row map' section of docs/ledger-notes.md."""
+    return _notes_map(r"distribution", ("distribution", "dist", "package", "pip", "name"))
+
+
+def dist_target(dist, dist_table):
+    d = norm(dist)
+    return dist_table.get(d) or {norm(k): v for k, v in DIST_TO_REPO.items()}.get(d) or d
+
+
+def missing_dists(dists, rows, dist_table):
+    return [d for d in sorted(dists) if not row_matches(dist_target(d, dist_table), rows)]
+
+
+@check("ledger: every declared dependency has a ledger row (exact repo-name match, no substrings)")
 def _():
-    ids = " ".join(r[0].lower() for r in ledger_rows())
-    missing = []
-    for d in sorted(declared_dists()):
-        key = DIST_TO_REPO.get(d, d)
-        if key not in ids:
-            missing.append(d)
-    assert not missing, missing
-    return f"{len(declared_dists())} declared deps"
+    rows = [tuple(x.strip() for x in r) for r in ledger_rows()]
+    dists = declared_dists()
+    missing = missing_dists(dists, rows, dist_map_table())
+    assert not missing, f"no ledger row (exact name match) for: {missing}"
+    return f"{len(dists)} declared deps"
 
 
 def py_files(*dirs, root=None):
@@ -277,9 +348,14 @@ FIRST_PARTY = {"om", "src", "tests", "scripts"}
 # D-S1-02: om/recalc.py may import LibreOffice's MPL-2.0 pyuno client bridge (uno, com.sun.star), but only lazily:
 # every such import must sit inside a function body or a try/except, never at module top level.
 ISOLATED_ALLOW: set[tuple[str, str]] = {("om/recalc.py", "uno"), ("om/recalc.py", "com")}
-# Well-known import-name != project-name pairs, used before the substring fallback.
-IMPORT_ALIASES = {"pil": "pillow", "bidi": "python-bidi", "pptx": "python-pptx", "yaml": "pyyaml",
-                  "pdfminer": "pdfminer", "fontTools".lower(): "fonttools", "bs4": "beautifulsoup"}
+# Well-known import-name != project-name pairs, used after the ledger-notes map and before DIST_TO_REPO.
+# Values follow row_matches(): 'owner/name' = full id, bare name = exact repo-name component.
+IMPORT_ALIASES = {"pil": "python-pillow/Pillow", "bidi": "MeirKriheli/python-bidi", "pptx": "scanny/python-pptx",
+                  "yaml": "yaml/pyyaml", "pdfminer": "pdfminer/pdfminer.six", "fonttools": "fonttools/fonttools",
+                  "bs4": "beautifulsoup", "fitz": "pymupdf/PyMuPDF", "pymupdf": "pymupdf/PyMuPDF",
+                  "uno": "LibreOffice/core", "com": "LibreOffice/core", "edgar": "dgunning/edgartools",
+                  "arabic_reshaper": "mpcabd/python-arabic-reshaper", "docling_core": "docling-project/docling-core",
+                  "docling_parse": "docling-project/docling-parse", "pypdfium2": "pypdfium2-team/pypdfium2"}
 
 
 def first_party_names(root=None):
@@ -346,44 +422,15 @@ def third_party_imports(root=None, with_scope=False):
     return found
 
 
-def import_map_table():
-    """Parse the 'Import-name -> ledger row map' section of docs/ledger-notes.md (arrow lines or a markdown table)."""
-    p = os.path.join(ROOT, "docs", "ledger-notes.md")
-    out: dict[str, str] = {}
-    if not os.path.exists(p):
-        return out
-    txt = open(p, encoding="utf-8").read()
-    m = re.search(r"^#+[^\n]*import-name[^\n]*\n(.*?)(?=^#+\s|\Z)", txt, re.I | re.M | re.S)
-    if not m:
-        return out
-    for ln in m.group(1).splitlines():
-        ln = ln.strip()
-        if re.match(r"^\|[\s:|-]+\|?$", ln):
-            continue
-        if ln.startswith("|"):
-            cells = [c.strip(" `*") for c in ln.strip("|").split("|")]
-            if len(cells) >= 2 and cells[0].lower() not in ("import", "import name", "import-name", "name"):
-                out[cells[0].lower()] = cells[1].lower()
-            continue
-        a = re.match(r"^[-*]?\s*[`*]*([A-Za-z0-9_.\-]+)[`*]*\s*(?:→|->)\s*[`*]*([A-Za-z0-9_.\-/]+)", ln)
-        if a:
-            out[a.group(1).lower()] = a.group(2).lower()
-    return out
-
-
 def isolated_violations(found, rows, table):
     """Return (unmapped, bad_dec). found is third_party_imports(with_scope=True). An allow-listed pair is
     permitted only when every such import in that file is inside a function body or try/except."""
     unmapped, bad_dec, n_mapped = [], [], 0
     for name in sorted(found):
-        key = name.lower()
-        if key in table:
-            target = table[key]
-            matched = [r for r in rows
-                       if r[0].lower() == target or r[0].lower().split("/")[-1] == target.split("/")[-1]]
-        else:
-            needle = IMPORT_ALIASES.get(key, key)
-            matched = [r for r in rows if needle in r[0].lower()]
+        key = norm(name)
+        target = table.get(key) or {norm(k): v for k, v in IMPORT_ALIASES.items()}.get(key) \
+            or {norm(k): v for k, v in DIST_TO_REPO.items()}.get(key) or key
+        matched = row_matches(target, rows)
         if not matched:
             unmapped.append(f"{name} ({', '.join(loc for loc, _ in found[name][:3])})")
             continue
@@ -431,7 +478,13 @@ def _():
     assert any("fitz" in h for h in hits), f"copyleft scanner missed module-level fitz: {hits}"
     # fitz is also rejected by the ledger import check (unmapped, or mapped to a skip/isolated row).
     unm, bad, _m = isolated_violations(third_party_imports(d, True), rows, table)
-    assert any("fitz" in x or "pymupdf" in x.lower() for x in unm + bad), f"fitz not flagged by import check: {unm} {bad}"
+    assert any(x.startswith("fitz") for x in bad), f"fitz not reported as a skip/isolated violation: {unm} {bad}"
+    assert any("skip" in x for x in bad if x.startswith("fitz")), f"fitz not mapped to the skip row: {bad}"
+    # an import with no exact ledger mapping is reported as unmapped, not silently accepted.
+    d = tree({"om/__init__.py": "", "om/x.py": "import totallyunknownpkg\nimport anthropic\n"})
+    unm, _b, _m = isolated_violations(third_party_imports(d, True), rows, table)
+    assert any(x.startswith("totallyunknownpkg") for x in unm), f"unknown import not unmapped: {unm}"
+    assert not any(r[0] == "anthropics/skills" for r in row_matches(IMPORT_ALIASES.get("anthropic", "anthropic"), rows))
     # (b) module-level import uno in om/recalc.py still fails.
     d = tree({"om/__init__.py": "", "om/recalc.py": "import uno\n"})
     _u, bad, _m = isolated_violations(third_party_imports(d, True), rows, table)
@@ -446,7 +499,59 @@ def _():
     d = tree({"om/__init__.py": "", "om/other.py": "def f():\n    import uno\n"})
     _u, bad, _m = isolated_violations(third_party_imports(d, True), rows, table)
     assert any("uno" in b for b in bad), f"uno in non-allowed file not flagged: {bad}"
-    return "4 scenarios"
+    return "4 scenarios + unmapped import"
+
+
+@check("self-test: exact matching (anthropic does not match anthropics/skills; python-pptx matches scanny/python-pptx)")
+def _():
+    fake = [("anthropics/skills", "x", "Apache-2.0", "borrow_ideas", "r"),
+            ("anthropics/financial-services", "x", "Apache-2.0", "borrow_ideas", "r"),
+            ("scanny/python-pptx", "x", "MIT", "adopt", "r"),
+            ("facebook/react (react@18.3.1)", "x", "MIT", "adopt", "r")]
+    assert row_matches("anthropic", fake) == [], "bare 'anthropic' matched a longer repo name"
+    assert missing_dists({"anthropic"}, fake, {}) == ["anthropic"], "anthropic dependency false-passed"
+    assert missing_dists({"python-pptx", "pptx"}, fake, {}) == [], "python-pptx should match scanny/python-pptx"
+    assert row_matches("skills", fake) and row_matches("React", fake), "exact name / parenthetical match broken"
+    assert row_matches("anthropics", fake) == [], "owner component must not match"
+    assert row_matches("python_pptx", fake), "'-'/'_' normalisation broken"
+    return "5 assertions"
+
+
+NOTICE_LICENCE = re.compile(r"APACHE|MPL|BSD|LGPL", re.I)
+NOTICE_REASON = re.compile(r"attribution|notice", re.I)
+
+
+def notice_required(rows):
+    return [r for r in rows if r[3] == "adopt" and (NOTICE_LICENCE.search(r[2]) or NOTICE_REASON.search(r[4]))]
+
+
+def notice_missing(rows, text):
+    t = text.lower().replace("_", "-")
+    return [r[0] for r in rows
+            if not re.search(r"(?<![a-z0-9])" + re.escape(repo_name(r[0])) + r"(?![a-z0-9])", t)]
+
+
+@check("notices: THIRD_PARTY_NOTICES.md exists and names every adopt row needing notice (Apache/MPL/BSD/LGPL/attribution/NOTICE)")
+def _():
+    p = os.path.join(ROOT, "THIRD_PARTY_NOTICES.md")
+    assert os.path.exists(p), "THIRD_PARTY_NOTICES.md missing at repo root"
+    rows = [tuple(x.strip() for x in r) for r in ledger_rows()]
+    need = notice_required(rows)
+    missing = notice_missing(need, open(p, encoding="utf-8").read())
+    assert not missing, f"{len(missing)} of {len(need)} rows not named: {missing[:12]}"
+    return f"{len(need)} rows named"
+
+
+@check("self-test: notices check flags missing rows and rejects substring leaks")
+def _():
+    rows = [("a/foo-bar", "x", "Apache-2.0", "adopt", "r"), ("a/baz", "x", "MIT", "adopt", "must keep attribution line"),
+            ("a/quux", "x", "MIT", "adopt", "plain"), ("a/skipped", "x", "BSD-3-Clause", "skip", "r")]
+    need = notice_required(rows)
+    assert [r[0] for r in need] == ["a/foo-bar", "a/baz"], need
+    assert notice_missing(need, "Foo_Bar and nothing else") == ["a/baz"]
+    assert notice_missing(need, "foo-bar baz") == []
+    assert notice_missing(need, "foo-barista bazaar") == ["a/foo-bar", "a/baz"], "substring leak"
+    return "ok"
 
 
 def main() -> int:
