@@ -161,17 +161,52 @@ class Gates(unittest.TestCase):
         self.assertIn("future", v.reason)
 
     def test_as_of_before_period_end(self):
-        v = verify_figure(fig(xbrl_concept="us-gaap:Revenues", period="FY2024", as_of="2024-06-30"), resolver())
+        r = resolver().add_fiscal_year_end("AAPL", "1231")
+        v = verify_figure(fig(xbrl_concept="us-gaap:Revenues", period="FY2024", as_of="2024-06-30"), r)
         self.assertFalse(v.ok)
         self.assertIn("period mismatch", v.reason)
 
     def test_restated_comparative_in_later_filing_passes(self):
         r = resolver()
         r.add_xbrl("AAPL", "us-gaap:Revenues", "FY2023", 383285e6)
+        r.add_fiscal_year_end("AAPL", "1231")
         f = fig(value=383285.0, period="FY2023", as_of="2025-02-01", xbrl_concept="us-gaap:Revenues")
         self.assertTrue(verify_figure(f, r).ok)
         early = fig(value=383285.0, period="FY2023", as_of="2023-06-30", xbrl_concept="us-gaap:Revenues")
         self.assertFalse(verify_figure(early, r).ok)
+
+    def test_apple_style_fye(self):
+        r = resolver().add_fiscal_year_end("AAPL", "0928")
+        r.add_xbrl("AAPL", "us-gaap:Revenues", "FY2024", 391035e6)
+        ok = fig(xbrl_concept="us-gaap:Revenues", as_of="2024-09-28")
+        v = verify_figure(ok, r)
+        self.assertTrue(v.ok, v.reason)
+        self.assertNotIn("unknown", v.reason)
+        bad = fig(xbrl_concept="us-gaap:Revenues", as_of="2024-06-30")
+        self.assertFalse(verify_figure(bad, r).ok)
+
+    def test_unknown_fye_lower_bound_with_note(self):
+        r = resolver()
+        r.add_xbrl("AAPL", "us-gaap:Revenues", "FY2024", 391035e6)
+        v = verify_figure(fig(xbrl_concept="us-gaap:Revenues", as_of="2024-09-28"), r)
+        self.assertTrue(v.ok, v.reason)
+        self.assertIn("fiscal year-end unknown; lower-bound check only", v.reason)
+        before = fig(xbrl_concept="us-gaap:Revenues", as_of="2023-12-31")
+        self.assertFalse(verify_figure(before, r).ok)
+
+    def test_walmart_style_jan_fye(self):
+        r = SourceResolver().add_fiscal_year_end("WMT", "0131")
+        r.add_xbrl("WMT", "us-gaap:Revenues", "FY2025", 681e9)
+        f = fig(doc_id="WMT", value=681000.0, period="FY2025", as_of="2025-01-31", xbrl_concept="us-gaap:Revenues")
+        v = verify_figure(f, r)
+        self.assertTrue(v.ok, v.reason)
+        self.assertIn("label convention ambiguous", v.reason)
+
+    def test_fye_ingest_and_validation(self):
+        r = SourceResolver()
+        self.assertIsNone(r.fiscal_year_end("X"))
+        with self.assertRaises(ValueError):
+            r.add_fiscal_year_end("X", "1332")
 
     def test_iso_and_quarter_period_end(self):
         f = fig(xbrl_concept="us-gaap:Revenues", period="2024-09-28", as_of="2024-09-27")

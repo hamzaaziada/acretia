@@ -332,7 +332,7 @@ def _common(fig: SourcedFigure, resolver=None):
         return f"period {fig.period!r}: {err}", None
     if asof < pend:
         return (f"period mismatch: citation as_of {c.as_of} is before the end of period {fig.period!r} "
-                f"({pend.isoformat()})" + (f"; {note}" if note else ""), None
+                f"({pend.isoformat()})" + (f"; {note}" if note else ""), None)
     kind, scale, uerr = _parse_units(fig.units)
     if uerr:
         return uerr, None
