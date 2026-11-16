@@ -9,6 +9,11 @@ One row per active claim. Claim a packet before you touch its files, commit the 
 | S2.1 adapter | worker | claude/dreamy-ramanujan-k8p2xt | 2026-11-16 | src/harness/adapter.py, src/harness/ledger.py, om/llm.py, tests/test_adapter.py, tests/fixtures/adapter/* |
 | S2.4 MCP | worker | claude/dreamy-ramanujan-k8p2xt | 2026-11-16 | src/harness/mcp/*, tests/test_mcp.py |
 | S2.5 connectors | worker | claude/dreamy-ramanujan-k8p2xt | 2026-11-16 | src/harness/connectors/*, tests/test_connectors_harness.py, tests/fixtures/connectors/* |
+| S5.1 parser (session D) | worker | main | 2026-11-16 | om/docparse.py, om/parse_services.py, tests/test_docparse.py, tests/fixtures/docparse/*, docs/s5/parser-*.md |
+| S5.2 DuckDB grid (session D) | worker | main | 2026-11-16 | om/grid.py, tests/test_grid.py, tests/fixtures/grid/*, open_multiples.py (grid subcommand only) |
+| S5.3 VDR gap/risk (session D) | worker | main | 2026-11-16 | om/vdr_risk.py, tests/test_vdr_risk.py, tests/fixtures/vdr/* |
+| S5.4 evals (session D) | worker | main | 2026-11-16 | evals/tenk/*, evals/odl_bench/*, scripts/build_tenk_corpus.py, scripts/eval_s5.py, tests/test_s5_evals.py, scorecard.csv (S5 rows only) |
+| S5 gate (session D) | Boss | main | 2026-11-16 | scripts/verify_s5.py, docs/s5/* |
 | S1 gate | Boss | claude/dreamy-ramanujan-k8p2xt | 2026-11-16 | scripts/verify_s1.py |
 | S4.1 validate_xlsx | worker (session C) | claude/busy-knuth-i3ewp5 | 2026-11-16 | om/validate_xlsx.py, scripts/validate_xlsx.py, tests/test_validate_xlsx.py |
 | S4.2 three-engine recalc | worker (session C) | claude/busy-knuth-i3ewp5 | 2026-11-16 | om/recalc.py, tests/test_recalc.py |
@@ -29,3 +34,4 @@ One row per active claim. Claim a packet before you touch its files, commit the 
 - 2026-11-16: S2.6, S2.7 done (pending S2 gate). S2.4, S2.5 claimed.
 - 2026-11-16: Session C claimed S4.1–S4.7 (Excel engine); disjoint from S1/S2 rows.
 - 2026-11-16: S2.2, S2.3 done (pending S2 gate); rows released.
+- 2026-11-16: Session D claimed S5.1–S5.4 and the S5 gate.

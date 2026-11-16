@@ -8,7 +8,7 @@
 | S2 Harness, router, adapter | 🟡 | v1 M1 ✅ (contracts, storage, PII, replay, DealMemory, router hardening; verify_m1 19/19). Still to build: the OpenAI-compatible adapter in src/harness, MCP, connectors, evidence chain |
 | S3 Deck engine + eval | 🟡 | Deck Studio, spacing, graders exist |
 | S4 Excel engine | 🟡 | 3-statement + DCF, grader, bench verified |
-| S5 Document matrix grid | 🟡 | Matrix with verified quotes exists (no bbox/DuckDB) |
+| S5 Document matrix grid | 🟡 | Session D building S5.1–S5.4 (claimed 2026-11-16). Existing: Matrix with verified quotes (no bbox/DuckDB) |
 | S6 Research agent | 🟡 | Ask with verified citations exists |
 | S7 UI, security, Docker/CI | ⬜ | |
 
