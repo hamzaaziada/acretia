@@ -10,6 +10,11 @@ import unittest
 import zipfile
 from pathlib import Path
 
+try:
+    import pptx, PIL, fontTools  # noqa: F401
+except ImportError as e:
+    raise unittest.SkipTest(f"deck deps missing: {e}")
+
 from lxml import etree
 from pptx import Presentation
 from pptx.chart.data import CategoryChartData

@@ -11,6 +11,11 @@ import unittest
 from types import SimpleNamespace
 from unittest import mock
 
+try:
+    import pptx, PIL, fontTools  # noqa: F401
+except ImportError as e:
+    raise unittest.SkipTest(f"deck deps missing: {e}")
+
 from om.deck import critic
 from om.deck.archetypes import BuildContext, base
 from om.deck.model import Element, Para, Run, SolvedSlide, TextSpec
