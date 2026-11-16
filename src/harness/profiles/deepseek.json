@@ -1,0 +1,35 @@
+{
+  "family": "deepseek",
+  "match": [
+    "^(deepseek[/.-]?)"
+  ],
+  "context_window": 128000,
+  "supports_vision": false,
+  "supports_json_schema": false,
+  "max_output_tokens": 8192,
+  "recommended": {
+    "default": {
+      "planner": "deepseek-chat",
+      "worker": "deepseek-chat",
+      "verifier": "deepseek-chat",
+      "critic": "deepseek-chat"
+    },
+    "reasoning": {
+      "planner": "deepseek-reasoner",
+      "worker": "deepseek-chat",
+      "verifier": "deepseek-reasoner",
+      "critic": "deepseek-reasoner"
+    }
+  },
+  "prompt_quirks": {
+    "caching": "automatic_prefix",
+    "json_mode": "response_format json_object only; include the word json and an example in the prompt",
+    "tool_calling": "native",
+    "style": "explicit numbered steps; vision tasks must go to another family"
+  },
+  "price_per_mtok": {
+    "input": 0.28,
+    "output": 0.42
+  },
+  "notes": "price_per_mtok is list price in USD per million tokens, approximate; update before relying on cost reports."
+}

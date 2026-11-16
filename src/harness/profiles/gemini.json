@@ -1,0 +1,29 @@
+{
+  "family": "gemini",
+  "match": [
+    "^(google[/.])?gemini"
+  ],
+  "context_window": 1000000,
+  "supports_vision": true,
+  "supports_json_schema": true,
+  "max_output_tokens": 65536,
+  "recommended": {
+    "default": {
+      "planner": "gemini-2.5-pro",
+      "worker": "gemini-2.5-flash",
+      "verifier": "gemini-2.5-pro",
+      "critic": "gemini-2.5-pro"
+    }
+  },
+  "prompt_quirks": {
+    "caching": "implicit prefix caching",
+    "json_schema": "subset of OpenAPI schema; no additionalProperties",
+    "thinking": "thinking tokens count toward max_output_tokens",
+    "style": "long context ok; put instructions after the data"
+  },
+  "price_per_mtok": {
+    "input": 1.25,
+    "output": 10.0
+  },
+  "notes": "price_per_mtok is list price in USD per million tokens, approximate; update before relying on cost reports."
+}

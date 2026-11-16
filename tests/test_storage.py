@@ -1,9 +1,12 @@
 import hashlib
+import json
 import os
 import sqlite3
+import sys
 import tempfile
 import threading
 import unittest
+from unittest import mock
 from datetime import datetime, timezone
 
 from om import storage as st
@@ -238,6 +241,141 @@ class FromEnvTests(unittest.TestCase):
             st.from_env({"ACRETIA_BLOB_BACKEND": "gcs"})
         with self.assertRaises(st.StorageError):
             st.from_env({"ACRETIA_BLOB_BACKEND": "s3"})
+
+
+BACKENDS = ["sqlite"] + (["duckdb"] if st.duckdb_available() else [])
+
+
+class AnalyticsTests(unittest.TestCase):
+    def each(self):
+        for b in BACKENDS:
+            with self.subTest(backend=b):
+                db = st.AnalyticsDB(":memory:", prefer=b)
+                self.assertEqual(db.backend, b)
+                yield db
+                db.close()
+
+    def test_insert_query_and_types(self):
+        for db in self.each():
+            n = db.insert_rows("t", [{"a": 1, "b": 1.5, "c": "x", "d": {"k": 1}}, {"a": 2, "b": None, "c": "y", "d": None}])
+            self.assertEqual(n, 2)
+            rows = db.query("SELECT * FROM t WHERE a >= ? ORDER BY a", [1])
+            self.assertEqual([r["a"] for r in rows], [1, 2])
+            self.assertEqual(json.loads(rows[0]["d"]), {"k": 1})
+            self.assertTrue(db.table_exists("t"))
+            self.assertFalse(db.table_exists("nope"))
+            db.executemany("INSERT INTO t (a, c) VALUES (?, ?)", [(3, "z"), (4, "w")])
+            self.assertEqual(db.query("SELECT count(*) AS n FROM t")[0]["n"], 4)
+            self.assertEqual(db.insert_rows("t", []), 0)
+
+    def test_identifier_injection_rejected(self):
+        for db in self.each():
+            for bad in ("x; DROP TABLE y", "a b", 'a"b', "a'b", "1a", "", "a" * 64, "a-b"):
+                with self.assertRaises(st.StorageError):
+                    db.insert_rows(bad, [{"a": 1}])
+                with self.assertRaises(st.StorageError):
+                    db.insert_rows("ok", [{bad: 1}])
+                with self.assertRaises(st.StorageError):
+                    db.upsert_rows("ok", [{"a": 1}], [bad])
+                with self.assertRaises(st.StorageError):
+                    db.table_exists(bad)
+            self.assertFalse(db.table_exists("ok"))
+            db.insert_rows("a" * 63, [{"a": 1}])
+
+    def test_upsert_idempotent(self):
+        for db in self.each():
+            rows = [{"k": "a", "v": 1}, {"k": "b", "v": 2}]
+            db.upsert_rows("u", rows, ["k"])
+            db.upsert_rows("u", rows, ["k"])
+            self.assertEqual(db.query("SELECT count(*) AS n FROM u")[0]["n"], 2)
+            db.upsert_rows("u", [{"k": "a", "v": 9}], "k")
+            self.assertEqual(db.query("SELECT v FROM u WHERE k = ?", ["a"])[0]["v"], 9)
+            db.upsert_rows("keys", [{"k": 1}], ["k"])
+            db.upsert_rows("keys", [{"k": 1}], ["k"])
+            self.assertEqual(len(db.query("SELECT * FROM keys")), 1)
+
+    def test_grid_schema(self):
+        for db in self.each():
+            st.ensure_grid_schema(db)
+            st.ensure_grid_schema(db)
+            cell = {"grid_id": "g", "doc_id": "d", "question_id": "q", "answer": "42", "exact_quote": "forty-two",
+                    "page": 3, "bbox_x0": 0.1, "bbox_y0": 0.2, "bbox_x1": 0.9, "bbox_y1": 1.0,
+                    "confidence": 0.8, "cost_usd": 0.01, "content_hash": "h", "updated_at": "2026-01-01T00:00:00Z"}
+            db.upsert_rows("grid_cells", [cell], ["grid_id", "doc_id", "question_id"])
+            db.upsert_rows("grid_cells", [dict(cell, answer="43")], ["grid_id", "doc_id", "question_id"])
+            self.assertEqual(db.query("SELECT answer FROM grid_cells")[0]["answer"], "43")
+            with self.assertRaises(st.StorageError):
+                db.insert_rows("grid_cells", [dict(cell, question_id="q2", bbox_x1=1.5)])
+            with self.assertRaises(st.StorageError):
+                db.insert_rows("grid_cells", [dict(cell, question_id="q3", bbox_y0=-0.1)])
+            with self.assertRaises(st.StorageError):
+                db.insert_rows("grid_cells", [cell])  # primary key duplicate
+            db.insert_rows("grid_cells", [dict(cell, question_id="q4", bbox_x0=None)])
+            db.insert_rows("grid_runs", [{"run_id": "r", "grid_id": "g", "est_cost_usd": 1.0}])
+            self.assertEqual(len(db.query("SELECT * FROM grid_runs")), 1)
+
+    def test_context_manager_and_closed(self):
+        with st.AnalyticsDB(prefer="sqlite") as db:
+            db.execute("CREATE TABLE z (a INTEGER)")
+        with self.assertRaises(st.StorageError):
+            db.query("SELECT 1")
+
+    def test_fallback_when_duckdb_missing(self):
+        with mock.patch.object(st, "_duckdb", None):
+            db = st.AnalyticsDB(":memory:", prefer="duckdb")
+            self.assertEqual(db.backend, "sqlite")
+            db.insert_rows("t", [{"a": 1}])
+            self.assertEqual(db.query("SELECT a FROM t"), [{"a": 1}])
+            db.close()
+            with tempfile.TemporaryDirectory() as d:
+                a = st.connect(f"duckdb:///{d}/g.duckdb")
+                self.assertEqual(a.backend, "sqlite")
+                self.assertTrue(a.path.endswith("g.sqlite"))
+                a.close()
+        with mock.patch.dict(sys.modules, {"duckdb": None}):
+            with self.assertRaises(ImportError):
+                import duckdb  # noqa: F401
+
+    def test_connect_dsn(self):
+        with tempfile.TemporaryDirectory() as d:
+            for dsn in ("duckdb://:memory:", f"duckdb:///{d}/sub/g.duckdb", f"duckdb:////{d.lstrip('/')}/h.duckdb"):
+                a = st.connect(dsn)
+                self.assertIsInstance(a, st.AnalyticsDB)
+                a.insert_rows("t", [{"a": 1}])
+                a.close()
+            self.assertTrue(os.path.isfile(f"{d}/sub/g.duckdb" if st.duckdb_available() else f"{d}/sub/g.sqlite"))
+
+    def test_from_env_analytics(self):
+        with tempfile.TemporaryDirectory() as d:
+            s = st.from_env({"ACRETIA_BLOB_ROOT": d + "/b", "ACRETIA_KV_PATH": d + "/kv.db", "ACRETIA_DB": d + "/m.db",
+                             "ACRETIA_ANALYTICS": f"sqlite:///{d}/a.sqlite"})
+            self.assertIsInstance(s.analytics, st.AnalyticsDB)
+            self.assertEqual(s.analytics.backend, "sqlite")
+            s.analytics.close(); s.kv.close(); s.db.close()
+            s = st.from_env({"ACRETIA_BLOB_ROOT": d + "/b", "ACRETIA_KV_PATH": d + "/kv.db"}, connect_db=False)
+            self.assertIsNone(s.analytics)
+            s.kv.close()
+
+    def test_threads_file_db(self):
+        for b in BACKENDS:
+            with self.subTest(backend=b), tempfile.TemporaryDirectory() as d:
+                db = st.AnalyticsDB(os.path.join(d, "t.db"), prefer=b)
+                errs = []
+
+                def work(i):
+                    try:
+                        for j in range(10):
+                            db.insert_rows("t", [{"w": i, "j": j}])
+                            db.query("SELECT count(*) AS n FROM t")
+                    except Exception as e:  # pragma: no cover
+                        errs.append(e)
+
+                ts = [threading.Thread(target=work, args=(i,)) for i in range(8)]
+                [t.start() for t in ts]
+                [t.join() for t in ts]
+                self.assertEqual(errs, [])
+                self.assertEqual(db.query("SELECT count(*) AS n FROM t")[0]["n"], 80)
+                db.close()
 
 
 if __name__ == "__main__":

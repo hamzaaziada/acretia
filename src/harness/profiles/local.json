@@ -1,0 +1,33 @@
+{
+  "family": "local",
+  "match": [
+    "^(ollama|vllm|local)[/:]",
+    "^(qwen|llama|mistral|mixtral|phi|gemma|codestral|yi|command-r)[\\w.\\-]*",
+    ":\\d+(\\.\\d+)?b\\b",
+    "^hf\\.co/",
+    "^meta-llama/"
+  ],
+  "context_window": 32768,
+  "supports_vision": false,
+  "supports_json_schema": true,
+  "max_output_tokens": 4096,
+  "recommended": {
+    "default": {
+      "planner": "qwen2.5:7b",
+      "worker": "qwen2.5:7b",
+      "verifier": "qwen2.5:7b",
+      "critic": "qwen2.5:7b"
+    }
+  },
+  "prompt_quirks": {
+    "servers": "vLLM (guided_json) and Ollama (format=json/schema) via OpenAI-compatible endpoint",
+    "context": "set num_ctx explicitly on Ollama; default is small",
+    "style": "keep prompts short, one task per call, validate every JSON reply",
+    "vision": "only with a -vl / llava style model"
+  },
+  "price_per_mtok": {
+    "input": 0.0,
+    "output": 0.0
+  },
+  "notes": "price_per_mtok is list price in USD per million tokens, approximate; update before relying on cost reports."
+}

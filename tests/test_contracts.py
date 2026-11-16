@@ -5,6 +5,7 @@ import unittest
 from om.contracts import (CONTRACTS, Citation, ContractError, DeckSpec, DealMemory, GridCell, GridSpec, Job,
                           ModelManifest, ModelSpec, SlideRepairPatch, SlideSpec, SolvedSlideLayout,
                           ValidationReport, WorkbookGraph, sha256_hex)
+from om.contracts import EvidenceRecord, GhostDeck, GhostTitle
 
 H = sha256_hex("x")
 
@@ -47,6 +48,29 @@ SAMPLES = {
     ValidationReport: {"target": "m.xlsx", "passed": False,
                        "findings": [{"rule": "r1", "severity": "critical", "message": "m", "location": "IS!A1"}]},
 }
+
+
+def evidence(**kw):
+    d = dict(job_id="j1", seq=0, tool="sec.fetch", args_sha256=H, source="https://sec.gov/a",
+             timestamp="2026-01-02T03:04:05Z", output_sha256=H, page=2, bbox_norm=[0.1, 0.1, 0.2, 0.2])
+    d.update(kw)
+    return EvidenceRecord.seal(**d).to_dict()
+
+
+SAMPLES.update({
+    EvidenceRecord: evidence(),
+    GhostTitle: {"id": "t1", "action_title": "Revenue grew 12% as pricing offset weaker volumes",
+                 "supporting_point": "FY24 10-K", "archetype_hint": "chart_single"},
+    GhostDeck: {"deck_id": "g", "title": "Project X", "audience": "IC", "approved": True, "approved_by": "mj",
+                "titles": [{"id": "t1", "action_title": "Margins expand 200bps on mix shift"},
+                           {"id": "t2", "action_title": "We recommend a bid at 9.5x EBITDA"}]},
+})
+SAMPLES[SlideSpec].update({"archetype": "chart_single", "action_title": "Revenue grew 12% on pricing",
+                           "blocks": [{"type": "chart", "series": [{"name": "Rev", "points": [1, 2]}]},
+                                      {"type": "text", "text": "hello"}],
+                           "sources": [cit(url="https://sec.gov/a", as_of="2024-02-29",
+                                           cell_locator="IS!B4:C4", xbrl_concept="us-gaap:Revenues")],
+                           "as_of": "2025-12-31"})
 
 
 class Base(unittest.TestCase):
@@ -214,6 +238,125 @@ class Adversarial(Base):
         self.bad(SlideRepairPatch, {"slide_index": -1, "ops": [{"op": "move", "target": "a"}]},
                  "SlideRepairPatch.slide_index")
         self.bad(SlideRepairPatch, {"slide_index": 0, "ops": []}, "SlideRepairPatch.ops")
+
+
+class S22(Base):
+    def test_citation_new_fields(self):
+        self.bad(Citation, cit(as_of="2024-02-30"), "Citation.as_of", "calendar")
+        self.bad(Citation, cit(as_of="2024-2-3"), "Citation.as_of")
+        self.bad(Citation, cit(url="javascript:alert(1)"), "Citation.url")
+        self.bad(Citation, cit(url="file:///etc/passwd"), "Citation.url")
+        self.bad(Citation, cit(url="https://a.com/x", source_url="https://b.com/x"), "Citation.url", "differs")
+        self.bad(Citation, cit(cell_locator="B4"), "Citation.cell_locator")
+        self.bad(Citation, cit(xbrl_concept="Revenues"), "Citation.xbrl_concept")
+        Citation.from_dict(cit(url="https://sec.gov/a"))          # equals source_url: fine
+        Citation.from_dict(cit(source_url=None, url="http://x.org"))
+
+    def test_evidence_chain_and_tamper(self):
+        r0 = EvidenceRecord.from_dict(evidence())
+        self.assertEqual(r0.record_hash, r0.compute_hash())
+        r1 = evidence(seq=1, prev_hash=r0.record_hash)
+        EvidenceRecord.from_dict(r1)
+        t = evidence()
+        t["record_hash"] = sha256_hex("forged")
+        self.bad(EvidenceRecord, t, "EvidenceRecord.record_hash", "tampered")
+        t = evidence()
+        t["source"] = "https://evil.example/"            # change content, keep old hash
+        self.bad(EvidenceRecord, t, "EvidenceRecord.record_hash")
+        self.bad(EvidenceRecord, {**evidence(), "seq": -1}, "EvidenceRecord.seq")
+        self.bad(EvidenceRecord, {**evidence(), "args_sha256": "abc"}, "EvidenceRecord.args_sha256")
+        self.bad(EvidenceRecord, {**evidence(), "timestamp": "2026-01-02T03:04:05+00:00"}, "EvidenceRecord.timestamp")
+        self.bad(EvidenceRecord, {**evidence(), "timestamp": "2026-13-02T03:04:05Z"}, "EvidenceRecord.timestamp")
+        body = {k: v for k, v in evidence().items() if k != "record_hash"}
+        with self.assertRaises(ContractError):                  # seq 0 must have the genesis prev_hash
+            EvidenceRecord.seal(**{**body, "prev_hash": H})
+        with self.assertRaises(ContractError):                  # seq > 0 must not use the genesis prev_hash
+            EvidenceRecord.seal(**{**body, "seq": 1})
+        # validate() on a mutated object catches tampering too
+        r = EvidenceRecord.from_dict(evidence())
+        r.tool = "other"
+        with self.assertRaises(ContractError):
+            r.validate()
+
+    def test_title_lint(self):
+        ok = ["Revenue grew 12% as pricing offset weaker volumes", "We recommend bidding 9.5x EBITDA",
+              "Margins expand 200bps on mix shift", "Net debt falls below 2x by FY26"]
+        for t in ok:
+            GhostTitle.from_dict({"id": "a", "action_title": t})
+        bad = {
+            "16 words": "Revenue grew twelve percent last year because pricing power offset weaker volumes across "
+                        "all three regions",
+            "bang": "Revenue grew 12% on pricing!",
+            "em dash": "Revenue grew 12% \u2014 pricing led",
+            "en dash": "Revenue grew 12% \u2013 pricing led",
+            "emoji": "Revenue grew 12% \U0001F680 on pricing",
+            "emoji2": "Revenue grew 12% on pricing \u2705",
+            "period": "Revenue grew 12% on pricing.",
+            "noun phrase": "Revenue by segment and region",
+            "short": "Revenue grew fast",
+            "long": "Revenue " + "grew " * 30,
+            "newline": "Revenue grew 12%\non pricing",
+            "leading space": " Revenue grew 12% on pricing",
+        }
+        for name, t in bad.items():
+            with self.subTest(name):
+                self.bad(GhostTitle, {"id": "a", "action_title": t}, "GhostTitle.action_title")
+        self.assertEqual(len(bad["16 words"].split()), 16)
+
+    def test_ghost_deck(self):
+        d = copy.deepcopy(SAMPLES[GhostDeck])
+        d["titles"][1]["id"] = "t1"
+        self.bad(GhostDeck, d, "GhostDeck.titles[1].id", "duplicate")
+        d = copy.deepcopy(SAMPLES[GhostDeck])
+        d["approved_by"] = None
+        self.bad(GhostDeck, d, "GhostDeck.approved_by", "required")
+        d["approved"] = False
+        g = GhostDeck.from_dict(d)
+        self.assertFalse(g.approved)
+        d["titles"][0]["archetype_hint"] = "Bad Hint"
+        self.bad(GhostDeck, d, "GhostDeck.titles[0].archetype_hint")
+        d["titles"][0]["archetype_hint"] = None
+        d["titles"][0]["action_title"] = "Margins expand!"
+        self.bad(GhostDeck, d, "GhostDeck.titles[0].action_title")
+
+    def test_slidespec_blocks_and_layout_ban(self):
+        base = copy.deepcopy(SAMPLES[SlideSpec])
+        SlideSpec.from_dict(base)
+        deep = copy.deepcopy(base)
+        deep["blocks"][0]["series"][0]["style"] = {"Color": "#fff"}
+        self.bad(SlideSpec, deep, "SlideSpec.blocks[0].series[0].style.Color", "forbidden")
+        for k in ("x", "y", "w", "h", "left", "top", "width", "height", "font", "font_size", "font_family", "color",
+                  "colour", "fill", "rgb", "hex", "emu", "position", "size_pt", "WIDTH"):
+            d = copy.deepcopy(base)
+            d["blocks"][1][k] = 1
+            self.bad(SlideSpec, d, f"SlideSpec.blocks[1].{k}", "forbidden")
+        d = copy.deepcopy(base)
+        d["data"] = {"a": {"b": [{"left": 1}]}}
+        self.bad(SlideSpec, d, "SlideSpec.data.a.b[0].left")
+        # nested inside a DeckSpec: path carries the deck prefix
+        deck = {"deck_id": "d", "title": "D", "slides": [base, {**copy.deepcopy(base), "id": "s2"}]}
+        deck["slides"][1]["blocks"][0]["series"][0]["points"] = [{"y": 3}]
+        self.bad(DeckSpec, deck, "DeckSpec.slides[1].blocks[0].series[0].points[0].y", "forbidden")
+        d = copy.deepcopy(base)
+        d["blocks"][0]["type"] = "carousel"
+        self.bad(SlideSpec, d, "SlideSpec.blocks[0].type")
+        d = copy.deepcopy(base)
+        del d["blocks"][0]["type"]
+        self.bad(SlideSpec, d, "SlideSpec.blocks[0].type", "required")
+        for k, v in (("archetype", "Chart Single"), ("as_of", "2024-02-30"), ("action_title", "Revenue by segment")):
+            self.bad(SlideSpec, {**base, k: v}, f"SlideSpec.{k}")
+        self.bad(SlideSpec, {**base, "sources": [cit(url="javascript:x")]}, "SlideSpec.sources[0].url")
+        # legacy minimal slide still valid
+        SlideSpec.from_dict({"id": "s", "layout": "title"})
+
+    def test_verify_m1_still_passes(self):
+        import subprocess
+        import sys
+        from pathlib import Path
+        root = Path(__file__).resolve().parent.parent
+        r = subprocess.run([sys.executable, str(root / "scripts" / "verify_m1.py")], cwd=root,
+                           capture_output=True, text=True, timeout=300)
+        self.assertEqual(r.returncode, 0, r.stdout[-800:] + r.stderr[-800:])
 
 
 if __name__ == "__main__":

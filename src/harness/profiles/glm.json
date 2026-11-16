@@ -1,0 +1,31 @@
+{
+  "family": "glm",
+  "match": [
+    "^(zai[/-]|z-ai[/-]|zhipu[/-])?glm",
+    "^chatglm"
+  ],
+  "context_window": 200000,
+  "supports_vision": false,
+  "supports_json_schema": false,
+  "max_output_tokens": 8192,
+  "recommended": {
+    "default": {
+      "planner": "glm-4.6",
+      "worker": "glm-4.6",
+      "verifier": "glm-4.6",
+      "critic": "glm-4.6"
+    }
+  },
+  "prompt_quirks": {
+    "caching": "automatic_prefix",
+    "json_mode": "json_object; validate output locally",
+    "thinking": "thinking mode on by default; disable for short extraction",
+    "tool_calling": "native",
+    "vision_variant": "glm-4.5v is a separate model id"
+  },
+  "price_per_mtok": {
+    "input": 0.6,
+    "output": 2.2
+  },
+  "notes": "price_per_mtok is list price in USD per million tokens, approximate; update before relying on cost reports."
+}

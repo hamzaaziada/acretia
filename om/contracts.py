@@ -12,8 +12,9 @@ import hashlib
 import json
 import math
 import re
+import unicodedata
 from dataclasses import MISSING, dataclass, field, fields, is_dataclass
-from datetime import datetime
+from datetime import date, datetime
 from typing import Any, ClassVar
 
 
@@ -168,6 +169,116 @@ def timestamp(x, p):
     return x
 
 
+def iso_date(x, p):
+    """Real calendar date, strictly YYYY-MM-DD."""
+    string(pattern=r"\d{4}-\d{2}-\d{2}")(x, p)
+    try:
+        date.fromisoformat(x)
+    except ValueError:
+        _err(p, f"not a real calendar date: {x!r}")
+    return x
+
+
+def utc_timestamp(x, p):
+    """ISO-8601 UTC timestamp ending in 'Z'."""
+    string(pattern=r"\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?Z")(x, p)
+    return timestamp(x, p)
+
+
+FORBIDDEN_LAYOUT_KEYS = frozenset({
+    "x", "y", "w", "h", "left", "top", "width", "height", "font", "font_size", "font_family", "color", "colour",
+    "fill", "rgb", "hex", "emu", "position", "size_pt"})
+
+
+def reject_layout_keys(x, p):
+    """The model never supplies layout: raise on any forbidden key at any depth of a raw spec tree."""
+    if isinstance(x, dict):
+        for k, e in x.items():
+            if isinstance(k, str) and k.lower() in FORBIDDEN_LAYOUT_KEYS:
+                _err(f"{p}.{k}", "layout/style key is forbidden in a spec (the layout solver owns geometry, fonts, colours)")
+            reject_layout_keys(e, f"{p}.{k}")
+    elif isinstance(x, (list, tuple)):
+        for i, e in enumerate(x):
+            reject_layout_keys(e, f"{p}[{i}]")
+
+
+# Action-title lint (deterministic; S3.1/S3.2). A title is a *claim*, not a topic label.
+TITLE_MAX_WORDS = 15
+TITLE_MAX_CHARS = 110          # about two lines on a 16:9 title box
+TITLE_MIN_WORDS = 4
+_VERBS = frozenset("""be is are was were been being am will would can could should may might must do does did done have has
+had having grow grew grown rise rose risen fall fell fallen drive drove driven lead led support show showed shown
+suggest imply mean means need require offer deliver generate produce reduce increase decrease improve expand
+accelerate slow weaken strengthen outperform underperform exceed lag trail beat miss cut raise lift lower hold
+remain stay become make made take took give gave see saw get got keep kept add pay paid earn earned cost buy bought
+sell sold fund finance justify warrant undervalue overvalue price value imply enable allow reflect indicate rank
+dominate depend rely face expect forecast project reach hit top gain lose lost win won compress widen narrow
+shrink double triple halve convert rebound recover stabilise stabilize peak trough yield return outgrow
+""".split())
+
+
+def _verbish(tok):
+    t = tok.lower()
+    if not t.isalpha():
+        return False
+    cands = {t, t[:-1], t[:-2], t[:-3], t[:-3] + "e", t[:-2] + "e", t[:-3] + "y"}
+    cands.discard("")
+    if cands & _VERBS:
+        return True
+    return len(t) >= 5 and t.endswith(("ed", "ing")) or t.endswith(("ize", "ise", "ify")) and len(t) >= 6
+
+
+def _has_emoji(s):
+    return any(ord(c) >= 0x1F000 or c in "\u200d\ufe0f" or unicodedata.category(c) == "So" for c in s)
+
+
+def action_title_lint(x, p):
+    """Action title: a one-sentence claim. Rules (all deterministic):
+
+    * <= 15 words and <= 110 characters, no leading/trailing space, single line;
+    * no trailing period, no ``!``, no em/en dash, no emoji or pictographs;
+    * >= 4 words and at least one verb-ish word after the first word (auxiliary/lexicon verb, inflected form of one,
+      or a word ending -ed/-ing/-ize/-ise/-ify) so a bare noun phrase such as "Revenue by segment" is rejected.
+    """
+    string()(x, p)
+    if x != x.strip() or "\n" in x or "\r" in x:
+        _err(p, "must be a single trimmed line")
+    if len(x) > TITLE_MAX_CHARS:
+        _err(p, f"title is {len(x)} chars; max {TITLE_MAX_CHARS} (about two lines)")
+    words = x.split()
+    if len(words) > TITLE_MAX_WORDS:
+        _err(p, f"title has {len(words)} words; max {TITLE_MAX_WORDS}")
+    if x.endswith("."):
+        _err(p, "title must not end with a period")
+    if "!" in x:
+        _err(p, "title must not contain '!'")
+    if "\u2014" in x or "\u2013" in x:
+        _err(p, "title must not contain em/en dashes")
+    if _has_emoji(x):
+        _err(p, "title must not contain emoji")
+    if len(words) < TITLE_MIN_WORDS:
+        _err(p, f"title must state a claim of at least {TITLE_MIN_WORDS} words, got {len(words)}")
+    if not any(_verbish(w.strip(",;:()%$\"'")) for w in words[1:]):
+        _err(p, "title reads as a noun phrase; it must contain a verb stating the claim")
+    return x
+
+
+ARCHETYPE = string(pattern=r"[a-z0-9_]+")
+BLOCK_TYPES = ("text", "bullets", "chart", "table", "kpi", "quote", "image_ref", "timeline", "matrix2x2", "process",
+               "tree")
+
+
+def block(x, p):
+    """Typed content block: ``{"type": <BLOCK_TYPES>, ...JSON data}``. Geometry/style keys are rejected."""
+    if not isinstance(x, dict):
+        _err(p, f"expected object, got {type(x).__name__}")
+    if "type" not in x:
+        _err(f"{p}.type", "required field missing")
+    enum(*BLOCK_TYPES)(x["type"], f"{p}.type")
+    reject_layout_keys(x, p)
+    return {_key(k, p): json_value(e, f"{p}.{k}") for k, e in x.items()}
+
+
 HASH = string(pattern=r"[0-9a-f]{64}")
 _LOCAL = r"\$?[A-Z]{1,3}\$?[1-9][0-9]*"
 _SHEET = r"(?:'[^']+'|[^'!:\s]+)"
@@ -262,10 +373,20 @@ class Citation(Contract):
     source_url: str | None = None
     sheet: str | None = None
     cell: str | None = None
+    cell_locator: str | None = None      # "Sheet!A1" or "Sheet!A1:B2"
+    xbrl_concept: str | None = None      # "us-gaap:Revenues"
+    url: str | None = None               # http/https only; ``source_url`` is the legacy alias (must not differ)
+    as_of: str | None = None             # YYYY-MM-DD
     SCHEMA: ClassVar = {
         "doc_id": ID, "sha256_span_hash": HASH, "page": optional(integer(1)), "bbox_norm": optional(bbox),
         "quote": string(0), "source_url": optional(string(pattern=r"https?://\S+|file:///\S+")),
-        "sheet": optional(string()), "cell": optional(LOCAL_REF)}
+        "sheet": optional(string()), "cell": optional(LOCAL_REF), "cell_locator": optional(SHEET_REF),
+        "xbrl_concept": optional(string(pattern=r"[A-Za-z][A-Za-z0-9-]*:[A-Za-z][A-Za-z0-9_]*")),
+        "url": optional(string(pattern=r"https?://\S+")), "as_of": optional(iso_date)}
+
+    def _check(self, path):
+        if self.url and self.source_url and self.url != self.source_url:
+            _err(f"{path}.url", "differs from source_url (alias); give one or make them equal")
 
 
 @dataclass
@@ -338,9 +459,21 @@ class SlideSpec(Contract):
     notes: str = ""
     citations: list = _list()
     data: dict = _dict()
+    archetype: str | None = None         # [a-z0-9_]+ ; the layout engine picks geometry from this
+    action_title: str | None = None      # one-sentence claim, see ``action_title_lint``
+    blocks: list = _list()               # typed content blocks, see ``BLOCK_TYPES``
+    sources: list = _list()              # Citations backing the slide
+    as_of: str | None = None             # YYYY-MM-DD
     SCHEMA: ClassVar = {
         "id": ID, "layout": enum(*SLIDE_LAYOUTS), "title": string(0), "bullets": listing(string(0)),
-        "notes": string(0), "citations": listing(nested(Citation)), "data": mapping(string(), json_value)}
+        "notes": string(0), "citations": listing(nested(Citation)), "data": mapping(string(), json_value),
+        "archetype": optional(ARCHETYPE), "action_title": optional(action_title_lint),
+        "blocks": listing(block), "sources": listing(nested(Citation)), "as_of": optional(iso_date)}
+
+    @classmethod
+    def _parse(cls, d, path):
+        reject_layout_keys(d, path)      # first, so the offending key is reported with its full path
+        return super()._parse(d, path)
 
 
 @dataclass
@@ -503,5 +636,79 @@ class ValidationReport(Contract):
                 _err(f"{path}.passed", f"cannot pass with a {f.severity} finding (findings[{i}])")
 
 
+# ---------------------------------------------------------------- evidence ledger & ghost deck
+@dataclass
+class EvidenceRecord(Contract):
+    """One link of a tamper-evident hash chain of tool calls. ``record_hash`` = sha256(canonical JSON of the rest)."""
+    job_id: str
+    seq: int
+    tool: str
+    args_sha256: str
+    source: str
+    timestamp: str
+    output_sha256: str
+    prev_hash: str
+    record_hash: str
+    page: int | None = None
+    bbox_norm: tuple | None = None
+    GENESIS: ClassVar[str] = "0" * 64
+    SCHEMA: ClassVar = {
+        "job_id": ID, "seq": integer(0), "tool": string(), "args_sha256": HASH, "source": string(),
+        "timestamp": utc_timestamp, "output_sha256": HASH, "prev_hash": HASH, "record_hash": HASH,
+        "page": optional(integer(1)), "bbox_norm": optional(bbox)}
+
+    def compute_hash(self) -> str:
+        body = {k: v for k, v in self.to_dict().items() if k != "record_hash"}
+        return sha256_hex(json.dumps(body, sort_keys=True, separators=(",", ":"), ensure_ascii=False,
+                                     allow_nan=False))
+
+    def _check(self, path):
+        zero = self.prev_hash == self.GENESIS
+        if self.seq == 0 and not zero:
+            _err(f"{path}.prev_hash", "must be 64 zeros for seq 0")
+        if self.seq > 0 and zero:
+            _err(f"{path}.prev_hash", "must link to the previous record for seq > 0")
+        if self.record_hash != self.compute_hash():
+            _err(f"{path}.record_hash", "does not match the hash of the record (tampered or stale)")
+
+    @classmethod
+    def seal(cls, **fields_):
+        """Build a record, computing ``record_hash`` (``prev_hash`` defaults to the genesis zeros)."""
+        fields_.setdefault("prev_hash", cls.GENESIS)
+        rec = cls(record_hash=cls.GENESIS, **fields_)
+        rec.record_hash = rec.compute_hash()
+        return rec.validate()
+
+
+@dataclass
+class GhostTitle(Contract):
+    id: str
+    action_title: str
+    supporting_point: str = ""
+    archetype_hint: str | None = None
+    SCHEMA: ClassVar = {"id": ID, "action_title": action_title_lint, "supporting_point": string(0),
+                        "archetype_hint": optional(ARCHETYPE)}
+
+
+@dataclass
+class GhostDeck(Contract):
+    """The storyline as action titles only; must be approved by a person before any slide is rendered."""
+    deck_id: str
+    title: str
+    audience: str
+    titles: list = _list()
+    approved: bool = False
+    approved_by: str | None = None
+    SCHEMA: ClassVar = {"deck_id": ID, "title": string(), "audience": string(),
+                        "titles": listing(nested(GhostTitle), unique="id"), "approved": boolean,
+                        "approved_by": optional(string())}
+
+    def _check(self, path):
+        if self.approved and not self.approved_by:
+            _err(f"{path}.approved_by", "required when approved is true")
+        if self.approved and not self.titles:
+            _err(f"{path}.titles", "cannot approve an empty ghost deck")
+
+
 CONTRACTS = (Citation, WorkbookGraph, ModelSpec, ModelManifest, SlideSpec, SolvedSlideLayout, SlideRepairPatch,
-             DeckSpec, GridSpec, GridCell, DealMemory, Job, ValidationReport)
+             DeckSpec, GridSpec, GridCell, DealMemory, Job, ValidationReport, EvidenceRecord, GhostTitle, GhostDeck)
