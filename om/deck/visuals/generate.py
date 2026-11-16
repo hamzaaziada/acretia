@@ -1,4 +1,4 @@
-"""Candidate generation: image model if the probe says so, else the SVG designer via the router, else procedural."""
+"""Candidate generation: image model if the probe says so, else the SVG designer via the model adapter, else procedural."""
 from __future__ import annotations
 
 import random
@@ -47,12 +47,12 @@ def _image_model(prompt, image_status, aspect):
     return client.generate(prompt, aspect=aspect if aspect in ("16:9", "4:3", "1:1") else "16:9")
 
 
-def _svg_designer(prompt, router, size):
+def _svg_designer(prompt, adapter, size, job_id=None):
     from ... import images
-    from ...llm import Part
     w, h = size
-    res = router.complete_json("storyboard", SVG_SYSTEM, [Part(f'viewBox="0 0 {w} {h}". {prompt}')],
-                               {"type": "object", "required": ["svg"], "properties": {"svg": {"type": "string"}}})
+    messages = [{"role": "system", "content": SVG_SYSTEM}, {"role": "user", "content": f'viewBox="0 0 {w} {h}". {prompt}'}]
+    res = adapter.chat(messages, json_schema={"type": "object", "required": ["svg"], "properties": {"svg": {"type": "string"}}},
+                       job_id=job_id)
     svg = images.sanitize_svg(res.data.get("svg") or "")
     if not _valid_svg(svg):
         return None, None
@@ -60,8 +60,9 @@ def _svg_designer(prompt, router, size):
     return (png, svg) if png else (None, None)
 
 
-def candidates(concept: str, style: str, n: int = 3, *, kind: str = "illustration", theme=None, router=None,
-               image_status: dict | None = None, seed: int | None = None, aspect: str = "16:9") -> list[Candidate]:
+def candidates(concept: str, style: str, n: int = 3, *, kind: str = "illustration", theme=None, adapter=None,
+               image_status: dict | None = None, seed: int | None = None, aspect: str = "16:9",
+               job_id: str | None = None) -> list[Candidate]:
     if style not in STYLES:
         raise ValueError(f"unknown style {style!r}")
     base = random.SystemRandom().randrange(2 ** 31) if seed is None else seed
@@ -81,9 +82,9 @@ def candidates(concept: str, style: str, n: int = 3, *, kind: str = "illustratio
                 continue
             except Exception:
                 pass
-        if router is not None:
+        if adapter is not None:
             try:
-                png, svg = _svg_designer(prompt + " " + STYLES[style].svg_rules, router, size)
+                png, svg = _svg_designer(prompt + " " + STYLES[style].svg_rules, adapter, size, job_id)
                 if png:
                     add(i, png, svg, "svg_designer", prompt, s)
                     continue

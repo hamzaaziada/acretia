@@ -626,6 +626,34 @@ def cmd_grid(args) -> None:
         print(f"wrote {args.out}")
 
 
+def cmd_slides(args) -> None:
+    import json as _json
+    from om.deck import engine, spec as deck_spec
+    d = deck_spec.load(args.spec)
+    out = args.out or str(DATA / "out" / f"{d.get('deck_id') or 'deck'}.pptx")
+    adapter = None
+    if (os.environ.get("ACRETIA_LLM_API_KEY") or "").strip():
+        from src.harness.adapter import Adapter
+        adapter = Adapter.from_env()
+    r = engine.build(d, out=out, adapter=adapter, seed=args.seed, template=args.template, critic=not args.no_critic)
+    if args.json:
+        print(_json.dumps(r.to_dict(), indent=2, default=str))
+    else:
+        probe = r.image_probe or {}
+        print(f"slides: {r.slides} | critical: {r.critical} | major: {r.major} | art direction: {r.art_direction or '-'} | "
+              f"image probe: {'available' if probe.get('available') else 'unavailable'} ({probe.get('reason', '-')}) | "
+              f"{r.critic or 'critic: -'} | {r.total_seconds:.2f} s")
+        for f in r.findings:
+            if f["severity"] == "critical":
+                print(f"  CRITICAL [{f['rule']}] slide {f['slide']}: {f['message']}")
+        if r.error:
+            print(f"  error: {r.error}")
+        if r.path:
+            print(f"  wrote {r.path}")
+    if not r.ok:
+        sys.exit(1)
+
+
 def main() -> None:
     load_env()
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
@@ -721,6 +749,15 @@ def main() -> None:
     pd.add_argument("tickers", nargs="*")
     pd.add_argument("--industry")
     pd.add_argument("--out", help="output .pptx path (default data/out/<name>.pptx)")
+    pl = sp.add_parser("slides", help="deck engine v2: build a .pptx from a DeckSpec (YAML/JSON)")
+    pls = pl.add_subparsers(dest="slides_cmd", required=True)
+    plb = pls.add_parser("build", help="spec -> validated .pptx; exits 1 on any critical finding")
+    plb.add_argument("spec")
+    plb.add_argument("--out", help="output .pptx path (default data/out/<deck_id>.pptx)")
+    plb.add_argument("--seed", type=int)
+    plb.add_argument("--template", help=".potx/.pptx template")
+    plb.add_argument("--no-critic", action="store_true")
+    plb.add_argument("--json", action="store_true", help="print the full BuildReport as JSON")
     pm3 = sp.add_parser("model", help="integrated three-statement model + DCF (.xlsx) from SEC filings, graded")
     pm3.add_argument("ticker")
     pm3.add_argument("--scenario", type=int, choices=[1, 2, 3], default=1, help="1 base, 2 upside, 3 downside")
@@ -773,6 +810,8 @@ def main() -> None:
         cmd_rounds(args)
     elif args.cmd == "deck":
         cmd_deck(args)
+    elif args.cmd == "slides":
+        cmd_slides(args)
     elif args.cmd == "model":
         cmd_model(args)
     elif args.cmd == "grade":

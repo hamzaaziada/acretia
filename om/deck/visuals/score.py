@@ -109,25 +109,25 @@ VLM_SYSTEM = ("You are a senior presentation art director. Rate this slide visua
               "no clichés, supports the concept. Return JSON {\"score\": number, \"issues\": [string]}.")
 
 
-def vlm_score(candidate, router, concept: str = "") -> float | None:
-    """Optional critic score via task type `vision_critic`; any failure -> None."""
+def vlm_score(candidate, adapter, concept: str = "", job_id: str | None = None) -> float | None:
+    """Optional critic score through the model adapter (vision message); any failure (replay miss, transport, parse) -> None."""
     try:
-        from ...llm import Part
-        parts = [Part(f"Concept: {concept or 'abstract business visual'}", image=candidate.png)]
+        from src.harness.adapter import image_part
+        content = [{"type": "text", "text": f"Concept: {concept or 'abstract business visual'}"}, image_part(candidate.png)]
+        messages = [{"role": "system", "content": VLM_SYSTEM}, {"role": "user", "content": content}]
         schema = {"type": "object", "required": ["score"], "properties": {"score": {"type": "number"}}}
-        res = router.complete_task("vision_critic", VLM_SYSTEM, parts, schema)
-        v = float(res.data["score"])
-        return max(0.0, min(10.0, v))
+        res = adapter.chat(messages, json_schema=schema, job_id=job_id)
+        return max(0.0, min(10.0, float(res.data["score"])))
     except Exception:
         return None
 
 
-def choose(cands, theme=None, router=None, concept: str = ""):
+def choose(cands, theme=None, adapter=None, concept: str = "", job_id: str | None = None):
     """-> (best candidate, {candidate id: score dict}); the VLM score, when present, is blended 50/50 into `final`."""
     scores = {}
     for i, c in enumerate(cands):
         sc = score(c, theme, others=[o for j, o in enumerate(cands) if j != i])
-        v = vlm_score(c, router, concept) if router is not None else None
+        v = vlm_score(c, adapter, concept, job_id) if adapter is not None else None
         if v is not None:
             sc["vlm"] = v
         sc["final"] = round((sc["overall"] + v) / 2, 2) if v is not None else sc["overall"]
