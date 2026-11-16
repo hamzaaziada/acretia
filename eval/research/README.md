@@ -26,11 +26,13 @@ correct number without a verified citation (doc_id + 64-hex span hash + url or p
 citation page or quote overlapping gold evidence (FinanceBench). Long free-text gold and BTB rubrics are `unscorable`
 here (need an LLM judge / deliverable grader, live) and are excluded from the accuracy denominator, never counted right.
 
-## `scorecard.csv`
+## `scorecard.csv` (D-S6-01)
 
-Columns `suite,metric,value,n,mode,ran_live,date,notes`. `update_scorecard()` upserts only `research/*` rows keyed by
-(suite, metric) and keeps every other row. A replay row never overwrites a live row. Replay rows have a blank value and
-the note `not run live (D-021)`.
+Existing 5-column schema `stage,eval,n,score,notes`; never add columns. Our rows: `stage=S6`,
+`eval=research/<suite>/<metric>` (metrics `strict_accuracy`, `evidence_rate`, `items_run`), `notes` =
+`mode=<replay|live>; ran_live=<yes|no>; date=<ISO>; <text>`. `update_scorecard()` upserts by (stage, eval), raises on any
+eval not starting with `research/`, keeps foreign rows byte-identical, and a replay row never overwrites a live row
+(`ran_live` is read from notes). Replay rows have a blank score and the text `not run live (D-021)`.
 
 ## Time-saved hook: `data/evals/out/tsb_research.jsonl`
 

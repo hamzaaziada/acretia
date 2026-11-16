@@ -129,37 +129,47 @@ class Scoring(NoNetwork):
 
 
 class Scorecard(NoNetwork):
-    def test_update_preserves_foreign_rows_and_only_touches_research(self):
+    HDR = "stage,eval,n,score,notes\n"
+    FOREIGN = 'S8,standards_qa,50,0.520,"live_model=no; a, b ""q"""\n'
+
+    @staticmethod
+    def row(ev, score, live, n=3):
+        return {"stage": "S6", "eval": ev, "n": n, "score": score,
+                "notes": f"mode={'live' if live else 'replay'}; ran_live={'yes' if live else 'no'}; date=2026-11-17; t"}
+
+    def test_update_preserves_foreign_rows_and_never_downgrades_live(self):
         with tempfile.TemporaryDirectory() as d:
             p = Path(d) / "scorecard.csv"
-            p.write_text("suite,metric,value,n,mode,ran_live,date,notes,extra\n"
-                         "deck/s3.10,quality,0.91,20,live,yes,2026-11-01,keep me,x1\n"
-                         "research/vals-v1,strict_accuracy,0.5,50,live,yes,2026-11-02,live row,\n")
-            row = lambda s, m, v, live: {"suite": s, "metric": m, "value": v, "n": 3, "mode": "live" if live else "replay",  # noqa: E731
-                                         "ran_live": "yes" if live else "no", "date": "2026-11-16", "notes": "n"}
-            update_scorecard(p, [row("research/vals-v1", "strict_accuracy", "", False),     # replay must not clobber live
-                                 row("research/btb", "items_run", "", False)])
+            live_line = "S6,research/vals-v1/strict_accuracy,50,0.5,mode=live; ran_live=yes; date=2026-11-02; x\n"
+            p.write_text(self.HDR + self.FOREIGN + live_line)
+            update_scorecard(p, [self.row("research/vals-v1/strict_accuracy", "", False),
+                                 self.row("research/btb/items_run", "", False)])
+            text = p.read_text()
+            self.assertTrue(text.startswith(self.HDR + self.FOREIGN + live_line))      # foreign + live untouched, byte-identical
+            self.assertIn("S6,research/btb/items_run,3,,mode=replay; ran_live=no", text)
+            update_scorecard(p, [self.row("research/vals-v1/strict_accuracy", "0.6", True)])
             rows = read_rows(p)
-            self.assertEqual(rows[0]["extra"], "x1")
-            self.assertEqual(rows[0]["notes"], "keep me")
-            live = [r for r in rows if r["suite"] == "research/vals-v1"][0]
-            self.assertEqual((live["value"], live["ran_live"]), ("0.5", "yes"))
-            self.assertTrue(any(r["suite"] == "research/btb" for r in rows))
-            update_scorecard(p, [row("research/vals-v1", "strict_accuracy", "0.6", True)])   # live may update live
-            rows = read_rows(p)
-            self.assertEqual([r["value"] for r in rows if r["suite"] == "research/vals-v1"], ["0.6"])
+            self.assertEqual([r["score"] for r in rows if r["eval"].startswith("research/vals-v1")], ["0.6"])
             self.assertEqual(len(rows), 3)
+            self.assertEqual(p.read_text().splitlines()[0], "stage,eval,n,score,notes")
+            self.assertTrue(p.read_text().startswith(self.HDR + self.FOREIGN))
 
-    def test_rejects_foreign_suite_rows(self):
+    def test_rejects_foreign_eval_rows(self):
         with tempfile.TemporaryDirectory() as d, self.assertRaises(ValueError):
-            update_scorecard(Path(d) / "s.csv", [{"suite": "deck/x", "metric": "m"}])
+            update_scorecard(Path(d) / "s.csv", [{"stage": "S3", "eval": "deck/x"}])
 
-    def test_creates_file_with_columns(self):
+    def test_rejects_other_header(self):
         with tempfile.TemporaryDirectory() as d:
             p = Path(d) / "s.csv"
-            update_scorecard(p, [{"suite": "research/btb", "metric": "m", "value": "", "n": 0, "mode": "replay",
-                                  "ran_live": "no", "date": "d", "notes": "not run live (D-021)"}])
-            self.assertEqual(p.read_text().splitlines()[0], "suite,metric,value,n,mode,ran_live,date,notes")
+            p.write_text("suite,metric\n")
+            with self.assertRaises(ValueError):
+                update_scorecard(p, [self.row("research/btb/items_run", "", False)])
+
+    def test_creates_file_with_five_columns(self):
+        with tempfile.TemporaryDirectory() as d:
+            p = Path(d) / "s.csv"
+            update_scorecard(p, [self.row("research/btb/items_run", "", False)])
+            self.assertEqual(p.read_text().splitlines()[0], "stage,eval,n,score,notes")
 
 
 class FakeAdapter:
@@ -192,10 +202,10 @@ class Runner(NoNetwork):
             summ = json.loads((Path(d) / "out" / "summary.json").read_text())
             self.assertEqual(summ["mode"], "replay")
             rows = read_rows(card)
-            self.assertTrue(rows and all(r["ran_live"] == "no" and r["value"] == "" for r in rows))
+            self.assertTrue(rows and all(r["stage"] == "S6" and r["score"] == "" for r in rows))
+            self.assertTrue(all("ran_live=no" in r["notes"] and "mode=replay" in r["notes"] for r in rows))
             self.assertTrue(all("not run live (D-021)" in r["notes"] for r in rows))
-            self.assertEqual({r["suite"] for r in rows}, {"research/vals-v1", "research/vals-v2", "research/financebench",
-                                                         "research/btb"})
+            self.assertEqual({r["eval"].split("/")[1] for r in rows}, {"vals-v1", "vals-v2", "financebench", "btb"})
             tsb = [json.loads(x) for x in (Path(d) / "out" / "tsb_research.jsonl").read_text().splitlines()]
             self.assertEqual(len(tsb), 3 + 1 + 2 + 2)
             self.assertIsNone(tsb[0]["review_and_fix_min"])
@@ -205,8 +215,9 @@ class Runner(NoNetwork):
         with tempfile.TemporaryDirectory() as d:
             s = runner_mod.run("financebench", "live", None, Path(d) / "o", data_root=FX, adapter=FakeAdapter(),
                                runner=fake_runner, scorecard_path=Path(d) / "c.csv")
-            acc = [r for r in s["scorecard_rows"] if r["metric"] == "strict_accuracy"][0]
-            self.assertEqual((acc["ran_live"], acc["value"]), ("yes", "1.0000"))
+            acc = [r for r in s["scorecard_rows"] if r["eval"].endswith("/strict_accuracy")][0]
+            self.assertEqual(acc["score"], "1.0000")
+            self.assertIn("ran_live=yes", acc["notes"])
 
     def test_unfetched_dataset_marked_unavailable(self):
         with tempfile.TemporaryDirectory() as d:

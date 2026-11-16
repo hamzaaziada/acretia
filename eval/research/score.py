@@ -7,12 +7,13 @@ reported as ``unscorable`` (excluded from the accuracy denominator, never silent
 from __future__ import annotations
 
 import csv
+import io
 import re
 from datetime import date
 from pathlib import Path
 
 REL_TOL = 0.01
-SCORECARD_COLUMNS = ["suite", "metric", "value", "n", "mode", "ran_live", "date", "notes"]
+SCORECARD_COLUMNS = ["stage", "eval", "n", "score", "notes"]
 _SCALE = {"billion": 1e9, "bn": 1e9, "b": 1e9, "million": 1e6, "mm": 1e6, "m": 1e6, "thousand": 1e3, "k": 1e3}
 _UNIT_FIGURE = {"usd": ("money", 1.0), "usd_k": ("money", 1e3), "usd_m": ("money", 1e6), "usd_mm": ("money", 1e6),
                 "usd_bn": ("money", 1e9), "usd_b": ("money", 1e9), "pct": ("frac", 0.01), "percent": ("frac", 0.01),
@@ -160,50 +161,57 @@ def aggregate(scored: list) -> dict:
             "evidence_rate": (sum(bool(s["evidence_ok"]) for s in ev) / len(ev)) if ev else None, "n_evidence": len(ev)}
 
 
+def _notes_live(notes: str) -> bool:
+    return "ran_live=yes" in (notes or "")
+
+
 def update_scorecard(path, rows: list) -> None:
-    """Upsert ``rows`` (dicts with SCORECARD_COLUMNS) keyed by (suite, metric). Only rows whose suite starts with
-    "research/" are ever replaced or added; every other row (other sessions' suites, extra columns) is kept as is.
-    A replay/not-run row never overwrites an existing live (ran_live=yes) row of the same key."""
+    """Upsert ``rows`` (dicts with stage, eval, n, score, notes) into the 5-column scorecard (D-S6-01), keyed by
+    (stage, eval). Only evals starting with "research/" may be written (ValueError otherwise). Foreign rows are
+    kept byte-identical; no columns are ever added. A replay row never overwrites a live row (ran_live in notes)."""
     path = Path(path)
-    header, existing = list(SCORECARD_COLUMNS), []
-    if path.is_file():
-        with path.open(newline="", encoding="utf-8") as fh:
-            rd = csv.DictReader(fh)
-            if rd.fieldnames:
-                header = list(rd.fieldnames) + [c for c in SCORECARD_COLUMNS if c not in rd.fieldnames]
-            existing = [dict(r) for r in rd]
     for r in rows:
-        if not str(r.get("suite", "")).startswith("research/"):
-            raise ValueError(f"update_scorecard only writes research/ rows, got suite {r.get('suite')!r}")
+        if not str(r.get("eval", "")).startswith("research/"):
+            raise ValueError(f"update_scorecard only writes research/ rows, got eval {r.get('eval')!r}")
+    text = path.read_text(encoding="utf-8") if path.is_file() else ""
+    lines = text.splitlines(keepends=True)
+    header = ",".join(SCORECARD_COLUMNS) + "\n"
+    recs, prev = [], 0                     # (raw_text, parsed_row)
+    if text.strip():
+        rd = csv.reader(io.StringIO(text))
+        cols = next(rd)
+        if cols != SCORECARD_COLUMNS:
+            raise ValueError(f"scorecard header {cols} != {SCORECARD_COLUMNS} (D-S6-01)")
+        header, prev = lines[0], rd.line_num
+        for row in rd:
+            recs.append(["".join(lines[prev:rd.line_num]), dict(zip(SCORECARD_COLUMNS, row))])
+            prev = rd.line_num
     for new in rows:
-        key = (new["suite"], new["metric"])
-        idx = next((i for i, e in enumerate(existing) if (e.get("suite"), e.get("metric")) == key), None)
-        if idx is None:
-            existing.append({c: new.get(c, "") for c in header})
-        elif not (existing[idx].get("ran_live") == "yes" and new.get("ran_live") != "yes"):
-            existing[idx] = {**existing[idx], **{c: new.get(c, "") for c in SCORECARD_COLUMNS}}
+        key = (new.get("stage", "S6"), new["eval"])
+        out = io.StringIO()
+        csv.writer(out, lineterminator="\n").writerow([new.get(c, "") for c in SCORECARD_COLUMNS])
+        raw = out.getvalue()
+        i = next((i for i, (_, r) in enumerate(recs) if (r["stage"], r["eval"]) == key), None)
+        if i is None:
+            recs.append([raw, dict(zip(SCORECARD_COLUMNS, [new.get(c, "") for c in SCORECARD_COLUMNS]))])
+        elif not (_notes_live(recs[i][1]["notes"]) and not _notes_live(new.get("notes", ""))):
+            recs[i] = [raw, recs[i][1] | {c: new.get(c, "") for c in SCORECARD_COLUMNS}]
+    body = "".join(r[0] if r[0].endswith("\n") else r[0] + "\n" for r in recs)
     path.parent.mkdir(parents=True, exist_ok=True)
-    with path.open("w", newline="", encoding="utf-8") as fh:
-        w = csv.DictWriter(fh, fieldnames=header, restval="", lineterminator="\n")
-        w.writeheader()
-        w.writerows(existing)
+    path.write_text(header + body, encoding="utf-8")
 
 
 def scorecard_rows(suite: str, agg: dict, *, mode: str, today: str | None = None, note: str = "") -> list:
     live = mode == "live" and agg["n_run"] > 0
     d = today or date.today().isoformat()
-    base = {"mode": mode, "ran_live": "yes" if live else "no", "date": d}
-    nonote = "" if live else "not run live (D-021)"
-    notes = "; ".join(x for x in (note, nonote) if x)
+    tail = "; ".join(x for x in (note, "" if live else "not run live (D-021)") if x)
+    meta = f"mode={mode}; ran_live={'yes' if live else 'no'}; date={d}; "
 
     def val(x):
         return "" if x is None or not live else f"{x:.4f}"
     unsc = f"; {agg['n_unscorable']} unscorable excluded" if agg["n_unscorable"] else ""
-    return [
-        {**base, "suite": f"research/{suite}", "metric": "strict_accuracy", "value": val(agg["accuracy"]),
-         "n": agg["n_scorable"], "notes": notes + unsc},
-        {**base, "suite": f"research/{suite}", "metric": "evidence_rate", "value": val(agg["evidence_rate"]),
-         "n": agg["n_evidence"], "notes": notes},
-        {**base, "suite": f"research/{suite}", "metric": "items_run", "value": str(agg["n_run"]) if live else "",
-         "n": agg["n"], "notes": notes},
-    ]
+    mk = lambda metric, v, n, t: {"stage": "S6", "eval": f"research/{suite}/{metric}", "n": n, "score": v,  # noqa: E731
+                                  "notes": meta + t}
+    return [mk("strict_accuracy", val(agg["accuracy"]), agg["n_scorable"], tail + unsc),
+            mk("evidence_rate", val(agg["evidence_rate"]), agg["n_evidence"], tail),
+            mk("items_run", str(agg["n_run"]) if live else "", agg["n"], tail)]
