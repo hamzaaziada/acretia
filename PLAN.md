@@ -13,6 +13,39 @@ v1 of this plan (M1–M7) is superseded. Its packets are mapped to v2 stages bel
 
 ---
 
+## North star: the product (read this first)
+
+Acretia ships as a **production-level product that does what Rogo's Felix does, and beats it**. The engines (stages S1–S6, S8) exist to serve this product, and it is judged by what a banker experiences:
+
+1. They open the app (or email it) and ask in plain language: "spread trading comps for ElSewedy vs GCC cable peers and add a football field".
+2. An agent plans the work, shows its steps and cost live, and pulls filings, the VDR and the firm's own files.
+3. It returns **finished deliverables** within minutes: Excel in the firm's conventions, slides in the firm's template, an IC memo. Every number links to the highlighted source.
+4. The banker comments ("make slide 4 a waterfall", "use 9% WACC") and the agent edits in place, with versions and undo.
+5. When new earnings land, the model and deck roll forward by themselves and the user is told.
+
+### User journeys = product acceptance tests (P-J1 … P-J8)
+
+Each journey is scripted as an end-to-end browser test (Playwright, Apache-2.0, ledger row) running against the real app. The Haiku personas also judge it from screenshots and outputs.
+
+| Journey | The user does | They get (acceptance) |
+|---|---|---|
+| P-J1 Ask | Types a request in the command bar (or sends it by email) | A live plan with steps, sources, cost and time; deliverables delivered to the deal's library; p50 under 5 min for comps or a profile deck |
+| P-J2 Deal workspace | Creates a deal, drops a VDR zip (50+ PDFs, some scanned or Arabic) | Documents indexed with progress; diligence matrix with cost estimate; gaps and risks flagged; every cell clickable to its bbox |
+| P-J3 Model | "3-statement + DCF for X" (US XBRL or an annual-report PDF) | A graded, tied Excel model; assumptions editable in the UI with live recompute; download; audit view (blue/black/green, three-engine check) |
+| P-J4 Deck | "Pitch book / IC memo from this model and grid" | Ghost-deck approval, then rendered slides in the firm template with validator badges; comment-to-edit annotator; versions and diffs; model→deck sync |
+| P-J5 Earnings update | A new filing arrives (or the user triggers it) | Model rolled forward, deck refreshed, diff shown, notification sent |
+| P-J6 Trust | Clicks any number in a slide, Excel cell, memo or grid | Split-pane PDF with the exact span highlighted, plus page, as-of date and source link |
+| P-J7 Firm setup | An admin uploads templates and sample decks, defines Adjusted EBITDA and Net Debt, adds users and roles, connects SharePoint/Drive/VDR | House style cloned and applied everywhere; definitions used in every model; RBAC enforced |
+| P-J8 Agent library | Picks a pre-built agent (comps, DCF, LBO, merger, CIM summary, teaser, buyer list, earnings recap, IC memo) or saves their own prompt chain | Repeatable runs, shareable within the org, run history |
+
+**Production bar:**
+- multi-tenant auth with roles; audit log of every action and agent step;
+- streamed progress; cost shown per task; resumable jobs; notifications;
+- fast, dense, institutional UI with keyboard shortcuts; accessible (WCAG AA); English/Arabic UI with RTL;
+- no dead ends: every error says what to do next.
+
+---
+
 ## 0. Ground rules (binding on every packet)
 
 1. **Licence ledger first.** Before adopting, vendoring or borrowing from any repo, inspect its `LICENSE` at a **pinned commit** and add a row to [`license-and-repo-ledger.csv`](license-and-repo-ledger.csv): `repo, commit_hash, license, decision (adopt | borrow_ideas | isolated_service | skip), reason`.
@@ -120,7 +153,9 @@ v1 M1 is done (see §1): extend `om/contracts.py`, `om/pii.py`, `om/replay.py`, 
 | S6.3 | **Evals:** Vals Finance Agent (50 public questions) + FinanceBench subset, scored with evidence |
 | Gate | `scripts/verify_s6.py` (0 unsourced figures, eval pass rates recorded), then **persona gate** |
 
-### Stage 7 — Production UI, security review, Docker and CI
+### Stage 7 — The product app (session F) + security review, Docker and CI (session A)
+
+The product app (P-J1–P-J8 above) is built by session F, starting now: the shell first, then each engine plugged in as it lands on main. S7.4–S7.5 (security, Docker, CI) stay with session A. S7.1–S7.3 below are part of the product app.
 
 | Packet | Scope |
 |---|---|
@@ -152,10 +187,11 @@ Several Claude Code cloud sessions build at once, one stage each. Every session 
 
 | Session | Owns | Starts |
 |---|---|---|
-| A: "Acretia: autonomous build" (Boss) | S1 → S2 → S6 → S7 | now |
+| A: "Acretia: autonomous build" (Boss) | S1 → S2 → S6 → S7.4–S7.5 (security, Docker/CI) | now |
 | B: "Acretia: deck engine" | S3 (incl. S3.11 creative layer) | now: deterministic parts first; the VLM critic and image generation use `om/llm.py` until S2.1's adapter lands, then switch |
 | C: "Acretia: Excel engine" | S4 | now |
 | D: "Acretia: document grid" | S5 | now (builds on `om/pdfdoc.py` from S5.1-pre) |
+| F: "Acretia: product app (Felix parity)" | North star P-J1–P-J8, S7.1–S7.3 | now: owns `frontend/`, `om/api/` (or the backend the session chooses per D-029), `e2e/`, `scripts/verify_product.py` |
 | E: "Acretia: international & OCR" | S8 | now: owns `om/intl/`, `src/harness/connectors/intl_*.py`, its own tests and `verify_s8.py`; uses `om/pdfdoc.py` (S5) and the Statements contract; asks S4 through locks for builder changes |
 
 How the sessions share the repo:
