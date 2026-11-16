@@ -11,7 +11,7 @@ These are binding for every S4 worker. Read this file once, then only the target
 - One formula per row across all projection columns (relative pattern identical; `om.modelcheck` "consistency" grader enforces it). Historical columns may differ from projection columns.
 - No `{=TABLE()}` data tables, no array formulas, no merged cells in calculation areas, no volatile functions (`OFFSET`, `INDIRECT`, `NOW`, `TODAY`, `RAND`).
 - Sensitivity tables are **live formula grids**: every grid cell is a closed-form formula that references the model's cells and the row/column header inputs. The headers are inputs (blue) or formulas off a base input plus a step input.
-- Use only functions `om.formula` evaluates: ABS AND AVERAGE CHOOSE COLUMNS COUNT COUNTA COUNTIF EXP IF IFERROR INDEX INT IRR ISBLANK ISERROR ISNUMBER ISTEXT LEFT LEN LN MATCH MAX MEDIAN MIN MOD NOT NPV OR PERCENTILE(.INC) POWER QUARTILE(.INC) ROUND ROUNDDOWN ROUNDUP ROWS SIGN SQRT STDEV(.S) SUM SUMIF SUMPRODUCT TEXT. If you need another, stop and report it as a blocker in your Receipt (om/formula.py belongs to the S4.2 row).
+- Use only functions `om.formula` evaluates: ABS AND AVERAGE CHOOSE COLUMNS COUNT COUNTA COUNTIF EXP IF IFERROR INDEX INT IRR ISBLANK ISERROR ISNUMBER ISTEXT LEFT LEN LN MATCH MAX MEDIAN MIN MOD NOT NPV OR PERCENTILE(.INC) POWER QUARTILE(.INC) ROUND ROUNDDOWN ROUNDUP ROWS SIGN SQRT STDEV(.S) SUM SUMIF SUMPRODUCT TEXT, and since S4.2: VLOOKUP HLOOKUP XLOOKUP LOOKUP AVERAGEIF(S) SUMIFS COUNTIFS MAXIFS MINIFS YEAR MONTH DAY DATE EOMONTH EDATE CONCATENATE CONCAT TEXTJOIN RIGHT MID UPPER LOWER TRIM SUBSTITUTE VALUE LARGE SMALL RANK(.EQ) PRODUCT COUNTBLANK IFS SWITCH XNPV XIRR PMT FV PV RATE NPER ISERR NA (avoid XLOOKUP in models: LibreOffice 24.2 lacks it). If you need another, stop and report it as a blocker in your Receipt (om/formula.py belongs to the S4.2 row).
 - Circularity (interest on average balances, cash sweep): only behind a 1/0 switch input named `Circ` (`=IF(Circ=1, average-balance formula, opening-balance formula)`), with `Workbook(iterate=True)`. With `circ=0` the workbook must have **no** circular reference (LibreOffice comparison, D-006).
 - A `Checks` sheet: every check cell evaluates to the text `"OK"` or `"ERROR"` (formula), column C onward; a master check `=IF(AND(COUNTIF(rng,"ERROR")=0, ...),"OK","ERROR")`; `sh.ok_error(rng)` for conditional colouring. Tolerances are named input cells.
 - Sheet layout like `om/model3.py`: title in A2 (`kind="title"`), subtitle A3 (`kind="note"`), header row 5 (`kind="header"`), period-end row 6, labels in column A (width ~44), units in B, periods from column C, `freeze=(6, 2)`.
@@ -19,6 +19,10 @@ These are binding for every S4 worker. Read this file once, then only the target
 - Return `build_workbook(...) -> (wb, meta)` and `build(...) -> (bytes, meta)`. `meta` holds at least: `"model"`, `"rows"` (sheet -> {key: row}), `"outputs"` (list of `{"id", "sheet", "ref", "units", "label"}` for the headline numbers a deck would cite), `"converged"`, `"iterations"`, `"warnings"`.
 - Inputs come from `om.statements.Statements` (`om.statements.build(companyfacts, ticker)`), already provenance-tagged (`s.data[key][p].source()`, `s.filings[p]["url"]`). Tests use `tests/test_model3.py::synthetic_companyfacts` (import it) — never network.
 - Market data (share price, as-of) is a caller-supplied dict `market={"price": float, "as_of": "YYYY-MM-DD", "source": str}` written as a blue input with its source as a cell comment (D-S4-01). Never invent a price.
+
+## Polish (S4.7)
+
+- Call `om.polish.finish(wb, model_name=..., source=..., period_sheets=...)` after `calculate_workbook`; build the dashboard (first tab) with `om.polish.waterfall`, `football_field`, `trend`. Chart values bind to formula cells; category labels may be text.
 
 ## Acceptance every builder must meet (its unit tests assert these)
 

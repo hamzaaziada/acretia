@@ -50,7 +50,7 @@ Flags: `--offline` (synthetic fixtures only, for CI), default (synthetic + SEC).
 21. Adversarial: a workbook with a planted `#DIV/0!` and one with a failing check each raise `DeliveryBlocked` and leave no files behind.
 
 ### H. Polish (S4.7), checked with openpyxl + raw XML on every delivered workbook
-22. A `Cover`/dashboard sheet first in the tab order with ≥ 3 native charts (`xl/charts/chart*.xml`), every series reference resolving to cells in this workbook that hold formulas or sourced values (not typed chart data); three-statement models carry revenue/EBITDA trend + an EBITDA/FCF bridge (waterfall) + a valuation football field; LBO carries a returns-attribution bridge; comps a football field.
+22. A `Cover`/dashboard sheet first in the tab order with ≥ 3 native charts (`xl/charts/chart*.xml`), every series **value** reference (`c:val`) resolving to formula cells in this workbook (not typed chart data); category references may be text labels or formulas; three-statement models carry revenue/EBITDA trend + an EBITDA/FCF bridge (waterfall) + a valuation football field; LBO carries a returns-attribution bridge; comps a football field.
 23. Named styles present (`Input`, `Calculation`, `Link`, `Header`, `Total` at least) and used by cells.
 24. Every sheet: gridlines off, frozen panes on calculation sheets, print setup (fit to 1 page wide, landscape, print titles for the header rows/label columns, footer with source and `Page &P of &N`).
 25. Historical and projection columns grouped with outline levels on the statement sheets.
