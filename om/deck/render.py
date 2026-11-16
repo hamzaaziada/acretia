@@ -223,6 +223,47 @@ def _add_box(slide, el: Element, cx: _Ctx, rtl: bool) -> None:
         _fill_text(shp.text_frame, el.text, cx, rtl)
 
 
+_PRST = {"chevron": MSO_SHAPE.CHEVRON, "homePlate": MSO_SHAPE.PENTAGON, "diamond": MSO_SHAPE.DIAMOND,
+         "ellipse": MSO_SHAPE.OVAL, "triangle": MSO_SHAPE.ISOSCELES_TRIANGLE, "downTriangle": MSO_SHAPE.FLOWCHART_MERGE,
+         "rect": MSO_SHAPE.RECTANGLE, "rightArrow": MSO_SHAPE.RIGHT_ARROW}
+_DIRECTIONAL = {"chevron", "homePlate", "rightArrow"}
+
+
+def _add_shape(slide, el: Element, cx: _Ctx, rtl: bool) -> None:
+    spec = el.shape or {}
+    prst = spec["prst"]
+    shp = slide.shapes.add_shape(_PRST[prst], _emu(el.x), _emu(el.y), _emu(el.w), _emu(el.h))
+    _strip_style(shp)
+    shp.name = el.id
+    # python-pptx maps some enums to a different preset name; force the requested prstGeom
+    shp._element.spPr.find(qn("a:prstGeom")).set("prst", prst)
+    _set_fill_line(shp, el, cx)
+    if spec.get("rot"):
+        shp.rotation = float(spec["rot"])
+    flip = bool(spec.get("flipH")) != (rtl and prst in _DIRECTIONAL)
+    if flip:
+        shp._element.spPr.find(qn("a:xfrm")).set("flipH", "1")
+    if el.text:
+        _fill_text(shp.text_frame, el.text, cx, rtl)
+
+
+def _add_connector(slide, el: Element, cx: _Ctx, rtl: bool) -> None:
+    spec = el.connector or {}
+    (x1, y1), (x2, y2) = spec["start"], spec["end"]
+    if rtl:
+        x1, x2 = x2, x1
+    kind = MSO_CONNECTOR.ELBOW if spec["type"] == "elbow" else MSO_CONNECTOR.STRAIGHT
+    c = slide.shapes.add_connector(kind, _emu(x1), _emu(y1), _emu(x2), _emu(y2))
+    _strip_style(c)
+    c.name = el.id
+    token, width = el.line or ("text", 1.0)
+    cx.color(c.line.color, token)
+    c.line.width = Pt(width)
+    if spec.get("arrow"):
+        ln = c._element.spPr.find(qn("a:ln"))
+        etree.SubElement(ln, f"{{{_NS_A}}}tailEnd").attrib.update({"type": "triangle", "w": "med", "len": "med"})
+
+
 def _add_line(slide, el: Element, cx: _Ctx) -> None:
     c = slide.shapes.add_connector(MSO_CONNECTOR.STRAIGHT, _emu(el.x), _emu(el.y), _emu(el.x + el.w), _emu(el.y + el.h))
     _strip_style(c)
@@ -514,6 +555,8 @@ def _secondary_axes(chart, lo: float | None, hi: float | None) -> None:
 
 
 def _manual_layout(chart, box: list[float], rtl: bool) -> None:
+    if isinstance(box, dict):
+        box = [box["x"], box["y"], box["w"], box["h"]]
     x, y, w, h = box
     if rtl:
         x = round(1 - x - w, 4)
@@ -706,8 +749,10 @@ def _add_chart(slide, el: Element, cx: _Ctx, rtl: bool) -> None:
             if hs is None:
                 hs = etree.SubElement(dn, f"{{{_NS_C}}}holeSize")
             hs.set("val", str(int(spec.get("hole", 62))))
-        if spec.get("plot_layout"):
-            _manual_layout(chart, spec["plot_layout"], rtl)
+        pl = spec.get("plot_layout") or {"x": 0.05, "y": 0.05, "w": 0.9, "h": 0.9}
+        if isinstance(pl, dict):
+            pl = [pl["x"], pl["y"], pl["w"], pl["h"]]
+        _manual_layout(chart, pl, rtl)
         return
     ca, va = chart.category_axis, chart.value_axis
     for ax in (ca, va):
@@ -801,6 +846,10 @@ def render(slides: list[SolvedSlide], theme: Theme, *, title: str, template: str
                 _add_box(sl, el, cx, s.rtl)
             elif el.kind == "line":
                 _add_line(sl, el, cx)
+            elif el.kind == "shape":
+                _add_shape(sl, el, cx, s.rtl)
+            elif el.kind == "connector":
+                _add_connector(sl, el, cx, s.rtl)
             elif el.kind == "table":
                 _add_table(sl, el, cx, s.rtl)
             elif el.kind == "chart":

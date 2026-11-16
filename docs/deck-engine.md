@@ -172,7 +172,7 @@ theme_color|whitespace|slop|variety|...", "slide": int, "shape_id": int|None, "s
 
 ## Additions (wave 3)
 
-- Element kinds `shape` (`shape={"prst": "chevron|homePlate|diamond|ellipse|triangle|downTriangle|rect"}`,
+- Element kinds `shape` (`shape={"prst": "chevron|homePlate|diamond|ellipse|triangle|downTriangle|rect|rightArrow", "rot"?: 0|90|180|270, "flipH"?: bool}`; directional presets flip automatically on RTL slides; pie/doughnut charts get a tight inner plot layout by default,
   fill/line tokens, optional text) and `connector` (`connector={"type": "elbow|straight", "start": [x, y],
   "end": [x, y], "arrow": bool}`) render as native PowerPoint autoshapes/connectors (FP-S3-a).
 - Reserved spec keys apply to archetype blocks too: data coordinates use `xv`/`yv`, option columns use
