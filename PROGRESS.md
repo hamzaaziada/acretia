@@ -1,5 +1,19 @@
 # Progress
 
+**Plan v2 (pivot, 2026-11-16) is active: see PLAN.md.** The v1 milestone table below is kept for history; v1 packets map into v2 stages.
+
+| v2 stage | Status | Evidence |
+|---|---|---|
+| S1 Ledger, teardowns, buyer research | ⬜ | ledger started (1 row) |
+| S2 Harness, router, adapter | 🟡 | v1 M1 ✅ (contracts, storage, PII, replay, DealMemory, router hardening; verify_m1 19/19). Still to build: the OpenAI-compatible adapter in src/harness, MCP, connectors, evidence chain |
+| S3 Deck engine + eval | 🟡 | Deck Studio, spacing, graders exist |
+| S4 Excel engine | 🟡 | 3-statement + DCF, grader, bench verified |
+| S5 Document matrix grid | 🟡 | Matrix with verified quotes exists (no bbox/DuckDB) |
+| S6 Research agent | 🟡 | Ask with verified citations exists |
+| S7 UI, security, Docker/CI | ⬜ | |
+
+## v1 (superseded)
+
 Status: ✅ verified (gate passed) · 🟡 partial · ⬜ not started. Update this file only after a gate passes.
 
 | Milestone | Status | Evidence |
@@ -17,3 +31,4 @@ Status: ✅ verified (gate passed) · 🟡 partial · ⬜ not started. Update th
 
 - 2026-11-16: Repository initialised. The plan, decisions and lock files were written. Next: M1 P1.1 contracts.
 - 2026-11-16: M1 gate passed (19/19), suite 222 green. Next: M2.
+- 2026-11-16: Architectural pivot to plan v2. Meshpool Harness reference code added. M1 work (gated) maps into S2. Next: S1.

@@ -1,0 +1,2 @@
+repo,commit_hash,license,decision,reason
+internal/meshpool-harness,n/a (copied 2026-11-16 from the user's Meshpool Harness Experiment),MIT,adopt,"User's own project; curated, secret-scanned subset in reference/meshpool-harness/ (D-016)"
