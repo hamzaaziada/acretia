@@ -1,5 +1,7 @@
 """S8.1 standards knowledge base: schema, coverage, citations, no-copy guard and retrieval (offline)."""
 import re
+import subprocess
+import sys
 import unittest
 from pathlib import Path
 
@@ -107,6 +109,113 @@ class StandardsKB(unittest.TestCase):
         text = (base / "differences.md").read_text(encoding="utf-8")
         for d in self.kb.differences:
             self.assertIn(d["id"], text)
+
+    def test_docs_match_generator(self):
+        r = subprocess.run([sys.executable, str(ROOT / "scripts/gen_standards_docs.py"), "--check"], capture_output=True, text=True)
+        self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
+
+    def test_verification_fields(self):
+        for e in list(self.kb.differences) + list(self.kb.frameworks.values()):
+            for v in e.get("verified_facts", []):
+                self.assertTrue(v["fact"] and v["url"].startswith("https://"), e["id"] if "id" in e else e["name"])
+            if e["confidence"] == "verified":
+                self.assertFalse(e.get("unverified_facts"), e.get("id"))
+            if e.get("unverified_facts"):
+                self.assertEqual(e["confidence"], "unverified")
+        flipped = {"diff-zakat-vs-income-tax", "diff-uae-corporate-tax", "diff-uae-dmtt-pillar-two", "diff-egypt-income-tax",
+                   "diff-hyperinflation-ias29", "diff-eosb-ksa", "diff-leases-indas116", "diff-indas-applicability"}
+        by = {d["id"]: d for d in self.kb.differences}
+        for i in flipped:
+            self.assertEqual(by[i]["confidence"], "verified", i)
+            self.assertTrue(by[i]["verified_facts"], i)
+
+    def test_new_entries_and_facts(self):
+        ids = {d["id"] for d in self.kb.differences}
+        self.assertTrue({"diff-leases-indas116", "diff-eas17-separate-fs", "diff-indas-applicability", "diff-uae-dmtt-pillar-two"} <= ids)
+        txt = " ".join(d["summary"] for d in self.kb.differences)
+        for needle in ("2.5 percent", "20 percent", "AED 375,000", "15 percent", "EUR 750 million", "INR 250 crore"):
+            self.assertIn(needle, txt)
+        std = {s["standard"]: s["summary"] for s in self.kb.standards}
+        for k, words in {"IFRS 9": ["stage", "forward-looking"], "IAS 12": ["balance-sheet liability", "substantively enacted"],
+                         "IAS 16": ["cost model", "revaluation model"], "IAS 19": ["projected unit credit", "OCI"],
+                         "IAS 23": ["qualifying asset", "substantial period"], "IAS 36": ["higher of", "cash-generating"],
+                         "IAS 37": ["probable", "contingent liabilities"], "IAS 38": ["technical feasibility", "Research"],
+                         "IAS 40": ["cost model", "fair value model"], "IFRS 8": ["10 percent", "75 percent", "CODM"],
+                         "IAS 24": ["Key management"], "IAS 33": ["dilutive", "antidilutive"],
+                         "IFRS 15": ["five-step", "contracts with customers"], "IFRS 16": ["right-of-use asset", "lease liability"]}.items():
+            for w in words:
+                self.assertIn(w.lower(), std[k].lower(), (k, w))
+
+    def test_more_answers(self):
+        cases = [("What is the UAE Domestic Minimum Top-up Tax rate?", "diff-uae-dmtt-pillar-two"),
+                 ("When does Ind AS apply to a company with net worth of INR 250 crore?", "diff-indas-applicability"),
+                 ("Ind AS 116 differences from IFRS 16", "diff-leases-indas116"),
+                 ("equity method in separate financial statements in Egypt EAS 17", "diff-eas17-separate-fs"),
+                 ("Saudi end of service award calculation", "diff-eosb-ksa"),
+                 ("how do I strip devaluation FX losses out of recurring EBITDA", "diff-fx-devaluation-ias21")]
+        for q, want in cases:
+            self.assertIn(want, [e["id"] for e in self.kb.answer(q).entries], q)
+
+    def test_answer_composition(self):
+        # standard-level entry first, then difference entries, full summaries, verified facts matching the query
+        cases = [("How does a lessee account for a lease under IFRS 16?", "std-ifrs16", ["right-of-use asset", "lease liability"]),
+                 ("When is a provision recognised under IAS 37?", "std-ias37", ["probable", "contingent liabilities"]),
+                 ("Explain the IFRS 15 five-step revenue model", "std-ifrs15", ["performance obligation", "transaction price"]),
+                 ("Can development costs be capitalised under IAS 38?", "std-ias38", ["technical feasibility", "Research"]),
+                 ("What is recoverable amount under IAS 36?", "std-ias36", ["fair value less costs of disposal", "value in use"]),
+                 ("How is basic and diluted EPS calculated?", "std-ias33", ["dilutive potential"])]
+        for q, std, words in cases:
+            a = self.kb.answer(q)
+            ids = [e["id"] for e in a.entries]
+            self.assertEqual(ids[0], std, (q, ids))
+            self.assertLessEqual(len(ids), 4)
+            for w in words:
+                self.assertIn(w.lower(), a.text.lower(), (q, w))
+            for e in a.entries:  # full summaries, never truncated
+                self.assertIn(" ".join(e["summary"].split()), a.text)
+        a = self.kb.answer("What is the UAE corporate tax rate and threshold?")
+        self.assertIn("diff-uae-corporate-tax", [e["id"] for e in a.entries])
+        self.assertIn("375,000", a.text)
+        self.assertIn("Verified facts", a.text)
+        a = self.kb.answer("What are the zakat and income tax rates in Saudi Arabia?")
+        self.assertIn("2.5 percent", a.text)
+        self.assertIn("20 percent", a.text)
+        self.assertIn("Verified facts", a.text)
+        a = self.kb.answer("Is LIFO allowed? IAS 2 inventories")
+        self.assertEqual(a.entries[0]["id"], "std-ias2")
+        self.assertIn("diff-inventory-lifo", [e["id"] for e in a.entries])
+
+    def test_f3_substance(self):
+        def ans(q):
+            return self.kb.answer(q)
+        a = ans("What is needed to recognise a provision under IAS 37?")
+        self.assertEqual(a.entries[0]["id"], "std-ias37")
+        for w in ("present", "past event", "probable", "reliable estimate", "constructive"):
+            self.assertIn(w, a.text)
+        a = ans("How does EAS 49 account for leases?")
+        for w in ("right-of-use asset", "lease liability"):
+            self.assertIn(w, a.text)
+        self.assertTrue(any(e["id"] == "diff-leases-eas49" for e in a.entries))
+        a = ans("What is EAS 48 and how does it relate to IFRS 15?")
+        self.assertIn("contracts with customers", a.text)
+        self.assertIn("five-step", a.text)
+        a = ans("What happened to the Egyptian pound on 6 March 2024 and how should analysts normalise it?")
+        self.assertIn("diff-fx-devaluation-ias21", [e["id"] for e in a.entries])
+        for w in ("flexible", "30.9", "50", "Q1 2024", "one-off"):
+            self.assertIn(w, a.text)
+        a = ans("When did Saudi listed companies adopt IFRS endorsed by SOCPA?")
+        self.assertEqual(a.entries[0]["id"], "diff-socpa-ifrs-adoption")
+        self.assertIn("1 January 2017", a.text)
+        self.assertIn("1 January 2018", a.text)
+        a = ans("Which IFRS regulator and exchanges apply to UAE listed companies? SCA or CMA")
+        self.assertEqual(a.entries[0]["id"], "diff-uae-ifrs-requirement")
+        for w in ("Capital Market Authority", "Dubai Financial Market", "Abu Dhabi Securities Exchange", "32 of 2021"):
+            self.assertIn(w, a.text)
+        a = ans("Is pooling of interests allowed for business combinations and common control under IFRS 3?")
+        ids = [e["id"] for e in a.entries]
+        self.assertIn("diff-business-combinations", ids)
+        for w in ("acquisition method", "common control", "Ind AS 103", "merger accounting", "ASC 805"):
+            self.assertIn(w, a.text)
 
     def test_find(self):
         self.assertTrue(self.kb.find(topic="leases"))

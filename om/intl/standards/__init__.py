@@ -51,6 +51,15 @@ CONCEPTS = [
     ("c_credit", r"\becl\b|\bcecl\b|credit loss|ifrs 9|eas 47|loss allowance|financial instrument"),
     ("c_netdebt", r"net debt|leverage|enterprise value|\bev\b"),
     ("c_ebitda", r"ebitda"),
+    ("c_pillar", r"pillar two|\bdmtt\b|top up tax|minimum tax|globe"),
+    ("c_segment", r"segment|\bcodm\b|ifrs 8|operating decision maker"),
+    ("c_eps", r"\beps\b|earnings per share|dilut|ias 33"),
+    ("c_related", r"related part|key management|ias 24"),
+    ("c_separate", r"separate financial|ias 27|eas 17|standalone accounts"),
+    ("c_applicability", r"applicab|net worth|crore|roadmap"),
+    ("c_provision", r"provision|contingent liabilit|ias 37|asc 450|constructive obligation|present obligation"),
+    ("c_bizcomb", r"business combination|acquisition method|pooling|common control|merger accounting|ifrs 3\b|asc 805|ind as 103|predecessor accounting|group reconstruction"),
+    ("c_adoption", r"adopt|endorse|\bcma\b|\bsca\b|capital market authority|securities and commodities|no local gaap|\bdfm\b|\badx\b|tadawul"),
     ("c_mapping", r"eas \d+|map|equivalent|correspond"),
 ]
 _CONCEPTS = [(c, re.compile(p)) for c, p in CONCEPTS]
@@ -188,24 +197,54 @@ class KB:
         return s
 
     def answer(self, question: str, k: int = 3) -> Answer:
+        """Compose from the best standard-level entry (always, when the question names or strongly matches a standard),
+        then the best difference/framework entries (up to k), full summaries, plus verified facts that match the query."""
         q_tok = tokens(question)
         q_con = concepts(question)
         q_fw = _question_frameworks(question)
         scored = sorted(((self._score(q_tok, q_con, q_fw, i), i) for i in range(len(self._entries))), reverse=True)
-        top = [(s, i) for s, i in scored if s > 0][:k]
+        top = [(s, i) for s, i in scored if s > 0]
         if not top or top[0][0] < 1.5 or (not q_con and not q_fw and top[0][0] < 5.0):
             return Answer("No entry in the knowledge base matches this question closely enough to answer it.", [], [], "unverified", 0.0)
         best = top[0][0]
-        picked = [self._entries[i] for s, i in top if s >= 0.45 * best]
+        qn = " " + normalise(question) + " "
+        named = {i for i, e in enumerate(self._entries) if e["kind"] == "standard" and f" {normalise(e['standard'])} " in qn}
+        std_idx = None
+        for s, i in top:
+            if self._entries[i]["kind"] != "standard":
+                continue
+            if i in named or s >= 0.5 * best:
+                std_idx = i
+                break
+        std_candidates = [i for s, i in top if i in named]
+        if std_candidates:
+            std_idx = std_candidates[0]
+        picked_idx = [std_idx] if std_idx is not None else []
+        best_other = next((s for s, i in top if self._entries[i]["kind"] != "standard"), best)
+        for s, i in top:
+            if len(picked_idx) >= k + (1 if std_idx is not None else 0):
+                break
+            if i in picked_idx or self._entries[i]["kind"] == "standard":
+                continue
+            if s >= 0.6 * best_other:
+                picked_idx.append(i)
+        if not picked_idx:
+            picked_idx = [top[0][1]]
+        picked = [self._entries[i] for i in picked_idx]
+        qset = set(q_tok)
         parts, cits, seen = [], [], set()
         for e in picked:
-            label = e["topic"] if e["kind"] != "standard" else f"{e['standard']} ({e['topic']})"
-            fw = ", ".join(e["frameworks"])
-            part = f"{label} [{fw}]: {e['summary'].strip()}"
+            label = e["topic"].replace("_", " ") if e["kind"] != "standard" else f"{e['standard']} ({e['topic']})"
+            part = f"{label} [{', '.join(e['frameworks'])}]: {_fold(e['summary'])}"
             if e.get("analyst_impact"):
-                part += f" Analyst impact: {e['analyst_impact'].strip()}"
+                part += f" Analyst impact: {_fold(e['analyst_impact'])}"
             if e.get("adjustment"):
                 part += f" Adjustment recipe: {e['adjustment']}."
+            kw = " ".join(map(str, e.get("keywords", [])))
+            vf = [v["fact"] for v in e.get("verified_facts", [])
+                  if qset & set(tokens(v["fact"] + " " + kw)) or q_con & concepts(v["fact"])]
+            if vf:
+                part += " Verified facts: " + "; ".join(vf) + "."
             parts.append(part)
             for c in e["citations"]:
                 key = (c["standard"], c["ref"], c["url"])
@@ -214,6 +253,10 @@ class KB:
                     cits.append(dict(c))
         conf = "verified" if all(e.get("confidence") == "verified" for e in picked) else "unverified"
         return Answer("\n\n".join(parts), cits, picked, conf, best)
+
+
+def _fold(t: str) -> str:
+    return re.sub(r"\s+", " ", str(t)).strip()
 
 
 _FW_ALIASES = {

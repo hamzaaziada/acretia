@@ -6,13 +6,14 @@
 **Jurisdictions:** India
 
 ## Summary
-Converged with IFRS but not identical. Notified under the Companies (Indian Accounting Standards) Rules 2015 and mandatory in phases for larger and listed companies. Differences are called carve-outs: investment property uses cost only, business combinations under common control use pooling of interests, and a few presentation and measurement options differ. Reporting is in INR, with a fiscal year ending 31 March.
+Converged with IFRS but not identical. Notified under the Companies (Indian Accounting Standards) Rules 2015 and mandatory in phases: from 1 April 2016 for listed companies and unlisted companies with net worth of INR 500 crore or more, and from 1 April 2017 for all other listed companies and unlisted companies with net worth of INR 250 crore up to 500 crore (SME-exchange companies and those below INR 250 crore stay on the older standards). Differences are called carve-outs: investment property uses cost only, business combinations under common control use pooling of interests, and a few presentation and measurement options differ. Reporting is in INR, with a fiscal year ending 31 March.
 
 ## Relationship to full IFRS
 Substantially converged with carve-outs (investment property, common-control combinations, some financial instrument and employee benefit details).
 
 ## Effective dates and caveats
-- Phased adoption from fiscal 2016-17 for listed and large companies
+- Phased adoption: net worth of INR 500 crore or more from fiscal 2016-17; INR 250 crore and all listed companies from fiscal 2017-18
+- Ind AS 116 leases: annual periods beginning on or after 1 April 2019
 
 ## Presentation
 - **Profit or loss layout:** Schedule III of the Companies Act prescribes a by-nature statement of profit and loss.
@@ -92,6 +93,12 @@ Substantially converged with carve-outs (investment property, common-control com
 - `diff-presentation-by-nature-function` (presentation): recipe `by_nature_ebit`
 - `diff-cash-flow-classification` (presentation): recipe `ifrs16_to_pre16_ebitda`
 - `diff-ind-as-carveouts` (presentation): recipe `by_nature_ebit`
+- `diff-leases-indas116` (leases): recipe `ifrs16_to_pre16_ebitda`
+- `diff-indas-applicability` (presentation): recipe `eas_to_ifrs_map`
+- `diff-business-combinations` (business_combinations): recipe `associates_share_strip`
+- `diff-provisions-ias37-asc450` (provisions): recipe `eosb_as_debt_like`
 
 ## Sources
 - Ind AS, Ind AS 1, 40, 103 (Appendix C), 116: <https://www.mca.gov.in/content/mca/global/en/acts-rules/ebooks/accounting-standards.html>
+- Companies (Indian Accounting Standards) Rules 2015, Rule 4 applicability phases: <https://taxguru.in/company-law/applicability-indian-accounting-standard-ind.html>
+- Ind AS 116, Differences from IFRS 16: <https://alumni.in.kpmg.com/downloads/Publications/Accounting_Publications/firstnotes-leases-standard-ind-as-116-notified-mca.pdf>

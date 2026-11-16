@@ -19,6 +19,7 @@ from __future__ import annotations
 
 import io
 import re
+import struct
 import zipfile
 from dataclasses import dataclass, field
 from xml.etree import ElementTree as ET
@@ -217,6 +218,7 @@ class Sheet:
     print_cfg: dict | None = None
     col_groups: dict = field(default_factory=dict)     # col index -> (level, hidden)
     row_groups: dict = field(default_factory=dict)     # row -> (level, hidden)
+    images: list = field(default_factory=list)         # native pictures (Sheet.image)
 
     def set(self, where: str | tuple, value, *, kind: str | None = None, fmt: str | None = None, bold: bool = False,
             italic: bool = False, indent: int = 0, top: bool = False, bottom: bool = False, fill: str | None = None,
@@ -281,6 +283,29 @@ class Sheet:
             raise ValueError(f"unknown chart kind {kind!r}")
         self.charts.append(dict(kind=kind, title=title, series=series, anchor=anchor, y_format=y_format, legend=legend,
                                 data_labels=data_labels, gap_width=gap_width, overlap=overlap, colors=colors))
+
+    def image(self, png_bytes: bytes, anchor: "tuple[str, str] | str", *, name: str = "Logo",
+              max_height_px: int | None = None) -> None:
+        """Native PNG picture. anchor is a top-left cell, or (top-left, bottom-right) to fit inside that box. The aspect
+        ratio comes from the PNG header; max_height_px caps the height. PNG only (ValueError otherwise)."""
+        w, h = _png_size(png_bytes)
+        tl = anchor if isinstance(anchor, str) else anchor[0]
+        split_ref(tl)
+        if not isinstance(anchor, str):
+            split_ref(anchor[1])
+        self.images.append(dict(data=bytes(png_bytes), anchor=anchor, name=name, w=w, h=h, max_h=max_height_px))
+
+    def _image_size(self, spec: dict) -> tuple[int, int]:
+        w, h = spec["w"], spec["h"]
+        scale = 1.0
+        if spec["max_h"]:
+            scale = min(scale, spec["max_h"] / h)
+        if not isinstance(spec["anchor"], str):
+            (r1, c1), (r2, c2) = split_ref(spec["anchor"][0]), split_ref(spec["anchor"][1])
+            bw = sum(int((self.widths.get(c, 8.43)) * 7 + 5) for c in range(c1, c2 + 1))
+            bh = (r2 - r1 + 1) * 18
+            scale = min(scale, bw / w, bh / h)
+        return max(1, round(w * scale)), max(1, round(h * scale))
 
     def _print_names(self) -> list[tuple[str, str]]:
         cfg, out, q = self.print_cfg, [], quote_sheet(self.name)
@@ -456,7 +481,7 @@ class Sheet:
             header = escape(join(hdr))
             hf = "<headerFooter>" + (f"<oddHeader>{header}</oddHeader>" if header else "") + f"<oddFooter>{footer}</oddFooter></headerFooter>"
         drawing = ""
-        if self.charts:
+        if self.charts or self.images:
             rid_d = f"rId{len(rels) + 1}"
             rels.append((rid_d, "http://schemas.openxmlformats.org/officeDocument/2006/relationships/drawing", f"../drawings/drawing{idx}.xml", False))
             drawing = f'<drawing r:id="{rid_d}"/>'
@@ -467,6 +492,32 @@ class Sheet:
                f'{cond}{dv}{hl}{popt}<pageMargins left="0.5" right="0.5" top="0.6" bottom="0.6" header="0.3" footer="0.3"/>'
                f'{psetup}{hf}{drawing}{legacy}</worksheet>')
         return xml, comments_xml, vml
+
+
+_PNG_SIG = b"\x89PNG\r\n\x1a\n"
+
+
+def _png_size(data: bytes) -> tuple[int, int]:
+    if not isinstance(data, (bytes, bytearray)) or data[:8] != _PNG_SIG or data[12:16] != b"IHDR" or len(data) < 24:
+        raise ValueError("image must be a PNG (bad signature or IHDR)")
+    w, h = struct.unpack(">II", data[16:24])
+    if w <= 0 or h <= 0:
+        raise ValueError("PNG has zero dimensions")
+    return w, h
+
+
+def _pic_xml(spec: dict, size: tuple[int, int], rid: str, n: int) -> str:
+    r, c = split_ref(spec["anchor"] if isinstance(spec["anchor"], str) else spec["anchor"][0])
+    cx, cy = size[0] * 9525, size[1] * 9525
+    return ('<xdr:oneCellAnchor>'
+            f'<xdr:from><xdr:col>{c - 1}</xdr:col><xdr:colOff>0</xdr:colOff><xdr:row>{r - 1}</xdr:row><xdr:rowOff>0</xdr:rowOff></xdr:from>'
+            f'<xdr:ext cx="{cx}" cy="{cy}"/>'
+            f'<xdr:pic><xdr:nvPicPr><xdr:cNvPr id="{n + 1}" name="{escape(spec["name"], {chr(34): "&quot;"})}"/>'
+            '<xdr:cNvPicPr><a:picLocks noChangeAspect="1"/></xdr:cNvPicPr></xdr:nvPicPr>'
+            f'<xdr:blipFill><a:blip xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships" r:embed="{rid}"/>'
+            '<a:stretch><a:fillRect/></a:stretch></xdr:blipFill>'
+            f'<xdr:spPr><a:xfrm><a:off x="0" y="0"/><a:ext cx="{cx}" cy="{cy}"/></a:xfrm>'
+            '<a:prstGeom prst="rect"><a:avLst/></a:prstGeom></xdr:spPr></xdr:pic><xdr:clientData/></xdr:oneCellAnchor>')
 
 
 def _comments(items: list, idx: int) -> tuple[str, str]:
@@ -605,6 +656,21 @@ def _chart_xml(sh: "Sheet", spec: dict) -> str:
             f'{_txpr()}</c:chartSpace>')
 
 
+def _zip_bytes(files: dict) -> bytes:
+    """Deterministic package: fixed timestamp, attributes and part order (content types and root rels first)."""
+    first = ["[Content_Types].xml", "_rels/.rels"]
+    buf = io.BytesIO()
+    with zipfile.ZipFile(buf, "w", zipfile.ZIP_DEFLATED) as z:
+        for k in [k for k in first if k in files] + sorted(k for k in files if k not in first):
+            zi = zipfile.ZipInfo(k, date_time=(1980, 1, 1, 0, 0, 0))
+            zi.compress_type = zipfile.ZIP_DEFLATED
+            zi.external_attr = 0o600 << 16
+            zi.create_system = 3
+            v = files[k]
+            z.writestr(zi, v.encode("utf-8") if isinstance(v, str) else v)
+    return buf.getvalue()
+
+
 class Workbook:
     def __init__(self, iterate: bool = False):
         self.sheets: list[Sheet] = []
@@ -627,10 +693,11 @@ class Workbook:
         self.names[name] = f"{quote_sheet(sheet)}!{ref(r, c, True, True)}"
 
     def to_bytes(self) -> bytes:
-        files: dict[str, str] = {}
+        files: dict[str, str | bytes] = {}
         overrides, sheet_entries, wb_rels = [], [], []
         any_vml = False
         chart_no = 0
+        image_no = 0
         for i, sh in enumerate(self.sheets, 1):
             rels: list = []
             xml, cxml, vml = sh._xml(i, rels)
@@ -641,7 +708,7 @@ class Workbook:
                 files[f"xl/drawings/vmlDrawing{i}.vml"] = vml
                 overrides.append(f'<Override PartName="/xl/comments{i}.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.comments+xml"/>')
                 any_vml = True
-            if sh.charts:
+            if sh.charts or sh.images:
                 drels, anchors = [], []
                 for j, spec in enumerate(sh.charts, 1):
                     chart_no += 1
@@ -649,6 +716,12 @@ class Workbook:
                     overrides.append(f'<Override PartName="/xl/charts/chart{chart_no}.xml" ContentType="application/vnd.openxmlformats-officedocument.drawingml.chart+xml"/>')
                     drels.append(f'<Relationship Id="rId{j}" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/chart" Target="../charts/chart{chart_no}.xml"/>')
                     anchors.append(_anchor_xml(spec["anchor"], j))
+                for k, spec in enumerate(sh.images, 1):
+                    image_no += 1
+                    files[f"xl/media/image{image_no}.png"] = spec["data"]
+                    rid = f"rId{len(sh.charts) + k}"
+                    drels.append(f'<Relationship Id="{rid}" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/image" Target="../media/image{image_no}.png"/>')
+                    anchors.append(_pic_xml(spec, sh._image_size(spec), rid, len(sh.charts) + k))
                 files[f"xl/drawings/drawing{i}.xml"] = (
                     '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
                     '<xdr:wsDr xmlns:xdr="http://schemas.openxmlformats.org/drawingml/2006/spreadsheetDrawing" '
@@ -685,15 +758,12 @@ class Workbook:
         files["[Content_Types].xml"] = (
             '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">'
             '<Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/>'
+            + ('<Default Extension="png" ContentType="image/png"/>' if image_no else "")
             + ('<Default Extension="vml" ContentType="application/vnd.openxmlformats-officedocument.vmlDrawing"/>' if any_vml else "")
             + '<Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/>'
             '<Override PartName="/xl/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.styles+xml"/>'
             + "".join(overrides) + "</Types>")
-        buf = io.BytesIO()
-        with zipfile.ZipFile(buf, "w", zipfile.ZIP_DEFLATED) as z:
-            for k in ["[Content_Types].xml", "_rels/.rels"] + [k for k in files if k not in ("[Content_Types].xml", "_rels/.rels")]:
-                z.writestr(k, files[k])
-        return buf.getvalue()
+        return _zip_bytes(files)
 
 
 # --------------------------------------------------------------------------- formula references
@@ -879,3 +949,43 @@ def read(data: bytes) -> Book:
         comments[sh.get("name")] = cm
         links[sh.get("name")] = lk
     return Book(sheets, order, dn, iterate, comments, links)
+
+
+# --------------------------------------------------------------------------- values-only export
+_CELL = re.compile(r"<c\b([^>]*?)(?:/>|>(.*?)</c>)", re.S)
+
+
+def _freeze_cell(m: "re.Match") -> str:
+    attrs, inner = m.group(1), m.group(2)
+    if inner is None or "<f" not in inner:
+        return m.group(0)
+    v = re.search(r"<v>(.*?)</v>", inner, re.S)
+    t = re.search(r'\st="([^"]*)"', attrs)
+    t = t.group(1) if t else None
+    if v is None:
+        return "<c" + re.sub(r'\st="[^"]*"', "", attrs) + "/>"
+    if t == "str":
+        attrs = re.sub(r'\st="str"', ' t="inlineStr"', attrs)
+        return f'<c{attrs}><is><t xml:space="preserve">{v.group(1)}</t></is></c>'
+    return f"<c{attrs}>{v.group(0)}</c>"
+
+
+def values_only(data: bytes) -> bytes:
+    """Copy of an .xlsx where every formula cell holds only its cached value (number, string, bool or error). Styles,
+    comments, links, charts and images are untouched; fullCalcOnLoad and any calcChain are dropped."""
+    src = zipfile.ZipFile(io.BytesIO(data))
+    files: dict[str, str | bytes] = {}
+    for n in src.namelist():
+        if n == "xl/calcChain.xml":
+            continue
+        raw = src.read(n)
+        if re.fullmatch(r"xl/worksheets/sheet\d+\.xml", n):
+            raw = _CELL.sub(_freeze_cell, raw.decode("utf-8")).encode("utf-8")
+        elif n == "xl/workbook.xml":
+            raw = re.sub(r'\s+fullCalcOnLoad="[^"]*"', "", raw.decode("utf-8")).encode("utf-8")
+        elif n == "[Content_Types].xml":
+            raw = re.sub(r'<Override[^>]*calcChain[^>]*/>', "", raw.decode("utf-8")).encode("utf-8")
+        elif n == "xl/_rels/workbook.xml.rels":
+            raw = re.sub(r'<Relationship\b[^>]*calcChain[^>]*/>', "", raw.decode("utf-8")).encode("utf-8")
+        files[n] = raw
+    return _zip_bytes(files)

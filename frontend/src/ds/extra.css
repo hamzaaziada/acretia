@@ -1,0 +1,41 @@
+/* Menu / popover / chips used by the app shell. Logical properties only. */
+.acr-menu-wrap { position: relative; display: inline-flex; }
+.acr-menu {
+  position: absolute;
+  inset-block-start: calc(100% + 4px);
+  inset-inline-end: 0;
+  z-index: 60;
+  min-inline-size: 220px;
+  background: var(--acr-surface);
+  border: 1px solid var(--acr-border-strong);
+  border-radius: var(--acr-radius-lg);
+  box-shadow: var(--acr-shadow-2);
+  padding: var(--acr-s-1);
+  color: var(--acr-text);
+}
+.acr-menu--up { inset-block-start: auto; inset-block-end: calc(100% + 4px); inset-inline-start: 0; inset-inline-end: auto; }
+.acr-menu__item {
+  display: flex; align-items: center; gap: var(--acr-s-2);
+  inline-size: 100%; block-size: 28px; padding-inline: var(--acr-s-2);
+  background: none; border: 0; border-radius: var(--acr-radius-sm);
+  text-align: start; cursor: pointer; color: inherit;
+}
+.acr-menu__item:hover, .acr-menu__item:focus-visible { background: var(--acr-surface-hover); }
+.acr-menu__sep { block-size: 1px; background: var(--acr-border); margin-block: var(--acr-s-1); }
+.acr-menu__label { padding: var(--acr-s-2) var(--acr-s-2) 2px; font-size: var(--acr-fs-11); letter-spacing: 0.06em; text-transform: uppercase; color: var(--acr-text-3); }
+.acr-seg { display: inline-flex; border: 1px solid var(--acr-border-strong); border-radius: var(--acr-radius); overflow: hidden; }
+.acr-seg button { background: var(--acr-surface); border: 0; padding-inline: var(--acr-s-3); block-size: 26px; cursor: pointer; color: var(--acr-text-2); border-inline-end: 1px solid var(--acr-border); }
+.acr-seg button:last-child { border-inline-end: 0; }
+.acr-seg button[aria-pressed='true'] { background: var(--acr-accent-subtle); color: var(--acr-accent-text); font-weight: 600; }
+.acr-menu .acr-seg { margin: var(--acr-s-1) var(--acr-s-2); display: flex; }
+.acr-menu .acr-seg button { flex: 1; }
+.acr-chip {
+  display: inline-flex; align-items: center; gap: 6px; max-inline-size: 100%;
+  block-size: 24px; padding-inline: var(--acr-s-2);
+  background: var(--acr-surface-2); border: 1px solid var(--acr-border); border-radius: var(--acr-radius);
+  color: var(--acr-text); font-size: var(--acr-fs-12); cursor: default;
+}
+button.acr-chip { cursor: pointer; }
+button.acr-chip:hover { background: var(--acr-surface-hover); }
+.acr-chip[aria-pressed='true'] { background: var(--acr-accent-subtle); border-color: var(--acr-accent); color: var(--acr-accent-text); }
+.acr-chip--accent { background: var(--acr-accent-subtle); border-color: var(--acr-accent); color: var(--acr-accent-text); }
