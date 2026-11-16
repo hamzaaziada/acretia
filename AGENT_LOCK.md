@@ -22,7 +22,7 @@ One row per active claim. Claim a packet before you touch its files, commit the 
 | S4.4 graph/ask/edit/roll-forward | worker (session C) | claude/busy-knuth-i3ewp5 | 2026-11-16 | om/wbgraph.py, om/wbedit.py, om/rollforward.py, tests/test_wbgraph.py, tests/test_wbedit.py, tests/test_rollforward.py |
 | S4.5 manifest + delivery gate | worker (session C) | claude/busy-knuth-i3ewp5 | 2026-11-16 | om/manifest.py, om/delivery.py, tests/test_manifest.py |
 | S4.7a writer polish (styles, charts, print, outline) | worker (session C) | claude/busy-knuth-i3ewp5 | 2026-11-16 | om/xlsx.py, tests/test_xlsx_polish.py |
-| S4.6 bench + S4 gate | Boss (session C) | claude/busy-knuth-i3ewp5 | 2026-11-16 | om/bench.py, scripts/verify_s4.py, tests/test_bench.py, docs/s4/* |
+| S4.6 bench + S4 gate | workers (session C) | claude/busy-knuth-i3ewp5 | 2026-11-16 | om/bench.py, scripts/verify_s4.py, tests/test_bench.py, docs/s4/* |
 | S3.core render+theme+model+archetype base | session B worker | claude/upbeat-mccarthy-viqjuo | 2026-11-16 | om/deck/__init__.py, om/deck/model.py, om/deck/theme.py, om/deck/render.py, om/deck/archetypes/__init__.py, om/deck/archetypes/base.py, om/deck/archetypes/core.py, tests/test_deck_render.py |
 | S3.4/S3.5 metrics, fit, RTL | session B worker | claude/upbeat-mccarthy-viqjuo | 2026-11-16 | om/deck/metrics.py, om/deck/fit.py, om/deck/rtl.py, tests/test_deck_fit.py, tests/test_deck_rtl.py |
 | S3.1/S3.2 ghost deck + spec | session B worker | claude/upbeat-mccarthy-viqjuo | 2026-11-16 | om/deck/spec.py, om/deck/ghost.py, tests/test_deck_spec.py, tests/test_deck_ghost.py, tests/fixtures/llm/deck_* |
