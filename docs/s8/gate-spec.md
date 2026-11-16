@@ -5,7 +5,9 @@ assertion (`PASS`/`FAIL`/`SKIP <reason>`), writes `docs/s8/gate-report.md`, and 
 assertion passes and no assertion in the "never skippable" set is skipped. It makes no network calls and no model
 calls (sockets are monkeypatched to raise for the whole run). It may call `tesseract`, `pdftoppm` and `pdftotext`.
 
-Never skippable: G1, G2, G3, G4, G5 (tesseract is required: install it, don't skip), G6, G7, G9, G10.
+Never skippable: G0, G1, G2, G3, G4, G5 (tesseract is required: install it, don't skip), G6, G7, G9, G10.
+
+Order (D-030): G0 (anchors) must pass before the wider MENA and XBRL-gold results count.
 
 ## Shared contract the gate relies on
 
@@ -18,6 +20,23 @@ Never skippable: G1, G2, G3, G4, G5 (tesseract is required: install it, don't sk
   (native/scanned, en/ar/bi), and the ground-truth figures (`key`, `period_end`, `value` in reporting-currency millions).
 
 ## Assertions
+
+**G0 Anchor companies (S8.0, D-030)**: SWDY, EAST, TMGH, 2280 (Almarai), 4190 (Jarir), 2010 (SABIC), EMAAR,
+ADNOCDIST, ALDAR. Data in `evals/intl/anchors/<ticker>/`.
+1. `sources.json` lists ≥ 2 audited annual financial statements and ≥ 1 latest quarterly earnings release or investor
+   presentation, each with URL, sha256, retrieval date, and `committed: false` unless the publisher's terms allow it
+   (then the terms URL is recorded).
+2. `figures.jsonl`: full IS, BS and CF for both annual reports (every printed line, not only the model lines), each
+   record with page, bbox, confidence and key (or `null` with the printed label); for both years, BS balances,
+   CF ties to the change in cash, and IS/CF net income agree, either in `check()` or with a review item explaining why.
+3. `release_recon.jsonl`: every headline figure in the earnings release (revenue, EBITDA or operating profit, net
+   profit, and any other figure it states with a statements counterpart) is matched to a statements figure with both
+   citations, and every difference ≠ 0 has a category (`adjusted_vs_reported`, `segment_vs_group`, `restatement`,
+   `rounding`, `period_mismatch`, `definition`) plus a one-sentence explanation. Unexplained differences = 0.
+4. `om/intl/companies/<ticker>.md` exists and covers: framework, layout quirks, non-standard lines, zakat or tax,
+   IFRS 16, FX/devaluation, related parties, units, fiscal year, each with ≥ 1 page citation.
+5. `qa.jsonl`: 10 analyst questions with answers; every answer has ≥ 1 citation (doc sha256 + page + bbox or a
+   figure id) and every number in an answer appears in `figures.jsonl` or the release.
 
 **G1 Licences and isolation**
 1. Every third-party tool or package S8 uses (tesseract, its `ara`/`eng` traineddata, PyYAML, anything else imported in

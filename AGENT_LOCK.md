@@ -31,7 +31,8 @@ One row per active claim. Claim a packet before you touch its files, commit the 
 | S8.3a numbers + OCR service + synthetic fixtures (session E) | worker | main | 2026-11-16 | om/intl/numparse.py, om/intl/ocr.py, scripts/make_intl_fixtures.py, tests/fixtures/intl/**, tests/test_intl_numparse.py, tests/test_intl_ocr.py, license-and-repo-ledger.csv (S8 rows only) |
 | S8.4 types + tie-out + review queue (session E) | worker | main | 2026-11-16 | om/intl/types.py, om/intl/tieout.py, om/intl/review.py, tests/test_intl_tieout.py |
 | S8.6a FX, calendarisation, adjustments (session E) | worker | main | 2026-11-16 | om/intl/fx.py, om/intl/calendar.py, om/intl/adjust.py, tests/test_intl_fx.py, tests/test_intl_adjust.py, docs/s8-requests-for-s4.md |
-| S8.7-corpus eval sourcing (session E) | worker | main | 2026-11-16 | evals/intl/corpus/**, scripts/fetch_intl_corpus.py, data/raw/intl/** (never committed) |
+| S8.0/S8.7-corpus anchors + eval sourcing (session E) | worker | main | 2026-11-16 | evals/intl/corpus/**, evals/intl/anchors/*/sources.json, scripts/fetch_intl_corpus.py, data/raw/intl/** (never committed) |
+| S8.0 anchor notes + QA (session E, wave 2) | worker | main | 2026-11-16 | om/intl/companies/**, evals/intl/anchors/*/{figures,release_recon,qa}.jsonl |
 | S8.5 intl connectors (session E, wave 2; new files only, base.py untouched) | worker | main | 2026-11-16 | src/harness/connectors/intl_*.py, om/intl/sources/**, tests/test_intl_connectors.py, tests/fixtures/intl_connectors/** |
 | S8 gate + docs (session E) | Boss | main | 2026-11-16 | scripts/verify_s8.py, docs/s8/*.md, om/intl/__init__.py, PROGRESS.md (S8 row only) |
 | SF.0 product spec + gate spec (session F) | Boss | main | 2026-11-16 | docs/product/**, docs/product-requests.md, PROGRESS.md (Product row only), DECISIONS.md (D-SF-* only) |
