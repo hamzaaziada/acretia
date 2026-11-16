@@ -47,6 +47,7 @@ One row per active claim. Claim a packet before you touch its files, commit the 
 | FP-S2b adapter/ledger/PII/router | worker (session A) | claude/dreamy-ramanujan-k8p2xt | 2026-11-17 | src/harness/adapter.py, src/harness/ledger.py, src/harness/router.py, src/harness/profiles/*, om/pii.py, om/replay.py, tests/test_adapter.py, tests/test_harness_router.py, tests/test_llm_router.py |
 | FP-S2c evidence/deals/queue | worker (session A) | claude/dreamy-ramanujan-k8p2xt | 2026-11-17 | src/harness/evidence.py, om/deals.py, om/storage.py, tests/test_evidence.py, tests/test_deal_memory.py, tests/test_storage.py |
 | FP-S2d unpack/crawler | worker (session A) | claude/dreamy-ramanujan-k8p2xt | 2026-11-17 | src/harness/connectors/unpack.py, src/harness/connectors/web.py, tests/test_connectors_harness.py |
+| FP-CI1 CI concurrency on main | worker (session A) | claude/dreamy-ramanujan-k8p2xt | 2026-11-17 | .github/workflows/ci.yml |
 
 ## Log
 - 2026-11-16: created; no active claims.
@@ -81,3 +82,4 @@ One row per active claim. Claim a packet before you touch its files, commit the 
 - 2026-11-16: session A: FP-S1a/b, S6.1b, S6.3 done; S6.1 workflows, S6.4, S6.5a, S6.5b claimed (parity items 24-33, 58-63).
 - 2026-11-16: session A: S2 specialist review FAIL (1C/7H); FP-S2a-d claimed.
 - 2026-11-17: S5.fix1 and S5.5a verified on main and released; S5.4b and S5.5b claimed (session D).
+- 2026-11-16: session A: FP-CI1 claimed (main CI runs all cancelled by cancel-in-progress).
