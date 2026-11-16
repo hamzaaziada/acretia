@@ -1,0 +1,80 @@
+[
+  {
+    "doc_type": "annual_fs",
+    "period_end": "2025-12-31",
+    "fiscal_year_end_month": 12,
+    "language": "en",
+    "scanned": false,
+    "url": "https://www.sabic.com/en/Images/SABIC-FINANCIALS-2025_tcm1010-49441.pdf",
+    "host": "www.sabic.com",
+    "sha256": "b8d702a3669d35ff119c9f1b010af223c1d16f2c2559dae942d7ba0f6cb02817",
+    "bytes": 2305286,
+    "pages": 121,
+    "retrieved": "2026-11-16",
+    "terms_url": "https://www.sabic.com/en/terms-of-use",
+    "committed": false,
+    "primary_statement_pages": {
+      "IS": 10,
+      "BS": 9,
+      "CF": 13,
+      "OCI": 11,
+      "EQ": 12
+    },
+    "currency": "SAR",
+    "unit": "SAR million",
+    "notes": "Standalone audited consolidated FS; auditor report included",
+    "local_path": "anchors/2010/SABIC-FINANCIALS-2025_tcm1010-49441.pdf"
+  },
+  {
+    "doc_type": "annual_fs",
+    "period_end": "2024-12-31",
+    "fiscal_year_end_month": 12,
+    "language": "en",
+    "scanned": false,
+    "url": "https://www.sabic.com/en/Images/SABIC%20Financials%202024_tcm1010-46869.pdf",
+    "host": "www.sabic.com",
+    "sha256": "2cb97825ca6fcb6922924375da82f314f3bfacd388a39d77ee0c6701f1ff1c38",
+    "bytes": 2211987,
+    "pages": 119,
+    "retrieved": "2026-11-16",
+    "terms_url": "https://www.sabic.com/en/terms-of-use",
+    "committed": false,
+    "primary_statement_pages": {
+      "IS": 10,
+      "BS": 9,
+      "CF": 13,
+      "OCI": 11,
+      "EQ": 12
+    },
+    "currency": "SAR",
+    "unit": "SAR million",
+    "notes": "Standalone audited consolidated FS; auditor report included",
+    "local_path": "anchors/2010/SABIC_Financials_2024_tcm1010-46869.pdf"
+  },
+  {
+    "doc_type": "quarterly_fs",
+    "period_end": "2026-09-30",
+    "fiscal_year_end_month": 12,
+    "language": "en",
+    "scanned": false,
+    "url": "https://data.argaam.com/files/download/55eb0f1c-2d19-4b5c-ae43-8d09364ce429.pdf",
+    "host": "data.argaam.com",
+    "sha256": "62c9db91fd6626a288b055c39f84b43a24572a099b2998d3c4a6d9f9a4cb583c",
+    "bytes": 1937379,
+    "pages": 26,
+    "retrieved": "2026-11-16",
+    "terms_url": "https://www.argaam.com/en/static-contents/termsandconditions",
+    "committed": false,
+    "primary_statement_pages": {
+      "IS": 5,
+      "BS": 4,
+      "CF": 8,
+      "OCI": 6,
+      "EQ": 7
+    },
+    "currency": "SAR",
+    "unit": "SAR million",
+    "notes": "Q3 2026 interim condensed FS via Argaam mirror of Tadawul disclosure",
+    "local_path": "anchors/2010/55eb0f1c-2d19-4b5c-ae43-8d09364ce429.pdf"
+  }
+]
