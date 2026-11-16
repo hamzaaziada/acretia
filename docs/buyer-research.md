@@ -154,7 +154,7 @@ What they reject: an unsourced claim, a memo that hides the downside, returns th
 14. **Risk table and taxonomy.** Per risk: description, probability, impact, mitigant or trigger, owner. **Required categories (11), each present or marked not applicable with a reason:** customer concentration (single customer above 10% of revenue flagged), key person, regulatory, FX, refinancing and maturity wall (maturity within 24 months of close flagged), supplier, technology and cyber, litigation, ESG, **market and competitive** (share loss, pricing pressure, new entrants), **interest-rate and macro** (floating-rate exposure, cycle sensitivity). Taxonomy and thresholds are a [HOUSE RULE]. Check (D). [27][29]
 15. **Hockey sticks flagged (tag D).** A forecast is tagged "hockey stick" when its revenue or EBITDA forecast CAGR exceeds 1.5x the trailing 3-year CAGR, or its annual margin expansion exceeds 1.5x the trailing 3-year average annual margin change. **If the trailing CAGR is zero or negative, the ratio is undefined and the test falls back to the absolute difference: tag when the forecast CAGR exceeds the trailing CAGR by more than 5 percentage points** (likewise 1 percentage point for annual margin change). Each tag has a verification note. Check (D): recompute CAGRs and tag. [HOUSE RULE] [30]
 16. **Diligence status:** completed vs outstanding with owners and dates; conditions on approval. Check (D). [27]
-17. **VDR request-list matching and coverage.** The request list is the versioned **Acretia buyer request list v1** (Appendix A, 79 items across eight sections). **A request matches a document when the document has the same section tag AND its BM25 score for the request text is at least tau**, or by a **logged manual override** (who, when, why). BM25 runs over the document title plus its first 200 words, with lowercased, stop-word-removed, stemmed tokens. **tau is calibrated on a labelled fixture of 40 request-document pairs** (20 positive, 20 negative, of which at least 10 are hard negatives in the same section on a different topic; labelled independently by two reviewers with disagreements resolved and logged; stored as a versioned test fixture with the pair ids, section tags, texts and labels). tau is the smallest threshold maximising F1 on the fixture and **must reach F1 of at least 0.8**, else the matcher is blocked from the gate. **Coverage = matched requests / total requests**, reported by section. Status per request: fulfilled / partial (matched below a second threshold, 1.5 x tau, or only part of the sub-items) / unaddressed. **Every unaddressed request gets an owner and a due date.** **Superseded versions** are flagged by date (a later document date for the same normalised filename stem) or version suffix (`v2`, `rev`, `final`, `_FINAL_v3`), the latest being current; **unreadable files** (corrupt, password-protected, no text after failed OCR) are listed separately and count as unaddressed. Coverage and the unaddressed count appear on page one. Check (D). [HOUSE RULE] [41][42]
+17. **VDR request-list matching and coverage.** The request list is the versioned **Acretia buyer request list v1** (Appendix A, 80 items across eight sections). **A request matches a document when the document has the same section tag AND its BM25 score for the request text is at least tau**, or by a **logged manual override** (who, when, why). BM25 runs over the document title plus its first 200 words, with lowercased, stop-word-removed, stemmed tokens. **tau is calibrated on a labelled fixture of 40 request-document pairs** (20 positive, 20 negative, of which at least 10 are hard negatives in the same section on a different topic; labelled independently by two reviewers with disagreements resolved and logged; stored as a versioned test fixture with the pair ids, section tags, texts and labels). tau is the smallest threshold maximising F1 on the fixture and **must reach F1 of at least 0.8**, else the matcher is blocked from the gate. **Coverage = matched requests / total requests**, reported by section. Status per request: fulfilled / partial (matched below a second threshold, 1.5 x tau, or only part of the sub-items) / unaddressed. **Every unaddressed request gets an owner and a due date.** **Superseded versions** are flagged by date (a later document date for the same normalised filename stem) or version suffix (`v2`, `rev`, `final`, `_FINAL_v3`), the latest being current; **unreadable files** (corrupt, password-protected, no text after failed OCR) are listed separately and count as unaddressed. Coverage and the unaddressed count appear on page one. Check (D). [HOUSE RULE] [41][42]
 18. **Data security and confidentiality (HARD).** [HOUSE RULE; no public standard for this product class found] The following **artifacts must exist and be named in the data-security pack**; each missing artifact fails the row: (a) **AES-256 encryption at rest and TLS 1.2 or higher in transit**, shown by configuration evidence; (b) **a SOC 2 Type II report, or a dated roadmap to one plus a current third-party penetration-test report**; (c) **a subprocessor list that includes every LLM provider**, each with zero-retention and no-training terms; (d) **an audit-log export** (immutable; who, what, when for every view, export and model call); (e) **deletion within 30 days of request, with a deletion certificate** covering data, derived indexes and caches. Also required: organisation-level access control (SSO/RBAC, deal-level permissions), no training on client data, and configurable data residency (region selectable per organisation). Ingested documents are treated as data, never instructions. Check (D) for artifact presence and dates, (G) for the written policy.
 19. **Audit before submission:** `om.formula` and `om.modelcheck` pass; scenario outputs reconcile. Check (D). [27]
 20. **Length.** The IC memo body is 10-25 pages with a one-page executive summary (typical, not a rule). Reviewed by (G) only; not a (D) check. [28]
@@ -186,22 +186,26 @@ Evidence: BankerToolBench [24] (Handshake AI and McGill, bankers from several bu
 
 ## 5. Persona rubric (canonical; refines and supersedes the summary bullets in PLAN.md section 6)
 
-Scoring: each persona returns per-criterion scores 0 to the weight, a total out of 10, blocking issues with locators (sheet!cell, slide number, memo section), and a **non-scored** comment "would pay $10K+/seat? yes/no + why" (recorded, never scored, see 4-13). Below 8.5 = blocked. Any **HARD** row scoring 0 caps the total at 6.0. For the IB persona, a failed **binary gate** (G1 error values or indicators, G2 unbalanced BS, G3 untied cash; see section 1) caps the total at **5.0**, whatever the sum.
+Scoring: each persona returns per-criterion scores 0 to the weight, a total out of 10, blocking issues with locators (sheet!cell, slide number, memo section), and a **non-scored** comment "would pay $10K+/seat? yes/no + why" (recorded, never scored, see 4-13). Below 8.5 = blocked.
+
+**Partial credit [HOUSE RULE]:** for every non-HARD row, `score = weight x passed_checks / total_checks`, where the checks are the numbered items cited in the row, each reduced to its deterministic or calibrated pass/fail tests (a check with sub-tests counts as passed only if all sub-tests pass). A **HARD** row is all-or-nothing: `score = weight` if every check passes, else 0. Any HARD row scoring 0 caps the total at 6.0. For the IB persona, a failed **binary gate** (G1 error values or indicators, G2 unbalanced BS, G3 untied cash; see section 1) caps the total at **5.0**, whatever the sum. A valid exception record (reason code plus note, 1b-20 and 1b-22) deducts 0.25 points from IB row 7 per exception, and never takes the row to 0 by itself.
+
+**Grader reproducibility [HOUSE RULE]:** every (G) check in a gate runs as a replay: a pinned model id, the sha256 of the prompt text and replay fixtures keyed by (model id, prompt sha256, input hash); no live LLM calls in tests or gates (CLAUDE.md). Live grading runs only in eval runs through the adapter with user-supplied keys. Every (G) row first passes its calibration set (5.4): both pass anchors score at least 8.5 and both fail anchors at most 4.0; otherwise the row's (G) score is discarded and the row is scored on its (D) checks only.
 
 ### 5.1 IB analyst (Goldman / Morgan Stanley style)
 
 | # | Criterion | Wt | Pass descriptor (full marks) | Check |
 |---|---|---|---|---|
-| 1 | **HARD** Integrity gates G1-G3: zero error values and indicators, BS balances and cash ties within 0.001, checks tab green, IFERROR/IFNA only around lookups (1a-9, 11, 12) | 2.0 | No error cells or indicators; diffs at most 0.001 in all periods; master check = 0; masking test passes | D: LibreOffice recalc, `om.modelcheck` |
-| 2 | **HARD** Live model: allowlist-only literals, forecasts all formulas, input flex changes outputs, no volatile functions, external links = 0 (1a-2, 3, 16; 1d-35, 36) | 1.75 | Zero non-allowlist literals; every input has dependents; flex passes; no volatile or external links | D |
+| 1 | **HARD** Integrity gates G1-G3: zero error values and indicators, BS balances and cash ties within 0.001 declared units, checks tab green, IFERROR/IFNA only around lookups and no masked non-lookup error of any type (1a-9, 11, 12) | 2.0 | No error cells or indicators; diffs at most 0.001 in all periods; master check = 0; masking test passes | D: LibreOffice recalc, `om.modelcheck` |
+| 2 | **HARD** Live model: allowlist-only literals, forecasts all formulas, flex test with correct output signs, no volatile functions, external links = 0, historical tie-out to filings (1a-2, 3, 16; 1d-35, 36, 42) | 1.75 | Zero non-allowlist literals; every input has dependents; flex passes with expected signs; historicals equal filed values | D |
 | 3 | Colour code incl. green cross-sheet, distinct external colour, legend (1a-1) | 0.75 | 100% conformance | D |
-| 4 | Row consistency, sign convention, units and headers (1a-4, 6, 7) | 0.75 | R1C1 inconsistencies = 0; header cells present | D |
+| 4 | Row consistency, sign convention, units on cover and headers (1a-4, 6, 7) | 0.75 | R1C1 inconsistencies = 0; cover units declared | D |
 | 5 | Circularity switch and scenario toggle (1a-10, 17) | 0.75 | Both work and balance in every state | D |
 | 6 | Navigability: freeze panes, print area, fit to 1 page wide, 0 hidden sheets, at most 25 named ranges (1a-13, 14) | 0.5 | All present on all model tabs | D |
-| 7 | Valuation mechanics: valuation date and stub, DCF mid-year column, TV cross-check and share flag, EV bridge with tranche TSM, IQR rule, declared DCF range, calendarisation, LTM/NTM, comps criteria (1b; 1d-38) | 1.0 | All items pass | D + G |
-| 8 | Transaction mechanics: LBO (S&U, debt schedule, sweep, IRR vs XIRR) and accretion/dilution where included (1d-39, 40) | 1.0 | All items pass; N/A rows are declared | D |
-| 9 | Pitchbook hygiene: cross-page agreement, one citation schema and date rule, typography numerics, font histogram, draft/confidentiality legend, footers (1c-26 to 33; 1d-37) | 1.0 | Zero mismatches; schema 100%; typography within limits; legend on 100% of pages | D |
-| 10 | Editable deliverable: native charts and tables with embedded data (1c-34) | 0.5 | Zero chart images; embedded workbooks open | D |
+| 7 | **HARD** Valuation mechanics: valuation date and stub, DCF mid-year column, TV cross-check and share flag, EV bridge with tranche TSM, IQR rule, declared DCF range, grid centred on base, WACC build, calendarisation, LTM/NTM, comps criteria (1b-18 to 25; 1d-38, 43) | 1.0 | All checks pass; exceptions coded and noted | D + G |
+| 8 | Transaction mechanics and deck-to-model resolution: LBO, accretion/dilution where included, every shown return/IRR/EPS/accretion figure resolves to a model cell (1d-39, 40, 41) | 1.0 | All items pass; "N/A" never hides a shown figure | D |
+| 9 | Pitchbook hygiene: cross-page agreement, one citation schema and date rule, typography numerics (at most 5 sizes, chart text counted), font histogram, draft/confidentiality legend, footers (1c-26 to 33; 1d-37) | 1.0 | Zero mismatches; schema 100%; typography within limits; legend on 100% of pages | D |
+| 10 | Editable deliverable and raster rule: native charts and tables, chart values tie to workbook and manifest, no chart-like or text pictures (1c-34) | 0.5 | Zero offending pictures; cached values equal workbook | D |
 
 Weights: 2.0 + 1.75 + 0.75 + 0.75 + 0.75 + 0.5 + 1.0 + 1.0 + 1.0 + 0.5 = **10.0**.
 
@@ -209,15 +213,15 @@ Weights: 2.0 + 1.75 + 0.75 + 0.75 + 0.75 + 0.5 + 1.0 + 1.0 + 1.0 + 0.5 = **10.0*
 
 | # | Criterion | Wt | Pass descriptor | Check |
 |---|---|---|---|---|
-| 1 | **HARD** Storyline: SCQA executive summary, ghost-deck diff equal or logged, grader passes calibration anchors then reconstructs the recommendation from titles alone (2a-2, 6, 7; 2f-20) | 1.75 | Calibration passed; grader: 0 topic titles, 0 gaps, 0 overlaps, score at least 8.5; unlogged ghost diffs = 0 | G + D |
-| 2 | **HARD** Action titles (at most 15 words, at most 2 lines, verb by lexicon + morphology, number where data exists) and one message per slide (2a-1, 3) | 1.5 | 100% of content slides comply | D + G |
+| 1 | **HARD** Storyline: SCQA executive summary, ghost-deck diff equal or logged (DealMemory, owner-approved), replayed grader passes calibration then reconstructs the recommendation from titles alone (2a-2, 6, 7; 2f-20) | 1.75 | Calibration passed; grader: 0 topic titles, 0 gaps, 0 overlaps, score at least 8.5; unlogged ghost diffs = 0 | G + D |
+| 2 | **HARD** Action titles (at most 15 words, at most 2 lines, verb by lexicon + morphology with -ing guard, number where data exists) and the deterministic one-message rule (2a-1, 3) | 1.5 | 100% of content slides comply | D + G |
 | 3 | Horizontal and vertical logic (2a-4, 5) | 0.5 | Ordering principle identified; no overlaps or gaps | G |
-| 4 | Chart fit: chart-message mapping, axis baselines, sort order, labels, no 3D (2e-17) | 1.0 | Every chart passes mapping and title-exhibit match | D + G |
+| 4 | Chart fit: chart-message mapping, axis baselines, sort order, labels, no 3D, chart values tie to workbook and manifest, contrast (2e-17; 2f-21, 22) | 1.0 | Every chart passes mapping, title-exhibit match, tie-out and 3:1 contrast | D + G |
 | 5 | Sources and traceability: source/date line, register, reconciling numbers (2a-9, 10) | 0.75 | Zero orphan numbers | D |
-| 6 | Geometry: 0 EMU overlap, margins at least 0.4 in, 12-column grid, size floors, whitespace at least 15% per slide (2b-13) | 1.0 | `om.spacing`/validate_pptx zero violations | D |
-| 7 | Visual range: at most 40% one archetype, at least 4 archetypes per 10, no archetype over 2 consecutive, pHash distance at least 10 of 64 (2c-15) | 1.0 | All thresholds met | D + G |
-| 8 | Anti-slop, typography and house rules: banned patterns, no gradients/shadows/3D, one accent at most 15% coverage, no em dashes/emojis/exclamations, at most 2 families and 4 sizes, line length at most 90, no eyebrows, footer and page number (2a-11; 2b-14; 2d-16) | 1.5 | Zero violations | D |
-| 9 | Editability and image hygiene: native charts, no text baked into images, OCR at most 5 characters (2f-18, 19) | 1.0 | Zero chart images; OCR at most 5 per image | D |
+| 6 | Geometry: 0 EMU overlap, margins at least 0.4 in, 12-column grid, size floors, whitespace at least 15% per slide except full-bleed and section dividers, LibreOffice/fontTools metrics (2b-13; 2f-23) | 1.0 | `om.spacing`/validate_pptx zero violations | D |
+| 7 | Visual range: at most 40% one archetype, at least 4 archetypes per 10, none over 2 consecutive, pHash distance at least 10 of 64 (2c-15) | 1.0 | All thresholds met | D + G |
+| 8 | Anti-slop, typography and house rules: banned patterns, no gradients/shadows/3D, one accent at most 15% coverage, no em dashes/emojis/exclamations (So/Cs method), at most 2 families and 4 sizes, line length at most 90, eyebrow rule (1.0 in), body contrast 4.5:1, footer and page number (2a-9, 11; 2b-14; 2d-16; 2f-22) | 1.5 | Zero violations | D |
+| 9 | Image hygiene: no chart-like or text content in any picture, native charts (2f-18, 19) | 1.0 | Zero offending pictures | D |
 
 Weights: 1.75 + 1.5 + 0.5 + 1.0 + 0.75 + 1.0 + 1.0 + 1.5 + 1.0 = **10.0**.
 
@@ -225,17 +229,34 @@ Weights: 1.75 + 1.5 + 0.5 + 1.0 + 0.75 + 1.0 + 1.0 + 1.5 + 1.0 = **10.0**.
 
 | # | Criterion | Wt | Pass descriptor | Check |
 |---|---|---|---|---|
-| 1 | **HARD** Traceability: 100% of numeric claims cited with the single schema; page + bbox_norm + text span; derived figures trace to all inputs; memo-to-model tie-out by manifest id (3-3, 4, 5) | 2.0 | 100% of numeric claims linked and resolving; orphan memo numbers = 0 | D |
-| 2 | Memo structure: 14 enumerated sections, fund-template conformance, appendix links (3-1, 2, 6) | 1.25 | All sections present; template map complete | D |
-| 3 | Returns and case thresholds: downside at least 20% below base, haircut table, conventions (5y, 20% IRR / 2.5x, XIRR check, grid steps), no-expansion case, bridge (3-7, 8, 9) | 1.5 | All thresholds met; grids centred on base | D + G |
-| 4 | QoE, NWC peg and revenue quality: add-backs sourced and flagged above 20% of adjusted EBITDA, 12-month peg, recurring %, concentration (3-11, 12, 13) | 1.0 | Every adjustment sourced; peg from 12 months | D + G |
-| 5 | Leverage, covenant headroom and debt capacity (3-10) | 0.75 | Headroom at least 20% in base; downside reported | D |
-| 6 | VDR matching against Acretia buyer request list v1: Jaccard 0.3 rule, overrides logged, superseded and unreadable flagged, owners on unaddressed (3-17; Appendix A) | 1.0 | Counts shown; every unaddressed item has an owner | D |
-| 7 | Risk taxonomy (9 categories), hockey sticks tagged, diligence status (3-14, 15, 16) | 0.75 | All categories present or n/a with reason | D + G |
-| 8 | Model integrity behind the memo (3-19) | 0.75 | `om.formula` and `om.modelcheck` green | D |
-| 9 | Data security and confidentiality: access control, no training on client data, residency, audit log, deletion (3-18) | 1.0 | All five controls evidenced | D + G |
+| 1 | **HARD** Traceability: 100% of numeric claims cited (source records and assumption/model records through the manifest); page + bbox_norm + text span; derived figures trace to all inputs; memo-to-model tie-out (3-3, 4, 5) | 2.0 | 100% of numeric claims linked and resolving; orphan memo numbers = 0 | D |
+| 2 | Memo structure and content: 14 enumerated sections each passing its content test, fund-template conformance, appendix links (3-1, 2, 6) | 1.0 | All sections present with required elements; template map complete | D |
+| 3 | Returns and case thresholds: downside at least 20% below base with IRR floor and liquidity, haircut table, conventions (5y, 20% IRR / 2.5x, fee rule, XIRR at 0.01 pp, grid steps), no-expansion case, bridge (3-7, 8, 9) | 1.5 | All thresholds met; grids centred on base | D + G |
+| 4 | QoE, NWC peg and revenue quality: add-backs sourced, info above 20% and flag above 30% of adjusted EBITDA, 12-month peg, recurring %, concentration (3-11, 12, 13) | 0.75 | Every adjustment sourced; peg from 12 months | D + G |
+| 5 | Leverage, covenant headroom and debt capacity (3-10) | 0.5 | Headroom at least 20% in base; downside reported | D |
+| 6 | VDR matching: same section + BM25 at least tau, tau calibrated to F1 of at least 0.8 on the 40-pair fixture, coverage reported, overrides logged, superseded and unreadable flagged, owners on unaddressed (3-17; Appendix A) | 0.75 | Coverage and counts shown; every unaddressed item has an owner | D |
+| 7 | Risk taxonomy (11 categories), hockey sticks tagged (CAGR rule with fallback), diligence status (3-14, 15, 16) | 0.5 | All categories present or n/a with reason | D + G |
+| 8 | Model integrity behind the memo (3-19) | 0.5 | `om.formula` and `om.modelcheck` green | D |
+| 9 | **HARD** Data security and confidentiality: AES-256 and TLS 1.2+, SOC 2 Type II (or dated roadmap plus pen test), subprocessor list with LLM providers and zero-retention/no-training terms, audit-log export, deletion within 30 days with certificate (3-18) | 1.0 | All five artifacts present and dated | D + G |
+| 10 | Entry valuation and sources and uses (3-21, 22) | 1.0 | EV recomputed; multiples in range or coded; S = U | D |
+| 11 | Recommendation with size and price (3-23) | 0.5 | Decision, cheque, EV and multiple, maximum price, conditions all present and tied to the model | D |
 
-Weights: 2.0 + 1.25 + 1.5 + 1.0 + 0.75 + 1.0 + 0.75 + 0.75 + 1.0 = **10.0**.
+Weights: 2.0 + 1.0 + 1.5 + 0.75 + 0.5 + 0.75 + 0.5 + 0.5 + 1.0 + 1.0 + 0.5 = **10.0**.
+
+### 5.4 Grader calibration sets (two pass and two fail anchors per G-graded row)
+
+A pass anchor must score at least 8.5 and a fail anchor at most 4.0.
+
+- **MBB-1 (storyline):** the four title sequences in section 2a.
+- **IB-7 (valuation).** Pass: DCF with a t - 0.5 column, TV 62% of EV, implied exit multiple 9.1x inside the comps IQR 8.2-10.4x, bridge listing six option tranches. Pass: TV 78% flagged with code data_scarcity and a note, grid centred on base. Fail: TV 85% with no flag. Fail: selected multiple 14x against an IQR of 8-10x and no reason code.
+- **MBB-2 (titles and one message).** Pass: "Cost-to-serve is 18% above peers because of last-mile routing" over one chart and one callout. Pass: comparison-archetype slide with two exhibits and a 12-word action title. Fail: title "Market overview" over three charts. Fail: a 22-word title with five text blocks.
+- **MBB-3 (logic).** Pass: a section ordered by importance where each body proves its title. Pass: a chronological section with no gaps. Fail: two slides making the same claim. Fail: title says margin rose while the exhibit shows revenue.
+- **MBB-4 (chart fit).** Pass: sorted horizontal bar highlighting the bar named in the title. Pass: waterfall whose steps reconcile start to end. Fail: pie with seven slices. Fail: bar chart with a truncated value axis.
+- **MBB-7 (visual range).** Pass: ten slides across five archetypes, none over three slides, no archetype twice in a row, images differing by pHash at least 10. Fail: eight of ten slides title-plus-bullets. Pass (second): ten slides, four archetypes, a full-bleed divider and a split layout. Fail (second): three consecutive slides on the same archetype with near-identical generated images.
+- **PE-3 (returns).** Pass: downside EBITDA 27% below base, IRR 4%, liquidity positive, grids centred, bridge sums. Pass: no-expansion case at 17% IRR labelled below the 20% hurdle with a clear verdict. Fail: downside only 8% below base. Fail: IRR resting on two turns of multiple expansion with no stress case.
+- **PE-4 (QoE and NWC).** Pass: add-backs 14% of adjusted EBITDA, each sourced and categorised, peg from 12 months. Pass: add-backs 33% flagged with each large item re-evidenced. Fail: add-backs 33% unflagged. Fail: peg from one year-end balance.
+- **PE-7 (risk).** Pass: all 11 categories with probability, impact, mitigant, owner. Pass: two categories marked n/a with reasons. Fail: risks in prose with no table. Fail: a 40% customer not flagged.
+- **PE-9 (data security).** Pass: all five artifacts attached with dates and a subprocessor list naming the LLM provider with zero-retention terms. Pass: SOC 2 roadmap dated plus a current pen-test report, other four artifacts present. Fail: a policy statement with no artifacts. Fail: subprocessor list omitting the LLM provider.
 
 ---
 
@@ -251,7 +272,7 @@ Weights: 2.0 + 1.25 + 1.5 + 1.0 + 0.75 + 1.0 + 0.75 + 0.75 + 1.0 = **10.0**.
 
 ## Appendix A. Acretia buyer request list v1
 
-Version 1.0 (75 items, eight sections: corporate, financial, tax, legal, commercial, HR, IT, environmental). Compiled as a generic buyer-side diligence list from the structure described in [41][42]; wording is original and the list is a [HOUSE RULE] default that a fund list may replace (then it is versioned as a new list id). Matching rule (3-17): same section and keyword Jaccard at least 0.3 between the request text and the candidate document, or a logged manual override. Every unaddressed item gets an owner.
+Version 1.0 (80 items, eight sections: corporate, financial, tax, legal, commercial, HR, IT, environmental). Compiled as a generic buyer-side diligence list from the structure described in [41][42]; wording is original and the list is a [HOUSE RULE] default that a fund list may replace (then it is versioned as a new list id). Matching rule (3-17): same section tag and BM25 score at least tau (calibrated on the 40-pair labelled fixture to F1 of at least 0.8, see 3-17), or a logged manual override. Coverage = matched / total. Every unaddressed item gets an owner.
 
 | ID | Section | Request |
 |---|---|---|
@@ -277,59 +298,64 @@ Version 1.0 (75 items, eight sections: corporate, financial, tax, legal, commerc
 | A-020 | Financial | Accounts receivable and payable ageing reports |
 | A-021 | Financial | Off-balance-sheet liabilities leases and guarantees |
 | A-022 | Financial | Auditor management letters and internal control findings |
-| A-023 | Tax | Federal state and foreign income tax returns for three years |
-| A-024 | Tax | Tax audits examinations and correspondence with authorities |
-| A-025 | Tax | Sales use and VAT filings and exposure analysis |
-| A-026 | Tax | Transfer pricing documentation and intercompany agreements |
-| A-027 | Tax | Deferred tax asset and liability schedule and net operating losses |
-| A-028 | Tax | Tax structure chart and any tax rulings or holidays |
-| A-029 | Tax | Payroll tax filings and worker classification review |
-| A-030 | Tax | Uncertain tax positions and tax reserves |
-| A-031 | Legal | Material customer contracts and change of control provisions |
-| A-032 | Legal | Material supplier and distribution contracts |
-| A-033 | Legal | Pending threatened or settled litigation and claims |
-| A-034 | Legal | Regulatory licences permits and compliance correspondence |
-| A-035 | Legal | Intellectual property register patents trademarks and licences |
-| A-036 | Legal | Real property leases and ownership documents |
-| A-037 | Legal | Insurance policies and claims history |
-| A-038 | Legal | Data privacy policies breach notices and regulator inquiries |
-| A-039 | Legal | Related party transactions and agreements |
-| A-040 | Legal | Non-compete exclusivity and most-favoured-nation clauses |
-| A-041 | Commercial | Market study or third-party industry report |
-| A-042 | Commercial | Customer list with revenue concentration and tenure |
-| A-043 | Commercial | Customer churn retention and cohort analysis |
-| A-044 | Commercial | Pricing history discounts and rebate programmes |
-| A-045 | Commercial | Sales pipeline backlog and bookings by quarter |
-| A-046 | Commercial | Competitor analysis and market share data |
-| A-047 | Commercial | Customer references and satisfaction surveys or NPS |
-| A-048 | Commercial | Product roadmap and development pipeline |
-| A-049 | Commercial | Sales and marketing organisation and channel strategy |
-| A-050 | Commercial | Top supplier list with spend concentration |
-| A-051 | Commercial | Warranty returns and product liability history |
-| A-052 | Commercial | Recurring revenue definition and contract renewal schedule |
-| A-053 | HR | Employee census with role tenure location and compensation |
-| A-054 | HR | Employment agreements for senior management and key employees |
-| A-055 | HR | Equity incentive plans and outstanding awards |
-| A-056 | HR | Benefit plans pension obligations and retiree liabilities |
-| A-057 | HR | Union and collective bargaining agreements |
-| A-058 | HR | Employee turnover and hiring data for three years |
-| A-059 | HR | Employment claims disputes and investigations |
-| A-060 | HR | Key person dependency and succession plans |
-| A-061 | IT | Systems architecture and application inventory |
-| A-062 | IT | Cybersecurity policies penetration tests and incident log |
-| A-063 | IT | Software licences and open source usage report |
-| A-064 | IT | Disaster recovery and business continuity plans |
-| A-065 | IT | Major IT vendor contracts and cloud hosting agreements |
-| A-066 | IT | Technology roadmap and technical debt assessment |
-| A-067 | IT | Data protection certifications SOC 2 and ISO 27001 reports |
-| A-068 | IT | Capitalised software development costs and headcount |
-| A-069 | IT | Customer data inventory and retention policy |
-| A-070 | Environmental | Environmental permits and compliance audits |
-| A-071 | Environmental | Phase I and Phase II environmental site assessments |
-| A-072 | Environmental | Hazardous materials waste and remediation liabilities |
-| A-073 | Environmental | Health and safety incident records and citations |
-| A-074 | Environmental | ESG policies emissions data and sustainability reporting |
-| A-075 | Environmental | Climate and physical risk assessment of key sites |
+| A-023 | Financial | Debt-like items schedule covering deferred revenue earn-outs pensions leases accrued bonuses and tax payables |
+| A-024 | Tax | Federal state and foreign income tax returns for three years |
+| A-025 | Tax | Tax audits examinations and correspondence with authorities |
+| A-026 | Tax | Sales use and VAT filings and exposure analysis |
+| A-027 | Tax | Transfer pricing documentation and intercompany agreements |
+| A-028 | Tax | Deferred tax asset and liability schedule and net operating losses |
+| A-029 | Tax | Tax structure chart and any tax rulings or holidays |
+| A-030 | Tax | Payroll tax filings and worker classification review |
+| A-031 | Tax | Uncertain tax positions and tax reserves |
+| A-032 | Legal | Material customer contracts and change of control provisions |
+| A-033 | Legal | Material supplier and distribution contracts |
+| A-034 | Legal | Pending threatened or settled litigation and claims |
+| A-035 | Legal | Regulatory licences permits and compliance correspondence |
+| A-036 | Legal | Intellectual property register patents trademarks and licences |
+| A-037 | Legal | Real property leases and ownership documents |
+| A-038 | Legal | Insurance policies and claims history |
+| A-039 | Legal | Data privacy policies breach notices and regulator inquiries |
+| A-040 | Legal | Related party transactions and agreements |
+| A-041 | Legal | Non-compete exclusivity and most-favoured-nation clauses |
+| A-042 | Legal | Sanctions screening procedures and OFAC compliance policy |
+| A-043 | Legal | Anti-money-laundering and know-your-customer programme |
+| A-044 | Legal | Anti-bribery and anti-corruption policy and any FCPA investigations |
+| A-045 | Legal | Export controls trade restrictions and sanctions-related licences |
+| A-046 | Commercial | Market study or third-party industry report |
+| A-047 | Commercial | Customer list with revenue concentration and tenure |
+| A-048 | Commercial | Customer churn retention and cohort analysis |
+| A-049 | Commercial | Pricing history discounts and rebate programmes |
+| A-050 | Commercial | Sales pipeline backlog and bookings by quarter |
+| A-051 | Commercial | Competitor analysis and market share data |
+| A-052 | Commercial | Customer references and satisfaction surveys or NPS |
+| A-053 | Commercial | Product roadmap and development pipeline |
+| A-054 | Commercial | Sales and marketing organisation and channel strategy |
+| A-055 | Commercial | Top supplier list with spend concentration |
+| A-056 | Commercial | Warranty returns and product liability history |
+| A-057 | Commercial | Recurring revenue definition and contract renewal schedule |
+| A-058 | HR | Employee census with role tenure location and compensation |
+| A-059 | HR | Employment agreements for senior management and key employees |
+| A-060 | HR | Equity incentive plans and outstanding awards |
+| A-061 | HR | Benefit plans pension obligations and retiree liabilities |
+| A-062 | HR | Union and collective bargaining agreements |
+| A-063 | HR | Employee turnover and hiring data for three years |
+| A-064 | HR | Employment claims disputes and investigations |
+| A-065 | HR | Key person dependency and succession plans |
+| A-066 | IT | Systems architecture and application inventory |
+| A-067 | IT | Cybersecurity policies penetration tests and incident log |
+| A-068 | IT | Software licences and open source usage report |
+| A-069 | IT | Disaster recovery and business continuity plans |
+| A-070 | IT | Major IT vendor contracts and cloud hosting agreements |
+| A-071 | IT | Technology roadmap and technical debt assessment |
+| A-072 | IT | Data protection certifications SOC 2 and ISO 27001 reports |
+| A-073 | IT | Capitalised software development costs and headcount |
+| A-074 | IT | Customer data inventory and retention policy |
+| A-075 | Environmental | Environmental permits and compliance audits |
+| A-076 | Environmental | Phase I and Phase II environmental site assessments |
+| A-077 | Environmental | Hazardous materials waste and remediation liabilities |
+| A-078 | Environmental | Health and safety incident records and citations |
+| A-079 | Environmental | ESG policies emissions data and sustainability reporting |
+| A-080 | Environmental | Climate and physical risk assessment of key sites |
 
 ---
 
