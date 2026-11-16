@@ -2,9 +2,13 @@
 from __future__ import annotations
 
 import json
+import re
 
 PROTOCOL_VERSION = "2025-06-18"
 MAX_MESSAGE_BYTES = 8 * 1024 * 1024
+MAX_DEPTH = 64
+_STRINGS = re.compile(rb'"(?:[^"\\]|\\.)*"', re.S)
+_BRACKETS = re.compile(rb"[\[\]{}]")
 
 PARSE_ERROR, INVALID_REQUEST, METHOD_NOT_FOUND, INVALID_PARAMS, INTERNAL_ERROR = -32700, -32600, -32601, -32602, -32603
 
@@ -30,14 +34,31 @@ def encode(msg: dict) -> bytes:
     return (json.dumps(msg, ensure_ascii=False, separators=(",", ":"), default=str) + "\n").encode("utf-8")
 
 
+def _check_depth(raw: bytes) -> None:
+    """Reject nesting deeper than MAX_DEPTH before the JSON parser sees it (no recursion, no crash)."""
+    if raw.count(b"[") + raw.count(b"{") <= MAX_DEPTH:
+        return
+    depth = 0
+    for m in _BRACKETS.finditer(_STRINGS.sub(b'""', raw)):
+        if m.group() in (b"[", b"{"):
+            depth += 1
+            if depth > MAX_DEPTH:
+                raise ProtocolError(INVALID_REQUEST, f"nesting deeper than {MAX_DEPTH} levels")
+        else:
+            depth -= 1
+
+
 def decode(line: bytes | str):
     """Parse one line. Raises ProtocolError(-32700) on bad JSON/oversize; returns the parsed object."""
     if isinstance(line, str):
         line = line.encode("utf-8")
     if len(line) > MAX_MESSAGE_BYTES:
         raise ProtocolError(PARSE_ERROR, f"message exceeds {MAX_MESSAGE_BYTES} bytes")
+    _check_depth(line)
     try:
         return json.loads(line.decode("utf-8"))
+    except RecursionError:
+        raise ProtocolError(PARSE_ERROR, "parse error: nesting too deep") from None
     except (UnicodeDecodeError, ValueError) as e:
         raise ProtocolError(PARSE_ERROR, f"parse error: {e}") from None
 

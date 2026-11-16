@@ -8,8 +8,12 @@ from __future__ import annotations
 import difflib
 import io
 import json
+import contextlib
+import random
 import re
 import sqlite3
+import threading
+import time
 import uuid
 import xml.etree.ElementTree as ET
 import zipfile
@@ -34,8 +38,15 @@ CREATE TABLE IF NOT EXISTS deal_memory_versions(
 CREATE TABLE IF NOT EXISTS deal_deliverables(
   org_id TEXT NOT NULL DEFAULT 'local', deal_id TEXT NOT NULL, name TEXT NOT NULL, version INTEGER NOT NULL,
   kind TEXT NOT NULL, sha256 TEXT NOT NULL, size INTEGER NOT NULL, note TEXT NOT NULL DEFAULT '',
-  created_at TEXT NOT NULL, PRIMARY KEY(org_id, deal_id, name, version));
+  created_at TEXT NOT NULL, evidence_anchor TEXT, PRIMARY KEY(org_id, deal_id, name, version));
 """
+
+_DELIV_COLS = "name, version, kind, sha256, size, note, created_at"
+
+
+def _busy(e: Exception) -> bool:
+    m = str(e).lower()
+    return isinstance(e, sqlite3.OperationalError) and ("locked" in m or "busy" in m)
 
 
 class DealError(ValueError):
@@ -47,16 +58,71 @@ def _now() -> str:
 
 
 class DealStore:
-    def __init__(self, db, blobs, org_id: str = "local"):
-        self.db = connect(db) if isinstance(db, str) else db
+    """Every read-modify-write runs in one ``BEGIN IMMEDIATE`` transaction (retried on SQLITE_BUSY). A file path
+    gets one connection per thread; a connection object passed in is shared behind a lock."""
+
+    def __init__(self, db, blobs, org_id: str = "local", _lock=None):
+        self._local = threading.local()
+        self._dsn = None
+        self._lock = _lock or threading.RLock()
+        self._shared = None
+        if isinstance(db, str):
+            first = connect(db)
+            if isinstance(first, sqlite3.Connection) and not re.search(r":memory:|mode=memory", db):
+                self._dsn = db
+                self._local.db = first
+            else:
+                self._shared = first
+        else:
+            self._shared = db
         self.blobs = blobs
         self.org_id = org_id
-        self.db.executescript(_SCHEMA)
-        self.db.commit()
+        with self._lock:
+            self.db.executescript(_SCHEMA)
+            cols = {r[1] for r in self.db.execute("PRAGMA table_info(deal_deliverables)")}
+            if "evidence_anchor" not in cols:
+                try:
+                    self.db.execute("ALTER TABLE deal_deliverables ADD COLUMN evidence_anchor TEXT")
+                except sqlite3.OperationalError:
+                    pass
+            self.db.commit()
+
+    @property
+    def db(self):
+        if self._shared is not None:
+            return self._shared
+        c = getattr(self._local, "db", None)
+        if c is None:
+            c = self._local.db = connect(self._dsn)
+        return c
+
+    @contextlib.contextmanager
+    def _tx(self):
+        """One immediate (write-locking) transaction; joins an already-open one on this connection."""
+        lock = self._lock if self._shared is not None else contextlib.nullcontext()
+        with lock:
+            db = self.db
+            if db.in_transaction:
+                yield db
+                return
+            for attempt in range(60):
+                try:
+                    db.execute("BEGIN IMMEDIATE")
+                    break
+                except sqlite3.OperationalError as e:
+                    if not _busy(e) or attempt == 59:
+                        raise
+                    time.sleep(random.uniform(0.005, 0.05) * min(attempt + 1, 10))
+            try:
+                yield db
+            except BaseException:
+                db.rollback()
+                raise
+            db.commit()
 
     def for_org(self, org_id: str) -> "DealStore":
         """A view of the same database/blobs scoped to another org."""
-        return DealStore(self.db, self.blobs, org_id)
+        return DealStore(self._dsn if self._dsn is not None else self._shared, self.blobs, org_id, _lock=self._lock)
 
     # ------------------------------------------------------------------ deals
     def _row(self, deal_id):
@@ -81,7 +147,7 @@ class DealStore:
     def create_deal(self, name: str, definitions: dict | None = None, formatting: dict | None = None) -> DealMemory:
         deal_id = "deal-" + uuid.uuid4().hex[:12]
         DealMemory(deal_id, name, dict(definitions or {}), dict(formatting or {})).validate()
-        with self.db:
+        with self._tx():
             self.db.execute("INSERT INTO deals VALUES(?,?,?,?,?,?)",
                             (self.org_id, deal_id, name, json.dumps(definitions or {}, sort_keys=True),
                              json.dumps(formatting or {}, sort_keys=True), _now()))
@@ -96,13 +162,14 @@ class DealStore:
         return [self._memory(r) for r in rows]
 
     def _update(self, deal_id, col, mutate, note):
-        r = self._row(deal_id)
-        cur = json.loads(r[col])
-        mutate(cur)
-        mem = self._memory(r)
-        setattr(mem, col, cur)
-        mem.validate()
-        with self.db:
+        """Read, mutate, validate, write and snapshot inside one immediate transaction: no lost keys."""
+        with self._tx():
+            r = self._row(deal_id)
+            cur = json.loads(r[col])
+            mutate(cur)
+            mem = self._memory(r)
+            setattr(mem, col, cur)
+            mem.validate()
             self.db.execute(f"UPDATE deals SET {col}=? WHERE org_id=? AND deal_id=?",
                             (json.dumps(cur, sort_keys=True), self.org_id, deal_id))
             self._snapshot(deal_id, note)
@@ -136,7 +203,10 @@ class DealStore:
         return out
 
     # ------------------------------------------------------------------ deliverables
-    def save_deliverable(self, deal_id: str, name: str, data: bytes, kind: str, note: str = "") -> dict:
+    def save_deliverable(self, deal_id: str, name: str, data: bytes, kind: str, note: str = "",
+                         evidence_anchor: dict | None = None) -> dict:
+        """``evidence_anchor``: an ``Anchor`` (or its dict) from ``EvidenceBundle.seal()``, stored in the version's
+        metadata so ``verify_deliverable_evidence`` can later prove the evidence was not truncated or re-chained."""
         self._row(deal_id)
         if kind not in KINDS:
             raise DealError(f"kind must be one of {KINDS}, got {kind!r}")
@@ -144,24 +214,41 @@ class DealStore:
             raise DealError("deliverable name must be a non-empty string")
         if not isinstance(data, (bytes, bytearray)):
             raise DealError("data must be bytes")
-        return self._append(deal_id, name, bytes(data), kind, note)
+        anchor_json = None
+        if evidence_anchor is not None:
+            a = evidence_anchor.as_dict() if hasattr(evidence_anchor, "as_dict") else evidence_anchor
+            if not isinstance(a, dict) or not {"job_id", "n_records", "head_hash", "signature"} <= set(a):
+                raise DealError("evidence_anchor must be an Anchor dict (job_id, n_records, head_hash, signature)")
+            anchor_json = json.dumps(a, sort_keys=True)
+        return self._append(deal_id, name, bytes(data), kind, note, anchor_json)
 
-    def _append(self, deal_id, name, data, kind, note):
+    def _append(self, deal_id, name, data, kind, note, anchor_json=None):
         sha = self.blobs.put(data)
-        with self.db:
+        with self._tx():
             n = self.db.execute("SELECT COALESCE(MAX(version),0)+1 FROM deal_deliverables WHERE org_id=? AND deal_id=? AND name=?",
                                 (self.org_id, deal_id, name)).fetchone()[0]
             ts = _now()
-            self.db.execute("INSERT INTO deal_deliverables VALUES(?,?,?,?,?,?,?,?,?)",
-                            (self.org_id, deal_id, name, n, kind, sha, len(data), note, ts))
-        return {"name": name, "version": n, "kind": kind, "sha256": sha, "size": len(data), "note": note, "created_at": ts}
+            self.db.execute("INSERT INTO deal_deliverables(org_id,deal_id,name,version,kind,sha256,size,note,created_at,"
+                            "evidence_anchor) VALUES(?,?,?,?,?,?,?,?,?,?)",
+                            (self.org_id, deal_id, name, n, kind, sha, len(data), note, ts, anchor_json))
+        out = {"name": name, "version": n, "kind": kind, "sha256": sha, "size": len(data), "note": note, "created_at": ts}
+        if anchor_json is not None:
+            out["evidence_anchor"] = json.loads(anchor_json)
+        return out
 
     def history(self, deal_id: str, name: str) -> list:
         self._row(deal_id)
-        rows = self.db.execute("SELECT name, version, kind, sha256, size, note, created_at FROM deal_deliverables "
+        rows = self.db.execute(f"SELECT {_DELIV_COLS}, evidence_anchor FROM deal_deliverables "
                                "WHERE org_id=? AND deal_id=? AND name=? ORDER BY version",
                                (self.org_id, deal_id, name)).fetchall()
-        return [dict(r) for r in rows]
+        out = []
+        for r in rows:
+            d = dict(r)
+            a = d.pop("evidence_anchor")
+            if a is not None:
+                d["evidence_anchor"] = json.loads(a)
+            out.append(d)
+        return out
 
     def deliverables(self, deal_id: str) -> list:
         self._row(deal_id)
@@ -181,7 +268,19 @@ class DealStore:
 
     def restore(self, deal_id: str, name: str, version: int, note: str = "") -> dict:
         m = self._meta(deal_id, name, version)
-        return self._append(deal_id, name, self.blobs.get(m["sha256"]), m["kind"], note or f"restore of v{version}")
+        return self._append(deal_id, name, self.blobs.get(m["sha256"]), m["kind"], note or f"restore of v{version}",
+                            m["evidence_anchor"])
+
+    def verify_deliverable_evidence(self, deal_id: str, name: str, version: int, evidence_dir, key=None):
+        """Check the evidence bundle behind a deliverable version against the anchor stored in its metadata.
+        Returns the evidence ``VerifyResult`` (falsy when truncated, re-chained, badly signed or unanchored)."""
+        from pathlib import Path
+        from src.harness.evidence import VerifyResult, verify
+        raw = self._meta(deal_id, name, version)["evidence_anchor"]
+        if raw is None:
+            return VerifyResult(False, 0, None, "missing anchor: no evidence anchor stored for this version")
+        anchor = json.loads(raw)
+        return verify(Path(evidence_dir) / f"{anchor['job_id']}.jsonl", anchor, key=key)
 
     def undo(self, deal_id: str, name: str) -> dict:
         h = self.history(deal_id, name)
@@ -255,3 +354,8 @@ def diff_text(a: bytes, b: bytes, la="a", lb="b") -> list:
     x = a.decode("utf-8", "replace").splitlines()
     y = b.decode("utf-8", "replace").splitlines()
     return list(difflib.unified_diff(x, y, la, lb, lineterm=""))
+
+
+def verify_deliverable_evidence(store: DealStore, deal_id: str, name: str, version: int, evidence_dir, key=None):
+    """Module-level form of ``DealStore.verify_deliverable_evidence``."""
+    return store.verify_deliverable_evidence(deal_id, name, version, evidence_dir, key=key)

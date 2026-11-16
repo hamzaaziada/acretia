@@ -810,5 +810,276 @@ class WebTests(unittest.TestCase):
             c.fetch("https://a.example/f.exe")
 
 
+# ----------------------------------------------------------------------------- FP-S2d: hardening
+def overlapping_msg(n=200, size=1_000_000) -> bytes:
+    """A .msg whose n attachment streams all declare `size` bytes starting at one shared big sector chain."""
+    kids = [("__substg1.0_0037001F", u16("s")), ("__substg1.0_1000001F", u16("b"))]
+    kids.append(("__attach_version1.0_#00000000", [("__substg1.0_3707001F", u16("big.bin")),
+                                                   ("__substg1.0_37010102", b"\x01" * size)]))
+    for i in range(1, n):
+        kids.append((f"__attach_version1.0_#{i:08X}", [("__substg1.0_3707001F", u16(f"a{i}.bin")),
+                                                      ("__substg1.0_37010102", b"x")]))
+    raw = bytearray(build_cfb(kids))
+    dir_start = struct.unpack_from("<I", raw, 48)[0]
+    ents = []
+    sec = dir_start
+    nfat = struct.unpack_from("<I", raw, 44)[0]
+    fat = []
+    for fs in struct.unpack_from(f"<{nfat}I", raw, 76):
+        fat += struct.unpack_from("<128I", raw, (fs + 1) * 512)
+    while sec < 0xFFFFFFFA:
+        ents.append(sec)
+        sec = fat[sec] if sec < len(fat) else 0xFFFFFFFE
+    big_start = None
+    for sec in ents:
+        for off in range(0, 512, 128):
+            o = (sec + 1) * 512 + off
+            nlen = struct.unpack_from("<H", raw, o + 64)[0]
+            name = bytes(raw[o:o + max(0, nlen - 2)]).decode("utf-16-le", "replace")
+            if name == "__substg1.0_37010102":
+                st, sz = struct.unpack_from("<IQ", raw, o + 116)
+                if sz >= 4096:
+                    big_start = st
+    for sec in ents:
+        for off in range(0, 512, 128):
+            o = (sec + 1) * 512 + off
+            nlen = struct.unpack_from("<H", raw, o + 64)[0]
+            name = bytes(raw[o:o + max(0, nlen - 2)]).decode("utf-16-le", "replace")
+            if name == "__substg1.0_37010102":
+                st, sz = struct.unpack_from("<IQ", raw, o + 116)
+                if sz < 4096:
+                    struct.pack_into("<IQ", raw, o + 116, big_start, size)
+    return bytes(raw)
+
+
+class MsgAmplificationTests(Tmp):
+    def test_overlapping_chains_rejected_fast_and_small(self):
+        import time
+        import tracemalloc
+        raw = overlapping_msg()
+        self.assertLess(len(raw), 1_300_000)
+        tracemalloc.start()
+        t0 = time.time()
+        try:
+            with self.assertRaises(U.ArchiveBombError):
+                U.unpack(raw, self.out(), name="bomb.msg")
+        finally:
+            _cur, peak = tracemalloc.get_traced_memory()
+            tracemalloc.stop()
+        self.assertLess(peak, 50 * 1024 * 1024)
+        self.assertLess(time.time() - t0, 10)
+        self.assertFalse(any(self.out().rglob("*")))
+
+    def test_declared_size_sum_over_file_size_x4(self):
+        # distinct chains cannot overlap, so lower the budget instead: a stream bigger than the per-stream cap
+        raw = make_msg("s", "b", [("a.bin", b"A" * 20000)])
+        with self.assertRaises(U.ArchiveBombError):
+            U.read_msg(raw, U.Limits(max_file_bytes=10000))
+        self.assertEqual(U.read_msg(raw)["attachments"][0][1], b"A" * 20000)
+
+    def test_entry_cap(self):
+        kids = [(f"__substg1.0_{i:04X}001F", u16("x")) for i in range(U._MAX_CFB_ENTRIES + 10)]
+        with self.assertRaises(U.ArchiveBombError):
+            U.read_msg(build_cfb(kids))
+
+
+class TransactionalUnpackTests(Tmp):
+    def assertFailsClean(self, data, name, exc=U.UnpackError, **kw):
+        out = self.out()
+        with self.assertRaises(exc):
+            U.unpack(data, out, name=name, **kw)
+        self.assertEqual([p.name for p in self.tmp.iterdir() if p.name != "out"], [])
+        self.assertFalse(out.exists() and any(out.iterdir()))
+
+    def test_failure_leaves_dest_empty_no_temp(self):
+        z = make_zip([("ok.txt", b"fine"), ("../evil.txt", b"x")])
+        self.assertFailsClean(z, "e.zip", U.UnsafePathError)
+
+    def test_mid_stream_failure_is_atomic(self):
+        z = make_zip([("ok.txt", b"fine"), ("sub/big.bin", b"\0" * (3 << 20))])
+        self.assertFailsClean(z, "e.zip", U.ArchiveBombError, limits=U.Limits(max_total_bytes=1 << 20))
+
+    def test_file_then_dir_clash(self):
+        self.assertFailsClean(make_zip([("a", b"1"), ("a/b", b"2")]), "c.zip")
+
+    def test_dir_then_file_clash(self):
+        self.assertFailsClean(make_zip([("a/b", b"2"), ("a", b"1")]), "c.zip")
+
+    def test_nested_clash_across_containers(self):
+        m = EmailMessage()
+        m["Subject"] = "s"
+        m.set_content("hi")
+        m.add_attachment(b"1", maintype="application", subtype="octet-stream", filename="e.body.txt")
+        # body is written as e.body.txt first; duplicate file names are renamed, not an error
+        r = U.unpack(m.as_bytes(), self.out(), name="e.eml")
+        self.assertEqual(len(r.files), 2)
+
+    def test_success_replaces_empty_dest(self):
+        out = self.out()
+        out.mkdir()
+        r = U.unpack(make_zip([("a/b.txt", b"x")]), out, name="z.zip")
+        self.assertEqual((out / "a" / "b.txt").read_bytes(), b"x")
+        self.assertEqual([p.name for p in self.tmp.iterdir()], ["out"])
+        self.assertEqual(r.files[0]["path"], "a/b.txt")
+
+    def test_corrupt_inputs_map_to_unpack_error(self):
+        good = make_zip([("a.txt", b"hello" * 1000)])
+        bad = bytearray(good)
+        i = bad.index(b"hello") if b"hello" in bad else 40
+        for k in range(30, min(len(bad), 90)):
+            bad[k] ^= 0xFF
+        self.assertFailsClean(bytes(bad), "x.zip")
+        self.assertFailsClean(b"PK\x03\x04garbage", "x.zip")
+        with self.assertRaises(U.UnpackError):
+            U.unpack(self.tmp / "missing.zip", self.out())
+        # dest is a file
+        f = self.tmp / "afile"
+        f.write_text("x")
+        with self.assertRaises(U.UnpackError):
+            U.unpack(make_zip([("a", b"1")]), f, name="z.zip")
+
+    def test_deep_multipart_is_bomb_not_recursion_error(self):
+        for depth in (25, 3000):
+            raw = "Content-Type: multipart/mixed; boundary=b0\n\n"
+            parts = []
+            for i in range(depth):
+                parts.append(f"--b{i}\nContent-Type: multipart/mixed; boundary=b{i + 1}\n\n")
+            raw += "".join(parts) + f"--b{depth}\nContent-Type: text/plain\n\nx\n--b{depth}--\n"
+            with self.subTest(depth=depth):
+                self.assertFailsClean(raw.encode(), "deep.eml", U.ArchiveBombError)
+
+    def test_deep_rfc822_is_bomb_not_recursion_error(self):
+        for depth in (25, 3000):
+            s = "Content-Type: text/plain\n\nx"
+            for _ in range(depth):
+                s = "Content-Type: message/rfc822\n\n" + s
+            with self.subTest(depth=depth):
+                self.assertFailsClean(s.encode(), "deep.eml", U.ArchiveBombError)
+
+    def test_base64_part_cap(self):
+        import base64
+        m = EmailMessage()
+        m["Subject"] = "s"
+        m.set_content("hi")
+        m.add_attachment(b"\0" * 90000, maintype="application", subtype="octet-stream", filename="a.bin")
+        self.assertFailsClean(m.as_bytes(), "b.eml", U.ArchiveBombError, limits=U.Limits(max_file_bytes=50000))
+        m2 = EmailMessage()
+        m2["Subject"] = "s"
+        m2.set_content("hi")
+        for i in range(4):
+            m2.add_attachment(b"\1" * 30000, maintype="application", subtype="octet-stream", filename=f"a{i}.bin")
+        self.assertFailsClean(m2.as_bytes(), "b.eml", U.ArchiveBombError, limits=U.Limits(max_total_bytes=80000))
+        self.assertTrue(base64)
+
+
+class SsrfV6Tests(unittest.TestCase):
+    BAD = ["64:ff9b::7f00:1", "64:ff9b::a9fe:a9fe", "64:ff9b::10.0.0.1", "64:ff9b:1::7f00:1", "64:ff9b:1:abcd::1",
+           "::7f00:1", "::10.1.2.3", "::192.168.0.1", "::ffff:127.0.0.1", "::ffff:10.0.0.1", "::ffff:0:7f00:1",
+           "2002:7f00:1::1", "2002:c0a8:101::1", "2002:a00:1::", "2001:0:4136:e378:8000:63bf:3fff:fdd2",
+           "fec0::1", "fc00::1", "fd12:3456::1", "::", "0.0.0.0", "::1"]
+
+    def test_literals_and_resolved_rejected(self):
+        for a in self.BAD:
+            with self.subTest(addr=a):
+                self.assertFalse(web._ip_ok(a))
+                host = f"[{a}]" if ":" in a else a
+                with self.assertRaises(web.SsrfError):
+                    web.validate_url(f"http://{host}/", lambda h, p: [])
+                with self.assertRaises(web.SsrfError):
+                    web.validate_url("http://dns.example/", lambda h, p, a=a: [a])
+
+    def test_public_still_allowed(self):
+        for a in ("93.184.216.34", "2606:2800:220:1:248:1893:25c8:1946", "64:ff9b::5db8:d822"):
+            with self.subTest(addr=a):
+                self.assertTrue(web._ip_ok(a))
+
+
+class CrawlerLimitTests(unittest.TestCase):
+    def test_crawl_delay_clamped_and_over_30_skips_host(self):
+        net = FakeNet({"ir.example": ["93.184.216.34"], "slow.example": ["93.184.216.35"]}, {
+            "https://ir.example/robots.txt": (200, {}, b"User-agent: *\nCrawl-delay: 0.1\n"),
+            "https://ir.example/a": (200, HTML, b"<title>a</title>"), "https://ir.example/b": (200, HTML, b"<title>b</title>"),
+            "https://slow.example/robots.txt": (200, {}, b"User-agent: *\nCrawl-delay: 100000\n"),
+            "https://slow.example/a": (200, HTML, b"<title>a</title>")})
+        c, clk = crawler(net)
+        c.fetch("https://ir.example/a")
+        with self.assertRaises(web.HostSkipped):
+            c.fetch("https://slow.example/a")
+        self.assertNotIn("https://slow.example/a", [u for u, _i, _h in net.requests])
+        self.assertEqual(c.skipped_hosts, {"https://slow.example": 100000.0})
+        self.assertTrue(all(s <= web.MAX_CRAWL_DELAY for s in clk.sleeps))
+        rl = web.RateLimiter(1.0, clk.now, clk.sleep)
+        rl.wait("h", interval=100000)
+        clk.sleeps.clear()
+        rl.wait("h")
+        self.assertLessEqual(clk.sleeps[0], 30.001)
+
+    def test_crawl_delay_30_is_honoured(self):
+        net = FakeNet({"ir.example": ["93.184.216.34"]}, {
+            "https://ir.example/robots.txt": (200, {}, b"User-agent: *\nCrawl-delay: 30\n"),
+            "https://ir.example/a": (200, HTML, b"x"), "https://ir.example/b": (200, HTML, b"y")})
+        c, clk = crawler(net)
+        c.fetch("https://ir.example/a")
+        c.fetch("https://ir.example/b")
+        self.assertGreaterEqual(max(clk.sleeps), 29.9)
+
+    def test_huge_robots_truncated_not_blocking(self):
+        rules = b"User-agent: *\nDisallow: /private\n"
+        body = rules + b"# pad\n" * (10 * 1024 * 1024 // 6)
+        body += b"Disallow: /late\n"
+        net = FakeNet({"ir.example": ["93.184.216.34"]}, {
+            "https://ir.example/robots.txt": (200, {}, body),
+            "https://ir.example/news": (200, HTML, b"<title>n</title>"), "https://ir.example/late": (200, HTML, b"x"),
+            "https://ir.example/private": (200, HTML, b"x")})
+        c, _ = crawler(net)
+        c.fetch("https://ir.example/news")                 # site not blocked
+        c.fetch("https://ir.example/late")                 # rule beyond 512 KiB is ignored
+        with self.assertRaises(web.RobotsDisallowed):
+            c.fetch("https://ir.example/private")          # rule inside the first 512 KiB applies
+
+    def test_robots_timeout_status_and_24h_cache(self):
+        seen, clk = [], Clock()
+        state = {"status": 503}
+
+        def transport(method, url, headers, ip, timeout, max_bytes):
+            seen.append((url, timeout))
+            if url.endswith("/robots.txt"):
+                return state["status"], {}, b"User-agent: *\nAllow: /\n"
+            return 200, {"content-type": "text/html"}, b"x"
+        c = web.Crawler(lambda h, p: ["93.184.216.34"], transport, web.RateLimiter(1.0, clk.now, clk.sleep))
+        with self.assertRaises(web.RobotsDisallowed):
+            c.fetch("https://x.example/p")
+        self.assertEqual(seen[0], ("https://x.example/robots.txt", 10.0))
+        state["status"] = 200
+        with self.assertRaises(web.RobotsDisallowed):      # still cached as disallow
+            c.fetch("https://x.example/p")
+        self.assertEqual(len([u for u, _t in seen if u.endswith("robots.txt")]), 1)
+        clk.t += 24 * 3600 + 1
+        c.reset_budget()
+        c.fetch("https://x.example/p")                     # cache expired: refetched, now allowed
+        state["status"] = 404
+        c2 = web.Crawler(lambda h, p: ["93.184.216.34"], transport, web.RateLimiter(1.0, clk.now, clk.sleep))
+        c2.fetch("https://y.example/p")                    # 4xx: allow
+
+    def test_budget_pages_and_seconds(self):
+        pages = {"https://a.example/robots.txt": (404, {}, b"")}
+        for i in range(10):
+            pages[f"https://a.example/{i}"] = (200, HTML, b"<title>t</title>")
+        net = FakeNet({"a.example": ["93.184.216.34"]}, pages)
+        clk = Clock()
+        c = web.Crawler(net.resolver, net.transport, web.RateLimiter(1.0, clk.now, clk.sleep), max_pages=3)
+        for i in range(3):
+            c.fetch(f"https://a.example/{i}")
+        with self.assertRaises(web.CrawlBudgetExceeded):
+            c.fetch("https://a.example/3")
+        c.reset_budget()
+        c.fetch("https://a.example/3")
+        c2 = web.Crawler(net.resolver, net.transport, web.RateLimiter(1.0, clk.now, clk.sleep), max_seconds=2.5)
+        with self.assertRaises(web.CrawlBudgetExceeded):
+            for i in range(10):
+                c2.fetch(f"https://a.example/{i}")
+
+
+
 if __name__ == "__main__":
     unittest.main()

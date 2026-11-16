@@ -1,13 +1,19 @@
 import hashlib
+import json
 import os
+import subprocess
+import sys
 import tempfile
+import threading
 import unittest
+from pathlib import Path
 
 from om import xlsx
 from om.contracts import DealMemory
 from om.deals import DealError, DealStore
 from om.pptx import Deck, para, run
 from om.storage import LocalBlobStore
+from src.harness.evidence import EvidenceBundle
 
 
 def book(rev, formula="=B1*2"):
@@ -157,3 +163,107 @@ class DealMemoryTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+_WORKER = """
+import sys, threading, json
+sys.path.insert(0, sys.argv[1])
+from om.deals import DealStore
+from om.storage import LocalBlobStore
+db, blobs, deal, tag = sys.argv[2:6]
+st = DealStore(db, LocalBlobStore(blobs))
+errs = []
+def run(t):
+    for i in range(20):
+        try:
+            st.save_deliverable(deal, "model.json", ("%s-%d-%d" % (tag, t, i)).encode(), "json")
+        except Exception as e:
+            errs.append(repr(e))
+ts = [threading.Thread(target=run, args=(t,)) for t in range(4)]
+[t.start() for t in ts]; [t.join() for t in ts]
+print(json.dumps(errs))
+"""
+
+
+class DealConcurrencyTests(unittest.TestCase):
+    def setUp(self):
+        self.tmp = tempfile.TemporaryDirectory()
+        self.addCleanup(self.tmp.cleanup)
+        self.dbp = os.path.join(self.tmp.name, "d.sqlite")
+        self.blobp = os.path.join(self.tmp.name, "blobs")
+        self.s = DealStore(self.dbp, LocalBlobStore(self.blobp))
+        self.id = self.s.create_deal("Concurrent").deal_id
+
+    def test_120_concurrent_set_definition_keep_all_keys(self):
+        errs = []
+
+        def run(t):
+            for i in range(10):
+                try:
+                    self.s.set_definition(self.id, f"k-{t}-{i}", "v")
+                except Exception as e:  # pragma: no cover
+                    errs.append(e)
+        ts = [threading.Thread(target=run, args=(t,)) for t in range(12)]
+        [t.start() for t in ts]
+        [t.join() for t in ts]
+        self.assertEqual(errs, [])
+        m = self.s.get(self.id)
+        self.assertEqual(len(m.definitions), 120)
+        self.assertEqual(len(m.versions), 121)  # created + one snapshot per write
+
+    def test_concurrent_set_formatting_keep_all_keys(self):
+        def run(t):
+            self.s.set_formatting(self.id, **{f"p{t}": t})
+        ts = [threading.Thread(target=run, args=(t,)) for t in range(20)]
+        [t.start() for t in ts]
+        [t.join() for t in ts]
+        self.assertEqual(len(self.s.get(self.id).formatting), 20)
+
+    def test_160_saves_across_8_threads_and_2_processes(self):
+        root = str(Path(__file__).resolve().parent.parent)
+        procs = [subprocess.Popen([sys.executable, "-c", _WORKER, root, self.dbp, self.blobp, self.id, f"p{k}"],
+                                  stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True) for k in range(2)]
+        outs = [p.communicate(timeout=300) for p in procs]
+        for p, (o, e) in zip(procs, outs):
+            self.assertEqual(p.returncode, 0, e)
+            self.assertEqual(json.loads(o.strip().splitlines()[-1]), [])
+        h = self.s.history(self.id, "model.json")
+        self.assertEqual([x["version"] for x in h], list(range(1, 161)))
+
+
+class DealEvidenceAnchorTests(unittest.TestCase):
+    KEY = b"deal-evidence-key"
+
+    def setUp(self):
+        self.tmp = tempfile.TemporaryDirectory()
+        self.addCleanup(self.tmp.cleanup)
+        self.ev = Path(self.tmp.name) / "evidence"
+        self.s = DealStore(os.path.join(self.tmp.name, "d.sqlite"), LocalBlobStore(os.path.join(self.tmp.name, "b")))
+        self.id = self.s.create_deal("Anchored").deal_id
+        self.b = EvidenceBundle(self.ev / "job9.jsonl")
+        self.addCleanup(self.b.close)
+        for i in range(5):
+            self.b.append("t", {"i": i}, source="s", output=i)
+        self.anchor = self.b.seal(key=self.KEY)
+
+    def test_anchor_stored_and_verified(self):
+        r = self.s.save_deliverable(self.id, "m.json", b"{}", "json", evidence_anchor=self.anchor.as_dict())
+        self.assertEqual(r["evidence_anchor"]["head_hash"], self.anchor.head_hash)
+        self.assertEqual(self.s.history(self.id, "m.json")[0]["evidence_anchor"], self.anchor.as_dict())
+        self.assertTrue(self.s.verify_deliverable_evidence(self.id, "m.json", 1, self.ev, key=self.KEY))
+
+    def test_truncated_evidence_fails_and_missing_anchor_fails(self):
+        self.s.save_deliverable(self.id, "m.json", b"{}", "json", evidence_anchor=self.anchor.as_dict())
+        self.s.save_deliverable(self.id, "plain.json", b"{}", "json")
+        p = self.ev / "job9.jsonl"
+        p.write_text("".join(p.read_text().splitlines(keepends=True)[:2]))
+        self.assertIn("truncated", self.s.verify_deliverable_evidence(self.id, "m.json", 1, self.ev, key=self.KEY).reason)
+        self.assertIn("missing anchor", self.s.verify_deliverable_evidence(self.id, "plain.json", 1, self.ev).reason)
+
+    def test_restore_keeps_anchor_and_bad_anchor_rejected(self):
+        self.s.save_deliverable(self.id, "m.json", b"{}", "json", evidence_anchor=self.anchor)
+        self.s.save_deliverable(self.id, "m.json", b"{1}", "json")
+        v3 = self.s.restore(self.id, "m.json", 1)
+        self.assertEqual(v3["evidence_anchor"], self.anchor.as_dict())
+        with self.assertRaises(DealError):
+            self.s.save_deliverable(self.id, "m.json", b"x", "json", evidence_anchor={"job_id": "x"})

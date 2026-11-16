@@ -16,6 +16,8 @@ import os
 import tempfile
 from pathlib import Path
 
+from . import pii
+
 MODES = ("live", "record", "replay")
 DEFAULT_DIR = Path(__file__).resolve().parents[1] / "tests" / "fixtures" / "llm"
 
@@ -26,6 +28,32 @@ class ReplayMiss(Exception):
     def __init__(self, key: str, task: str, path: Path):
         super().__init__(f"no LLM replay fixture for task {task!r} (key {key}); record it with ACRETIA_LLM_MODE=record -> {path}")
         self.key, self.task, self.path = key, task, path
+
+
+class FixturePII(ValueError):
+    """Refused to save a fixture whose reply still contains raw PII (mask it first)."""
+
+
+def _strings(obj):
+    if isinstance(obj, str):
+        yield obj
+    elif isinstance(obj, dict):
+        for k, v in obj.items():
+            yield from _strings(k)
+            yield from _strings(v)
+    elif isinstance(obj, (list, tuple)):
+        for v in obj:
+            yield from _strings(v)
+
+
+def find_pii(obj) -> list[str]:
+    """Placeholder kinds (EMAIL, CARD, ...) of raw PII found in any string of a JSON-like object; [] when clean."""
+    kinds = []
+    for t in _strings(obj):
+        m = pii.Masker()
+        m.mask(t)
+        kinds += [ph.strip("[]").rsplit("_", 1)[0] for ph in m.mapping]
+    return sorted(set(kinds))
 
 
 def mode(explicit: str | None = None) -> str:
@@ -59,10 +87,20 @@ def load(key: str, task: str = "") -> dict:
     path = fixture_path(key)
     if not path.is_file():
         raise ReplayMiss(key, task, path)
-    return json.loads(path.read_text(encoding="utf-8"))
+    try:
+        doc = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, ValueError) as e:
+        raise ReplayMiss(key, f"{task} (corrupt fixture: {type(e).__name__})", path) from None
+    if not isinstance(doc, dict) or doc.get("key") != key:
+        raise ReplayMiss(key, f"{task} (fixture key mismatch)", path)
+    return doc
 
 
 def save(key: str, task: str, data: dict, usage: dict | None, model: str) -> Path:
+    found = find_pii([data, usage, model])
+    if found:
+        raise FixturePII(f"refusing to save fixture {key[:12]}: the reply contains unmasked PII ({', '.join(found)}); "
+                         "mask it (om.pii) before recording")
     path = fixture_path(key)
     path.parent.mkdir(parents=True, exist_ok=True)
     doc = {"key": key, "task": task, "model": model, "usage": usage or {}, "data": data}

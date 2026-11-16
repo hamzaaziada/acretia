@@ -3,6 +3,8 @@ from __future__ import annotations
 
 import json
 import sys
+import threading
+from concurrent.futures import ThreadPoolExecutor
 
 from ..evidence import EvidenceBundle
 from ..router import ToolError
@@ -10,7 +12,12 @@ from . import protocol as P
 
 
 class ToolFailure(Exception):
-    """A tool ran and failed (reported as isError result, not a protocol error)."""
+    """A tool ran and failed (reported as isError result, not a protocol error). `data` adds structured fields
+    (for example {"code": "xlsx_limit_exceeded"}) to the error result."""
+
+    def __init__(self, message="", data=None):
+        super().__init__(message)
+        self.data = dict(data or {})
 
 
 class MCPServer:
@@ -18,6 +25,8 @@ class MCPServer:
         self.name, self.version, self.registry = name, version, registry
         self.evidence = EvidenceBundle(evidence_path) if evidence_path else None
         self.initialized = False
+        self.max_concurrency = 4
+        self._ev_lock = threading.Lock()
 
     # -------------------------------------------------------------------------------------------- dispatch
     def handle(self, message) -> dict | None:
@@ -66,7 +75,7 @@ class MCPServer:
                 raise P.ProtocolError(P.INVALID_PARAMS, msg) from None
             out, is_error = {"error": msg}, True
         except ToolFailure as e:
-            out, is_error = {"error": str(e)}, True
+            out, is_error = {"error": str(e), **e.data}, True
         except Exception as e:
             out, is_error = {"error": f"{type(e).__name__}: {e}"}, True
         try:
@@ -87,12 +96,24 @@ class MCPServer:
         if not self.evidence:
             return
         src = args.get("doc_id") if isinstance(args.get("doc_id"), str) and args.get("doc_id") else name
-        self.evidence.append(name, args, source=src, output=out)
+        with self._ev_lock:
+            self.evidence.append(name, args, source=src, output=out)
 
     # -------------------------------------------------------------------------------------------- stdio
     def serve_stdio(self, stdin=None, stdout=None) -> None:
+        """Read frames serially; run tools/call on a small worker pool (cap 4) so ping and the rest keep answering
+        while a slow tool runs. Writes are serialised by a lock."""
         stdin = stdin or sys.stdin.buffer
         stdout = stdout or sys.stdout.buffer
+        wlock = threading.Lock()
+        pool = ThreadPoolExecutor(max_workers=self.max_concurrency, thread_name_prefix="mcp-call")
+
+        def write(resp):
+            if resp is not None:
+                with wlock:
+                    stdout.write(P.encode(resp))
+                    stdout.flush()
+
         try:
             while True:
                 try:
@@ -103,13 +124,14 @@ class MCPServer:
                         continue
                     msg = P.decode(line)
                 except P.ProtocolError as e:
-                    resp = P.error_response(None, e.code, e.message)
+                    write(P.error_response(None, e.code, e.message))
+                    continue
+                if isinstance(msg, dict) and msg.get("method") == "tools/call" and "id" in msg:
+                    pool.submit(lambda m=msg: write(self.handle(m)))
                 else:
-                    resp = self.handle(msg)
-                if resp is not None:
-                    stdout.write(P.encode(resp))
-                    stdout.flush()
+                    write(self.handle(msg))
         finally:
+            pool.shutdown(wait=True)
             self.close()
 
     def close(self) -> None:

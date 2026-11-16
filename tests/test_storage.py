@@ -189,6 +189,103 @@ class KVTests(unittest.TestCase):
         self.assertEqual(len(seen), n)
         self.assertEqual(len(set(seen)), n)
 
+    def test_lease_tokens_unique_and_stale_ack_rejected(self):
+        self.kv.enqueue("q", b"job")
+        a = self.kv.dequeue("q", lease=10)
+        self.now[0] += 11  # A's lease expires; B takes the job
+        b = self.kv.dequeue("q", lease=10)
+        self.assertNotEqual(a.token, b.token)
+        self.assertFalse(self.kv.ack(a))          # stale worker: must not delete the live lease
+        self.assertFalse(self.kv.nack(a))
+        self.assertEqual(self.kv.qsize("q"), 1)
+        self.assertTrue(self.kv.ack(b))
+        self.assertEqual(self.kv.qsize("q"), 0)
+
+    def test_dead_letter_after_max_attempts_and_requeue(self):
+        i = self.kv.enqueue("q", b"poison", max_attempts=3)
+        for n in range(3):
+            lease = self.kv.dequeue("q", lease=10)
+            self.assertEqual(lease.attempts, n + 1)
+            self.now[0] += 11  # worker crashes: lease expires
+        self.assertIsNone(self.kv.dequeue("q"))
+        self.assertEqual(self.kv.qsize("q"), 0)
+        d = self.kv.dlq_list("q")
+        self.assertEqual([(x["id"], x["payload"], x["attempts"]) for x in d], [(i, b"poison", 3)])
+        self.assertIn("max attempts", d[0]["last_error"])
+        self.assertEqual(self.kv.dlq_requeue("q"), 1)
+        self.assertEqual(self.kv.dlq_list("q"), [])
+        again = self.kv.dequeue("q", lease=10)
+        self.assertEqual((again.payload, again.attempts), (b"poison", 1))
+
+    def test_nack_with_error_goes_to_dlq_on_last_attempt(self):
+        self.kv.enqueue("q", b"x", max_attempts=2)
+        self.assertTrue(self.kv.nack(self.kv.dequeue("q"), error="boom1"))
+        l2 = self.kv.dequeue("q")
+        self.assertTrue(self.kv.nack(l2, error="boom2"))
+        self.assertIsNone(self.kv.dequeue("q"))
+        self.assertEqual(self.kv.dlq_list("q")[0]["last_error"], "boom2")
+        self.assertFalse(self.kv.ack(l2))
+        self.assertEqual(self.kv.dlq_requeue("q", self.kv.dlq_list("q")[0]["id"]), 1)
+
+    def test_default_max_attempts_is_five(self):
+        self.kv.enqueue("q", b"x")
+        for _ in range(5):
+            self.assertIsNotNone(self.kv.dequeue("q", lease=1))
+            self.now[0] += 2
+        self.assertIsNone(self.kv.dequeue("q"))
+        self.assertEqual(len(self.kv.dlq_list("q")), 1)
+
+    def test_old_database_is_migrated(self):
+        import sqlite3
+        path = os.path.join(self.d.name, "old.sqlite")
+        c = sqlite3.connect(path)
+        c.executescript("CREATE TABLE queue(id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL,"
+                        " payload BLOB NOT NULL, visible_at REAL NOT NULL, attempts INTEGER NOT NULL DEFAULT 0);"
+                        "INSERT INTO queue(name,payload,visible_at) VALUES('q',x'41',0);")
+        c.commit()
+        c.close()
+        kv = st.SQLiteKV(path, clock=lambda: self.now[0])
+        self.addCleanup(kv.close)
+        lease = kv.dequeue("q")
+        self.assertEqual(lease.payload, b"A")
+        self.assertTrue(kv.ack(lease))
+
+    def test_redis_encoding_has_token_fencing(self):
+        self.assertIn("':t'", st.RedisKV._DEQ)
+        self.assertIn("ARGV[2]", st.RedisKV._ACK)
+        self.assertIn("then return 0", st.RedisKV._ACK)
+        self.assertIn("then return 0", st.RedisKV._NACK)
+        self.assertIn("KEYS[3]", st.RedisKV._DEQ)
+
+    def test_redis_commands_offline(self):
+        sent = []
+
+        class Fake(st.RedisKV):
+            def __init__(self):
+                self._clock = lambda: 100.0
+
+            def _cmd(self, *a):
+                sent.append(a)
+                if a[0] == "EVAL" and a[1] == st.RedisKV._DEQ:
+                    return [b"7", b"p", 1]
+                return {"INCR": 7}.get(a[0], 1)
+
+        r = Fake()
+        self.assertEqual(r.enqueue("q", b"p", max_attempts=2), 7)
+        self.assertIn(("HSET", "q:q:data", "7", b"p", "7:max", "2"), sent)
+        lease = r.dequeue("q", lease=5)
+        self.assertEqual((lease.id, lease.queue, len(lease.token)), (7, "q", 32))
+        ev = [a for a in sent if a[0] == "EVAL"][0]
+        self.assertEqual(ev[1], st.RedisKV._DEQ)
+        self.assertIn(lease.token, ev)
+        self.assertTrue(r.ack(lease))
+        ack = sent[-1]
+        self.assertEqual((ack[1], ack[-2:]), (st.RedisKV._ACK, ("7", lease.token)))
+        r.nack(lease, error="e")
+        self.assertIn(lease.token, sent[-1])
+        with self.assertRaises(st.StorageError):
+            r.ack(st.Lease(7, b"", 1, "q"))  # no token -> refused
+
     def test_redis_unreachable_is_clear(self):
         with self.assertRaises(st.StorageError):
             st.RedisKV("redis://127.0.0.1:1/0", timeout=0.2)

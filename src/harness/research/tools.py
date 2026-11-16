@@ -441,11 +441,6 @@ def _open_grid(grid_db):
     except PathError as e:
         raise ToolError(str(e)) from None
     db = AnalyticsDB(str(p), prefer=os.environ.get("ACRETIA_GRID_BACKEND", "duckdb"))
-    if db.backend == "sqlite":
-        try:
-            db.execute("PRAGMA query_only=ON")
-        except Exception:
-            pass
     return db, True
 
 
@@ -474,25 +469,21 @@ def _cell_figure(row: dict, default_as_of):
 
 
 def grid_query(sql: str, params=None, *, grid_db=None, as_of=None) -> ToolResult:
-    from src.harness.mcp.grid_server import check_select
+    from src.harness.mcp.grid_server import run_select
     from src.harness.mcp.server import ToolFailure
     if params is not None and not isinstance(params, list):
         raise ToolError("params must be a list")
-    try:
-        q = check_select(sql)
-    except ToolFailure as e:
-        raise ToolError(str(e)) from None
     db, own = _open_grid(grid_db)
     try:
         try:
-            rows = db.query(f"SELECT * FROM ({q}) AS _q LIMIT {MAX_ROWS + 1}", params or [])
-        except Exception as e:
-            raise ToolError(f"query failed: {type(e).__name__}: {e}") from None
+            res = run_select(db, sql, params, MAX_ROWS)   # shared hardened engine: no external access, timeout, caps
+        except ToolFailure as e:
+            raise ToolError(str(e)) from None
     finally:
         if own:
             db.close()
-    truncated = len(rows) > MAX_ROWS
-    rows = rows[:MAX_ROWS]
+    truncated = res["truncated"]
+    rows = res["rows"]
     figures, cits, missing = [], [], []
     for row in rows:
         if "exact_quote" not in row:

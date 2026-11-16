@@ -21,7 +21,7 @@ from src.harness.evidence import EvidenceBundle, head_hash
 
 API_VERSION = 1
 OUTPUT_KINDS = ("slide_specs", "excel_inputs", "grid_answers")
-EVENT_TYPES = ("step_started", "step_finished", "figure", "rejected", "cost", "done", "error")
+EVENT_TYPES = ("step_started", "step_finished", "figure", "rejected", "cost", "done", "error", "source_review")
 JOB_ID_RE = r"[A-Za-z0-9][A-Za-z0-9_-]{0,63}"
 PROSE_KEYS = frozenset({"answer", "summary", "text", "prose", "report", "markdown", "narrative", "commentary",
                         "memo", "essay", "content", "analysis"})
@@ -74,18 +74,29 @@ class ResearchRequest(Contract):
     org_id: str = "local"
     user_id: str | None = None
     v: int = API_VERSION
+    workflow: str | None = None          # additive (S6.1): "company_profile", "/a /b" composition, ...; None = route
+    options: dict = field(default_factory=dict)     # additive (S6.1): source_review, candidates, figures, ...
     SCHEMA: ClassVar = {
         "question": string(), "tickers": listing(string(pattern=r"[A-Za-z0-9.\-]{1,12}"), unique=True),
         "doc_ids": listing(string(pattern=r"\S+"), unique=True), "room_id": optional(string(pattern=r"\S+")),
         "as_of": optional(iso_date), "outputs": listing(enum(*OUTPUT_KINDS), min_len=1, unique=True),
         "budget_usd": _positive,
         "max_steps": integer(1, 50), "org_id": string(pattern=r"[A-Za-z0-9][A-Za-z0-9_.-]{0,63}"),
-        "user_id": optional(string(pattern=r"\S+")), "v": _V}
+        "user_id": optional(string(pattern=r"\S+")), "v": _V,
+        "workflow": optional(string(pattern=r"[A-Za-z0-9_/ ,.+-]{1,200}")),
+        "options": mapping(string(), json_value)}
 
     @classmethod
     def _parse(cls, d, path):
         _reject_prose(d, path)
         return super()._parse(d, path)
+
+    def to_dict(self):
+        d = super().to_dict()
+        for k in ("workflow", "options"):       # additive fields stay out of the wire form while unused
+            if not d.get(k):
+                d.pop(k, None)
+        return d
 
 
 @dataclass
@@ -138,16 +149,24 @@ class ResearchResult(Contract):
     steps: list = field(default_factory=list)
     error: str | None = None
     v: int = API_VERSION
+    timings: dict = field(default_factory=dict)     # additive (S6.1): step id -> wall_clock_s (TSB harness input)
     SCHEMA: ClassVar = {
         "job_id": _ID, "status": enum(*STATUS), "evidence_head": _HASH, "slide_specs": _dicts_of(SlideSpec),
         "excel_inputs": listing(nested(ExcelInputPayload)), "figures": listing(nested(SourcedFigure)),
         "rejected": listing(nested(RejectedFigure)), "cost_usd": number(0), "tokens": integer(0),
-        "steps": listing(nested(JobStep)), "error": optional(string(0)), "v": _V}
+        "steps": listing(nested(JobStep)), "error": optional(string(0)), "v": _V,
+        "timings": mapping(string(), number(0))}
 
     @classmethod
     def _parse(cls, d, path):
         _reject_prose(d, path)
         return super()._parse(d, path)
+
+    def to_dict(self):
+        d = super().to_dict()
+        if not d.get("timings"):
+            d.pop("timings", None)
+        return d
 
 
 @dataclass
