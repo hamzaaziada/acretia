@@ -31,6 +31,10 @@ One row per active claim. Claim a packet before you touch its files, commit the 
 | S3.6/S3.7 slop + validate_pptx | session B worker | claude/upbeat-mccarthy-viqjuo | 2026-11-16 | om/deck/slop.py, om/deck/validate.py, scripts/validate_pptx.py, tests/test_validate_pptx.py |
 | S3.11 visual layer | session B worker | claude/upbeat-mccarthy-viqjuo | 2026-11-16 | om/deck/visuals/**, tests/test_deck_visuals.py |
 | S3 gate + docs | session B Boss | claude/upbeat-mccarthy-viqjuo | 2026-11-16 | scripts/verify_s3.py, docs/deck-engine.md, PROGRESS.md (S3 row only) |
+| SF.0 product spec + gate spec (session F) | Boss | main | 2026-11-16 | docs/product/**, docs/product-requests.md, PROGRESS.md (Product row only), DECISIONS.md (D-SF-* only) |
+| SF.1 API backend (session F) | session F workers | main | 2026-11-16 | om/api/**, tests/test_api_*.py, tests/fixtures/api/** |
+| SF.2 frontend app (session F) | session F workers | main | 2026-11-16 | frontend/** |
+| SF.3 e2e journeys + product gate (session F) | session F gate worker | main | 2026-11-16 | e2e/**, scripts/verify_product.py |
 
 ## Log
 - 2026-11-16: created; no active claims.
@@ -44,5 +48,9 @@ One row per active claim. Claim a packet before you touch its files, commit the 
 - 2026-11-16: Session D claimed S5.1–S5.4 and the S5 gate.
 - 2026-11-16: session B claimed S3 wave 1 (core, fit/RTL, spec/ghost, validator, visuals) and the S3 gate.
 - 2026-11-16: S2.1 adapter landed on main (e988e01); row released.
+<<<<<<< Updated upstream
 - 2026-11-16: Reviewer findings verified (env-dependent live path in Router chains; OCR test recursion; psycopg/pypdf ledger gap). FP-R1..R3 claimed.
 - 2026-11-16: S2.4, S2.5 done (pending S2 gate); rows released. S6.0 interface claimed early for session F's command bar.
+=======
+- 2026-11-16: Session F claimed the product app: frontend/, om/api/, e2e/, verify_product.py, docs/product/.
+>>>>>>> Stashed changes
