@@ -27,8 +27,18 @@ PROSE_KEYS = frozenset({"answer", "summary", "text", "prose", "report", "markdow
                         "memo", "essay", "content", "analysis"})
 _HASH = string(pattern=r"[0-9a-f]{64}")
 _ID = string(pattern=JOB_ID_RE)
-_V = enum(API_VERSION) if False else (lambda x, p: x if (x == API_VERSION and not isinstance(x, bool))
-                                      else _err(p, f"unsupported version {x!r}; this build speaks v={API_VERSION}"))
+
+
+def _V(x, p):
+    if isinstance(x, bool) or x != API_VERSION:
+        _err(p, f"unsupported version {x!r}; this build speaks v={API_VERSION}")
+    return x
+
+
+def _positive(x, p):
+    if number()(x, p) <= 0:
+        _err(p, "must be > 0")
+    return float(x)
 
 
 def _reject_prose(d, path):
@@ -68,7 +78,7 @@ class ResearchRequest(Contract):
         "question": string(), "tickers": listing(string(pattern=r"[A-Za-z0-9.\-]{1,12}"), unique=True),
         "doc_ids": listing(string(pattern=r"\S+"), unique=True), "room_id": optional(string(pattern=r"\S+")),
         "as_of": optional(iso_date), "outputs": listing(enum(*OUTPUT_KINDS), min_len=1, unique=True),
-        "budget_usd": lambda x, p: number()(x, p) if number()(x, p) > 0 else _err(p, "must be > 0"),
+        "budget_usd": _positive,
         "max_steps": integer(1, 50), "org_id": string(pattern=r"[A-Za-z0-9][A-Za-z0-9_.-]{0,63}"),
         "user_id": optional(string(pattern=r"\S+")), "v": _V}
 
