@@ -19,6 +19,7 @@ class Base(unittest.TestCase):
     def setUp(self):
         self.db = sqlite3.connect(":memory:")
         self.svc = ScimService(self.db, "org1")
+        self.addCleanup(self.db.close)
 
 
 class TestScimCrud(Base):
