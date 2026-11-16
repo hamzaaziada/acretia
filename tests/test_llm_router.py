@@ -358,6 +358,44 @@ class MeterTests(unittest.TestCase):
         self.assertAlmostEqual(r.meter.totals("B")["cost_usd"], 0.27 + 1.10)
         self.assertNotIn("job_id", p.calls[0]["kw"])                     # router-only kwargs never reach providers
 
+class HermeticTests(unittest.TestCase):
+    """An explicit chain / override is exact: env provider keys must never add a real provider or open a socket."""
+    ENV = {"MESHPOOL_API_KEY": "k\u2014ey", "ANTHROPIC_API_KEY": "x", "OPENAI_API_KEY": "y", "OM_MODEL_ASK": "meshpool:auto"}
+
+    def _no_net(self):
+        return mock.patch.object(socket, "socket", side_effect=AssertionError("socket opened"))
+
+    def test_explicit_chain_is_exclusive(self):
+        a, b = FakeProvider("a", replies=[TransportError("boom")]), FakeProvider("b")
+        with mock.patch.dict(os.environ, self.ENV), self._no_net():
+            r = router(chains={"ask": [a, b]})
+            self.assertEqual(r.providers("ask"), [a, b])
+            res = r.complete_json("ask", SYS, EXTRACT_PARTS, SCHEMA)
+        self.assertEqual(res.data["answer"], "ok")
+        self.assertEqual(len(b.calls), 1)
+
+    def test_override_is_exclusive(self):
+        a = FakeProvider("a")
+        with mock.patch.dict(os.environ, self.ENV), self._no_net():
+            r = router(overrides={"ask": a})
+            self.assertEqual(r.providers("ask"), [a])
+            r.complete_json("ask", SYS, EXTRACT_PARTS, SCHEMA)
+        self.assertEqual(len(a.calls), 1)
+
+    def test_env_primary_kept_without_explicit_chain(self):
+        with mock.patch.dict(os.environ, {"MESHPOOL_API_KEY": "key", "OM_MODEL_ASK": "meshpool:auto"}):
+            ps = router().providers("ask")
+        self.assertEqual([p.name for p in ps], ["meshpool"])
+
+    def test_bad_key_clear_error_without_value(self):
+        for bad in ("k\u2014ey", "abc\r\nX-Evil: 1", "tok\nen"):
+            with mock.patch.dict(os.environ, {"MESHPOOL_API_KEY": bad}):
+                with self.assertRaises(LLMError) as cm:
+                    llm.make_provider("meshpool:auto")
+            self.assertIn("MESHPOOL_API_KEY", str(cm.exception))
+            self.assertNotIn(bad, str(cm.exception))
+            self.assertNotIn("Evil", str(cm.exception))
+
 
 if __name__ == "__main__":
     unittest.main()

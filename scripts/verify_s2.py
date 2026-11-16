@@ -64,6 +64,32 @@ class NoSockets:
         return False
 
 
+# ------------------------------------------------------------ hermetic environment
+# Scrub every variable that could select or authenticate a live model provider, and stop the keystore reading
+# the user's Keychain or secrets files. Runs before any check.
+import re as _re  # noqa: E402
+
+_SCRUB = _re.compile(r"(_API_KEY|_AUTH_TOKEN|_BASE_URL)$|^(OM_PROVIDER_|OM_FALLBACK_|OM_MODEL_|OM_STAGE_|MESHPOOL_|"
+                     r"ANTHROPIC_|OPENAI_|GEMINI_|DEEPSEEK_|ACRETIA_LLM_)|^GOOGLE_API_KEY$")
+SCRUBBED = sorted(k for k in os.environ if _SCRUB.search(k))
+for _k in SCRUBBED:
+    del os.environ[_k]
+os.environ["ACRETIA_LLM_MODE"] = "replay"
+print("hermetic: scrubbed env vars (names only): " + (", ".join(SCRUBBED) or "none")
+      + "; ACRETIA_LLM_MODE=replay")
+
+try:
+    from om import keystore as _ks  # noqa: E402
+    for _fn, _val in (("get", lambda *a, **k: None), ("load_into_env", lambda *a, **k: []),
+                      ("_find", lambda *a, **k: None), ("_file_read", lambda *a, **k: {}),
+                      ("_file_write", lambda *a, **k: None), ("put", lambda *a, **k: None),
+                      ("delete", lambda *a, **k: None)):
+        if hasattr(_ks, _fn):
+            setattr(_ks, _fn, _val)
+except ImportError:
+    pass
+
+
 # ------------------------------------------------------------ import isolation
 @check("isolation: no provider SDK imported outside src/harness/adapter.py (AST)")
 def _():
@@ -492,3 +518,89 @@ def _():
         finally:
             c.close()
     return "ok"
+
+
+@check("hermetic: fake keys present, sockets patched, live-mode Router uses only fake providers (chain fallback + override)")
+def _():
+    import socket as _socket
+    from om import llm as L
+    fake_keys = {"MESHPOOL_API_KEY": "mp-fake\u2014key", "ANTHROPIC_API_KEY": "sk-ant-fake", "OPENAI_API_KEY": "sk-fake"}
+    saved_env = {k: os.environ.get(k) for k in list(fake_keys) + ["ACRETIA_LLM_MODE"]}
+    saved_sock = (_socket.socket, _socket.create_connection, _socket.getaddrinfo)
+    attempts = []
+    calls = []
+
+    def boom(*a, **k):
+        attempts.append(1)
+        raise AssertionError("socket attempted")
+
+    class Fake:
+        def __init__(self, name, fail=False):
+            self.name, self.model, self.fail = name, name + "-model", fail
+
+        def complete_json(self, system, parts, schema, repair_note=None, **kw):
+            calls.append(self.name)
+            if self.fail:
+                raise L.TransportError("503 service unavailable", status=503)
+            return L.Result(data={"answer": self.name}, usage={"input": 1, "output": 1}, model=self.model)
+
+    schema = {"type": "object", "required": ["answer"], "properties": {"answer": {"type": "string"}}}
+    try:
+        os.environ.update(fake_keys)
+        os.environ["ACRETIA_LLM_MODE"] = "live"
+        _socket.socket = _socket.create_connection = _socket.getaddrinfo = boom
+        parts = [L.Part("hello")]
+        r = L.Router(chains={"ask": [Fake("fail503", fail=True), Fake("ok")]}, mode="live").complete_json(
+            "ask", "sys", parts, schema)
+        assert r.data == {"answer": "ok"}, r.data
+        assert calls == ["fail503", "ok"], calls
+        calls.clear()
+        r = L.Router(overrides={"ask": Fake("only")}, mode="live").complete_json("ask", "sys", parts, schema)
+        assert r.data == {"answer": "only"} and calls == ["only"], (r.data, calls)
+    finally:
+        _socket.socket, _socket.create_connection, _socket.getaddrinfo = saved_sock
+        for k, v in saved_env.items():
+            if v is None:
+                os.environ.pop(k, None)
+            else:
+                os.environ[k] = v
+    assert not attempts, f"{len(attempts)} socket attempts"
+    assert not any(k in os.environ for k in fake_keys), "fake keys leaked after restore"
+    return "chain fell through 503 to fake_ok; override used alone; 0 socket attempts"
+
+
+@check("adapter: header injection refused (CR/LF, non-Latin-1, trailing newline) before transport, key never echoed")
+def _():
+    from src.harness.adapter import Adapter
+    msgs = [{"role": "user", "content": "hi"}]
+    seen = []
+
+    def transport(url, body, headers):
+        seen.append(headers)
+        return {"choices": [{"message": {"content": "{}"}}], "usage": {}}
+
+    for key in ("k\r\nX-Evil: 1", "k\u2014ey", "k\n"):
+        a = Adapter("https://llm.meshpool.ai/v1", api_key=key, model_name="m", transport=transport, mode="live")
+        try:
+            a.chat(msgs)
+        except Exception as e:  # noqa: BLE001
+            text = f"{e} {e!r} {''.join(map(str, e.args))}"
+            assert key not in text, f"exception text contains key {key!r}"
+        else:
+            raise AssertionError(f"key {key!r} accepted")
+    assert not seen, f"transport called with {len(seen)} header sets"
+    return "3 hostile keys refused, transport never called"
+
+
+def main() -> int:
+    width = max(len(n) for n, _, _ in RESULTS)
+    fails = 0
+    for name, ok, detail in RESULTS:
+        fails += not ok
+        print(f"{'PASS' if ok else 'FAIL'}  {name.ljust(width)}  {detail}")
+    print(f"\nS2 gate: {len(RESULTS) - fails}/{len(RESULTS)} checks passed")
+    return 1 if fails else 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())
