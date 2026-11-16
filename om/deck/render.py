@@ -10,7 +10,8 @@ from lxml import etree
 from pptx import Presentation
 from pptx.chart.data import CategoryChartData, XyChartData
 from pptx.dml.color import RGBColor
-from pptx.enum.chart import XL_AXIS_CROSSES, XL_CHART_TYPE, XL_LABEL_POSITION, XL_LEGEND_POSITION, XL_TICK_MARK
+from pptx.enum.chart import (XL_AXIS_CROSSES, XL_CHART_TYPE, XL_LABEL_POSITION, XL_LEGEND_POSITION, XL_MARKER_STYLE,
+                             XL_TICK_MARK)
 from pptx.enum.dml import MSO_THEME_COLOR
 from pptx.enum.shapes import MSO_CONNECTOR, MSO_SHAPE
 from pptx.opc.constants import RELATIONSHIP_TYPE as RT
@@ -326,22 +327,62 @@ _TYPES = {
 }
 _HORIZONTAL = {"bar", "stacked_bar", "football_field"}
 _STACKED = {"stacked_bar", "stacked_column", "waterfall", "football_field"}
+MINUS = "−"
+GAP_WIDTH = 60
+MIN_LABEL_CONTRAST = 4.5
 
 
 def fmt_number(v: float, number_format: str) -> str:
-    m = re.search(r"0(?:\.(0+))?", number_format)
-    dec = len(m.group(1)) if m and m.group(1) else 0
-    s = f"{abs(v) * (100 if '%' in number_format else 1):{',' if ',' in number_format else ''}.{dec}f}"
-    s += "%" if "%" in number_format else ""
-    return ("-" if v < 0 else "") + s
+    """Format v like the Excel number format would: placeholders, thousands comma, percent, quoted literals."""
+    m = re.search(r"[#0,]*0(?:\.0+)?", number_format)
+    if not m:
+        return f"{v:g}"
+    pre, post = number_format[:m.start()], number_format[m.end():]
+    pct = "%" in re.sub(r'"[^"]*"', "", pre + post)
+    lit = lambda t: re.sub(r'"([^"]*)"', r"\1", t).replace("\\", "")
+    dec = len(m.group(0).split(".")[1]) if "." in m.group(0) else 0
+    body = f"{abs(v) * (100 if pct else 1):{',' if ',' in m.group(0) else ''}.{dec}f}"
+    return ("-" if v < 0 else "") + lit(pre) + body + lit(post)
+
+
+def _lin(c: int) -> float:
+    c = c / 255
+    return c / 12.92 if c <= 0.03928 else ((c + 0.055) / 1.055) ** 2.4
+
+
+def _lum(hex6: str) -> float:
+    r, g, b = (int(hex6[i:i + 2], 16) for i in (0, 2, 4))
+    return 0.2126 * _lin(r) + 0.7152 * _lin(g) + 0.0722 * _lin(b)
+
+
+def contrast(a: str, b: str) -> float:
+    """WCAG contrast ratio of two 6-digit hex colours."""
+    la, lb = _lum(a.lstrip("#")), _lum(b.lstrip("#"))
+    hi, lo = max(la, lb), min(la, lb)
+    return (hi + 0.05) / (lo + 0.05)
+
+
+def label_token(cx: "_Ctx", fill_token: str | None) -> str:
+    """Text token with the best contrast against a fill: `background` on dark fills, `text` on light ones."""
+    if not fill_token:
+        return "text"
+    f = cx.hex(fill_token)
+    return "background" if contrast(cx.hex("background"), f) > contrast(cx.hex("text"), f) else "text"
+
+
+def _signed(v: float, nf: str) -> str:
+    body = fmt_number(abs(v), nf)
+    return ("+" if v >= 0 else MINUS) + body
 
 
 def _plan_waterfall(spec: dict) -> list[dict]:
     cats = spec["categories"]
     vals = [float(v or 0) for v in spec["series"][0]["values"]]
     totals = set(spec.get("totals", [0, len(vals) - 1]))
+    nf = spec.get("number_format", "0.0")
     n = len(vals)
     base, up, down, tot = [None] * n, [None] * n, [None] * n, [None] * n
+    tops, texts = [0.0] * n, [""] * n
     run = 0.0
     for i, v in enumerate(vals):
         if i in totals:
@@ -349,19 +390,35 @@ def _plan_waterfall(spec: dict) -> list[dict]:
                 raise RenderError(f"waterfall does not foot at {cats[i]!r}: steps sum to {run}, total is {v}")
             run = v
             tot[i] = v
+            tops[i] = v
+            texts[i] = fmt_number(v, nf)
         else:
             new = run + v
             if min(run, new) < -1e-9:
                 raise RenderError("waterfall running total crosses zero; not supported")
             base[i] = min(run, new)
             (up if v >= 0 else down)[i] = abs(v)
+            tops[i] = max(run, new)
+            texts[i] = _signed(v, nf)
             run = new
-    return [
+    plan = [
         {"name": "Base", "values": base, "hidden": True},
-        {"name": "Increase", "values": up, "color": "positive", "labels": True},
-        {"name": "Decrease", "values": down, "color": "negative", "labels": True, "neg": True},
+        {"name": "Increase", "values": up, "color": "positive", "labels": True, "fmt": f'"+"{nf}'},
+        {"name": "Decrease", "values": down, "color": "negative", "labels": True, "fmt": f'"{MINUS}"{nf}'},
         {"name": "Total", "values": tot, "color": "secondary", "labels": True},
     ]
+    if spec.get("labels_above"):
+        peak = max(tops) or 1.0
+        axis_max = float(spec.get("axis_max") or peak * 1.2)
+        pad = round(axis_max * 0.09, 6)
+        for p in plan[1:]:
+            p["labels"] = False
+        plan.append({"name": "Label", "values": [pad] * n, "hidden": True, "labels": True, "custom": texts,
+                     "label_pos": "inBase", "label_token": "text"})
+    else:
+        for p, key in zip(plan[1:], ("up", "down", "tot")):
+            p["small_below"] = 0.07 * (float(spec.get("axis_max") or max(tops) * 1.05 or 1.0))
+    return plan
 
 
 def _plan_football(spec: dict) -> tuple[list[dict], list[str]]:
@@ -370,7 +427,7 @@ def _plan_football(spec: dict) -> tuple[list[dict], list[str]]:
     lo, hi = spec["series"][0]["values"], spec["series"][1]["values"]
     fmt = spec.get("number_format", "0.0")
     width = [None if a is None or b is None else b - a for a, b in zip(lo, hi)]
-    texts = [f"{fmt_number(a, fmt)} – {fmt_number(b, fmt)}" if a is not None and b is not None else ""
+    texts = [f"{fmt_number(a, fmt)}\u2013{fmt_number(b, fmt)}" if a is not None and b is not None else ""
              for a, b in zip(lo, hi)]
     name = spec["series"][1].get("name", "Range")
     return [{"name": "Low", "values": list(lo), "hidden": True},
@@ -392,19 +449,23 @@ def _chart_data(spec: dict, plan: list[dict]):
     if spec["type"] == "scatter":
         cd = XyChartData()
         for s in plan:
-            ser = cd.add_series(s["name"], number_format=nf)
+            ser = cd.add_series(s["name"], number_format=s.get("number_format", nf))
+            xs = s.get("x")
             for i, y in enumerate(s["values"]):
-                try:
-                    x = float(spec["categories"][i])
-                except (ValueError, TypeError, IndexError):
-                    x = float(i)
+                if xs is not None:
+                    x = float(xs[i])
+                else:
+                    try:
+                        x = float(spec["categories"][i])
+                    except (ValueError, TypeError, IndexError):
+                        x = float(i)
                 if y is not None:
                     ser.add_data_point(x, y)
         return cd
     cd = CategoryChartData(number_format=nf)
     cd.categories = spec["categories"]
     for s in plan:
-        cd.add_series(s["name"], s["values"])
+        cd.add_series(s["name"], s["values"], number_format=s.get("number_format"))
     return cd
 
 
@@ -429,11 +490,71 @@ def _make_combo(chart) -> None:
     plot.addnext(line)
 
 
+def _secondary_axes(chart, lo: float | None, hi: float | None) -> None:
+    """Give the line of a combo chart its own hidden value axis (scaled by lo/hi) so it floats above the bars."""
+    cs = chart._chartSpace
+    line = cs.find(f".//{{{_NS_C}}}lineChart")
+    last_ax = [e for e in cs.find(f".//{{{_NS_C}}}plotArea") if e.tag in (f"{{{_NS_C}}}valAx", f"{{{_NS_C}}}catAx")][-1]
+    scale = '<c:orientation val="minMax"/>' + (f'<c:max val="{hi}"/>' if hi is not None else "") + \
+        (f'<c:min val="{lo}"/>' if lo is not None else "")
+    cat = parse_xml(
+        f'<c:catAx xmlns:c="{_NS_C}"><c:axId val="50010"/><c:scaling><c:orientation val="minMax"/></c:scaling>'
+        '<c:delete val="1"/><c:axPos val="b"/><c:majorTickMark val="none"/><c:minorTickMark val="none"/>'
+        '<c:tickLblPos val="nextTo"/><c:crossAx val="50020"/><c:crosses val="autoZero"/><c:auto val="1"/>'
+        '<c:lblAlgn val="ctr"/><c:lblOffset val="100"/><c:noMultiLvlLbl val="0"/></c:catAx>')
+    val = parse_xml(
+        f'<c:valAx xmlns:c="{_NS_C}"><c:axId val="50020"/><c:scaling>{scale}</c:scaling><c:delete val="0"/>'
+        '<c:axPos val="r"/><c:numFmt formatCode="General" sourceLinked="0"/><c:majorTickMark val="none"/>'
+        '<c:minorTickMark val="none"/><c:tickLblPos val="none"/><c:spPr><a:ln xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main"><a:noFill/></a:ln></c:spPr><c:crossAx val="50010"/><c:crosses val="max"/>'
+        '<c:crossBetween val="between"/></c:valAx>')
+    last_ax.addnext(cat)
+    cat.addnext(val)
+    for ax, new in zip(line.findall(f"{{{_NS_C}}}axId"), ("50010", "50020")):
+        ax.set("val", new)
+
+
+def _manual_layout(chart, box: list[float], rtl: bool) -> None:
+    x, y, w, h = box
+    if rtl:
+        x = round(1 - x - w, 4)
+    pa = chart._chartSpace.find(f".//{{{_NS_C}}}plotArea")
+    for old in pa.findall(f"{{{_NS_C}}}layout"):
+        pa.remove(old)
+    pa.insert(0, parse_xml(
+        f'<c:layout xmlns:c="{_NS_C}"><c:manualLayout><c:layoutTarget val="inner"/><c:xMode val="edge"/>'
+        f'<c:yMode val="edge"/><c:x val="{x}"/><c:y val="{y}"/><c:w val="{w}"/><c:h val="{h}"/>'
+        '</c:manualLayout></c:layout>'))
+
+
 def _font(font, cx: _Ctx, size: float = 12, token: str = "text", bold: bool = False) -> None:
     font.size = Pt(size)
     font.bold = bold
     font.name = "+mn-lt"
     cx.color(font.color, token)
+
+
+def _end_label(s, j: int, cx: _Ctx, nf: str, rtl: bool, token: str) -> None:
+    """Direct label on point j: series name + value, so the chart needs no legend."""
+    dlb = s.points[j].data_label
+    dlb.position = XL_LABEL_POSITION.LEFT if rtl else XL_LABEL_POSITION.RIGHT
+    _font(dlb.font, cx, 12, token, bold=True)
+    d = dlb._get_or_add_dLbl()
+    d.find(f"{{{_NS_C}}}showSerName").set("val", "1")
+    d.find(f"{{{_NS_C}}}idx").addnext(parse_xml(f'<c:numFmt xmlns:c="{_NS_C}" formatCode="{_xml_attr(nf)}" sourceLinked="0"/>'))
+    d.append(parse_xml(f'<c:separator xmlns:c="{_NS_C}">  </c:separator>'))
+
+
+def _xml_attr(s: str) -> str:
+    return s.replace("&", "&amp;").replace('"', "&quot;").replace("<", "&lt;")
+
+
+def _custom_label(s, j: int, txt: str, cx: _Ctx, token: str, pos=None, bold: bool = False) -> None:
+    dlb = s.points[j].data_label
+    tf = dlb.text_frame
+    tf.text = txt
+    _font(tf.paragraphs[0].runs[0].font, cx, 12, token, bold=bold)
+    if pos is not None:
+        dlb.position = pos
 
 
 def _add_chart(slide, el: Element, cx: _Ctx, rtl: bool) -> None:
@@ -475,60 +596,118 @@ def _add_chart(slide, el: Element, cx: _Ctx, rtl: bool) -> None:
             le = parse_xml(f'<c:legendEntry xmlns:c="{_NS_C}"><c:idx val="{i}"/><c:delete val="1"/></c:legendEntry>')
             pos.addnext(le)
 
+    end_labels = t == "line" and spec.get("end_labels", not legend)
     series_all = [s for plot in chart.plots for s in plot.series]
     for i, (s, ps) in enumerate(zip(series_all, plan)):
         color = ps.get("color") or (_SERIES_SEQ[i % len(_SERIES_SEQ)])
         if len(plan) == 1 and highlight and not ps.get("color"):
             color = "mute_bar"
         is_line = t == "line" or (t == "combo" and i == len(plan) - 1)
+        is_ref = bool(ps.get("ref"))
         if ps.get("hidden"):
             s.format.fill.background()
             s.format.line.fill.background()
+        elif is_ref:
+            cx.color(s.format.line.color, ps.get("color", "mute_bar"))
+            s.format.line.width = Pt(1.0)
+            s.marker.style = XL_MARKER_STYLE.NONE
         elif is_line:
             cx.color(s.format.line.color, color)
             s.format.line.width = Pt(2.25)
             s.smooth = False
-            s.marker.style = None
-            from pptx.enum.chart import XL_MARKER_STYLE
             s.marker.style = XL_MARKER_STYLE.NONE
+            if t == "line":
+                last = max((j for j, v in enumerate(ps["values"]) if v is not None), default=None)
+                if last is not None:
+                    pt = s.points[last]
+                    pt.marker.style = XL_MARKER_STYLE.CIRCLE
+                    pt.marker.size = 8
+                    pt.marker.format.fill.solid()
+                    cx.color(pt.marker.format.fill.fore_color, color)
+                    pt.marker.format.line.fill.background()
         elif t != "scatter" and not pie:
             s.format.fill.solid()
             cx.color(s.format.fill.fore_color, color)
             s.format.line.fill.background()
         elif t == "scatter":
             s.format.line.fill.background()
+            s.marker.style = XL_MARKER_STYLE.CIRCLE
+            s.marker.size = int(ps.get("marker_size", 10))
             s.marker.format.fill.solid()
             cx.color(s.marker.format.fill.fore_color, color)
-        if not ps.get("hidden"):
-            pc = {int(k): v for k, v in (ps.get("point_colors") or {}).items()}
+            s.marker.format.line.fill.background()
+        pc = {int(k): v for k, v in (ps.get("point_colors") or {}).items()}
+        if not ps.get("hidden") and not is_ref:
             if len(plan) == 1 and highlight and not pc:
                 pc = {j: "accent" for j in highlight}
             if pie:
                 pc = {**{j: _SERIES_SEQ[j % len(_SERIES_SEQ)] for j in range(len(spec["categories"]))}, **pc}
-            if not is_line and t != "scatter":
+            if t == "scatter":
+                for j, tok in pc.items():
+                    pt = s.points[j]
+                    pt.marker.style = XL_MARKER_STYLE.CIRCLE
+                    pt.marker.size = int(ps.get("marker_size", 10))
+                    pt.marker.format.fill.solid()
+                    cx.color(pt.marker.format.fill.fore_color, tok)
+                    pt.marker.format.line.fill.background()
+                    pt.format.fill.solid()
+                    cx.color(pt.format.fill.fore_color, tok)
+            elif not is_line:
                 for j, tok in pc.items():
                     pt = s.points[j]
                     pt.format.fill.solid()
                     cx.color(pt.format.fill.fore_color, tok)
                     pt.format.line.fill.background()
-        if labels and ps.get("labels", True) and not ps.get("hidden"):
+        fill_tok = None if ps.get("hidden") else color
+        if t == "line" and not ps.get("hidden") and not is_ref and end_labels:
+            last = max((j for j, v in enumerate(ps["values"]) if v is not None), default=None)
+            if last is not None:
+                dls = s.data_labels
+                dls.show_value = False
+                _end_label(s, last, cx, ps.get("number_format", nf), rtl, "text")
+        elif t == "scatter" and ps.get("point_labels") and not is_ref:
+            names = spec["categories"]
+            for j, v in enumerate(ps["values"]):
+                if v is not None and j < len(names) and names[j]:
+                    tok = "text"
+                    _custom_label(s, j, names[j], cx, tok, pos=XL_LABEL_POSITION.LEFT if rtl else XL_LABEL_POSITION.RIGHT,
+                                  bold=j in (ps.get("bold_points") or []))
+        elif labels and ps.get("labels", not ps.get("hidden")) and not is_ref:
             dl = s.data_labels
             dl.show_value = True
-            lf = ("-" + nf) if ps.get("neg") else nf
+            lf = ps.get("fmt") or ps.get("number_format") or nf
             dl.number_format = lf
             dl.number_format_is_linked = False
             inside = t in _STACKED
-            _font(dl.font, cx, 12, "background" if inside and ps.get("custom") else "text")
-            if not inside:
-                dl.position = (XL_LABEL_POSITION.OUTSIDE_END if t in ("bar", "column") or pie
-                               else XL_LABEL_POSITION.ABOVE)
-            if ps.get("custom"):
-                for j, txt in enumerate(ps["custom"]):
+            custom = ps.get("custom")
+            tok = ps.get("label_token") or ("text" if (not inside or custom) else label_token(cx, fill_tok))
+            if inside and not custom and ps.get("small_below"):
+                small = [v for v in ps["values"] if v is not None and v < ps["small_below"]]
+                if small:
+                    tok = "text"
+            _font(dl.font, cx, 12, tok)
+            if ps.get("label_pos") == "inBase":
+                dl.position = XL_LABEL_POSITION.INSIDE_BASE
+            elif inside:
+                dl.position = XL_LABEL_POSITION.CENTER
+            elif t in ("bar", "column") or pie:
+                dl.position = XL_LABEL_POSITION.OUTSIDE_END
+            else:
+                dl.position = XL_LABEL_POSITION.ABOVE
+            if custom:
+                for j, txt in enumerate(custom):
                     if txt:
-                        tf = s.points[j].data_label.text_frame
-                        tf.text = txt
-                        _font(tf.paragraphs[0].runs[0].font, cx, 12, "background")
-    if t in ("pie", "doughnut"):
+                        ptok = ps.get("label_token") or (label_token(cx, pc.get(j) or fill_tok) if inside else "text")
+                        _custom_label(s, j, txt, cx, ptok)
+    if pie:
+        if t == "doughnut":
+            dn = cs.find(f".//{{{_NS_C}}}doughnutChart")
+            hs = dn.find(f"{{{_NS_C}}}holeSize")
+            if hs is None:
+                hs = etree.SubElement(dn, f"{{{_NS_C}}}holeSize")
+            hs.set("val", str(int(spec.get("hole", 62))))
+        if spec.get("plot_layout"):
+            _manual_layout(chart, spec["plot_layout"], rtl)
         return
     ca, va = chart.category_axis, chart.value_axis
     for ax in (ca, va):
@@ -537,26 +716,53 @@ def _add_chart(slide, el: Element, cx: _Ctx, rtl: bool) -> None:
         ax.major_tick_mark = XL_TICK_MARK.NONE
         _font(ax.tick_labels.font, cx)
     cx.color(ca.format.line.color, "mute_bar")
+    ca.format.line.width = Pt(0.5)
     va.format.line.fill.background()
-    va.tick_labels.number_format = nf
+    va.tick_labels.number_format = spec.get("axis_format", nf)
     va.tick_labels.number_format_is_linked = False
-    va.visible = not labels
-    if spec.get("axis_title"):
+    show_va = bool(spec.get("value_axis", not labels))
+    va.visible = show_va
+    if spec.get("axis_min") is not None:
+        va.minimum_scale = spec["axis_min"]
+    if spec.get("axis_max") is not None:
+        va.maximum_scale = spec["axis_max"]
+    if t == "scatter":
+        if spec.get("x_min") is not None:
+            ca.minimum_scale = spec["x_min"]
+        if spec.get("x_max") is not None:
+            ca.maximum_scale = spec["x_max"]
+        ca.visible = True
+        ca.tick_labels.number_format = spec.get("x_format", nf)
+        ca.tick_labels.number_format_is_linked = False
+        for ax, key in ((ca, "x_title"), (va, "axis_title")):
+            if spec.get(key):
+                ax.has_title = True
+                ax.axis_title.text_frame.text = spec[key]
+                _font(ax.axis_title.text_frame.paragraphs[0].runs[0].font, cx)
+        if spec.get("axis_title"):
+            va.visible = True
+    elif spec.get("axis_title"):
         va.has_title = True
         va.axis_title.text_frame.text = spec["axis_title"]
         _font(va.axis_title.text_frame.paragraphs[0].runs[0].font, cx)
         va.visible = True
     for plot in chart.plots:
         if hasattr(plot, "gap_width") and t not in ("line", "area", "scatter"):
-            plot.gap_width = 40 if t == "waterfall" else 60
+            plot.gap_width = GAP_WIDTH
     if t in _HORIZONTAL:
-        ca.reverse_order = not rtl
-        if not rtl:
-            ca.crosses = XL_AXIS_CROSSES.MAXIMUM
-        else:
+        ca.reverse_order = True
+        ca.crosses = XL_AXIS_CROSSES.MAXIMUM
+        if rtl:
             va.reverse_order = True
     elif rtl:
         ca.reverse_order = True
+    lp = spec.get("plot_layout")
+    if lp is None and end_labels:
+        lp = [0.03, 0.06, 0.74, 0.80]
+    if lp:
+        _manual_layout(chart, lp, rtl)
+    if t == "combo" and spec.get("secondary"):
+        _secondary_axes(chart, spec.get("axis2_min"), spec.get("axis2_max"))
 
 
 # ---------------------------------------------------------------- deck

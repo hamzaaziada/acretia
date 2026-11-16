@@ -9,9 +9,15 @@ import shutil
 import struct
 import subprocess
 import tempfile
-import unittest
 import zipfile
 import zlib
+
+import unittest
+
+try:
+    import pptx, PIL, fontTools  # noqa: F401,E401
+except ImportError as e:  # clean machine without deck deps: skip, do not error
+    raise unittest.SkipTest(f"deck deps missing: {e}")
 
 from lxml import etree
 from pptx import Presentation
@@ -125,6 +131,20 @@ class DeckRenderTests(unittest.TestCase):
         ff = {s.name: s for s in self.prs.slides[4].shapes}
         self.assertEqual(ff["s5.chart"].chart.chart_type, XL_CHART_TYPE.BAR_STACKED)
         self.assertEqual(len(ff["s5.chart.2"].chart.plots), 2)
+
+    def test_chart_polish_label_contrast_and_formats(self):
+        from om.deck.render import contrast, fmt_number, label_token, _Ctx
+        cx = _Ctx(THEME)
+        self.assertEqual(label_token(cx, "secondary"), "background")
+        self.assertEqual(label_token(cx, "mute_bar"), "text")
+        self.assertGreaterEqual(contrast("#FFFFFF", THEME.colors["secondary"]), 4.5)
+        self.assertEqual(fmt_number(-3.456, '0.0"x"'), "-3.5x")
+        self.assertEqual(fmt_number(0.123, "0.0%"), "12.3%")
+        ch = {s.name: s for s in self.prs.slides[2].shapes}["s3.chart"].chart
+        x = xml_of(ch._chartSpace)
+        self.assertIn('gapWidth val="60"', x)
+        self.assertIn("&#8722;", x)
+        self.assertIn('w="6350"', x)
 
     def test_waterfall_must_foot(self):
         bad = {**WATERFALL, "series": [{"name": "x", "values": [100, 12, -8, -4, 90]}]}
