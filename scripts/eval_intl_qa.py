@@ -24,6 +24,8 @@ _EAST = str.maketrans("٠١٢٣٤٥٦٧٨٩۰۱۲۳۴۵۶۷۸۹", "0123456789012
 
 def norm(text) -> str:
     t = _AR_DIAC.sub("", str(text)).translate(_AR_MAP).translate(_EAST).lower()
+    t = re.sub(r"\b(?:percent|per cent|pct)\b", "%", t)
+    t = re.sub(r"(\d)\s+%", r"\1%", t)
     return re.sub(r"\s+", " ", t).strip()
 
 
