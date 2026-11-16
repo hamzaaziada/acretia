@@ -14,9 +14,8 @@ One row per active claim. Claim a packet before you touch its files, commit the 
 | S3.3a archetypes: text/structure + registry examples | session B worker | claude/upbeat-mccarthy-viqjuo | 2026-11-16 | om/deck/archetypes/__init__.py, om/deck/archetypes/core.py, om/deck/archetypes/text.py, tests/test_deck_arch_text.py |
 | S3.3b archetypes: charts + renderer chart polish | session B worker | claude/upbeat-mccarthy-viqjuo | 2026-11-16 | om/deck/archetypes/charts.py, om/deck/render.py, tests/test_deck_arch_charts.py, tests/test_deck_render.py |
 | S3.3c archetypes: tables/frameworks | session B worker | claude/upbeat-mccarthy-viqjuo | 2026-11-16 | om/deck/archetypes/frameworks.py, tests/test_deck_arch_frameworks.py |
-| S3.8 vision critic loop | session B worker | claude/upbeat-mccarthy-viqjuo | 2026-11-16 | om/deck/critic.py, tests/test_deck_critic.py |
-| S3.9 template cloner + manifest sync | session B worker | claude/upbeat-mccarthy-viqjuo | 2026-11-16 | om/deck/house_clone.py, om/deck/sync.py, tests/test_deck_clone.py, tests/test_deck_sync.py |
 | S3.int engine entry + adapter switch + provenance/telemetry | session B worker | claude/upbeat-mccarthy-viqjuo | 2026-11-16 | om/deck/engine.py, om/deck/provenance.py, om/deck/ghost.py, om/deck/visuals/generate.py, om/deck/visuals/probe.py, om/deck/visuals/score.py, tests/test_deck_engine.py, tests/test_deck_ghost.py, tests/test_deck_visuals.py, open_multiples.py (deck subcommand only) |
+| S3.fix-env deck deps + font discovery + clean skips | session B worker | claude/upbeat-mccarthy-viqjuo | 2026-11-16 | requirements.txt (deck lines only), om/deck/metrics.py, tests/test_deck_fit.py, tests/test_deck_rtl.py, tests/test_deck_spec.py, tests/test_validate_pptx.py, tests/test_deck_critic.py, tests/test_deck_clone.py, tests/test_deck_sync.py |
 | S3 gate + docs | session B Boss | claude/upbeat-mccarthy-viqjuo | 2026-11-16 | scripts/verify_s3.py, docs/deck-engine.md, PROGRESS.md (S3 row only) |
 | S8.1 standards KB (session E) | worker | main | 2026-11-16 | om/intl/standards/**, docs/s8/standards/**, tests/test_intl_standards.py |
 | S8.2 concepts + bilingual labels (session E) | worker | main | 2026-11-16 | om/intl/concepts.py, om/intl/labels.py, om/intl/data/labels/**, tests/test_intl_concepts.py, tests/test_intl_labels.py |
@@ -69,3 +68,4 @@ One row per active claim. Claim a packet before you touch its files, commit the 
 - 2026-11-16: session A: FP-R1, FP-R3, S6.0 landed on main (f8bc923); FP-R4 and S2 connector gate section claimed.
 - 2026-11-16: session A: S6.1a, S6.1b, S6.2, S6.3 claimed.
 - 2026-11-16: S4.2, S4.3a/b/c, S4.4, S4.7b merged and released. Session C wave 2 claimed: S4.7c, S4.6a/b/c, S4.fix1, S4 gate script.
+- 2026-11-16: session B: S3.8, S3.9 merged and released; S3.fix-env claimed (reviewer: deck deps/fonts on clean machines).
