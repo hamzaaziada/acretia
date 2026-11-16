@@ -1,0 +1,2 @@
+stage,eval,n,score,notes
+S8,standards_qa,50,0.520,"live_model=no; deterministic retrieval; key-point rubric >=75%, cite match, url on every citation"
