@@ -80,6 +80,8 @@ FIXTURES = [
     dict(file="nile_valley_ar_scanned_fy2024.pdf", spec="nile_a", cur=2, kind="scanned", language="ar",
          raster_of="nile_valley_ar_native_fy2024.pdf", skew=[0.9, -1.3, 0.6, 1.1]),
     dict(file="nile_valley_ar_native_fy2023.pdf", spec="nile_a", cur=1, kind="native", language="ar", eastern=True),
+    dict(file="nile_valley_ar_scanned_fy2023.pdf", spec="nile_a", cur=1, kind="scanned", language="ar", eastern=True,
+         raster_of="nile_valley_ar_native_fy2023.pdf", skew=[-1.1, 0.7, 1.4, -0.6]),
     dict(file="red_sea_cement_en_native_fy2024.pdf", spec="redsea", cur=2, kind="native", language="en"),
     dict(file="red_sea_cement_en_scanned_fy2024.pdf", spec="redsea", cur=2, kind="scanned", language="en",
          raster_of="red_sea_cement_en_native_fy2024.pdf", skew=[-0.8, 1.4, -0.5, 1.0]),
