@@ -13,6 +13,9 @@ One row per active claim. Claim a packet before you touch its files, commit the 
 | S5.3 VDR gap/risk (session D) | worker | main | 2026-11-16 | om/vdr_risk.py, tests/test_vdr_risk.py, tests/fixtures/vdr/* |
 | S5.4 evals (session D) | worker | main | 2026-11-16 | evals/tenk/*, evals/odl_bench/*, scripts/build_tenk_corpus.py, scripts/eval_s5.py, tests/test_s5_evals.py, scorecard.csv (S5 rows only) |
 | S5 gate (session D) | Boss | main | 2026-11-16 | scripts/verify_s5.py, docs/s5/* |
+| FP-R1 router hermeticity + OCR test | worker | claude/dreamy-ramanujan-k8p2xt | 2026-11-16 | om/llm.py, tests/test_llm_router.py, src/harness/adapter.py, tests/test_adapter.py, tests/test_pdfdoc.py |
+| FP-R2 ledger rows for optional imports | worker | claude/dreamy-ramanujan-k8p2xt | 2026-11-16 | license-and-repo-ledger.csv, docs/ledger-notes.md |
+| FP-R3 gate hardening (gate-writer) | worker | claude/dreamy-ramanujan-k8p2xt | 2026-11-16 | scripts/verify_s1.py, scripts/verify_m1.py, scripts/verify_s2.py |
 | S1 gate | Boss | claude/dreamy-ramanujan-k8p2xt | 2026-11-16 | scripts/verify_s1.py |
 | S4.1 validate_xlsx | worker (session C) | claude/busy-knuth-i3ewp5 | 2026-11-16 | om/validate_xlsx.py, scripts/validate_xlsx.py, tests/test_validate_xlsx.py |
 | S4.2 three-engine recalc | worker (session C) | claude/busy-knuth-i3ewp5 | 2026-11-16 | om/recalc.py, om/formula.py, tests/test_recalc.py, tests/test_formula_ext.py |
@@ -42,3 +45,4 @@ One row per active claim. Claim a packet before you touch its files, commit the 
 - 2026-11-16: Session D claimed S5.1–S5.4 and the S5 gate.
 - 2026-11-16: session B claimed S3 wave 1 (core, fit/RTL, spec/ghost, validator, visuals) and the S3 gate.
 - 2026-11-16: S2.1 adapter landed on main (e988e01); row released.
+- 2026-11-16: Reviewer findings verified (env-dependent live path in Router chains; OCR test recursion; psycopg/pypdf ledger gap). FP-R1..R3 claimed.
