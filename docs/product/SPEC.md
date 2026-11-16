@@ -152,7 +152,9 @@ Event types on `/jobs/{id}/events` (each persisted in `job_events` before it is 
 
 Resumability: each step's output is checkpointed (`steps_json`). On server start, jobs in `planning|running` are re-queued and continue from the first step not `done`. `POST /jobs/{id}/resume` does the same for `failed` jobs.
 
-Planner: **rule-first** (D-SF-06). `agents/planner.py` maps the prompt to a built-in agent with regexes/keywords + entity extraction (tickers, company names from the deal, WACC/assumption overrides like "9% WACC"); only unmatched prompts go to the adapter (`json_schema` output, replay fixtures in tests). Built-in agents (P-J8): `comps`, `dcf` (3-statement + DCF), `lbo`, `merger`, `cim_summary`, `teaser`, `buyer_list`, `earnings_recap`, `ic_memo`, `profile_deck`, `diligence_grid`, `rollforward`, `deck_edit`, `model_edit`.
+Planner: **rule-first** (D-SF-06). `agents/planner.py` maps the prompt to a built-in agent with regexes/keywords + entity extraction (tickers, company names from the deal, WACC/assumption overrides like "9% WACC"); only unmatched prompts go to the adapter (`json_schema` output, replay fixtures in tests). Built-in agents (P-J8) cover the 14 catalogue tasks of PLAN "North-star metrics" (D-032), each with a stable `task_id` used by the time-saved benchmark: `comps` (trading comps), `precedents`, `three_statement`, `dcf`, `lbo`, `merger`, `vdr_review` (CIM/VDR first pass, per 50 docs), `profile` (company profile / one-pager), `pitchbook_section`, `teaser`, `ic_memo`, `earnings_update` (model roll-forward), `earnings_recap`, `buyer_list`. Plus the editing agents `deck_edit` and `model_edit`, and `diligence_grid` (used by `vdr_review`).
+
+**Telemetry (D-032).** Every step records `started_at`, `finished_at`, `seconds`, `tokens`, `cost_usd` and `engine`; the job records totals plus `wall_seconds`. These are in `steps_json` and in the `step` events. A delivered job also gets `time_saved = {task_id, t_h_minutes:{low,mid,high,source}, t_a_minutes, pct}` from the baselines table (`docs/time-saved-baselines.md`, parsed by `eval/tsb/baselines.py`), where `t_a_minutes` = wall time + estimated review/fix minutes (§11). The run view and the command bar show it as an estimate with its source until it is human-validated.
 
 Engine adapters (`agents/engines.py`) — each returns artefact bytes plus citations and is feature-detected (`healthz.engines`):
 - Excel: `om.model3.build(statements, assumptions=...)`; later S4 (`om.lbo`, `om.merger`, `om.comps`, `om.rollforward`, `om.manifest`, `om.validate_xlsx`) when importable.
@@ -203,7 +205,7 @@ Exits 0 only if all of these pass; prints one PASS/FAIL line per check:
 
 ## 9. Journey scripts (e2e) — acceptance per PLAN P-J1…P-J8
 
-- **P-J1 Ask**: log in → `⌘K` → "Spread trading comps for Apple vs peers and add a football field" → plan visible with steps, cost and elapsed time → steps stream → deliverable appears in the deal library → open it. Also: email-in variant via maildir fixture produces a run with `source=email`.
+- **P-J1 Ask**: log in → `⌘K` → "Spread trading comps for Apple vs peers and add a football field" → plan visible with steps, cost and elapsed time → steps stream → deliverable appears in the deal library → open it. Also: email-in variant via maildir fixture produces a run with `source=email`. Coverage (D-032): every one of the 14 catalogue tasks is started once from the command bar (by prompt) and once from the agent library, and each reaches `done` or fails with a hint naming the missing engine stage; the run view shows per-step time/cost and the time-saved estimate.
 - **P-J2 Deal workspace**: create deal → upload a zip with ≥ 50 PDFs (fixture generator; 2 Arabic) → documents index with progress → open Grid → add a question column → cost estimate shown → cells fill → gaps/risks panel → click a cell → PDF opens at page with the bbox highlighted.
 - **P-J3 Model**: "3-statement + DCF for Apple" → model view → change WACC → dependent cells and valuation update live → audit overlay shows blue/black/green and check status → download xlsx → new version in library.
 - **P-J4 Deck**: "Profile deck from this model" → ghost deck appears → approve (edit one title first) → slides render with validator badges → comment "make slide 2 a waterfall" → new version → diff shows the change → undo.
@@ -215,3 +217,13 @@ Exits 0 only if all of these pass; prints one PASS/FAIL line per check:
 ## 10. Persona gate inputs
 
 `e2e/artifacts/**.png` (light, dark and Arabic RTL screenshots of every journey's key screens) plus the produced xlsx/pptx. Three Haiku personas (PLAN §6) score; the PE principal must answer "would pay $10K+/seat" = yes. Scores and blockers are recorded in `docs/product/persona-gate.md`.
+
+## 11. Measurement harness (D-032; owned by session F)
+
+`eval/tsb/` and `eval/reliability/`. Replay mode in CI; live runs on the user's Mac (D-021). Nothing here may claim a human-validated number.
+
+- `eval/tsb/baselines.py`: parses `docs/time-saved-baselines.md` (written by another session) into `{task_id: {t_h_low, t_h_mid, t_h_high, unit, sources[], competitor_claims[]}}`; tolerant of the table not existing yet (then every task reports `t_h: unknown`, never an invented number).
+- `eval/tsb/edit_minutes.csv`: minutes-per-edit table by edit class (typo/label, number fix, formula fix, chart change, slide restructure, missing section, sourcing fix, formatting), each with a cited source or marked `[INFERENCE]` with the reasoning; the review/fix estimate is Σ(persona "edits needed" × minutes).
+- `eval/tsb/run.py`: for each of the 14 tasks × n briefs (n ≥ 10; briefs in `eval/tsb/briefs.yaml`, US + IFRS + MENA), runs the job through `om.api.jobs` in-process, records `T_a = wall + review_fix`, and writes `eval/tsb/report.md` + `eval/tsb/results.csv`: per task median, IQR, n, `1 − T_a/T_h` (low/mid/high), and the status column `estimate | human-validated`. Persona edit lists come from replayed persona outputs in CI.
+- `eval/reliability/run.py`: every journey's agent across ≥ 100 varied companies/briefs (`eval/reliability/corpus.yaml`): success rate (target ≥ 97%), silent-wrong-number count (target 0: every number in every deliverable is either tied to a citation/xbrl concept or carries a flag; checked by walking the manifest/citations), determinism (two runs, byte-identical numbers), resume-after-failure rate (inject a failure mid-job, resume, compare with a clean run), p95 latency, cost per deliverable → `eval/reliability/report.md`.
+- `scripts/verify_product.py` check 18: both harnesses run in replay mode on a reduced set (14 tasks × 2 briefs; 20 reliability briefs) and produce reports with the required columns; silent wrong numbers = 0 and determinism = 100% on that set.

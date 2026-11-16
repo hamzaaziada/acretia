@@ -40,6 +40,7 @@ One row per active claim. Claim a packet before you touch its files, commit the 
 | SF.1 API backend (session F) | session F workers | main | 2026-11-16 | om/api/**, tests/test_api_*.py, tests/fixtures/api/** |
 | SF.2 frontend app (session F) | session F workers | main | 2026-11-16 | frontend/** |
 | SF.3 e2e journeys + product gate (session F) | session F gate worker | main | 2026-11-16 | e2e/**, scripts/verify_product.py |
+| SF.4 TSB + reliability harness (session F, D-032) | session F workers | main | 2026-11-16 | eval/tsb/**, eval/reliability/** |
 | S4.7b polish layer + model3 dashboard | worker (session C) | claude/busy-knuth-i3ewp5 | 2026-11-16 | om/polish.py, om/model3.py, tests/test_polish.py |
 
 ## Log
@@ -60,3 +61,4 @@ One row per active claim. Claim a packet before you touch its files, commit the 
 - 2026-11-16: session E claimed S8.1–S8.7 and the S8 gate. S8.5 writes only new `src/harness/connectors/intl_*.py` files (inside the S2.5 glob); it waits for S2.5's base.py on main and never edits S2.5 files.
 - 2026-11-16: session A restored session C/F rows that de1725b dropped by mistake, and removed the stale S4.1/S4.5/S4.7a rows it had re-added.
 - 2026-11-16: session B: S3 wave 1 merged (core, fit/RTL, spec/ghost, validator, visuals); wave 2 claimed (archetypes a/b/c, critic, cloner+sync).
+- 2026-11-16: Session F claimed eval/tsb/ and eval/reliability/ (D-032 measurement harness).
