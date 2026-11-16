@@ -4,7 +4,6 @@ One row per active claim. Claim a packet before you touch its files, commit the 
 
 | Packet | Agent / session | Branch | Claimed (UTC) | Files |
 |---|---|---|---|---|
-| S1.2 deck teardowns | worker | claude/dreamy-ramanujan-k8p2xt | 2026-11-16 | docs/teardowns/deck-*.md, docs/teardowns/briefs/* |
 | S1.3 excel/grid/research teardowns | worker | claude/dreamy-ramanujan-k8p2xt | 2026-11-16 | docs/teardowns/excel-*.md, docs/teardowns/grid-*.md, docs/teardowns/research-*.md |
 | S5.1 parser (session D) | worker | main | 2026-11-16 | om/docparse.py, om/parse_services.py, tests/test_docparse.py, tests/fixtures/docparse/*, docs/s5/parser-*.md |
 | S5.2 DuckDB grid (session D) | worker | main | 2026-11-16 | om/grid.py, tests/test_grid.py, tests/fixtures/grid/*, open_multiples.py (grid subcommand only) |
@@ -12,7 +11,6 @@ One row per active claim. Claim a packet before you touch its files, commit the 
 | S5.4 evals (session D) | worker | main | 2026-11-16 | evals/tenk/*, evals/odl_bench/*, scripts/build_tenk_corpus.py, scripts/eval_s5.py, tests/test_s5_evals.py, scorecard.csv (S5 rows only) |
 | S5 gate (session D) | Boss | main | 2026-11-16 | scripts/verify_s5.py, docs/s5/* |
 | FP-R1 router hermeticity + OCR test | worker | claude/dreamy-ramanujan-k8p2xt | 2026-11-16 | om/llm.py, tests/test_llm_router.py, src/harness/adapter.py, tests/test_adapter.py, tests/test_pdfdoc.py |
-| FP-R2 ledger rows for optional imports | worker | claude/dreamy-ramanujan-k8p2xt | 2026-11-16 | license-and-repo-ledger.csv, docs/ledger-notes.md |
 | FP-R3 gate hardening (gate-writer) | worker | claude/dreamy-ramanujan-k8p2xt | 2026-11-16 | scripts/verify_s1.py, scripts/verify_m1.py, scripts/verify_s2.py |
 | S6.0 research job interface | worker | claude/dreamy-ramanujan-k8p2xt | 2026-11-16 | src/harness/research/__init__.py, src/harness/research/api.py, src/harness/research/jobs.py, docs/interfaces.md (section 'Research agent jobs' only), tests/test_research_api.py |
 | S1 gate | Boss | claude/dreamy-ramanujan-k8p2xt | 2026-11-16 | scripts/verify_s1.py |
@@ -46,3 +44,4 @@ One row per active claim. Claim a packet before you touch its files, commit the 
 - 2026-11-16: S2.1 adapter landed on main (e988e01); row released.
 - 2026-11-16: Reviewer findings verified (env-dependent live path in Router chains; OCR test recursion; psycopg/pypdf ledger gap). FP-R1..R3 claimed.
 - 2026-11-16: S2.4, S2.5 done (pending S2 gate); rows released. S6.0 interface claimed early for session F's command bar.
+- 2026-11-16: S1.2 deck teardowns and FP-R2 ledger rows done; rows released.
