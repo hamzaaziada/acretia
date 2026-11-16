@@ -189,7 +189,7 @@ v1 M1 is done (see §1): extend `om/contracts.py`, `om/pii.py`, `om/replay.py`, 
 |---|---|
 | S6.1 | **Research agent:** gpt-researcher (Apache-2.0) as the base, dexter (MIT) task planning with self-reflection and a source-logged scratchpad, FinRobot report structures; all tools through the harness router (edgartools, FinanceToolkit, crawl4ai, Matrix, Excel daemon) |
 | S6.2 | **Outputs:** only SlideSpecs and Excel input payloads, never free prose. Any figure without a verifiable source and as-of date is rejected |
-| S6.3 | **Evals:** Vals Finance Agent (50 public questions) + FinanceBench subset, scored with evidence |
+| S6.3 | **Evals:** Vals Finance Agent v1 public set (50 questions) and v2 where public, the FinanceBench subset, and BankerToolBench tasks where public (ICLR 2026; 502-banker rubric; frontier models scored 0% client-ready), all scored with evidence. Also the Wall Street Prep Apple 3-statement task (same prompt) through S4 |
 | Gate | `scripts/verify_s6.py` (0 unsourced figures, eval pass rates recorded), then **persona gate** |
 
 ### Stage 7 — The product app (session F) + security review, Docker and CI (session A)
