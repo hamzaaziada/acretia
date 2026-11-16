@@ -1,0 +1,21 @@
+{
+  "_comment": "Scripted replies for the grid LLM engine (fake transport / record-replay). Adversarial on purpose: one correct, one cites the wrong page, one fabricates its quote, one says not found.",
+  "replies": [
+    {"match": "total net sales",
+     "reply": {"answer": "Total net sales were $391,035 million.", "value": 391035, "unit": "$ millions",
+               "exact_quote": "Total net sales 391,035 383,285", "page": 1, "confidence": "high", "not_found": false},
+     "usage": {"prompt_tokens": 1200, "completion_tokens": 80}},
+    {"match": "full-time equivalent employees",
+     "reply": {"answer": "About 164,000 employees.", "value": 164000, "unit": null,
+               "exact_quote": "approximately 164,000 full-time equivalent employees", "page": 1, "confidence": "medium", "not_found": false},
+     "usage": {"prompt_tokens": 1100, "completion_tokens": 60}},
+    {"match": "auditor",
+     "reply": {"answer": "Deloitte issued a clean opinion.", "value": null, "unit": null,
+               "exact_quote": "Deloitte & Touche LLP issued a clean opinion on all periods", "page": 2, "confidence": "high", "not_found": false},
+     "usage": {"prompt_tokens": 1000, "completion_tokens": 50}},
+    {"match": "quantum",
+     "reply": {"answer": "Not found in document", "value": null, "unit": null,
+               "exact_quote": "", "page": null, "confidence": "low", "not_found": true},
+     "usage": {"prompt_tokens": 900, "completion_tokens": 20}}
+  ]
+}
