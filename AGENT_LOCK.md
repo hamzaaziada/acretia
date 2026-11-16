@@ -41,6 +41,10 @@ One row per active claim. Claim a packet before you touch its files, commit the 
 | S4.7b polish layer + model3 dashboard | worker (session C) | claude/busy-knuth-i3ewp5 | 2026-11-16 | om/polish.py, om/model3.py, tests/test_polish.py |
 | FP-R4 ledger rows for new imports | worker (session A) | claude/dreamy-ramanujan-k8p2xt | 2026-11-16 | license-and-repo-ledger.csv, docs/ledger-notes.md |
 | S2-gate-conn connector gate section | gate-writer (session A) | claude/dreamy-ramanujan-k8p2xt | 2026-11-16 | scripts/verify_s2.py |
+| S6.1a agent loop | worker (session A) | claude/dreamy-ramanujan-k8p2xt | 2026-11-16 | src/harness/research/agent.py, src/harness/research/planner.py, src/harness/research/scratchpad.py, src/harness/research/api.py, tests/test_research_agent.py, tests/fixtures/research/agent/* |
+| S6.1b research tools | worker (session A) | claude/dreamy-ramanujan-k8p2xt | 2026-11-16 | src/harness/research/tools.py, tests/test_research_tools.py, tests/fixtures/research/tools/* |
+| S6.2 figure verifier | worker (session A) | claude/dreamy-ramanujan-k8p2xt | 2026-11-16 | src/harness/research/verify.py, tests/test_research_verify.py |
+| S6.3 research evals | worker (session A) | claude/dreamy-ramanujan-k8p2xt | 2026-11-16 | eval/research/**, tests/test_research_evals.py |
 
 ## Log
 - 2026-11-16: created; no active claims.
@@ -62,3 +66,4 @@ One row per active claim. Claim a packet before you touch its files, commit the 
 - 2026-11-16: session B: S3 wave 1 merged (core, fit/RTL, spec/ghost, validator, visuals); wave 2 claimed (archetypes a/b/c, critic, cloner+sync).
 - 2026-11-16: Session F claimed eval/tsb/ and eval/reliability/ (D-032 measurement harness).
 - 2026-11-16: session A: FP-R1, FP-R3, S6.0 landed on main (f8bc923); FP-R4 and S2 connector gate section claimed.
+- 2026-11-16: session A: S6.1a, S6.1b, S6.2, S6.3 claimed.
