@@ -20,11 +20,11 @@ One row per active claim. Claim a packet before you touch its files, commit the 
 | S4.3c comps | worker (session C) | claude/busy-knuth-i3ewp5 | 2026-11-16 | om/comps.py, om/market.py, tests/test_comps.py |
 | S4.4 graph/ask/edit/roll-forward | worker (session C) | claude/busy-knuth-i3ewp5 | 2026-11-16 | om/wbgraph.py, om/wbedit.py, om/rollforward.py, tests/test_wbgraph.py, tests/test_wbedit.py, tests/test_rollforward.py |
 | S4.6 bench + S4 gate | Boss (session C) | claude/busy-knuth-i3ewp5 | 2026-11-16 | om/bench.py, scripts/verify_s4.py, tests/test_bench.py, docs/s4/* |
-| S3.core render+theme+model+archetype base | session B worker | claude/upbeat-mccarthy-viqjuo | 2026-11-16 | om/deck/__init__.py, om/deck/model.py, om/deck/theme.py, om/deck/render.py, om/deck/archetypes/__init__.py, om/deck/archetypes/base.py, om/deck/archetypes/core.py, tests/test_deck_render.py |
-| S3.4/S3.5 metrics, fit, RTL | session B worker | claude/upbeat-mccarthy-viqjuo | 2026-11-16 | om/deck/metrics.py, om/deck/fit.py, om/deck/rtl.py, tests/test_deck_fit.py, tests/test_deck_rtl.py |
-| S3.1/S3.2 ghost deck + spec | session B worker | claude/upbeat-mccarthy-viqjuo | 2026-11-16 | om/deck/spec.py, om/deck/ghost.py, tests/test_deck_spec.py, tests/test_deck_ghost.py, tests/fixtures/llm/deck_* |
-| S3.6/S3.7 slop + validate_pptx | session B worker | claude/upbeat-mccarthy-viqjuo | 2026-11-16 | om/deck/slop.py, om/deck/validate.py, scripts/validate_pptx.py, tests/test_validate_pptx.py |
-| S3.11 visual layer | session B worker | claude/upbeat-mccarthy-viqjuo | 2026-11-16 | om/deck/visuals/**, tests/test_deck_visuals.py |
+| S3.3a archetypes: text/structure + registry examples | session B worker | claude/upbeat-mccarthy-viqjuo | 2026-11-16 | om/deck/archetypes/__init__.py, om/deck/archetypes/core.py, om/deck/archetypes/text.py, tests/test_deck_arch_text.py |
+| S3.3b archetypes: charts + renderer chart polish | session B worker | claude/upbeat-mccarthy-viqjuo | 2026-11-16 | om/deck/archetypes/charts.py, om/deck/render.py, tests/test_deck_arch_charts.py, tests/test_deck_render.py |
+| S3.3c archetypes: tables/frameworks | session B worker | claude/upbeat-mccarthy-viqjuo | 2026-11-16 | om/deck/archetypes/frameworks.py, tests/test_deck_arch_frameworks.py |
+| S3.8 vision critic loop | session B worker | claude/upbeat-mccarthy-viqjuo | 2026-11-16 | om/deck/critic.py, tests/test_deck_critic.py |
+| S3.9 template cloner + manifest sync | session B worker | claude/upbeat-mccarthy-viqjuo | 2026-11-16 | om/deck/house_clone.py, om/deck/sync.py, tests/test_deck_clone.py, tests/test_deck_sync.py |
 | S3 gate + docs | session B Boss | claude/upbeat-mccarthy-viqjuo | 2026-11-16 | scripts/verify_s3.py, docs/deck-engine.md, PROGRESS.md (S3 row only) |
 | S8.1 standards KB (session E) | worker | main | 2026-11-16 | om/intl/standards/**, docs/s8/standards/**, tests/test_intl_standards.py |
 | S8.2 concepts + bilingual labels (session E) | worker | main | 2026-11-16 | om/intl/concepts.py, om/intl/labels.py, om/intl/data/labels/**, tests/test_intl_concepts.py, tests/test_intl_labels.py |
@@ -57,3 +57,4 @@ One row per active claim. Claim a packet before you touch its files, commit the 
 - 2026-11-16: S1.2 deck teardowns and FP-R2 ledger rows done; rows released.
 - 2026-11-16: session E claimed S8.1–S8.7 and the S8 gate. S8.5 writes only new `src/harness/connectors/intl_*.py` files (inside the S2.5 glob); it waits for S2.5's base.py on main and never edits S2.5 files.
 - 2026-11-16: session A restored session C/F rows that de1725b dropped by mistake, and removed the stale S4.1/S4.5/S4.7a rows it had re-added.
+- 2026-11-16: session B: S3 wave 1 merged (core, fit/RTL, spec/ghost, validator, visuals); wave 2 claimed (archetypes a/b/c, critic, cloner+sync).
