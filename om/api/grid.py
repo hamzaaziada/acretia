@@ -223,7 +223,7 @@ def _phrases(prompt: str) -> list[str]:
 
 
 def _candidates(pages: list[dict], prompt: str, typ: str):
-    """[(score, page, quote, bbox, nlines)] best-first: windows of 1-3 consecutive lines scored by stemmed term hits."""
+    """[(score, page, quote, bbox, nlines, hits)] best-first: windows of 1-3 consecutive lines scored by stemmed term hits."""
     terms = _matrix.key_terms(prompt)
     if not terms:
         return []
@@ -249,7 +249,7 @@ def _candidates(pages: list[dict], prompt: str, typ: str):
                 if typ in ("number", "currency", "percent", "date") and _typed(text, typ) is not None:
                     bonus = 0.5
                 score = h + ph + bonus - 0.2 * (n - 1) - len(text) / 4000
-                out.append((score, pg["page"], text, _union([l["bbox"] for l in win]), n))
+                out.append((score, pg["page"], text, _union([l["bbox"] for l in win]), n, h))
     out.sort(key=lambda c: (-c[0], c[1]))
     return out
 
@@ -274,7 +274,7 @@ def _confidence(score: float, nterms: int) -> str:
     return "high" if score >= nterms + 1.5 else "medium" if score >= max(1.5, nterms * 0.6) else "low"
 
 
-def answer_cell(pages: list[dict], prompt: str, typ: str) -> dict:
+def answer_cell(pages: list[dict], prompt: str, typ: str, min_frac: float = 0.5) -> dict:
     """Extractive, verified answer: {found, answer, citations:[{page, bbox_norm, quote}], confidence, meta}."""
     typ = typ if typ in TYPES else "text"
     full = {p["page"]: _norm(" ".join(l["text"] for l in p["lines"]) + " " + p["text"]) for p in pages}
@@ -282,9 +282,12 @@ def answer_cell(pages: list[dict], prompt: str, typ: str) -> dict:
     terms = _matrix.key_terms(prompt)
     chosen: list = []
     want = 3 if typ == "list" else 1
-    for score, page, quote, bbox, _n in cands:
+    need = max(1, -(-int(len(terms) * min_frac * 100) // 100)) if terms else 1
+    for score, page, quote, bbox, _n, hits in cands:
         if score < 0.9:
             break
+        if hits < need:
+            continue                                              # one stray word is not an answer to a multi-term question
         if _norm(quote) not in full.get(page, ""):
             continue                                              # traceable or not shown
         if any(page == c[1] and (quote in c[2] or c[2] in quote) for c in chosen):
