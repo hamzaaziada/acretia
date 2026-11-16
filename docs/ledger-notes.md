@@ -67,5 +67,12 @@ Every third-party (non-stdlib) module imported under `om/`, `src/`, `scripts/` a
 | `duckdb` | `duckdb/duckdb` | see ledger |
 | `edgar` | `dgunning/edgartools` | see ledger |
 | `crawl4ai` | `unclecode/crawl4ai` | see ledger (attribution clause) |
+| `arabic_reshaper` | `mpcabd/python-arabic-reshaper` | adopt (MIT; om/deck/rtl.py, om/deck/validate.py) |
+| `docling_core` | `docling-project/docling-core` | adopt (MIT; om/docparse.py) |
+| `lxml` | `lxml/lxml` | adopt (BSD-3-Clause; om/deck/*) |
+| `yaml` | `yaml/pyyaml` | adopt (MIT; om/deck/spec.py) |
+| `fontTools` | `fonttools/fonttools` | adopt (MIT, optional textfit extra) |
+| `uno` | `LibreOffice/core` | isolated_service (MPL-2.0; lazy import in om/recalc.py from the system soffice Python, never vendored) |
+| `com` | `LibreOffice/core` | isolated_service (`com.sun.star.*` UNO bindings, om/recalc.py) |
 
-Names that differ from the repo, kept for future imports (rows already in the ledger): `bidi → MeirKriheli/python-bidi`, `PIL → python-pillow/Pillow`, `pptx → scanny/python-pptx`, `fitz → pymupdf/PyMuPDF`, `yaml → yaml/pyyaml` (add a row if first imported), `redis → redis/redis`.
+Names that differ from the repo, kept for future imports (rows already in the ledger): `bidi → MeirKriheli/python-bidi`, `PIL → python-pillow/Pillow`, `pptx → scanny/python-pptx`, `fitz → pymupdf/PyMuPDF`, `redis → redis/redis`.
