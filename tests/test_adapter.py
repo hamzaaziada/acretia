@@ -1,0 +1,520 @@
+"""S2.1 model adapter: fake transports only, never the network."""
+import ast
+import json
+import os
+import socket
+import sys
+import tempfile
+import unittest
+import urllib.request
+from pathlib import Path
+from unittest import mock
+
+ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(ROOT))
+
+from om import llm, replay  # noqa: E402
+from om.llm import InvalidJSON, LLMError, LLMRefusal, SchemaInvalid, TransportError  # noqa: E402
+from src.harness import adapter as adp  # noqa: E402
+from src.harness.adapter import Adapter, image_part, parse_sse  # noqa: E402
+from src.harness.ledger import BudgetExceeded, Ledger, SpendGuard, cost_usd  # noqa: E402
+
+FIXTURES = ROOT / "tests" / "fixtures" / "adapter"
+KEY = "sk-test-key-0123456789"
+SCHEMA = {"type": "object", "required": ["answer", "n"], "properties": {"answer": {"type": "string"}, "n": {"type": "integer"}}}
+EMAIL = "jane.doe@example.com"
+REPLAY_MESSAGES = [{"role": "system", "content": "You are terse."},
+                   {"role": "user", "content": f"Summarise the note from {EMAIL} about revenue."}]
+
+
+def reply(content, prompt=10, completion=5, finish="stop"):
+    return {"choices": [{"message": {"content": content}, "finish_reason": finish}],
+            "usage": {"prompt_tokens": prompt, "completion_tokens": completion}}
+
+
+class FakeTransport:
+    """Pops queued replies (dict) or exceptions; records every call."""
+
+    def __init__(self, *queue):
+        self.queue, self.calls = list(queue), []
+
+    def __call__(self, url, body, headers, stream=False):
+        self.calls.append({"url": url, "body": body, "headers": headers, "stream": stream})
+        item = self.queue.pop(0)
+        if isinstance(item, BaseException):
+            raise item
+        return item
+
+
+def sse(*deltas, usage=None):
+    out = [": keepalive\n", "\n"]
+    for d in deltas:
+        out += ["data: " + json.dumps({"choices": [{"delta": {"content": d}}]}) + "\n", "\n"]
+    if usage:
+        out += ["data: " + json.dumps({"choices": [], "usage": usage}) + "\n"]
+    out.append("data: [DONE]\n")
+    return out
+
+
+def make(*queue, **kw):
+    t = FakeTransport(*queue)
+    kw.setdefault("mode", "live")
+    kw.setdefault("sleep", lambda s: None)
+    return Adapter("https://llm.meshpool.ai/v1", KEY, "m", transport=t, **kw), t
+
+
+class ChatTests(unittest.TestCase):
+    def test_plain_chat_returns_text_usage_cost(self):
+        a, t = make(reply("hello", 100, 20))
+        r = a.chat([{"role": "user", "content": "hi"}], max_tokens=50, job_id="j1")
+        self.assertEqual((r.text, r.replayed, r.model, r.fallbacks), ("hello", False, "m", []))
+        self.assertEqual(r.usage["input_tokens"], 100)
+        self.assertGreater(r.cost_usd, 0)
+        c = t.calls[0]
+        self.assertEqual(c["url"], "https://llm.meshpool.ai/v1/chat/completions")
+        self.assertEqual(c["headers"]["Authorization"], f"Bearer {KEY}")
+        self.assertEqual((c["body"]["model"], c["body"]["max_tokens"], c["body"]["temperature"]), ("m", 50, 0))
+
+    def test_json_schema_is_validated_and_sent(self):
+        a, t = make(reply('{"answer": "a", "n": 3}'))
+        r = a.chat([{"role": "user", "content": "q"}], json_schema=SCHEMA)
+        self.assertEqual(r.data, {"answer": "a", "n": 3})
+        body = t.calls[0]["body"]
+        self.assertEqual(body["response_format"]["type"], "json_schema")
+        self.assertIn('"required"', body["messages"][0]["content"])         # schema restated for JSON-mode-only servers
+
+    def test_json_repair_retry_then_success(self):
+        a, t = make(reply("not json at all"), reply('{"answer": "b", "n": 1}'))
+        r = a.chat([{"role": "user", "content": "q"}], json_schema=SCHEMA)
+        self.assertEqual(r.data["answer"], "b")
+        self.assertEqual(len(t.calls), 2)
+        repair = t.calls[1]["body"]["messages"]
+        self.assertEqual([m["role"] for m in repair[-2:]], ["assistant", "user"])
+        self.assertIn("rejected", repair[-1]["content"])
+
+    def test_schema_violation_repaired_once_then_raises(self):
+        a, t = make(reply('{"answer": "x"}'), reply('{"answer": 5, "n": 1}'))
+        with self.assertRaises(SchemaInvalid):
+            a.chat([{"role": "user", "content": "q"}], json_schema=SCHEMA)
+        self.assertEqual(len(t.calls), 2)                                     # exactly one repair, no more
+
+    def test_unparseable_after_repair_raises_invalid_json(self):
+        a, _ = make(reply("nope"), reply("still nope"))
+        with self.assertRaises(InvalidJSON):
+            a.chat([{"role": "user", "content": "q"}], json_schema=SCHEMA)
+
+    def test_content_filter_is_a_refusal_not_a_fallthrough(self):
+        b, tb = make(reply("x"))
+        a, _ = make(reply("", finish="content_filter"), fallbacks=[b])
+        with self.assertRaises(LLMRefusal):
+            a.chat([{"role": "user", "content": "q"}])
+        self.assertEqual(tb.calls, [])
+
+    def test_vision_payload_shape(self):
+        a, t = make(reply("a chart"))
+        png = b"\x89PNG\r\n\x1a\nfakebytes"
+        a.chat([{"role": "user", "content": [{"type": "text", "text": "what is this?"}, image_part(png, "image/png")]}])
+        parts = t.calls[0]["body"]["messages"][0]["content"]
+        self.assertEqual(parts[0], {"type": "text", "text": "what is this?"})
+        self.assertEqual(parts[1]["type"], "image_url")
+        url = parts[1]["image_url"]["url"]
+        self.assertTrue(url.startswith("data:image/png;base64,"))
+        import base64
+        self.assertEqual(base64.b64decode(url.split(",", 1)[1]), png)
+
+    def test_from_env(self):
+        env = {"ACRETIA_LLM_BASE_URL": "https://llm.meshpool.ai/v1", "ACRETIA_LLM_API_KEY": KEY, "ACRETIA_LLM_MODEL": "claude-x"}
+        with mock.patch.dict(os.environ, env):
+            a = Adapter.from_env()
+        self.assertEqual((a.base_url, a.model, a.key_host), ("https://llm.meshpool.ai/v1", "claude-x", "llm.meshpool.ai"))
+        with mock.patch.dict(os.environ, {}, clear=True):
+            d = Adapter.from_env()
+        self.assertEqual((d.base_url, d.api_key, d.model), (adp.DEFAULT_BASE_URL, None, "auto"))
+
+
+class StreamTests(unittest.TestCase):
+    def test_parse_sse_ignores_comments_and_stops_at_done(self):
+        evs = list(parse_sse(sse("a", "b") + ["data: {\"x\": 1}\n"]))
+        self.assertEqual(len(evs), 2)
+
+    def test_stream_yields_deltas_and_sets_result(self):
+        a, t = make(sse("Hel", "lo ", "world", usage={"prompt_tokens": 7, "completion_tokens": 3}),
+                    ledger=Ledger())
+        s = a.chat([{"role": "user", "content": "hi"}], stream=True, job_id="j")
+        self.assertEqual(list(s), ["Hel", "lo ", "world"])
+        self.assertEqual(s.result.text, "Hello world")
+        self.assertEqual(s.result.usage["output_tokens"], 3)
+        self.assertTrue(t.calls[0]["stream"])
+        self.assertTrue(t.calls[0]["body"]["stream"])
+        self.assertEqual(a.ledger.total("j")["output_tokens"], 3)
+
+    def test_stream_unmasks_placeholder_split_across_chunks(self):
+        a, _ = make(sse("Mail [EMA", "IL_1] now"))
+        s = a.chat([{"role": "user", "content": f"write to {EMAIL}"}], stream=True)
+        self.assertEqual(s.text(), f"Mail {EMAIL} now")
+
+    def test_stream_falls_back_before_first_chunk(self):
+        b, _ = make(sse("ok"))
+        a, _ = make(TransportError("boom", 503), fallbacks=[b], max_retries=0)
+        s = a.chat([{"role": "user", "content": "hi"}], stream=True)
+        self.assertEqual(s.text(), "ok")
+        self.assertEqual(s.result.fallbacks[0]["kind"], "TransportError")
+
+    def test_stream_with_schema_is_rejected(self):
+        a, _ = make()
+        with self.assertRaises(ValueError):
+            a.chat([{"role": "user", "content": "x"}], stream=True, json_schema=SCHEMA)
+
+
+class RetryFallbackTests(unittest.TestCase):
+    def test_retry_503_then_success_with_backoff(self):
+        sleeps = []
+        a, t = make(TransportError("unavailable", 503), TransportError("rate", 429), reply("ok"), sleep=sleeps.append)
+        self.assertEqual(a.chat([{"role": "user", "content": "q"}]).text, "ok")
+        self.assertEqual(len(t.calls), 3)
+        self.assertEqual(len(sleeps), 2)
+        self.assertGreater(sleeps[1], sleeps[0])                              # exponential
+
+    def test_timeout_is_retried(self):
+        a, t = make(TimeoutError("slow"), reply("ok"))
+        self.assertEqual(a.chat([{"role": "user", "content": "q"}]).text, "ok")
+
+    def test_client_error_is_not_retried(self):
+        a, t = make(TransportError("bad request", 400), reply("never"))
+        with self.assertRaises(TransportError):
+            a.chat([{"role": "user", "content": "q"}])
+        self.assertEqual(len(t.calls), 1)
+
+    def test_retries_exhausted_raises(self):
+        a, t = make(*[TransportError("down", 503)] * 3, max_retries=2)
+        with self.assertRaises(TransportError):
+            a.chat([{"role": "user", "content": "q"}])
+        self.assertEqual(len(t.calls), 3)
+
+    def test_fallback_to_second_adapter(self):
+        b, tb = make(reply('{"answer": "from b", "n": 2}'))
+        a, ta = make(TransportError("down", 503), TransportError("down", 503), fallbacks=[b], max_retries=1)
+        r = a.chat([{"role": "user", "content": "q"}], json_schema=SCHEMA)
+        self.assertEqual(r.data["answer"], "from b")
+        self.assertEqual(len(ta.calls), 2)
+        self.assertEqual([e["kind"] for e in r.fallbacks], ["TransportError"])
+
+    def test_fallback_on_invalid_json_from_first(self):
+        b, _ = make(reply('{"answer": "ok", "n": 1}'))
+        a, _ = make(reply("bad"), reply("worse"), fallbacks=[b])
+        r = a.chat([{"role": "user", "content": "q"}], json_schema=SCHEMA)
+        self.assertEqual(r.data["n"], 1)
+        self.assertEqual(r.fallbacks[0]["kind"], "InvalidJSON")
+
+    def test_last_error_propagates_when_chain_exhausted(self):
+        b, _ = make(TransportError("b down", 500), max_retries=0)
+        a, _ = make(TransportError("a down", 500), fallbacks=[b], max_retries=0)
+        with self.assertRaises(TransportError) as cm:
+            a.chat([{"role": "user", "content": "q"}])
+        self.assertIn("b down", str(cm.exception))
+
+
+class KeyHostTests(unittest.TestCase):
+    def test_lookalike_and_odd_endpoints_refused(self):
+        bad = ["https://llm.meshpool.ai.evil.com/v1", "https://llm.meshpool.ai@evil.com/v1", "https://xllm.meshpool.ai/v1",
+               "https://meshpool.ai/v1", "https://llm.meshpool.ai./v1", "http://llm.meshpool.ai/v1",
+               "https://llm.meshpool.ai:8443/v1", "https://user:pw@llm.meshpool.ai/v1", "https://api.openai.com/v1"]
+        for url in bad:
+            with self.subTest(url=url), self.assertRaises(LLMError):
+                Adapter(url, KEY, "m", key_host="llm.meshpool.ai", transport=lambda *a, **k: self.fail("sent"))
+
+    def test_good_host_accepted_and_case_insensitive(self):
+        Adapter("https://LLM.meshpool.ai/v1", KEY, "m", key_host="llm.meshpool.ai", transport=lambda *a, **k: {})
+
+    def test_key_host_defaults_to_base_url_host(self):
+        a = Adapter("https://api.openai.com/v1", KEY, "m", transport=lambda *a, **k: {})
+        self.assertEqual(a.key_host, "api.openai.com")
+        with self.assertRaises(LLMError):
+            Adapter("http://api.openai.com/v1", KEY, "m", transport=lambda *a, **k: {})
+
+    def test_base_url_mutated_after_construction_is_refused_before_sending(self):
+        a, t = make(reply("x"))
+        a.base_url = "https://evil.com/v1"
+        with self.assertRaises(LLMError):
+            a.chat([{"role": "user", "content": "q"}])
+        self.assertEqual(t.calls, [])
+
+    def test_redirect_off_host_refused_and_guard_installed(self):
+        used = []
+
+        def spy(*handlers):
+            used.extend(handlers)
+            raise urllib.error.URLError("stop")
+        import urllib.error
+        with mock.patch.object(urllib.request, "build_opener", spy), self.assertRaises(urllib.error.URLError):
+            adp.urllib_transport("https://llm.meshpool.ai/v1/chat/completions", {}, {}, bound_host="llm.meshpool.ai", has_key=True)
+        h = next(h for h in used if isinstance(h, llm._SameHostRedirect))
+        self.assertEqual((h.host, h.has_key), ("llm.meshpool.ai", True))
+        req = urllib.request.Request("https://llm.meshpool.ai/v1/chat/completions", data=b"{}")
+        for dest in ("https://evil.com/x", "https://llm.meshpool.ai.evil.com/v1", "http://llm.meshpool.ai/v1"):
+            with self.subTest(dest=dest), self.assertRaises(LLMError):
+                h.redirect_request(req, None, 307, "Temporary Redirect", {}, dest)
+
+    def test_key_not_in_body_or_error_text(self):
+        a, t = make(TransportError("HTTP 401", 401))
+        with self.assertRaises(TransportError) as cm:
+            a.chat([{"role": "user", "content": "q"}])
+        self.assertNotIn(KEY, json.dumps(t.calls[0]["body"]))
+        self.assertNotIn(KEY, str(cm.exception))
+
+    def test_ollama_localhost_without_key_ok_and_sends_no_auth(self):
+        t = FakeTransport(reply("hi"))
+        a = Adapter("http://localhost:11434/v1", None, "qwen2.5:14b", transport=t, mode="live")
+        a.chat([{"role": "user", "content": "q"}])
+        self.assertNotIn("Authorization", t.calls[0]["headers"])
+        Adapter("http://127.0.0.1:11434/v1", None, "m", transport=t)
+
+    def test_remote_http_refused_with_or_without_key(self):
+        for key in (None, KEY):
+            with self.subTest(key=key), self.assertRaises(LLMError):
+                Adapter("http://example.com/v1", key, "m", transport=lambda *a, **k: self.fail("sent"))
+
+    def test_localhost_http_with_key_refused(self):
+        with self.assertRaises(LLMError):
+            Adapter("http://localhost:11434/v1", KEY, "m", transport=lambda *a, **k: self.fail("sent"))
+
+
+class PiiTests(unittest.TestCase):
+    def test_pii_never_reaches_transport_and_is_restored_in_result(self):
+        a, t = make(reply("Contact [EMAIL_1] about it."), masker_names=["Jane Doe"])
+        msgs = [{"role": "system", "content": f"Owner {EMAIL}"},
+                {"role": "user", "content": [{"type": "text", "text": f"Jane Doe wrote from {EMAIL}, call +1 415-555-0132"}]}]
+        r = a.chat(msgs, job_id="j")
+        sent = json.dumps(t.calls[0]["body"])
+        for secret in (EMAIL, "Jane Doe", "415-555-0132"):
+            self.assertNotIn(secret, sent)
+        self.assertIn("[EMAIL_1]", sent)
+        self.assertEqual(r.text, f"Contact {EMAIL} about it.")
+        self.assertEqual(msgs[0]["content"], f"Owner {EMAIL}")                # caller's messages untouched
+
+    def test_json_data_is_unmasked(self):
+        a, _ = make(reply('{"answer": "[EMAIL_1]", "n": 1}'))
+        r = a.chat([{"role": "user", "content": f"who? {EMAIL}"}], json_schema=SCHEMA)
+        self.assertEqual(r.data["answer"], EMAIL)
+
+    def test_same_job_keeps_placeholders_stable(self):
+        a, t = make(reply("a"), reply("b"))
+        a.chat([{"role": "user", "content": f"x {EMAIL}"}], job_id="J")
+        a.chat([{"role": "user", "content": f"y other@example.org and {EMAIL}"}], job_id="J")
+        self.assertIn("[EMAIL_1]", json.dumps(t.calls[1]["body"]))
+        self.assertIn("[EMAIL_2]", json.dumps(t.calls[1]["body"]))
+
+
+class ReplayTests(unittest.TestCase):
+    def setUp(self):
+        self.tmp = tempfile.TemporaryDirectory()
+        self.addCleanup(self.tmp.cleanup)
+
+    def _env(self, d):
+        return mock.patch.dict(os.environ, {"ACRETIA_LLM_FIXTURES": str(d)})
+
+    def test_committed_fixture_replays_with_zero_sockets(self):
+        boom = AssertionError("network touched in replay mode")
+        a = Adapter("https://llm.meshpool.ai/v1", KEY, "fixture-model", mode="replay",
+                    transport=lambda *x, **k: self.fail("transport used in replay"))
+        with self._env(FIXTURES), \
+                mock.patch.object(socket.socket, "connect", side_effect=boom), \
+                mock.patch.object(socket, "create_connection", side_effect=boom), \
+                mock.patch.object(socket, "getaddrinfo", side_effect=boom), \
+                mock.patch.object(urllib.request, "urlopen", side_effect=boom), \
+                mock.patch.object(urllib.request.OpenerDirector, "open", side_effect=boom):
+            r = a.chat(REPLAY_MESSAGES, json_schema=SCHEMA)
+        self.assertTrue(r.replayed)
+        self.assertEqual(r.cost_usd, 0.0)
+        self.assertEqual(r.data, {"answer": f"Note from {EMAIL}", "n": 7})        # PII restored from the masked fixture
+
+    def test_committed_fixtures_contain_no_pii(self):
+        files = list(FIXTURES.glob("*.json"))
+        self.assertTrue(files)
+        for f in files:
+            self.assertNotIn("example.com", f.read_text())
+
+    def test_replay_miss_raises_before_any_socket(self):
+        boom = AssertionError("network touched")
+        a = Adapter("https://llm.meshpool.ai/v1", KEY, "m", mode="replay")        # no transport: would use urllib
+        with self._env(self.tmp.name), \
+                mock.patch.object(socket.socket, "connect", side_effect=boom) as sc, \
+                mock.patch.object(socket, "getaddrinfo", side_effect=boom) as ga, \
+                mock.patch.object(urllib.request, "build_opener", side_effect=boom) as bo:
+            with self.assertRaises(replay.ReplayMiss) as cm:
+                a.chat([{"role": "user", "content": "never recorded"}])
+            with self.assertRaises(replay.ReplayMiss):
+                list(a.chat([{"role": "user", "content": "never recorded"}], stream=True))
+        self.assertEqual(len(cm.exception.key), 64)
+        for m in (sc, ga, bo):
+            m.assert_not_called()
+
+    def test_record_writes_masked_fixture_then_replays(self):
+        rec, t = make(reply('{"answer": "[EMAIL_1]", "n": 7}'), mode="record")
+        with self._env(self.tmp.name):
+            live = rec.chat(REPLAY_MESSAGES, json_schema=SCHEMA)
+            files = list(Path(self.tmp.name).glob("*.json"))
+            self.assertEqual(len(files), 1)
+            text = files[0].read_text()
+            self.assertNotIn(EMAIL, text)
+            self.assertIn("[EMAIL_1]", text)
+            self.assertNotIn(EMAIL, json.dumps(t.calls[0]["body"]))
+            rep = Adapter("https://llm.meshpool.ai/v1", KEY, "m", mode="replay")
+            r = rep.chat(REPLAY_MESSAGES, json_schema=SCHEMA)
+        self.assertEqual(r.data, live.data)
+        self.assertEqual(r.data["answer"], EMAIL)
+        self.assertTrue(r.replayed and not live.replayed)
+
+    def test_invalid_reply_is_not_recorded(self):
+        rec, _ = make(reply("bad"), reply("bad again"), mode="record")
+        with self._env(self.tmp.name), self.assertRaises(InvalidJSON):
+            rec.chat(REPLAY_MESSAGES, json_schema=SCHEMA)
+        self.assertEqual(list(Path(self.tmp.name).glob("*.json")), [])
+
+    def test_stream_record_and_replay(self):
+        rec, _ = make(sse("Hi [EMAIL_", "1]"), mode="record")
+        with self._env(self.tmp.name):
+            self.assertEqual(rec.chat(REPLAY_MESSAGES, stream=True).text(), f"Hi {EMAIL}")
+            rep = Adapter("https://llm.meshpool.ai/v1", KEY, "m", mode="replay")
+            s = rep.chat(REPLAY_MESSAGES, stream=True)
+            self.assertEqual(s.text(), f"Hi {EMAIL}")
+            self.assertTrue(s.result.replayed)
+
+    def test_env_mode_default_is_respected(self):
+        a = Adapter("https://llm.meshpool.ai/v1", KEY, "m")
+        with self._env(self.tmp.name), mock.patch.dict(os.environ, {"ACRETIA_LLM_MODE": "replay"}):
+            with self.assertRaises(replay.ReplayMiss):
+                a.chat([{"role": "user", "content": "x"}])
+
+
+class LedgerTests(unittest.TestCase):
+    def test_totals_per_job_and_overall(self):
+        led = Ledger()
+        a, _ = make(reply("a", 1000, 100), reply("b", 500, 50), reply("c", 200, 20), ledger=led, mask=False)
+        a.chat([{"role": "user", "content": "1"}], job_id="J1")
+        a.chat([{"role": "user", "content": "2"}], job_id="J1")
+        a.chat([{"role": "user", "content": "3"}], job_id="J2")
+        j1, j2, tot = led.total("J1"), led.total("J2"), led.total()
+        self.assertEqual((j1["calls"], j1["input_tokens"], j1["output_tokens"]), (2, 1500, 150))
+        self.assertEqual((j2["calls"], j2["input_tokens"]), (1, 200))
+        self.assertEqual(tot["calls"], 3)
+        self.assertAlmostEqual(tot["cost_usd"], j1["cost_usd"] + j2["cost_usd"])
+        self.assertAlmostEqual(j2["cost_usd"], cost_usd("m", 200, 20))
+
+    def test_jsonl_is_append_only_and_reloaded(self):
+        with tempfile.TemporaryDirectory() as d:
+            p = Path(d) / "sub" / "ledger.jsonl"
+            led = Ledger(p)
+            led.record("J", "gpt-4.1-mini", 1000, 100)
+            led.record("J", "gpt-4.1-mini", 10, 1)
+            rows = [json.loads(x) for x in p.read_text().splitlines()]
+            self.assertEqual([r["input_tokens"] for r in rows], [1000, 10])
+            again = Ledger(p)
+            self.assertEqual(again.total("J")["calls"], 2)
+            again.record("K", "m", 1, 1)
+            self.assertEqual(len(p.read_text().splitlines()), 3)
+
+    def test_price_table_longest_match_and_cache_discount(self):
+        self.assertAlmostEqual(cost_usd("gpt-4.1-mini-2025", 1_000_000, 0), 0.40)
+        self.assertAlmostEqual(cost_usd("gpt-4.1", 1_000_000, 0), 2.0)
+        self.assertAlmostEqual(cost_usd("claude-sonnet-5", 0, 1_000_000), 15.0)
+        self.assertAlmostEqual(cost_usd("gpt-4.1", 1_000_000, 0, 1_000_000), 0.2)
+        self.assertEqual(cost_usd("ollama:qwen", 10**6, 10**6), 0.0)
+
+    def test_spend_guard_blocks_before_the_call(self):
+        led = Ledger(guard=SpendGuard(limit_usd=0.01))
+        a, t = make(reply("x"), ledger=led)
+        # worst case: 4096 output tokens of an unknown (expensive-default) model dwarfs $0.01
+        with self.assertRaises(BudgetExceeded):
+            a.chat([{"role": "user", "content": "q"}], max_tokens=4096, job_id="J")
+        self.assertEqual(t.calls, [])
+        self.assertEqual(led.total()["calls"], 0)
+
+    def test_spend_guard_counts_spend_so_far_and_job_limit(self):
+        guard = SpendGuard(limit_usd=1.0, job_limit_usd=0.10)
+        led = Ledger(guard=guard)
+        a, t = make(reply("x", 100, 100), reply("y"), ledger=led)
+        a.model = "gpt-4.1-mini"
+        a.chat([{"role": "user", "content": "q"}], max_tokens=1000, job_id="A")      # worst case ~$0.0016, fine
+        led.record("A", "gpt-4.1-mini", 0, 60_000)                                    # job A has now spent ~$0.096
+        with self.assertRaises(BudgetExceeded) as cm:
+            a.chat([{"role": "user", "content": "q"}], max_tokens=4000, job_id="A")
+        self.assertIn("job", str(cm.exception))
+        self.assertEqual(len(t.calls), 1)
+        a.chat([{"role": "user", "content": "q"}], max_tokens=1000, job_id="B")      # other jobs are unaffected
+        self.assertEqual(len(t.calls), 2)
+
+    def test_guard_checked_for_repair_and_stream(self):
+        led = Ledger(guard=SpendGuard(limit_usd=0.005))
+        a, t = make(sse("hi"), ledger=led)
+        a.model = "gpt-4.1-mini"
+        with self.assertRaises(BudgetExceeded):
+            a.chat([{"role": "user", "content": "q"}], max_tokens=100_000, stream=True).text()
+        self.assertEqual(t.calls, [])
+
+
+class Om_llmDelegationTests(unittest.TestCase):
+    """om/llm.py providers go through the adapter and keep their behaviour."""
+
+    def test_openai_compat_provider_uses_adapter_request(self):
+        seen = []
+        p = llm.OpenAICompatProvider("meshpool", "m", "https://llm.meshpool.ai/v1", KEY,
+                                     transport=lambda url, body, headers: seen.append((url, headers)) or reply('{"answer":"a","n":1}'))
+        with mock.patch.object(adp.Adapter, "request", autospec=True, side_effect=adp.Adapter.request) as req:
+            res = p.complete_json("s", [llm.Part("q")], SCHEMA)
+        self.assertEqual(res.data["n"], 1)
+        req.assert_called_once()
+        self.assertEqual(seen[0][1]["Authorization"], f"Bearer {KEY}")
+
+    def test_anthropic_without_sdk_client_routes_through_adapter_to_anthropic_host(self):
+        seen = []
+        tr = lambda url, body, headers: seen.append((url, headers)) or reply('{"answer":"a","n":1}')    # noqa: E731
+        with mock.patch.dict(os.environ, {"ANTHROPIC_API_KEY": KEY}):
+            p = llm.make_provider("anthropic:claude-x", transport=tr)
+        res = p.complete_json("s", [llm.Part("q")], SCHEMA)
+        self.assertEqual(res.model, "anthropic:claude-x")
+        self.assertEqual(seen[0][0], "https://api.anthropic.com/v1/chat/completions")
+        self.assertEqual(seen[0][1]["Authorization"], f"Bearer {KEY}")
+
+    def test_anthropic_needs_a_key_not_an_sdk(self):
+        with mock.patch.dict(os.environ, {}, clear=True), self.assertRaises(LLMError):
+            llm.make_provider("anthropic")
+
+
+class NoProviderSdkTests(unittest.TestCase):
+    BANNED = ("anthropic", "openai", "google.generativeai", "google.genai", "mistralai", "cohere", "litellm")
+
+    def test_no_module_imports_a_provider_sdk(self):
+        allowed = ROOT / "src" / "harness" / "adapter.py"
+        offenders = []
+        for base in ("om", "src"):
+            for path in (ROOT / base).rglob("*.py"):
+                if path == allowed:
+                    continue
+                tree = ast.parse(path.read_text(encoding="utf-8"), filename=str(path))
+                for node in ast.walk(tree):
+                    names = []
+                    if isinstance(node, ast.Import):
+                        names = [a.name for a in node.names]
+                    elif isinstance(node, ast.ImportFrom) and node.level == 0 and node.module:
+                        names = [node.module] + [f"{node.module}.{a.name}" for a in node.names]
+                    elif isinstance(node, ast.Call) and getattr(node.func, "id", "") == "__import__" and node.args \
+                            and isinstance(node.args[0], ast.Constant):
+                        names = [str(node.args[0].value)]
+                    elif isinstance(node, ast.Call) and getattr(node.func, "attr", "") == "import_module" and node.args \
+                            and isinstance(node.args[0], ast.Constant):
+                        names = [str(node.args[0].value)]
+                    for n in names:
+                        if any(n == b or n.startswith(b + ".") for b in self.BANNED):
+                            offenders.append(f"{path.relative_to(ROOT)}:{node.lineno} imports {n}")
+        self.assertEqual(offenders, [])
+
+    def test_adapter_itself_imports_no_sdk(self):
+        tree = ast.parse((ROOT / "src" / "harness" / "adapter.py").read_text())
+        mods = {a.name for n in ast.walk(tree) if isinstance(n, ast.Import) for a in n.names}
+        mods |= {n.module for n in ast.walk(tree) if isinstance(n, ast.ImportFrom) and n.module}
+        self.assertFalse({m.split(".")[0] for m in mods} & {"anthropic", "openai", "mistralai", "cohere", "litellm"})
+
+
+if __name__ == "__main__":
+    unittest.main()

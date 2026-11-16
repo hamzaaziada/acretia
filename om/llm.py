@@ -10,7 +10,7 @@ extraction, a stronger one for agentic modelling, …):
     DEEPSEEK_API_KEY=…  ANTHROPIC_API_KEY=…  OPENAI_API_KEY=…  OPENROUTER_API_KEY=…
 
   Providers
-    anthropic    Claude via the official `anthropic` SDK (structured outputs, prompt caching, refusal fallback)
+    anthropic    Claude (SDK-shaped client if injected; else the harness adapter -> Anthropic OpenAI-compatible endpoint)
     deepseek     https://api.deepseek.com            (OpenAI-compatible; JSON mode; automatic prefix caching)
     openai       https://api.openai.com/v1           (JSON-schema structured outputs)
     openrouter   https://openrouter.ai/api/v1        (hundreds of models behind one key)
@@ -51,7 +51,8 @@ PRESETS = {
 }
 ANTHROPIC_DEFAULT = "claude-opus-5-5"
 MESHPOOL_HOST = "llm.meshpool.ai"
-KEY_BOUND_HOSTS = {"meshpool": MESHPOOL_HOST}     # provider name -> the only host its key may ever reach
+ANTHROPIC_BASE_URL = "https://api.anthropic.com/v1"
+KEY_BOUND_HOSTS = {"meshpool": MESHPOOL_HOST, "anthropic": "api.anthropic.com"}     # provider name -> the only host its key may ever reach
 AUTO_ORDER = ("meshpool", "anthropic", "deepseek", "openai", "gemini", "openrouter", "together", "groq", "fireworks", "mistral")
 VISION = ("anthropic", "openai", "gemini", "openrouter")      # providers whose default models read images
 
@@ -162,21 +163,25 @@ def _extract_json(text: str):
 
 # --------------------------------------------------------------------------- providers
 class AnthropicProvider:
-    """Claude via the official SDK. Structured outputs guarantee schema-valid JSON; the document
-    prefix is cached; server-side refusal fallback is on."""
+    """Claude. With an injected SDK-shaped `client` (tests, or a caller who already holds one) the Messages API is used
+    through it (structured outputs, prompt caching, refusal fallback). Without one, calls go through the harness
+    adapter to Anthropic's OpenAI-compatible endpoint: no provider SDK is imported anywhere in this module (D-020)."""
 
-    def __init__(self, model: str, client=None):
+    def __init__(self, model: str, client=None, transport=None, api_key: str | None = None):
         self.model = model
-        if client is None:
-            try:
-                import anthropic
-            except ImportError:
-                raise LLMError("pip install anthropic (requirements.txt) to use Claude")
-            client = anthropic.Anthropic()
         self.client = client
+        self._compat = None
+        if client is None:
+            key = api_key or _env("ANTHROPIC_API_KEY") or _env("ANTHROPIC_AUTH_TOKEN")
+            if not key:
+                raise LLMError("Claude needs ANTHROPIC_API_KEY (Settings)")
+            self._compat = OpenAICompatProvider("anthropic", model, ANTHROPIC_BASE_URL, key, "json_object", transport,
+                                                key_host=KEY_BOUND_HOSTS["anthropic"])
 
     def complete_json(self, system: str, parts: list[Part], schema: dict, max_tokens: int = 16000,
                       effort: str = "medium", repair_note: str | None = None) -> Result:
+        if self._compat is not None:
+            return self._compat.complete_json(system, parts, schema, max_tokens, effort, repair_note)
         import base64
         content = []
         for p in parts:
@@ -211,29 +216,23 @@ class OpenAICompatProvider:
         self.key_host = (key_host or KEY_BOUND_HOSTS.get(name) or "").lower() or None
         if self.key and self.key_host:
             key_host_guard(self.base_url, self.key_host)
+        self._injected = transport
         self.transport = transport or self._post
         self.timeout = timeout
 
+    def _adapter(self):
+        """The harness adapter that performs the HTTP call (key-host binding, redirect guard, retry/backoff)."""
+        from src.harness.adapter import Adapter
+        return Adapter(self.base_url, self.key, self.model, key_host=self.key_host, timeout=self.timeout, mode="live",
+                       transport=self._injected, max_retries=0 if self._injected else 3, backoff=2.0, mask=False)
+
     def _post(self, url: str, body: dict, headers: dict) -> dict:
-        req = urllib.request.Request(url, data=json.dumps(body).encode(), headers=headers, method="POST")
-        opener = urllib.request.build_opener(_SameHostRedirect(self.key_host or (urlparse(url).hostname or ""), bool(self.key)))
-        for attempt in range(4):
-            try:
-                with opener.open(req, timeout=self.timeout) as r:
-                    return json.loads(r.read())
-            except urllib.error.HTTPError as e:
-                if e.code in (429, 500, 502, 503, 504) and attempt < 3:
-                    time.sleep(2 ** attempt * 2)
-                    continue
-                raise TransportError(f"{self.name} HTTP {e.code}: {e.read()[:300]!r}", e.code)
-            except LLMError:
-                raise
-            except (urllib.error.URLError, TimeoutError) as e:
-                if attempt < 3:
-                    time.sleep(2 ** attempt * 2)
-                    continue
-                raise TransportError(f"{self.name} unreachable: {e}")
-        raise TransportError("retries exhausted")
+        from src.harness.adapter import urllib_transport
+        try:
+            return urllib_transport(url, body, headers, timeout=self.timeout,
+                                    bound_host=self.key_host or (urlparse(url).hostname or ""), has_key=bool(self.key))
+        except TransportError as e:
+            raise TransportError(f"{self.name} {e}", e.status)
 
     def complete_json(self, system: str, parts: list[Part], schema: dict, max_tokens: int = 8000,
                       effort: str = "medium", repair_note: str | None = None) -> Result:
@@ -258,12 +257,9 @@ class OpenAICompatProvider:
             body["response_format"] = {"type": "json_schema", "json_schema": {"name": "result", "schema": schema, "strict": False}}
         elif self.json_mode == "json_object":
             body["response_format"] = {"type": "json_object"}
-        headers = {"Content-Type": "application/json", "User-Agent": "OpenMultiples/0.1"}
-        if self.key:
-            headers["Authorization"] = f"Bearer {self.key}"
         if self.key and self.key_host:
             key_host_guard(self.base_url, self.key_host)       # re-checked at call time: base_url is mutable
-        j = self.transport(f"{self.base_url}/chat/completions", body, headers)
+        j = self._adapter().request(body)
         choice = (j.get("choices") or [{}])[0]
         if choice.get("finish_reason") == "content_filter":
             raise LLMRefusal("content filter")
@@ -320,7 +316,7 @@ def make_provider(spec: str, transport=None, anthropic_client=None):
     name, _, model = spec.partition(":")
     name = name.strip().lower()
     if name == "anthropic":
-        return AnthropicProvider(model or ANTHROPIC_DEFAULT, client=anthropic_client)
+        return AnthropicProvider(model or ANTHROPIC_DEFAULT, client=anthropic_client, transport=transport)
     preset = dict(PRESETS.get(name, {}))
     up = name.upper()
     if _env(f"OM_PROVIDER_{up}_BASE_URL"):
@@ -362,11 +358,6 @@ def configured_spec(stage: str) -> str | None:
     for name in order:
         env = "ANTHROPIC_API_KEY" if name == "anthropic" else PRESETS[name]["key_env"]
         if _env(env) or (name == "anthropic" and _env("ANTHROPIC_AUTH_TOKEN")):
-            if name == "anthropic":
-                try:
-                    import anthropic  # noqa: F401
-                except ImportError:
-                    continue
             return name
     return None
 

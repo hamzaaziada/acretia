@@ -1,0 +1,13 @@
+{
+  "data": {
+    "text": "{\"answer\": \"Note from [EMAIL_1]\", \"n\": 7}"
+  },
+  "key": "e96d643a59c15178488f771565e94ea4303ce2dd1c1fc689deea4d7aef4ec796",
+  "model": "fixture-model",
+  "task": "adapter:fixture-model",
+  "usage": {
+    "cache_read_input_tokens": null,
+    "input_tokens": 30,
+    "output_tokens": 12
+  }
+}
