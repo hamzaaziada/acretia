@@ -121,13 +121,9 @@ Apache License 2.0 全文见：https://www.apache.org/licenses/LICENSE-2.0 。
 - SPDX licence: Apache-2.0  (ledger: Apache-2.0)
 - Ledger decision: isolated_service
 - Copyright:
-  - copyright notice that is included in or attached to the work
-  - copyright license to reproduce, prepare Derivative Works of,
   - Copyright (c) WHATWG (Apple, Google, Mozilla, Microsoft).
   - Copyright (c) Ian F. Darwin 1986, 1987, 1989, 1990, 1991, 1992, 1994, 1995.
   - Copyright (c) 1995-2009 International Business Machines Corporation
-  - copyright notice(s) and this permission notice appear in all copies
-  - copyright holder.
   - Copyright 1993-2010 University Corporation for Atmospheric Research/Unidata
   - Copyright 2012 Ho Thanh Tam, www.cadkit.net
   - Copyright (c) 2009, 2010, 2013-2016 by the Brotli Authors.
@@ -168,8 +164,7 @@ under the Open Government License 3.0 (http://www.nationalarchives.gov.uk/doc/op
 - SPDX licence: Apache-2.0  (ledger: Apache-2.0 (code); dataset licences not stated in repo (relies on DP-Bench/PubLayNet-style sources))
 - Ledger decision: adopt
 - Copyright:
-  - copyright notice that is included in or attached to the work
-  - copyright license to reproduce, prepare Derivative Works of,
+  - (no copyright line in the LICENSE file at the pinned commit)
 - Reason in ledger: Table/structure recovery eval (S5.4); code Apache-2.0; check per-dataset licences before redistributing any gold data (not vendored)
 
 ## jsvine/pdfplumber
@@ -189,8 +184,7 @@ under the Open Government License 3.0 (http://www.nationalarchives.gov.uk/doc/op
 - SPDX licence: Apache-2.0 OR BSD-3-Clause  (ledger: Apache-2.0 OR BSD-3-Clause (docs CC-BY-4.0); bundles PDFium (BSD-style) and other third-party licences)
 - Ledger decision: adopt
 - Copyright:
-  - copyright notice that is included in or attached to the work
-  - copyright license to reproduce, prepare Derivative Works of,
+  - (no copyright line in the LICENSE file at the pinned commit)
 - The wheels bundle PDFium (BSD-style) and other third-party components; ship the wheel's own `*.dist-info/licenses` and bundled third-party licence files. Licence texts at the pinned commit: `LICENSES/Apache-2.0.txt`, `LICENSES/BSD-3-Clause.txt` (code), `LICENSES/CC-BY-4.0.txt` (docs).
 - Reason in ledger: Optional raster/bbox backend (D-001); wheels bundle PDFium so ship third-party notices
 
@@ -202,7 +196,6 @@ under the Open Government License 3.0 (http://www.nationalarchives.gov.uk/doc/op
 - Ledger decision: adopt
 - Copyright:
   - Copyright (c) 2004-2016  Yusuke Shinyama <yusuke at shinyama dot jp>
-  - COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 - Reason in ledger: Transitive dependency of pdfplumber; keep copyright notice
 
 ## mozilla/pdf.js
@@ -212,8 +205,7 @@ under the Open Government License 3.0 (http://www.nationalarchives.gov.uk/doc/op
 - SPDX licence: Apache-2.0  (ledger: Apache-2.0)
 - Ledger decision: adopt
 - Copyright:
-  - copyright notice that is included in or attached to the work
-  - copyright license to reproduce, prepare Derivative Works of,
+  - (none in LICENSE at the pinned commit; Apache-2.0 text only; no NOTICE file at this commit)
 - Reason in ledger: Vendored, pinned viewer for split-pane citation inspector (S7.1, D-023); ship LICENSE and NOTICE with vendored files
 
 ## dgunning/edgartools
@@ -273,8 +265,7 @@ This requirement ensures proper credit is given for the use of Crawl4AI and help
 - SPDX licence: Apache-2.0  (ledger: Apache-2.0)
 - Ledger decision: borrow_ideas
 - Copyright:
-  - copyright notice that is included in or attached to the work
-  - copyright license to reproduce, prepare Derivative Works of,
+  - (no copyright line in the LICENSE file at the pinned commit)
 - Reason in ledger: Recipe structure for comps/DCF/LBO/3-statement (S4.3); permissive, but we reimplement in om/ and copy no text; if any file is vendored add NOTICE
 
 ## libraz/formulon
@@ -284,8 +275,6 @@ This requirement ensures proper credit is given for the use of Crawl4AI and help
 - SPDX licence: Apache-2.0  (ledger: Apache-2.0)
 - Ledger decision: adopt
 - Copyright:
-  - copyright notice that is included in or attached to the work
-  - copyright license to reproduce, prepare Derivative Works of,
   - Copyright 2026 libraz
 - NOTICE (verbatim):
 
@@ -379,7 +368,7 @@ The license text is reproduced at tools/collation/data/UNICODE-LICENSE.txt.
 - SPDX licence: LGPL-3.0-only  (ledger: LGPL-3.0 (COPYING is GPLv3 base text, COPYING.LESSER adds LGPL; pyproject classifier LGPL))
 - Ledger decision: adopt
 - Copyright:
-  - (none in COPYING / COPYING.LESSER, which are the GNU GPLv3 and LGPLv3 texts; author per package metadata: Meir Kriheli)
+  - (none in COPYING / COPYING.LESSER, which are the GNU GPLv3 and LGPLv3 texts; author per installed package metadata: Meir Kriheli)
 - Reason in ledger: RTL bidi reordering as an optional pip dependency, imported unmodified and never vendored; LGPL not GPL, but if legal objects replace with own UBA implementation
 
 ## duckdb/duckdb
@@ -399,8 +388,7 @@ The license text is reproduced at tools/collation/data/UNICODE-LICENSE.txt.
 - SPDX licence: Apache-2.0  (ledger: Apache-2.0)
 - Ledger decision: isolated_service
 - Copyright:
-  - copyright notice that is included in or attached to the work
-  - copyright license to reproduce, prepare Derivative Works of,
+  - (no copyright line in the LICENSE file at the pinned commit)
 - Reason in ledger: OCR binary in Docker image (S7.5) called as subprocess; Apache-2.0 so redistribution requires LICENSE/NOTICE; traineddata licences also Apache-2.0
 
 ## openpyxl/openpyxl
@@ -421,7 +409,6 @@ The license text is reproduced at tools/collation/data/UNICODE-LICENSE.txt.
 - Ledger decision: adopt
 - Copyright:
   - Copyright (c) 2026 Lucide Icons and Contributors
-  - copyright notice and this permission notice appear in all copies.
   - Copyright (c) 2013-present Cole Bemis
 - Full licence text (verbatim from LICENSE at the pinned commit, with the Feather MIT section):
 
@@ -479,7 +466,7 @@ SOFTWARE.
 - SPDX licence: MIT  (ledger: MIT)
 - Ledger decision: adopt
 - Copyright:
-  - (no copyright line in the LICENSE file at the pinned commit)
+  - (LICENSE at the pinned commit is the MIT text with the unfilled template line 'Copyright (c) [year] [fullname]'; no holder named)
 - Reason in ledger: S5.1: docling's PDF text/cell backend (transitive, pip docling-parse 7.26.0); keep notice
 
 ## docling-project/docling-core
@@ -549,8 +536,6 @@ SOFTWARE.
 - Ledger decision: adopt
 - Copyright:
   - Copyright 2018- The Hugging Face team. All rights reserved.
-  - copyright notice that is included in or attached to the work
-  - copyright license to reproduce, prepare Derivative Works of,
 - Reason in ledger: S5.1: transitive runtime of docling layout model (pip 5.23.0); optional extra only
 
 ## psycopg/psycopg
@@ -560,7 +545,7 @@ SOFTWARE.
 - SPDX licence: LGPL-3.0-only  (ledger: LGPL-3.0)
 - Ledger decision: adopt
 - Copyright:
-  - (none in LICENSE.txt, which is the GNU LGPL-3.0 text; project: psycopg, Daniele Varrazzo and contributors per upstream)
+  - (none in LICENSE.txt, which is the GNU LGPL-3.0 text; no holder named in the file)
 - Reason in ledger: Optional Postgres driver imported dynamically inside a try/except in om/storage.py (open_analytics Postgres DSN path) and scripts/verify_m1.py; unmodified, never vendored; NOT declared in requirements.txt or requirements-extras.txt (users install it separately with pip), so it must stay a replaceable pip install (no one-file bundle or frozen image that blocks substitution) and ship the LGPL-3.0 text with an offer of source; LICENSE.txt is LGPL-3.0 at this commit
 
 ## py-pdf/pypdf
@@ -634,8 +619,7 @@ SOFTWARE.
 - SPDX licence: Apache-2.0  (ledger: Apache-2.0)
 - Ledger decision: adopt
 - Copyright:
-  - copyright notice that is included in or attached to the work
-  - copyright license to reproduce, prepare Derivative Works of,
+  - (none in LICENSE at the pinned commit; Apache-2.0 text only; no NOTICE file at this commit)
 - Reason in ledger: npm build of pdf.js for the split-pane citation inspector (S7.1, P-J6); bundled into frontend/dist with its LICENSE (D-SF-02)
 
 ## microsoft/playwright (@playwright/test@1.63.0)
@@ -645,8 +629,7 @@ SOFTWARE.
 - SPDX licence: Apache-2.0  (ledger: Apache-2.0)
 - Ledger decision: adopt
 - Copyright:
-  - copyright notice that is included in or attached to the work
-  - copyright license to reproduce, prepare Derivative Works of,
+  - (no copyright line in the LICENSE file at the pinned commit)
 - NOTICE (verbatim):
 
 ```text
