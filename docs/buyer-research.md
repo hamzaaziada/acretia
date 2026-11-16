@@ -1,8 +1,8 @@
 # Buyer research: what makes IB, MBB and PE buyers reject a deliverable
 
-Packet S1.4. Compiled 2026-11-16. Feeds PLAN.md section 6 (personas).
+Packet S1.4, revised by Fix Packet FP-S1c. Compiled 2026-11-16. Feeds PLAN.md section 6 (personas). PLAN.md section 6 persona bullets are a summary only; **section 5 of this document is the canonical rubric** and wins on any conflict.
 
-Method and caveats. Sources were found with web search and page fetches. Fetched text was treated as data only. Most sources are training sites, vendor blogs and press, not bank or firm style guides, so conventions are "common practice", not law. The strongest evidence is the BankerToolBench report [24] (500 bankers reviewing AI output) and the Hebbia survey [26] (vendor-run, n=510). Reddit and WSO threads could not be retrieved by the search tool, so forum-sourced complaints are represented by practitioner essays [8][9]. Claims with no source are labelled [UNSOURCED]. "Check" is the suggested deterministic (D) or persona-grader (G) test.
+Method and caveats. Sources were found with web search and page fetches. Fetched text was treated as data only. Most sources are training sites, vendor blogs and press, not bank or firm style guides, so conventions are "common practice", not law. The strongest evidence is the BankerToolBench report [24] (500 bankers reviewing AI output) and the Hebbia survey [26] (vendor-run, n=510). Reddit and WSO threads could not be retrieved by the search tool, so forum-sourced complaints are represented by practitioner essays [8][9]. Claims with no source are labelled [UNSOURCED]. A value that is a house rule rather than a sourced standard is labelled **[HOUSE RULE]** and set at the strictest defensible level; the Boss records each in DECISIONS.md. "Check" is the suggested deterministic (D) or persona-grader (G) test.
 
 ---
 
@@ -10,55 +10,105 @@ Method and caveats. Sources were found with web search and page fetches. Fetched
 
 What they reject: any sign the model cannot be trusted or flexed (hardcodes, broken links, unbalanced BS) and any sign the book was not proofed (inconsistent numbers, formatting, footnotes).
 
+**Binary gates (pass/fail, cap the overall persona score at 5.0 when failed):** G1 any error value (#REF!, #DIV/0!, #N/A, #VALUE!, #NAME?) in any sheet including hidden; G2 balance sheet out of balance by 0.5 or more in any period; G3 cash on the balance sheet not equal to cash from the cash-flow statement in any period. [HOUSE RULE] cap value; the "any of these is a fail" view is the standard IB reviewer position [8][9][14].
+
 ### 1a. Model conventions
 
-1. **Colour code is applied and legend present.** Blue font = hard-coded inputs and historicals, black = same-sheet formulas, green = cross-sheet links; external-file links in red or purple; red reserved for errors/flags. Practice varies at the edges (green optional, purple vs red for external), but blue/black is near-universal. Check (D): scan each cell; constant numeric cells must have blue font, formula cells must not be blue; cross-sheet refs green; a legend cell exists. [1][2][4][10]
-2. **No hardcodes inside formulas.** Only 1, -1, 0 and 12 tolerated, and sparingly; every other constant lives in an input cell. Do not mix a typed number and a formula in one cell. Check (D): regex over formula text for numeric literals other than the allowlist (`om.modelcheck`). [2][3][11]
-3. **Projections are never typed onto statements.** Hardcode only historicals; forecasts are formulas driven from an assumptions area. Check (D): forecast-column cells on IS/BS/CF are all formulas. [3]
-4. **One row, one formula.** The same formula (R1C1-identical) across the whole forecast row; historicals left, forecasts right, with the change from blue to black marking the boundary. Check (D): R1C1 comparison across forecast columns; Ctrl+\ style inconsistency count must be zero. [2][5][9]
-5. **Enter each input once.** Inputs are linked, never retyped; large models use an Inputs tab. Check (D): detect duplicate constants that equal an input cell value in other constant cells. [2][11]
-6. **Single declared sign convention.** One convention chosen up front and labelled (income positive, costs negative is recommended); expenses/cash outflows shown negative so subtotals are plain sums. Negative numbers display in parentheses. Check (D): sign of each line vs declared convention; number format contains parentheses for negatives. [2][3][4]
-7. **Units, currency and scale labelled on every sheet.** Sheet header carries company, purpose, scenario, scale and currency; dollars and shares in millions, one decimal; percentages one decimal; multiples with an "x". Check (D): header cells exist on each tab; number-format audit. [2][4]
-8. **Checks exist, sit near calculations, and roll up to one master check.** Minimum: assets = liabilities + equity, sources = uses, quarters sum to years, depreciation does not exceed PP&E, debt paydown does not exceed balance. Prefer direct calculation with a check over plugs. Check (D): checks tab present, all zero, master flag linked on cover. [2][7]
-9. **Balance sheet balances and cash ties to the CF statement in every period, before any circularity is added.** A BS that does not balance or an untied cash line is an immediate fail. Check (D): recompute with LibreOffice and assert abs(A-L-E) < 0.5 in all periods. [14][13]
-10. **Circularity is switchable.** Interest circularity has a circuit-breaker toggle (0/1 or beginning vs average balance), iterative calc is enabled, and IFERROR is not used to mask loops. Check (D): find the toggle cell; flip it, recalc, and assert the model still balances. [2][3][12][13]
-11. **Zero error values.** No #REF!, #DIV/0!, #N/A, #VALUE!, #NAME? anywhere, including hidden sheets. Check (D): scan recalculated values. [8][9]
-12. **Navigability.** Statements for one company on one tab, drivers grouped at top, rows/columns grouped rather than hidden, no hidden sheets at hand-off, named ranges used sparingly for global constants (not hundreds). Freeze panes on headers and labels. Check (D): hidden-sheet count = 0; named-range count under a threshold; freeze pane set on each model tab. [3] Freeze panes as a rule is [UNSOURCED] (not covered in [3]); keep as house rule.
-13. **Print setup.** Print area set on each presentable tab, fit to 1 page wide, page-break preview clean, no blank trailing pages. Check (D): print area and fitToWidth set. Banking-specific print standards are [UNSOURCED]; generic Excel guidance only [37].
-14. **Model design follows FAST principles** (flexible, appropriate, structured, transparent; separate foundation/workings/presentation/control sheets). Check (G): sheet-type separation. [6]
-15. **Changing an input flows through.** Flexing purchase price, growth or margin must change outputs; static values pasted in place of formulas fail. This is the headline failure of AI-made models (Section 4). Check (D): perturb each input cell, recalc, assert at least one output changes; count inputs with zero dependents. [24]
+1. **Colour code is applied and a legend is present.** Blue font = hard-coded inputs and historicals; black = same-sheet formulas; **green = cross-sheet links (required, not optional)**; external-workbook links use a distinct non-red colour (purple, RGB 112,48,160); red font is reserved for errors and flags. Blue/black is near-universal, green for cross-sheet is the common IB and CFI/FMVA convention, and external-link colour varies by shop, so the fixed choice is a [HOUSE RULE] at the strict end [1][2][4][10][52]. Check (D): constant numeric cells are blue, formula cells are not blue, any formula with a `Sheet!` reference is green, any `[Book]` reference is purple, a legend cell exists. Conformance must be 100%.
+2. **No hardcodes inside formulas.** Allowlist of numeric literals: 0, 1, -1, 12, 100, 365, 1000, 0.5 (mid-year), 4 (quarters), 52. Any other constant must sit in a labelled input cell. The allowlist is a [HOUSE RULE] (sources agree only on "few, sparing") [2][3][11]. Never mix a typed number and a formula in one cell. Check (D): regex over formula text for numeric literals outside the allowlist (`om.modelcheck`); cell references such as `A1` and row numbers inside references are excluded.
+3. **Projections are never typed onto statements.** Hardcode only historicals; forecasts are formulas driven from an assumptions area. Check (D): forecast-column cells on IS/BS/CF are 100% formulas. [3]
+4. **One row, one formula.** The same R1C1 formula across the whole forecast row; historicals left, forecasts right, the blue-to-black change marks the boundary. Check (D): R1C1 comparison across forecast columns; inconsistent-formula count = 0. [2][5][9]
+5. **Enter each input once.** Inputs are linked, never retyped. Check (D): no constant cell outside the Inputs sheet equals an input cell value to within 1e-9 unless it is a labelled historical. [2][11]
+6. **Single declared sign convention** (income positive, costs negative recommended), stated on the cover; negatives shown in parentheses. Check (D): sign of each line vs declaration; number format contains parentheses. [2][3][4]
+7. **Units, currency and scale labelled on every sheet.** Header has company, purpose, scenario, scale and currency; dollars and shares in millions at one decimal; percentages at one decimal; multiples with "x". Check (D): header cells on each tab; number-format audit. [2][4]
+8. **Checks exist, sit near calculations and roll up to one master check on the cover.** Minimum: A = L + E, sources = uses, quarters sum to years, depreciation does not exceed PP&E, debt paydown does not exceed balance. Prefer direct calculation to plugs. Check (D): checks tab present, all zero, master flag linked. [2][7]
+9. **Gates G2 and G3: BS balances and cash ties in every period, with circularity off and on.** Check (D): LibreOffice recalculation; assert abs(A-L-E) < 0.5 and abs(BS cash - CF ending cash) < 0.5 in all periods. [14][13]
+10. **Circularity is switchable.** A circuit-breaker toggle (0/1 or beginning vs average balance), iterative calc enabled, no masking of loops with IFERROR. Check (D): flip the toggle, recalc, assert the model still balances and G1 to G3 hold. [2][3][12][13]
+11. **Gate G1: zero error values anywhere.** Check (D): scan recalculated values on every sheet including hidden. [8][9]
+12. **IFERROR/ISERROR masking test.** IFERROR and ISERROR are allowed only wrapping lookups (VLOOKUP, HLOOKUP, XLOOKUP, INDEX/MATCH). Check (D): parse each IFERROR/ISERROR argument; if it is not a lookup function the cell fails; additionally recalculate with the wrapper stripped and assert no `#REF!` appears in any masked cell (a masked #REF! is a G1 fail). Allowance rule is a [HOUSE RULE]; masking risk is [3][9].
+13. **Navigability numerics.** Hidden sheets at hand-off = 0; named ranges at most 25 per workbook and none for single-cell throwaway values [HOUSE RULE]; row/column groups rather than hidden rows; at most 3 levels of grouping. **Freeze panes** on every model tab: header rows (rows through the period-header row) and the label column(s) (through the units column), so the top-left unfrozen cell is the first data cell. Check (D): sheet view pane `topLeftCell` and `state=frozen` set. Freeze panes as a rule is [UNSOURCED]; keep as house rule [3].
+14. **Print setup.** Print area set on every presentable tab, `fitToWidth=1`, `fitToHeight=0` (as many pages tall as needed), landscape for wide tabs, print titles repeat header rows, no trailing blank page. Check (D): `print_area`, `fitToPage` and `fitToWidth=1` present. Banking-specific print standards are [UNSOURCED]; generic Excel guidance only [37].
+15. **Model design follows FAST** (flexible, appropriate, structured, transparent); sheet-type separation (inputs, workings, outputs, checks). Check (G). [6]
+16. **Changing an input flows through.** Perturb each input cell by +10%, recalc, assert at least one output changes; count inputs with zero dependents = 0. Headline AI failure (Section 4). [24]
+17. **Scenario toggle defined.** Exactly one scenario selector input cell (named `Scenario`), with a data-validation list (e.g. Base, Upside, Downside, Management); every scenario-dependent assumption line is driven by `INDEX` or `CHOOSE` off that cell; no scenario-dependent cell is hardcoded. Check (D): data validation present on the selector; every cell in the scenario block is a formula referencing the selector; flip through all scenarios, recalc, assert G1 to G3 hold in each and outputs differ between Base and Downside. Design is [HOUSE RULE], consistent with [2][3].
 
-### 1b. Pitchbook formatting (IB)
+### 1b. Valuation mechanics (DCF, bridge, comps)
 
-16. **Numbers agree across pages.** Same metric same value on every slide; a $50m discrepancy between two slides is treated as a firing-grade error. Check (D): extract all numeric claims by label and period across slides and assert equal after rounding. [8][24]
-17. **Footnotes, sources, dates correct and present on every exhibit; confidentiality marks and page numbers present.** Check (D): each chart/table shape has an adjacent source note; footer page number present; date in footnote matches the source record. [8][15][16][17][19]
-18. **Formatting consistency.** Same fonts, sizes, punctuation, alignment and spacing; double spaces and double periods are noticed by MDs. Placeholder and internal notes ("NTD") must never ship. Check (D): font-family/size histogram per role; regex for double spaces, "NTD", "TBD", "XX". [8][15][18][20]
-19. **Page furniture lives on the master.** Logos, fonts, footers and page numbers come from the slide master, not typed per slide. Check (D): footer/page number placeholders inherited from layout. [17]
-20. **Football field conventions.** One horizontal bar per method (trading comps, precedents, DCF, optional LBO) with low and high labelled; 52-week range shown as a visually distinct reference; current price and offer lines; ranges are chosen multiples, not the raw min and max of the whole comp set; DCF range from a sensitivity table; precedents typically sit above comps by a control premium. Check (D): bars present for each declared method, axis label units, reference line present; DCF bar endpoints equal sensitivity table min/max of a declared sub-range. [21][22]
-21. **Comps table is sourced and dated.** Source and as-of date, consistent multiple formats (one decimal and "x"), median and mean rows, no cell showing a bare error. Check (D): table footers include source and date; formats per column uniform. [4][21] Specific comps selection criteria are not specified by the sources: [UNSOURCED].
-22. **Layout hygiene: charts aligned, no overflow, no density that hides the point.** Misaligned charts and stray decimals damage credibility. Check (D): overlap/overflow/out-of-bounds shapes via `om.spacing`. [18]
-23. **Review turns are cheap.** Seniors request many revisions and change feedback late, so the deliverable must be editable (native charts, live-linked tables, master-driven) rather than flattened images. Check (D): charts are native objects with embedded data. [15] Rationale for native objects is inference from [15]; treat as [UNSOURCED] extension.
+18. **DCF mid-year convention is declared** on the DCF sheet (a Y/N toggle and a label). If on, discount periods are 0.5, 1.5, ...; the perpetuity-growth terminal value is discounted consistently (end-of-year N for exit multiple, N-0.5 for Gordon growth, or equivalent single declared treatment). Check (D): toggle exists; discount-period row matches the declaration. [53][54]
+19. **Terminal value cross-check.** Gordon-growth TV is converted to an implied EV/EBITDA exit multiple, and the exit-multiple TV to an implied perpetuity growth; both shown beside the TV. Implied multiple must lie within the comps interquartile range (item 22) or carry a written note. Check (D): cells exist and recompute. [53][54]
+20. **TV share of EV disclosed** as a percentage on the DCF output. Flag when above 75% (commonly cited band 60-80%, over 80% called a single-assumption valuation; 75% is the [HOUSE RULE] strict flag). Check (D): share cell exists; flag cell is TRUE when share > 0.75. [53][54]
+21. **EV to equity bridge is explicit:** EV less net debt (debt, leases if declared, less cash), less non-controlling interests, less preferred equity, plus equity-method investments if declared; equity value divided by **diluted shares computed with the treasury stock method** (options in the money at the current price, RSUs, convertibles per if-converted, iterated or declared). Check (D): each bridge line is a separate labelled formula; diluted shares use the TSM formula; EV recomputed from components equals the displayed EV. [2][24][54]
+22. **Chosen multiple lies within the comps interquartile range.** For each comps/precedents method, the selected low/high multiple must fall inside the Q1 to Q3 range of the set unless a note cell explains the exception (and the note cell is non-empty). Football-field bars are chosen ranges, not min/max. Check (D): compare selected range to QUARTILE of set. IQR rule is a [HOUSE RULE] strict reading of [21][22].
+23. **DCF football-field sub-range is declared** as WACC ± 100 bp by terminal growth ± 50 bp (or exit multiple ± 1.0x), and the bar endpoints equal the min and max of exactly that sensitivity sub-grid, with the grid centre equal to the base DCF. Check (D). [HOUSE RULE] [21][22]
+24. **Calendarisation** to the target's fiscal year-end is applied to every comp whose year-end differs (formula visible: weighted sum of adjacent fiscal years), and stated in a footnote. **LTM and NTM labels:** every multiple column is labelled LTM or NTM (or FY+1) with the period end date; mixing within a column fails. Check (D): label regex per column; calendarisation row present when year-ends differ. [4][21]
+25. **Comps selection criteria are stated on the page:** industry (SIC/GICS), business model, geography, size band (revenue or EV within 0.25x to 4x of target) and growth/margin profile; at least 6 comps unless the sector has fewer, with each exclusion reason listed. Criteria are [HOUSE RULE]; sources do not specify them [21].
+
+### 1c. Pitchbook formatting (IB)
+
+26. **Numbers agree across pages.** Same metric and period, same value on every slide (after rounding); a $50m discrepancy is firing-grade. Check (D): extract numeric claims by label and period across slides, assert equal. [8][24]
+27. **Source-record schema and footnote rule.** Every number on an exhibit resolves to a record `{value, units, period, doc_id_or_url, page, quote, as_of, retrieved_at}`. The footnote date must equal the record's `as_of` (not the retrieval date). Check (D): schema completeness 100%; footnote date string parsed and compared to `as_of`; every exhibit has a source footnote. [8][15][36][24]
+28. **Footers, confidentiality marks and page numbers present** on every page, inherited from the master. Check (D): footer placeholders inherited from layout. [16][17][19]
+29. **Pitchbook typography numerics** [HOUSE RULE; no bank style guide found]: one theme font family for all text (a second family only for a numeric/mono role, so at most 2 families in the file); body text at least 10 pt; tables at least 8 pt on banking pages; footnotes and sources at least 7 pt; titles 20-28 pt; at most 5 distinct font sizes per deck; margins at least 0.5 in left/right/bottom and 0.4 in top. **Font histogram per role:** group every text run by role (title, body, table, chart label, footnote, page number) and count runs per (family, size); each role must have exactly one dominant (family, size) pair covering at least 95% of its runs and no role may use more than 2 sizes. Check (D) via validate_pptx. [8][15][18][20]
+30. **Text hygiene.** No double spaces, double periods or placeholders ("NTD", "TBD", "XX", "[●]"). Check (D): regex. [8][15][18][20]
+31. **Football field conventions.** One horizontal bar per method (trading comps, precedents, DCF, optional LBO) with low and high labelled; 52-week range as a visually distinct reference; current price and offer lines; precedents commonly sit above comps by a control premium. Check (D): bar per declared method, axis units, reference lines, endpoints per items 22 and 23. [21][22]
+32. **Comps table is sourced and dated** (source, as-of date, one-decimal "x" multiples, median and mean rows, no error cell). Check (D). [4][21]
+33. **Layout hygiene.** Zero overlapping or out-of-bounds shapes. Check (D): `om.spacing`. [18]
+34. **Editable deliverable.** Native charts with embedded data, live-linked tables, master-driven. Rationale is inference from [15]; [UNSOURCED] extension.
 
 ---
 
 ## 2. MBB engagement manager / partner (deck)
 
-What they reject: a deck whose titles do not tell the story, slides with several messages, unsourced or non-reconciling numbers, and polish defects (grid, alignment, footers).
+What they reject: a deck whose titles do not tell the story, slides with several messages, unsourced or non-reconciling numbers, a rubber-stamped look, and polish defects.
 
-1. **Every content slide has an action title: a full sentence stating the conclusion, not a topic.** Check (D): title length and verb presence heuristic; no title ends without a verb or is a noun phrase. (G) rates it. [23][48][50]
-2. **The "title-only" read tells the whole story.** Reading only the titles in order must convey the argument; this is how partners review. Check (G): feed titles only to a grader, ask for the storyline and gaps. [48]
-3. **One message per slide.** Each slide supports a single action title; content that does not prove the title is cut. Check (G): does every element support the title; (D): at most one chart or one table as the primary exhibit per slide. [23][48]
-4. **Vertical logic: each title raises a "why" answered by the slide body.** Check (G): body evidence actually proves the claim; numbers in the title appear in the exhibit. [23][48]
-5. **Horizontal logic: sibling slides follow a clear order (deductive, chronological, structural or by importance) and are MECE.** Check (G): grader outputs the ordering principle and flags overlaps/gaps. [23][25]
-6. **Pyramid and SCQA at the top.** The answer comes first (executive summary), with situation-complication-question-answer opening. Check (G). [25][50]
-7. **Ghost deck / storyboard first.** A deck of titles and sketched exhibits is agreed before building; the final deck must not drift from the approved storyline. Check (D): final titles diff against stored storyboard titles; flag unexplained changes. [25]
-8. **Tracker / agenda that marks position.** Long decks carry a section tracker so the reader knows where they are. Check (D): tracker element present on section slides. [49] Mostly practitioner convention, partly [UNSOURCED].
-9. **Source and date line on every exhibit, bottom-left; page numbers in footer.** Check (D): shape exists per exhibit with a source and date. [48][49]
-10. **Every material number is traceable and reconciles.** A slide-to-source register (slide, claim, source file, page, retrieval date, data cut-off) is expected; numbers repeated across slides must match. Check (D): register completeness; cross-slide number agreement. [48][49]
-11. **Right chart for the message, labelled, with units.** The chart must show what the title claims (e.g. the highlighted bar is the one named), axes labelled, units shown. Check (G) plus (D): axis titles and data labels present. [23][48]
-12. **Grid discipline and whitespace.** Consistent margins and element alignment, no overflow, no text smaller than a floor size. Check (D): `om.spacing` plus minimum font size. [49] Exact margin/size thresholds are house rules: [UNSOURCED].
-13. **No generic or "smooth but empty" language and no off-brand accents.** AI-style slides read generic; a model used an off-brand accent colour where the style guide required blue. Check (D): theme colours match template; (G): language specificity. [24][36][45]
-14. **Reviewer round: "do all my action titles state conclusions?"** Check (G): run as a BYU-style feedback checklist. [51]
+### 2a. Storyline and titles
+
+1. **Every content slide has an action title:** a full sentence stating the conclusion, at most 15 words, at most 2 lines at the title size, containing a verb, and containing a number wherever the slide has quantitative data. The 15-word, 2-line and number rules are [HOUSE RULE] (sources say "full sentence, conclusion" only) [23][48][50]. Check (D): word count, rendered line count, verb heuristic (POS tag or verb lexicon), digit present when the slide has a chart or table.
+2. **The titles-only read tells the whole story.** Check (G): see the grader spec below. [48]
+3. **One message per slide:** at most one primary exhibit (one chart or one table) per slide. Check (D) plus (G). [23][48]
+4. **Vertical logic:** each title raises a "why" answered by the body; numbers in the title appear in the exhibit. Check (G). [23][48]
+5. **Horizontal logic:** sibling slides follow a stated ordering (deductive, chronological, structural, importance) and are MECE. Check (G). [23][25]
+6. **Pyramid and SCQA:** the answer first (executive summary), SCQA opening. Check (G). [25][50]
+7. **Ghost deck first:** final titles diff against the approved storyboard; unexplained changes flagged. Check (D). [25]
+8. **Tracker / agenda** marks position on section slides. Check (D). [49] Partly [UNSOURCED].
+9. **Source and date line on every exhibit, bottom-left; page number in footer.** Check (D). [48][49]
+10. **Every number traceable:** slide-to-source register (slide, claim, source file, page, retrieval date, data cut-off); cross-slide numbers match. Check (D). [48][49]
+11. **Eyebrow rule.** An **eyebrow** is a small text label placed above the slide title (a kicker, section tag or category label). House rule: **no eyebrows** on content slides. Check (D): flag any text shape whose bottom edge is above the title's top edge, whose height is under 0.35 in or font size is under 0.7x the title size, and which sits horizontally within the title's span; any hit fails. [HOUSE RULE] (PLAN.md section 6 requires it); the section tracker (item 8) is exempt only if it sits in the footer or a fixed tracker placeholder. Practitioner basis: [48][49].
+12. **Reviewer question:** "do all my action titles state conclusions?" Check (G). [51]
+
+**Storyline grader prompt (G).** Input: only the ordered list of slide titles. Prompt: "You are an engagement manager. From these titles alone: (1) state the recommendation in one sentence; (2) name the ordering principle of each section; (3) list slides whose title is a topic, not a conclusion; (4) list gaps (a step in the logic with no slide) and overlaps (two slides making the same point); (5) score 0-10." Pass: recommendation reconstructed correctly, 0 topic titles, 0 gaps, 0 overlaps, score at least 8.5. Verb/length threshold: 100% of content titles at most 15 words and containing a verb.
+
+*Anchor, good (action, specific, sequenced):* (a) "Cost-to-serve is 18% above peers because of last-mile routing" > "Rerouting 40 depots recovers 11 points of that gap" > "Three pilots show payback inside 14 months" > "We recommend a phased rollout starting in the North region". (b) "Demand for the segment grows 9% a year to 2030" > "Two of five competitors hold 70% of that growth" > "Our share gain depends on a faster onboarding cycle" > "Cutting onboarding to 10 days wins 3 points of share".
+
+*Anchor, bad (topic or vague, no number, no logic):* (a) "Market overview" > "Competitive landscape" > "Our capabilities" > "Next steps". (b) "Exciting opportunities in a dynamic market" > "Leveraging synergies to unlock value" > "A holistic approach" > "The way forward".
+
+### 2b. Geometry and typography (numeric)
+
+13. **Geometry floors** [HOUSE RULE; no firm style guide found]: **0 px overlap** between non-decorative shapes (tolerance 0 EMU); all content inside safe margins of at least **0.25 in** on every side (strict; MBB decks typically use 0.4-0.5 in); a **12-column grid** with a gutter of at least 0.15 in, and every shape's left and right edges snap to a column edge within 0.02 in; minimum font size 10 pt for body, 8 pt for footnotes and sources; minimum shape gap 0.1 in. Check (D): `om.spacing` and validate_pptx. [49]
+14. **MBB typography:** at most 2 font families per deck; at most 4 distinct font sizes per deck; a strict size hierarchy (title > subtitle > body > footnote, each step at least 2 pt); line length at most 90 characters per text line; no text below the floor sizes in item 13. [HOUSE RULE] [49][45]
+
+### 2c. Visual range and no rubber stamp
+
+15. **Visual range:** no more than 40% of slides may share one layout archetype (title+chart, title+table, title+bullets, etc. classified by shape structure); at least 4 distinct archetypes in any 10 consecutive content slides (at least 3 for decks under 10 slides); no two consecutive slides with the same archetype and the same primary-exhibit type more than twice in a row; generated visuals (images or SVG) must differ pairwise (perceptual hash distance at least 12 of 64 bits, and distinct palette dominant-hue spread), so one look is never stamped across slides. Check (D): archetype histogram and pHash. [HOUSE RULE] ("rubber-stamp fails" is PLAN.md section 6; thresholds are strict choices). Basis: generic AI decks read the same [36][45].
+
+### 2d. Anti-slop deterministic checks
+
+16. **Banned content and style.** Fail on any of: gradients (non-solid fills), shadows, glows, 3D or bevel effects; colours outside the theme palette (theme colours only: one accent plus greys, with the accent used on at most 15% of non-white area); em dashes (U+2014); emojis; exclamation marks; and banned phrases (case-insensitive substrings): "unlock", "leverage" (as verb), "synergies", "holistic", "game-changer", "cutting-edge", "revolutionary", "seamless", "robust", "best-in-class", "delve", "in today's fast-paced", "it's important to note", "paradigm", "state-of-the-art", "world-class", "empower", "journey". The list is a [HOUSE RULE] extensible set; the "generic language" complaint is sourced [24][36][45]. Check (D): XML scan of fills/effects, theme-colour resolution, regex.
+
+### 2e. Chart-message mapping
+
+17. **Right chart for the message** [HOUSE RULE, consistent with common practice [23][48]]:
+
+| Message | Required chart | Rules |
+|---|---|---|
+| Time series | Line or column | Time left to right, equal intervals; line for 8+ points, column otherwise |
+| Part-to-whole | Stacked bar (100% or absolute) | Pie or donut only with at most 3 slices; segments sum to total |
+| Ranking | Sorted horizontal bar | Sorted descending, largest at top; highlight bar named in the title |
+| Bridge (A to B) | Waterfall | Start and end totals reconcile to the steps |
+| Ranges / valuation | Football field | Per 1c-31 |
+| Comparison of 2 to 5 items | Clustered column or bar | Same sort rule as ranking |
+
+Universal: bar and column value axes start at 0; no 3D charts; no dual axes without labels; every axis titled with units; data labels on bars; the highlighted element equals the one in the title. Check (D) plus (G) for title-exhibit match. [23][48]
 
 ---
 
@@ -66,20 +116,22 @@ What they reject: a deck whose titles do not tell the story, slides with several
 
 What they reject: an unsourced claim, a memo that hides the downside, returns that rely on multiple expansion, add-backs they cannot verify, and diligence with unflagged gaps.
 
-1. **Memo follows the expected skeleton.** One-page executive summary (recommendation, size and price, 2-3 sentence thesis); thesis; company; market; competitive position; financial analysis; risk factors; terms and structure; value creation plan; diligence status; appendix with citations. Sources differ on ordering; all agree on presence. Check (D): required headings present. [27][28][29]
-2. **Every key figure carries a clickable citation.** "Every key assumption should be sourced with a clickable in-line citation"; unsupported thesis claims slow approval. Check (D): each numeric claim has a linked source id that resolves to a document, page and highlighted region. [27]
-3. **Appendix links to underlying documents** (models, filings, transcripts, CIM, expert-call notes, third-party reports). Check (D): all cited ids resolve. [27]
-4. **Base, upside and downside cases, each with distinct and defensible assumptions.** A downside that barely dips below base signals untested assumptions. Check (D): downside differs from base by a minimum on revenue growth and margin; (G): rationale. [27][30]
-5. **Returns sensitivity grids with IRR and MOIC together.** At minimum entry x exit multiple and growth x exit multiple; also leverage x exit multiple; show gross and net where relevant. Check (D): grids present, centre cell equals the base case output. [30][31]
-6. **Returns do not depend on multiple expansion.** Show a no-expansion case, exit 1-2 turns below entry as a stress, and the entry price at which the hurdle fails; return bridge splits growth, multiple, deleveraging. Check (D): bridge sums to total return; no-expansion case present. [30][31] The "2.0-2.5x on paydown and growth alone" figure is one author's rule of thumb, not a standard.
-7. **Hockey sticks flagged.** Projection inflections are called out and tagged for verification. Check (G). [30]
-8. **QoE adjustments documented and recurrence-tested.** Each EBITDA add-back has support, is non-recurring under new ownership, and the bridge from reported to adjusted EBITDA is shown; lenders may cap add-backs (a 20-25% range is cited by vendor blogs, unverified). Check (D): every adjustment has a source id and a category; adjusted EBITDA bridge sums. [32][33][34]
-9. **Revenue quality, customer concentration, working capital peg and tax exposure addressed.** Check (G): memo has concentration and NWC discussion when data exist. [33][34]
-10. **Risk table per risk: description, probability, impact, mitigant or trigger.** Check (D): table columns present for every listed risk. [27][29]
-11. **Diligence status: completed vs outstanding items with owners and dates; conditions on approval.** Check (D): status table present. [27]
-12. **VDR completeness shown, with gaps flagged rather than papered over.** Map the buyer request list to the data-room index; mark each request fulfilled / partial / unaddressed; number requests with owner, status and due date. Check (D): coverage matrix computed from the request list vs indexed docs; unaddressed count surfaced on page one. [41][42]
-13. **Audit before submission.** Check formulas, trace inputs to sources, confirm outputs are consistent across scenarios. Check (D): `om.formula`, `om.modelcheck` pass; scenario outputs reconcile. [27]
-14. **Concise.** 12-25 pages is a typical memo length; one-page exec summary. Check (D): page count and exec summary length. [28] (typical, not a rule)
+1. **Memo skeleton present:** one-page executive summary (recommendation, size and price, 2-3 sentence thesis); thesis; company; market; competitive position; financials; risks; terms and structure; value-creation plan; diligence status; appendix with citations. Check (D): headings. [27][28][29]
+2. **Every key figure has a clickable citation** resolving to a document, page and highlight. Check (D). [27]
+3. **Highlight format:** each citation stores `{doc_id, page, bbox_norm: [x0, y0, x1, y1] (0-1, page-relative), text_span}`; the highlight renders on the source page and the text span matches the extracted text inside the bbox. **Derived figures** (e.g. EBITDA margin, net debt) must list all their input figures, each with its own highlight; a derived figure with a missing input fails. Check (D). [27][HOUSE RULE]
+4. **Appendix links to underlying documents.** Check (D): all cited ids resolve. [27]
+5. **Case thresholds.** Base, upside, downside with distinct assumptions. **Downside EBITDA is at least 20% below base EBITDA** (in the trough year or cumulative, declared) [HOUSE RULE; the 20% is a strict reading of [27][30] "a downside that barely dips signals untested assumptions"]. **Sponsor case vs management case haircut table:** for revenue, EBITDA and capex, show management, sponsor and the haircut percentage, with a rationale per line; sponsor EBITDA at most the management EBITDA in every year. Check (D). [27][30]
+6. **Returns sensitivity grids** (entry x exit multiple, growth x exit multiple, leverage x exit multiple) with IRR and MOIC; centre cell = base case. Check (D). [30][31]
+7. **Returns do not depend on multiple expansion:** a no-expansion case, a stress with exit 1-2 turns below entry, the hurdle-failing entry price, and a bridge that sums to total return (growth, multiple, deleveraging). Check (D). [30][31]
+8. **Leverage, covenant headroom and debt capacity.** Show total and senior leverage (x EBITDA), interest cover and fixed-charge cover per year. **Covenant headroom (EBITDA cushion before breach) must be at least 20% in the base case**, and is reported (any value, flagged if below 20% or negative) in the downside; debt capacity shown as the maximum debt at which base-case headroom stays at 20%. Headroom 20% is a [HOUSE RULE]; the sensitivity of leverage to EBITDA misstatement is illustrated in [55]. Check (D): headroom = 1 - (covenant-tested EBITDA at breach / forecast EBITDA), recomputed. [HOUSE RULE]
+9. **QoE adjustments documented.** Each add-back has a source id, a category and a recurrence test, and the bridge from reported to adjusted EBITDA sums. **Adjustments totalling more than 20% of reported EBITDA are flagged for review**, citing the source: buy-side providers commonly disallow 10-30% of proposed add-backs and seller-reported add-backs run roughly 26-29% of adjusted EBITDA [55][56]. The 20% flag threshold is a [HOUSE RULE]. A claimed regulator-set 25-30% cap could not be verified and is [UNSOURCED]; not used. Check (D). [32][33][34]
+10. **Revenue quality, concentration, NWC peg and tax exposure addressed.** Check (G). [33][34]
+11. **Risk table** per risk: description, probability, impact, mitigant or trigger, owner. **Risk taxonomy (required categories, each present or explicitly marked not applicable with a reason):** customer concentration (any single customer above 10% of revenue is flagged), key person, regulatory, FX, refinancing and maturity wall (any maturity within 24 months of close flagged), supplier, technology and cyber, litigation, ESG. Taxonomy and 10%/24-month thresholds are [HOUSE RULE]. Check (D). [27][29]
+12. **Hockey sticks flagged.** Any year-on-year growth or margin inflection above 1.5x the historical average is tagged for verification [HOUSE RULE]. Check (G). [30]
+13. **Diligence status:** completed vs outstanding with owners and dates; conditions on approval. Check (D). [27]
+14. **VDR request-list matching.** The source list is the standard buyer due-diligence request list (financial, tax, legal, commercial, HR, IT, environmental sections). Match each request to indexed documents by section and keyword (case-insensitive, stem-normalised, with a confidence score), with a manual override that is logged. Status per request: fulfilled / partial / unaddressed. **Superseded versions** are flagged by date (a later modified/document date for the same normalised filename stem) or version suffix (`v2`, `final`, `rev`, `_FINAL_v3`), keeping the latest as current; **unreadable files** (corrupt, password-protected, scanned with no text and failed OCR) are listed separately and count as unaddressed. Unaddressed count surfaces on page one. Check (D). [41][42]
+15. **Audit before submission:** `om.formula`, `om.modelcheck` pass; scenario outputs reconcile. Check (D). [27]
+16. **Concise:** 12-25 pages, one-page exec summary (typical, not a rule). Check (D). [28]
 
 ---
 
@@ -87,78 +139,83 @@ What they reject: an unsourced claim, a memo that hides the downside, returns th
 
 Evidence: BankerToolBench [24] (Handshake AI and McGill, bankers from several bulge-bracket and elite boutiques, 100 tasks, 500 reviewers, April 2026): no deliverable client-ready; best model 58.1/100; Opus-class models produced polished Excel with hardcoded values so changing purchase price did not update; a deck showed $189.5bn then $201.0bn for the same period; off-brand accent colour; GPT-5.4 failure modes 41% code/formula bugs, 27% business-logic errors (e.g. cost synergies added to revenue), 13% invented missing numbers presented as sourced.
 
-1. **Zero hardcoded outputs in models.** Output cells must be live formulas; test by flexing an input. Check (D): see 1a-15. [24]
-2. **No invented numbers.** Every figure must resolve to a source record, or be explicitly flagged as an assumption. Check (D): numeric-claim to source-id coverage must be 100% with no orphan numbers. [24][26]
-3. **Cross-slide consistency.** Check (D): same as 1b-16. [24]
-4. **Business-logic sanity.** No synergies in revenue, EV bridge and diluted share logic correct. Check (D): domain assertions in `om.formula`/`om.modelcheck`. [24]
-5. **Citations and dates match the source document.** Associates report AI output with wrong EV from a linked source, an off date buried in a footnote, a synergy number that does not tie, and slides that read "too smooth and generic". Check (D): footnote date equals source record date; EV recomputed from components. [36]
-6. **Trust gap forces manual re-checking.** 59% of 510 finance professionals manually verify or recreate AI output all or most of the time; hallucinations and missing citations are the top concerns; even among those who trust AI, 84% still re-check. A product that removes re-checking (clickable proof for every figure) is the sellable difference. [26]
-7. **Client-facing errors are already happening** at most financial firms surveyed. [43]
-8. **Vendors' own accuracy claims are self-reported** (e.g. Daloopa >99% and hyperlinked data points); a buyer will test on their own sectors. Design for audit-by-click. [38]
-9. **Microsoft itself warns Copilot output can be wrong and not to use the Copilot formula function for accuracy or reproducibility tasks.** Deterministic, code-written formulas are a selling point. [39][40]
-10. **Generic ChatGPT/Copilot decks:** plain templates, overflow of bullet text, formatting breakage on export, generic corporate language, factual mistakes; vendors' own add-in notes limited template adherence. Check (D): overflow and template conformance; (G): specificity. [44][45]
-11. **Rollouts that overpromise erode trust.** Users report executives promising unrealistic efficiency gains. Implication: be conservative in claims, show failure flags. [35]
-12. **Price anchors.** Rogo is estimated around $3,300 per seat per year (third-party estimate); AlphaSense estimates range roughly $10,000-$20,000 per seat per year (third-party). No vendor publishes rate cards. A $10K+/seat tag implies the buyer must save an analyst-day per week with no re-checking. The last clause is [UNSOURCED] reasoning. [46][47]
+1. **Zero hardcoded outputs in models.** Check (D): see 1a-16. [24]
+2. **No invented numbers.** Numeric-claim to source-record coverage is 100%. Check (D). [24][26]
+3. **Cross-slide consistency.** Check (D): 1c-26. [24]
+4. **Business-logic sanity.** No synergies in revenue; EV bridge and diluted share logic correct (1b-21). Check (D). [24]
+5. **Citations and dates match the source.** Associates report wrong EV from a linked source, an off date in a footnote, a synergy that does not tie, and "too smooth and generic" slides. Check (D): footnote date equals `as_of` (1c-27); EV recomputed from components. [36]
+6. **Trust gap forces manual re-checking.** 59% of 510 finance professionals manually verify or recreate AI output all or most of the time; hallucinations and missing citations are the top concerns; 84% of those who trust AI still re-check. Clickable proof for every figure is the sellable difference. [26]
+7. **Client-facing errors already happen** at most financial firms surveyed. [43]
+8. **Vendors' accuracy claims are self-reported** (Daloopa >99%, hyperlinked data points); buyers will test on their own sectors. Design for audit-by-click. [38]
+9. **Microsoft warns Copilot output can be wrong** and not to use the Copilot formula function for accuracy or reproducibility tasks; deterministic code-written formulas are a selling point. [39][40]
+10. **Generic ChatGPT/Copilot decks:** plain templates, bullet overflow, export formatting breakage, generic language, factual mistakes. Check (D): overflow, template conformance; (G): specificity. [44][45]
+11. **Overpromising rollouts erode trust.** Be conservative in claims and show failure flags. [35]
+12. **Price anchors.** Rogo is estimated around $3,300 per seat per year (third-party estimate); AlphaSense estimates range roughly $10,000-$20,000 per seat per year (third-party). No vendor publishes rate cards. [46][47]
+13. **Reference deliverable for the $10K question.** No public benchmark deliverable priced at $10K per seat was found: that price-to-deliverable link is [UNSOURCED]. The working reference is a **10-page IC memo plus the linked 3-statement/DCF model plus a VDR coverage grid**, every figure click-through to a highlighted source region, delivered in one pass that an IC member would approve without a second verification pass [HOUSE RULE]. The last clause (analyst-day saved per week with no re-checking) is [UNSOURCED] reasoning.
 
 ---
 
-## 5. Persona rubric (refines PLAN.md section 6)
+## 5. Persona rubric (canonical; refines and supersedes the summary bullets in PLAN.md section 6)
 
-Scoring: each persona returns per-criterion scores 0 to the weight, a total /10, blocking issues with locators (sheet!cell, slide number, memo section), and "would pay $10K+/seat? yes/no + why". Below 8.5 = blocked. Any item marked **HARD** that scores 0 caps the total at 6.0 regardless of the sum.
+Scoring: each persona returns per-criterion scores 0 to the weight, a total out of 10, blocking issues with locators (sheet!cell, slide number, memo section) and "would pay $10K+/seat? yes/no + why". Below 8.5 = blocked. Any **HARD** row scoring 0 caps the total at 6.0. For the IB persona, a failed **binary gate** (G1 error value, G2 unbalanced BS, G3 untied cash; see section 1) caps the total at **5.0**, whatever the sum.
 
 ### 5.1 IB analyst (Goldman / Morgan Stanley style)
 
 | # | Criterion | Wt | Pass descriptor (full marks) | Check |
 |---|---|---|---|---|
-| 1 | **HARD** Integrity: zero error values, BS balances and cash ties every period, checks tab all green | 2.0 | No error cells; balance diff under 0.5 in all periods; master check = 0 | D: recalc via LibreOffice, `om.modelcheck` |
-| 2 | **HARD** Live model: no hardcodes in formulas; forecasts all formulas; input flex changes outputs | 2.0 | Zero non-allowlist literals in formulas; every input has dependents; flex test passes | D: literal scan + perturbation |
-| 3 | Colour code and legend (blue/black/green, external links distinct) | 1.0 | 100% of cells conform; legend present | D |
-| 4 | Row consistency and sign convention (one row one formula; declared sign convention; parentheses) | 1.0 | R1C1 inconsistencies = 0; convention declared and obeyed | D |
-| 5 | Circularity switch and scenario toggle | 0.75 | Circuit breaker works; balances in both states | D |
-| 6 | Navigability: sheet order, headers with units/currency, freeze panes, grouped not hidden, sparing named ranges, print setup | 1.0 | All present on all model tabs | D |
-| 7 | Pitchbook hygiene: numbers agree across pages, sources/dates on exhibits, fonts/alignment consistent, football field and comps conventions | 1.25 | Zero cross-page mismatches; every exhibit sourced; football field per 1b-20 | D + G |
-| 8 | Speed to usable: native editable objects, speed of review turns | 0.5 | Native charts/tables, master-driven footers | D |
-| 9 | Would pay $10K+/seat | 0.5 | Yes if analyst would send to MD without re-checking | G |
+| 1 | **HARD** Integrity gates G1-G3: zero error values, BS balances, cash ties, checks tab green, IFERROR not masking #REF! (1a-9, 11, 12) | 2.0 | No error cells; balance and cash diffs under 0.5 in all periods; master check = 0; masking test passes | D: LibreOffice recalc, `om.modelcheck` |
+| 2 | **HARD** Live model: allowlist-only literals, forecasts all formulas, input flex changes outputs (1a-2, 3, 16) | 1.75 | Zero non-allowlist literals; every input has dependents; flex passes | D |
+| 3 | Colour code incl. green cross-sheet and distinct external links, legend (1a-1) | 1.0 | 100% conformance | D |
+| 4 | Row consistency, sign convention, units and headers (1a-4, 6, 7) | 0.75 | R1C1 inconsistencies = 0; header cells present | D |
+| 5 | Circularity switch and scenario toggle (1a-10, 17) | 0.75 | Both work and balance in every state | D |
+| 6 | Navigability: freeze panes, print area, fit to 1 page wide, 0 hidden sheets, at most 25 named ranges (1a-13, 14) | 0.75 | All present on all model tabs | D |
+| 7 | Valuation mechanics: DCF mid-year, TV cross-check, TV share flag, EV bridge with TSM, IQR rule, declared DCF sub-range, calendarisation, LTM/NTM, comps criteria (1b) | 1.25 | All items pass | D + G |
+| 8 | Pitchbook hygiene: cross-page agreement, source-record schema and date rule, typography numerics, font histogram, footers (1c) | 1.0 | Zero mismatches; schema 100%; typography within limits | D |
+| 9 | Speed to usable: native editable objects (1c-34) | 0.25 | Native charts/tables | D |
+| 10 | Would pay $10K+/seat | 0.5 | Yes if the analyst would send to the MD without re-checking | G |
 
-Total 10.0.
+Weights: 2.0 + 1.75 + 1.0 + 0.75 + 0.75 + 0.75 + 1.25 + 1.0 + 0.25 + 0.5 = **10.0**.
 
 ### 5.2 MBB engagement manager
 
 | # | Criterion | Wt | Pass descriptor | Check |
 |---|---|---|---|---|
-| 1 | **HARD** Storyline: titles-only read gives the full argument; answer first; SCQA/pyramid | 2.0 | Grader reconstructs the recommendation from titles alone with no gaps | G |
-| 2 | **HARD** Action titles and one message per slide | 1.75 | 100% content slides have a conclusion title; at most one main exhibit; body proves title | D + G |
-| 3 | Horizontal and vertical logic (MECE ordering, "why" answered below) | 1.0 | Ordering principle identified; no overlaps or gaps | G |
-| 4 | Chart fit: right chart, labelled, units, highlights match title | 1.25 | Every chart passes title-exhibit match | D + G |
-| 5 | Sources and traceability: source and date line per exhibit; cross-slide numbers reconcile; slide-to-source register | 1.25 | Zero orphan numbers; register complete | D |
-| 6 | Grid, alignment, whitespace, min font size, no overflow | 1.0 | `om.spacing` zero violations | D |
-| 7 | House rules: title rule, footer and page number, tracker, no eyebrows, no AI-generic language, template colours | 1.0 | All present; language specific | D + G |
-| 8 | Would pay $10K+/seat | 0.75 | Yes if EM would edit rather than rebuild | G |
+| 1 | **HARD** Storyline: grader prompt and anchors (2a); titles-only read reconstructs the recommendation; answer first | 1.75 | Grader passes (0 topic titles, 0 gaps, 0 overlaps, score at least 8.5) | G |
+| 2 | **HARD** Action titles (at most 15 words, at most 2 lines, verb, number where data exists) and one message per slide (2a-1, 3) | 1.5 | 100% of content slides comply | D + G |
+| 3 | Horizontal and vertical logic (2a-4, 5) | 0.75 | Ordering principle identified; no overlaps or gaps | G |
+| 4 | Chart fit: chart-message mapping table, axis baselines, sort, labels, no 3D (2e) | 1.0 | Every chart passes mapping and title-exhibit match | D + G |
+| 5 | Sources and traceability: source/date line, register, reconciling numbers (2a-9, 10) | 1.0 | Zero orphan numbers | D |
+| 6 | Geometry: 0 px overlap, margins at least 0.25 in, 12-column grid, size floors (2b-13) | 1.0 | `om.spacing`/validate_pptx zero violations | D |
+| 7 | Visual range, no rubber stamp: at most 40% one archetype, at least 4 archetypes per 10 slides, visuals differ (2c-15) | 1.0 | All thresholds met | D + G |
+| 8 | Anti-slop, typography and house rules: banned list, no gradients/shadows/3D, theme-only colours, no em dashes/emojis/exclamations, at most 2 families and 4 sizes, line length at most 90, no eyebrows, footer and page number (2a-11, 2b-14, 2d-16) | 1.25 | Zero violations | D |
+| 9 | Would pay $10K+/seat | 0.75 | Yes if the EM would edit rather than rebuild | G |
 
-Total 10.0.
+Weights: 1.75 + 1.5 + 0.75 + 1.0 + 1.0 + 1.0 + 1.0 + 1.25 + 0.75 = **10.0**.
 
 ### 5.3 PE principal / IC member
 
 | # | Criterion | Wt | Pass descriptor | Check |
 |---|---|---|---|---|
-| 1 | **HARD** Traceability: every figure has a clickable citation to a highlighted source region; no orphan numbers | 2.0 | 100% numeric claims linked and resolving | D |
-| 2 | IC-memo structure complete (exec summary on one page, thesis through appendix) | 1.25 | All required sections present; exec summary has recommendation, size/price, thesis | D |
-| 3 | Returns: base/upside/downside distinct; IRR and MOIC grids; no-expansion case; bridge | 1.75 | Grids centred on base; bridge sums; downside materially below base | D + G |
-| 4 | QoE and add-backs documented; revenue quality, concentration, NWC covered | 1.25 | Every adjustment sourced and categorised | D + G |
-| 5 | VDR completeness: request list vs index matrix; gaps flagged on page one | 1.25 | Fulfilled/partial/unaddressed counts shown; unaddressed items listed with owners | D |
-| 6 | Risk coverage: probability, impact, mitigant or trigger per risk; hockey sticks flagged | 1.0 | Table complete; at least the deal-breaker risks present | D + G |
-| 7 | Model integrity behind the memo (formulas and checks pass; scenarios reconcile) | 0.5 | `om.formula` and `om.modelcheck` green | D |
-| 8 | Would pay $10K+/seat for this exact deliverable | 1.0 | Yes if the IC could approve without a second verification pass | G |
+| 1 | **HARD** Traceability: every figure has a clickable citation with page + bbox_norm + text span; derived figures trace to all inputs (3-2, 3-3) | 2.0 | 100% of numeric claims linked and resolving | D |
+| 2 | IC-memo structure complete (3-1, 3-4, 3-16) | 1.0 | All required sections; exec summary on one page | D |
+| 3 | Returns and case thresholds: downside at least 20% below base, sponsor vs management haircut table, IRR/MOIC grids, no-expansion case, bridge (3-5, 6, 7) | 1.5 | All thresholds met; grids centred on base | D + G |
+| 4 | QoE and revenue quality: add-backs sourced, over-20% flag, concentration, NWC (3-9, 10) | 1.0 | Every adjustment sourced and categorised | D + G |
+| 5 | Leverage, covenant headroom and debt capacity (3-8) | 1.0 | Headroom at least 20% in base; downside reported | D |
+| 6 | VDR matching: request list vs index, superseded and unreadable flagged, gaps on page one (3-14) | 1.0 | Counts shown; unaddressed listed with owners | D |
+| 7 | Risk taxonomy coverage, hockey sticks flagged, diligence status (3-11, 12, 13) | 1.0 | All 9 categories present or marked n/a; table complete | D + G |
+| 8 | Model integrity behind the memo (3-15) | 0.5 | `om.formula` and `om.modelcheck` green | D |
+| 9 | Would pay $10K+/seat for the reference deliverable of 4-13 | 1.0 | Yes if the IC could approve without a second verification pass | G |
 
-Total 10.0.
+Weights: 2.0 + 1.0 + 1.5 + 1.0 + 1.0 + 1.0 + 1.0 + 0.5 + 1.0 = **10.0**.
 
 ---
 
 ## 6. Gaps and open items
 
-- Forum threads (WSO, Reddit) were not retrievable; criteria 1-12 rely on training sites and practitioner essays. A manual WSO pass is recommended before final grading calibration [UNSOURCED for forum-specific pet peeves].
-- No bank or MBB firm style guide was found; pitchbook point sizes and margin thresholds are house rules to be set in DECISIONS.md.
-- Vendor and blog sources (marked in the list) carry commercial bias; the two strongest empirical sources are [24] and [26].
+- Forum threads (WSO, Reddit) were not retrievable; items 1a to 1c rely on training sites and practitioner essays. A manual WSO pass is recommended before grading calibration [UNSOURCED for forum-specific pet peeves].
+- No bank or MBB firm style guide was found; every numeric threshold labelled [HOUSE RULE] must be recorded in DECISIONS.md and may be loosened only by the Boss.
+- Vendor and blog sources carry commercial bias; the strongest empirical sources are [24] and [26].
+- Covenant headroom and TV-share bands come from training-site rules of thumb [53][54][55], not a standard.
 
 ---
 
@@ -215,3 +272,8 @@ Total 10.0.
 49. Consultport, "Consulting Presentation Checklist: 7 Elements", n.d. https://consultport.com/for-consultants/consulting-presentation-checklist-make-sure-to-include-these-7-elements/
 50. Deckary, "The Pyramid Principle: How Consultants Structure Arguments That Win" (SCQA), n.d. https://deckary.com/blog/pyramid-principle-consulting
 51. BYU Strategy, "Create Impact with People" (consulting feedback questions), n.d. https://byu-strategy.github.io/management-consulting/08-create-impact.html
+52. ModelMint, "How to Color Code a Financial Model in Excel" (blue inputs, black formulas, green cross-sheet links), n.d. https://modelmint.pages.dev/guides/how-to-color-code-a-financial-model.html ; ICAEW, "20 principles for good spreadsheet practice" (standards may differ on colour; consistency is the principle), n.d. https://icaew.com/-/media/corporate/files/technical/technology/excel/webinars/666--1582666-20-principles-for-good-spreadsheet-practice--why-are-they-important.ashx
+53. IB Interview Questions, "Why terminal value dominates DCF output" (TV share, implied multiple and growth cross-check), n.d. https://ibinterviewquestions.com/guides/valuation-investment-banking/why-terminal-value-dominates-dcf-output ; Financial Edge, "Mid Year Implied Multiple from TV" lesson, n.d. https://felix.fe.training/video-lesson/lesson/dcf-valuation/?video=1140
+54. Open Exam Prep (FMVA study guide), "Terminal Value and the Equity Bridge" (TV share band 60-80%, net debt, minorities, preferreds, diluted shares), n.d. https://open-exam-prep.com/study-guides/fmva/dcf-valuation/terminal-value-and-equity-bridge
+55. EightX, "QoE recast: adjustment valuation swing" (leverage sensitivity to EBITDA misstatement), n.d. https://eightx.co/blog/qoe-recast-adjustment-valuation-swing
+56. Beancount.io, "Quality of earnings reports, add-backs and purchase price cuts" (add-backs about 26-29% of adjusted EBITDA; 10-30% disallowed; vendor blog citing third-party studies), 2026-05-17. https://beancount.io/blog/2026/05/17/quality-of-earnings-qoe-reports-ma-sellers-buyer-due-diligence-adjusted-ebitda-add-backs-avoid-purchase-price-cuts-guide
