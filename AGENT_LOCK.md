@@ -43,6 +43,10 @@ One row per active claim. Claim a packet before you touch its files, commit the 
 | S6.4 schedules + email | worker (session A) | claude/dreamy-ramanujan-k8p2xt | 2026-11-17 | src/harness/research/schedule.py, src/harness/research/email_io.py, tests/test_research_schedule.py, docs/interfaces-s6/schedule-email.md |
 | S6.5a admin core | worker (session A) | claude/dreamy-ramanujan-k8p2xt | 2026-11-17 | src/harness/admin/__init__.py, src/harness/admin/agents.py, src/harness/admin/spend.py, src/harness/admin/sources.py, src/harness/admin/mcp_tools.py, tests/test_admin_core.py, docs/interfaces-s6/admin.md |
 | S6.5b SCIM + ACL mirroring | worker (session A) | claude/dreamy-ramanujan-k8p2xt | 2026-11-17 | src/harness/admin/scim.py, src/harness/connectors/acl.py, tests/test_admin_scim_acl.py, docs/interfaces-s6/scim-acl.md |
+| FP-S2a MCP/grid query safety | worker (session A) | claude/dreamy-ramanujan-k8p2xt | 2026-11-17 | src/harness/mcp/**, src/harness/research/tools.py, tests/test_mcp.py, tests/test_research_tools.py |
+| FP-S2b adapter/ledger/PII/router | worker (session A) | claude/dreamy-ramanujan-k8p2xt | 2026-11-17 | src/harness/adapter.py, src/harness/ledger.py, src/harness/router.py, src/harness/profiles/*, om/pii.py, om/replay.py, tests/test_adapter.py, tests/test_harness_router.py, tests/test_llm_router.py |
+| FP-S2c evidence/deals/queue | worker (session A) | claude/dreamy-ramanujan-k8p2xt | 2026-11-17 | src/harness/evidence.py, om/deals.py, om/storage.py, tests/test_evidence.py, tests/test_deal_memory.py, tests/test_storage.py |
+| FP-S2d unpack/crawler | worker (session A) | claude/dreamy-ramanujan-k8p2xt | 2026-11-17 | src/harness/connectors/unpack.py, src/harness/connectors/web.py, tests/test_connectors_harness.py |
 
 ## Log
 - 2026-11-16: created; no active claims.
@@ -75,3 +79,4 @@ One row per active claim. Claim a packet before you touch its files, commit the 
 - 2026-11-16: session B: S3.3a/b/c, S3.int, S3.fix-env merged and released; wave 3 claimed (FP-S3-a, FP-S3-b, S3.12, S3 gate script).
 - 2026-11-17: S4.fix1, S4.6b merged and released; S4.fix2 claimed.
 - 2026-11-16: session A: FP-S1a/b, S6.1b, S6.3 done; S6.1 workflows, S6.4, S6.5a, S6.5b claimed (parity items 24-33, 58-63).
+- 2026-11-16: session A: S2 specialist review FAIL (1C/7H); FP-S2a-d claimed.
