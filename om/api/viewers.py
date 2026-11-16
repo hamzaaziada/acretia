@@ -306,11 +306,12 @@ def _view(ctx, deal_id: str, name: str, data: bytes, version: int, latest: int) 
         for (r, c), cell in sorted(book.sheets[sh].items()):
             if cell.formula is not None or not isinstance(cell.value, (int, float)) or isinstance(cell.value, bool):
                 continue
-            if (cell.color or "").upper() != "0000FF" or c < 3:
+            if (cell.color or "").upper() != "0000FF" or c < 3 or (sh == "DCF" and c != 3):
                 continue
             key = f"{sh}!{col_letter(c)}{r}"
-            lab = label_of(book, key)
             base = (cell_label := (book.sheets[sh].get((r, 1)))) and cell_label.value or ""
+            n_in_row = sum(1 for (rr, cc), x in book.sheets[sh].items() if rr == r and cc >= 3 and x.formula is None and isinstance(x.value, (int, float)))
+            lab = (str(base) if n_in_row == 1 and base else label_of(book, key)) or key
             fm = _fmt_of(b, sh, (r, c))
             assumptions.append({"ref": key, "label": lab or key, "row_label": str(base), "sheet": sh, "section": _section_of(book, sh, r),
                                 "value": _num(cell.value), "fmt": fm, "unit": _unit_of(fm, str(base))})
