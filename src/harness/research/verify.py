@@ -32,6 +32,7 @@ Conventions
 from __future__ import annotations
 
 import ast
+import calendar
 import dataclasses
 import math
 import re
@@ -63,6 +64,7 @@ class SourceResolver:
         self._pages = dict(pages or {})   # (doc_id, page) -> str
         self._urls = dict(urls or {})     # url -> str
         self._cells = dict(cells or {})   # (path_or_doc, locator) -> float
+        self._fye = {}                    # ticker_or_cik -> "MMDD"
 
     def add_xbrl(self, ticker_or_cik, concept, period_end, value):
         self._xbrl[(str(ticker_or_cik), concept, str(period_end))] = float(value)
@@ -70,6 +72,13 @@ class SourceResolver:
 
     def add_page(self, doc_id, page, text):
         self._pages[(doc_id, int(page))] = text
+        return self
+
+    def add_fiscal_year_end(self, ticker_or_cik, mmdd):
+        mmdd = str(mmdd)
+        if not re.fullmatch(r"(0[1-9]|1[0-2])(0[1-9]|[12]\d|3[01])", mmdd):
+            raise ValueError(f"fiscal year end must be MMDD, got {mmdd!r}")
+        self._fye[str(ticker_or_cik)] = mmdd
         return self
 
     def add_url(self, url, text):
@@ -94,6 +103,11 @@ class SourceResolver:
             for o in (out if isinstance(out, list) else [out]):
                 if not isinstance(o, dict):
                     continue
+                if "fiscalYearEnd" in o and (o.get("ticker") or o.get("cik")):
+                    try:
+                        self.add_fiscal_year_end(o.get("ticker") or o.get("cik"), o["fiscalYearEnd"]); n += 1
+                    except ValueError:
+                        pass
                 if "doc_id" in o and "page" in o and isinstance(o.get("text"), str):
                     self.add_page(o["doc_id"], o["page"], o["text"]); n += 1
                 elif "url" in o and isinstance(o.get("text"), str):
@@ -103,6 +117,9 @@ class SourceResolver:
                 elif "locator" in o and isinstance(o.get("value"), (int, float)):
                     self.add_cell(o.get("doc") or o.get("path"), o["locator"], o["value"]); n += 1
         return n
+
+    def fiscal_year_end(self, ticker_or_cik) -> str | None:
+        return self._fye.get(str(ticker_or_cik))
 
     def xbrl_value(self, ticker_or_cik, concept, period_end, unit=None) -> float | None:
         return self._xbrl.get((str(ticker_or_cik), concept, str(period_end)))
@@ -259,57 +276,67 @@ def _today() -> date:
 _YEAR_RE = re.compile(r"(?<!\d)((?:19|20)\d{2})(?!\d)")
 
 
-def _period_end(period: str):
-    """-> (date, error). ISO date -> itself; ``Q1..Q4 <year>`` -> calendar quarter end; otherwise (FY/plain year) Dec 31
+def _period_end(period: str, fye=None):
+    """-> (date, error, note). ISO date -> itself; ``Q1..Q4 <year>`` -> calendar quarter end; otherwise (FY/plain year) Dec 31
     of that year (fiscal year-end unknown). Must resolve to exactly one period (D-S6-03)."""
     p = period or ""
     iso = re.findall(r"(?<!\d)(\d{4}-\d{2}-\d{2})(?!\d)", p)
     if len(iso) == 1:
         try:
-            return datetime.strptime(iso[0], "%Y-%m-%d").date(), None
+            return datetime.strptime(iso[0], "%Y-%m-%d").date(), None, None
         except ValueError:
-            return None, f"period {period!r}: not a real date"
+            return None, f"period {period!r}: not a real date", None
     if len(iso) > 1:
-        return None, "period spans several dates"
+        return None, "period spans several dates", None
     ys = {int(y) for y in _YEAR_RE.findall(p)}
     if not ys:
         m = re.search(r"FY\s?'?(\d{2})(?!\d)", p, re.I)
         if m:
             ys = {2000 + int(m.group(1))}
     if len(ys) != 1:
-        return None, ("period spans several years" if ys else "period has no parseable year")
+        return None, ("period spans several years" if ys else "period has no parseable year"), None
     y = next(iter(ys))
     q = {m.group(1) for m in re.finditer(r"(?<![A-Za-z0-9])Q([1-4])(?![0-9])", p, re.I)}
     if len(q) > 1:
-        return None, "period spans several quarters"
+        return None, "period spans several quarters", None
     if q:
         mm = int(next(iter(q))) * 3
-        return date(y, mm, {3: 31, 6: 30, 9: 30, 12: 31}[mm]), None
-    return date(y, 12, 31), None
+        return date(y, mm, {3: 31, 6: 30, 9: 30, 12: 31}[mm]), None, None
+    if re.search(r"FY", p, re.I):
+        if not fye:
+            return date(y, 1, 1), None, "fiscal year-end unknown; lower-bound check only"
+        mo, dd = int(fye[:2]), int(fye[2:])
+        dd = min(dd, calendar.monthrange(y, mo)[1])
+        note = "label convention ambiguous (accepting FY label by start or end year)" if mo <= 3 else None
+        return date(y, mo, dd), None, note
+    return date(y, 12, 31), None, None
 
 
-def _common(fig: SourcedFigure):
+def _common(fig: SourcedFigure, resolver=None):
     c = fig.citation
     if not c.as_of:
-        return "missing as_of"
+        return "missing as_of", None
     try:
         asof = datetime.strptime(c.as_of, "%Y-%m-%d").date()
     except ValueError:
-        return f"as_of {c.as_of!r} is not a real date"
+        return f"as_of {c.as_of!r} is not a real date", None
     if asof > _today():
-        return f"as_of {c.as_of} is in the future"
+        return f"as_of {c.as_of} is in the future", None
     if isinstance(fig.value, bool) or not isinstance(fig.value, (int, float)) or not math.isfinite(fig.value):
-        return "value is not a finite number"
-    pend, err = _period_end(fig.period)
+        return "value is not a finite number", None
+    fye = None
+    if resolver is not None and hasattr(resolver, "fiscal_year_end"):
+        fye = resolver.fiscal_year_end(c.doc_id)
+    pend, err, note = _period_end(fig.period, fye)
     if err:
-        return f"period {fig.period!r}: {err}"
+        return f"period {fig.period!r}: {err}", None
     if asof < pend:
         return (f"period mismatch: citation as_of {c.as_of} is before the end of period {fig.period!r} "
-                f"({pend.isoformat()})")
+                f"({pend.isoformat()})" + (f"; {note}" if note else ""), None
     kind, scale, uerr = _parse_units(fig.units)
     if uerr:
-        return uerr
-    return None
+        return uerr, None
+    return None, note
 
 
 # --------------------------------------------------------------------------------------------- methods
@@ -484,9 +511,16 @@ def verify_figure(fig, resolver, *, rel_tol=DEFAULT_REL_TOL, figures=None, _stac
         fig = _as_fig(fig)
     except Exception as e:
         return Verdict(False, f"figure is not a valid SourcedFigure: {e}", "none")
-    err = _common(fig)
+    err, note = _common(fig, resolver)
     if err:
         return Verdict(False, err, "none")
+    v = _verify_method(fig, resolver, rel_tol, figures, _stack)
+    if v.ok and note:
+        v = Verdict(True, f"{v.reason}; {note}", v.method)
+    return v
+
+
+def _verify_method(fig, resolver, rel_tol, figures, _stack) -> Verdict:
     kind, scale, _ = _parse_units(fig.units)
     c = fig.citation
     expr = _derived_parts(fig.label)
