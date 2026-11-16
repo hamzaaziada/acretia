@@ -1,0 +1,681 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sheets</title>
+<style>
+:root{--bg:#fafaf9;--panel:#fff;--ink:#1c1917;--muted:#78716c;--line:#e7e5e4;--accent:#2563eb;--chip:#f5f5f4;--sel:#dbeafe;--input:#1d4ed8;--data:#047857;--err:#b91c1c;--head:#f5f5f4}
+@media (prefers-color-scheme: dark){:root{--bg:#0c0a09;--panel:#1c1917;--ink:#f5f5f4;--muted:#a8a29e;--line:#292524;--accent:#60a5fa;--chip:#292524;--sel:#1e3a5f;--input:#93c5fd;--data:#34d399;--err:#f87171;--head:#231f1d}}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font:13px/1.4 ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,sans-serif;display:flex;flex-direction:column}
+header{display:flex;gap:16px;align-items:center;padding:10px 16px;border-bottom:1px solid var(--line);flex-wrap:wrap}
+header a{color:var(--muted);text-decoration:none}header a.on{color:var(--ink);font-weight:600}
+.toolbar{display:flex;gap:6px;align-items:center;padding:8px 16px;border-bottom:1px solid var(--line);flex-wrap:wrap}
+button,select,input{padding:6px 10px;border-radius:7px;border:1px solid var(--line);background:var(--panel);color:var(--ink);font:inherit;cursor:pointer}
+input{cursor:text}
+button.primary{background:var(--accent);border-color:var(--accent);color:#fff}
+.fbar{display:flex;gap:8px;align-items:center;padding:6px 16px;border-bottom:1px solid var(--line)}
+#addr{width:70px;text-align:center;font-weight:600}
+#fx{flex:1;font-family:ui-monospace,SFMono-Regular,Menlo,monospace}
+.wrap{flex:1;overflow:auto;position:relative}
+table{border-collapse:separate;border-spacing:0;table-layout:fixed;font-variant-numeric:tabular-nums}
+th,td{border-right:1px solid var(--line);border-bottom:1px solid var(--line);height:24px;padding:0 6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;width:110px;max-width:110px}
+th{background:var(--head);color:var(--muted);font-weight:500;position:sticky;top:0;z-index:2;text-align:center}
+td.rh{background:var(--head);color:var(--muted);text-align:center;position:sticky;left:0;z-index:1;width:44px;max-width:44px}
+th.corner{left:0;z-index:3;width:44px;max-width:44px}
+td.c{cursor:cell}
+td.num{text-align:right}
+td.sel{background:var(--sel)}
+td.cur{outline:2px solid var(--accent);outline-offset:-2px}
+td.input{color:var(--input)}
+td.data{color:var(--data)}
+td.err{color:var(--err)}
+td.bold{font-weight:600}
+td.c.wide{max-width:none}
+#editor{position:absolute;display:none;border:2px solid var(--accent);padding:0 5px;font:inherit;font-family:ui-monospace,Menlo,monospace;border-radius:0;z-index:5;background:var(--panel);color:var(--ink)}
+td.prop{outline:2px dashed #f59e0b;outline-offset:-2px;background:rgba(245,158,11,.12)}
+.main{flex:1;display:flex;min-height:0}
+.main .wrap{flex:1}
+#agent{width:360px;border-left:1px solid var(--line);display:flex;flex-direction:column;background:var(--panel);min-height:0}
+#agent.hidden{display:none}
+#agent .hd{padding:10px 12px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:center}
+#msgs{flex:1;overflow:auto;padding:10px 12px;display:flex;flex-direction:column;gap:8px}
+.msg{padding:8px 10px;border-radius:10px;max-width:92%;white-space:pre-wrap;word-wrap:break-word}
+.msg.user{align-self:flex-end;background:var(--accent);color:#fff}
+.msg.bot{align-self:flex-start;background:var(--chip)}
+.msg.sys{align-self:center;color:var(--muted);font-size:12px;text-align:center}
+#proposal{border-top:1px solid var(--line);padding:10px 12px;display:none}
+#proposal ul{max-height:150px;overflow:auto;margin:6px 0;padding-left:18px;font-family:ui-monospace,Menlo,monospace;font-size:11px}
+#ask{display:flex;gap:6px;padding:10px 12px;border-top:1px solid var(--line)}
+#ask textarea{flex:1;resize:none;height:56px;padding:6px 8px;border:1px solid var(--line);border-radius:7px;background:var(--bg);color:var(--ink);font:inherit}
+.chips{display:flex;flex-wrap:wrap;gap:4px;padding:0 12px 8px}
+.chips button{font-size:11px;padding:3px 7px}
+@media (max-width:900px){#agent{position:fixed;right:0;top:0;bottom:0;z-index:20;width:min(360px,100%)}}
+.status{padding:6px 16px;border-top:1px solid var(--line);color:var(--muted);font-size:12px;min-height:30px;display:flex;gap:16px;flex-wrap:wrap}
+.status a{color:var(--accent)}
+dialog{border:1px solid var(--line);border-radius:12px;background:var(--panel);color:var(--ink);width:min(520px,calc(100% - 32px))}
+dialog label{display:block;margin:10px 0 4px;font-weight:600}
+dialog input,dialog select{width:100%}
+.muted{color:var(--muted)}
+.legend span{margin-right:10px}
+</style>
+</head>
+<body>
+<header><b>Research</b><a href="/ask.html">Ask</a><a href="/rooms.html">Data Rooms</a><a href="/">Search</a><a href="/matrix.html">Matrix</a><a href="/sheets.html" class="on">Sheets</a><a href="/studio.html">Deck Studio</a><a href="/rounds.html">Funding Rounds</a><a href="/check.html">Check</a><a href="/settings.html">Settings</a>
+  <span class="muted legend" style="margin-left:auto;font-size:12px"><span style="color:var(--input)">■ input</span><span style="color:var(--data)">■ from filings</span><span>■ formula</span></span></header>
+<div class="toolbar">
+  <select id="pick"><option value="">Open a sheet…</option></select>
+  <button class="primary" onclick="newDlg.showModal()">New sheet</button>
+  <button onclick="buildModel(this)" title="Integrated income statement, balance sheet, cash flow, debt schedule and DCF from SEC filings, graded before download">3-statement model (.xlsx)</button>
+  <input id="sname" placeholder="Sheet name" style="width:200px">
+  <span class="muted">|</span>
+  <button onclick="fmt('num0')" title="1,234">1,234</button><button onclick="fmt('num2')" title="1.23">0.00</button>
+  <button onclick="fmt('pct')" title="Percent">%</button><button onclick="fmt('x')" title="Multiple">x</button>
+  <button onclick="fmt('')" title="Auto">Auto</button><button onclick="toggleBold()"><b>B</b></button>
+  <span class="muted">|</span>
+  <button onclick="fill('down')" title="Ctrl+D">Fill ↓</button><button onclick="fill('right')" title="Ctrl+R">Fill →</button>
+  <span class="muted">|</span>
+  <button onclick="exportXlsx()">Export .xlsx</button><button onclick="exportSlides(this)" title="Build a PowerPoint from this sheet">Slides</button><button onclick="exportCsv()">CSV</button>
+  <button onclick="refreshData()" title="Re-fetch =OM()/=MATRIX() values">↻ Data</button>
+  <button onclick="delSheet()" title="Delete sheet">🗑</button>
+  <button onclick="$('agent').classList.toggle('hidden')" title="Show / hide the agent">✦ Agent</button>
+  <span id="saveState" class="muted"></span>
+</div>
+<div class="fbar"><input id="addr" readonly><input id="fx" placeholder="Value or =formula, e.g. =OM(&quot;AAPL&quot;,&quot;revenue_ltm&quot;) or =MEDIAN(B5:B9)"></div>
+<div class="main">
+  <div class="wrap" id="wrap"><table id="grid"></table><input id="editor"></div>
+  <aside id="agent">
+    <div class="hd"><b>Agent</b><span id="agentModel" class="muted" style="font-size:11px"></span><button onclick="$('agent').classList.add('hidden')" title="Hide">×</button></div>
+    <div id="msgs"><div class="msg sys">Ask for a change to this sheet, e.g. “add EV/Sales and P/E with medians” or “add a sensitivity of share price to WACC and exit multiple”. Edits are previewed before they're applied.<br><br>Without a model: /comps AAPL MSFT NVDA · /dcf NVDA · /lbo AAPL · /precedents diagnostics</div></div>
+    <div class="chips" id="chips"></div>
+    <div id="proposal"><b id="propTitle"></b><ul id="propList"></ul><div style="display:flex;gap:6px"><button class="primary" onclick="applyProposal()">Apply</button><button onclick="discardProposal()">Discard</button></div></div>
+    <div id="ask"><textarea id="agentInput" placeholder="Ask the agent…  (Enter to send, Shift+Enter for a new line)"></textarea><button class="primary" id="agentSend" onclick="sendAgent()">Send</button></div>
+  </aside>
+</div>
+<div class="status" id="status">Pick or create a sheet. Data functions: <code>=OM(ticker, field)</code>, <code>=OMNAME(ticker)</code>, <code>=MATRIX(matrix, document, column)</code>.</div>
+
+<dialog id="newDlg"><form method="dialog" id="newForm">
+  <h3 style="margin-top:0">New sheet</h3>
+  <label>Template</label>
+  <select id="tpl" onchange="tplFields()">
+    <option value="comps">Trading comps (from SEC filings)</option>
+    <option value="precedents">Precedent transactions (from merger proxies)</option>
+    <option value="dcf">DCF — WACC build, both terminal methods, sensitivities</option>
+    <option value="lbo">LBO — paper LBO returns (IRR / MOIC)</option>
+    <option value="blank">Blank</option>
+  </select>
+  <div id="tplFields"></div>
+  <label>Name</label><input id="newName" placeholder="optional">
+  <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:14px"><button value="cancel">Cancel</button><button class="primary" id="createBtn" value="ok">Create</button></div>
+</form></dialog>
+
+<script src="/deck.js"></script>
+<script>
+// =====================================================================================
+// Formula engine
+// =====================================================================================
+const ERR = e => ({err: e});
+const isErr = v => v && typeof v === "object" && "err" in v;
+const colName = i => { let s = ""; i++; while (i) { const r = (i - 1) % 26; s = String.fromCharCode(65 + r) + s; i = Math.floor((i - 1) / 26); } return s; };
+const colIndex = s => [...s].reduce((a, ch) => a * 26 + ch.charCodeAt(0) - 64, 0) - 1;
+const parseRef = r => { const m = /^\$?([A-Z]{1,2})\$?(\d+)$/.exec(r); return m ? {c: colIndex(m[1]), r: +m[2] - 1} : null; };
+const key = (r, c) => colName(c) + (r + 1);
+
+const TOKEN = /\s*(?:(\d+\.?\d*(?:[eE][+-]?\d+)?|\.\d+)|("(?:[^"]|"")*")|(\$?[A-Z]{1,2}\$?\d+)(?![A-Z0-9_(])|([A-Za-z_][A-Za-z0-9_.]*)|(<=|>=|<>|[-+*/^&=<>%(),:]))/y;
+function tokenize(src) {
+  const out = []; TOKEN.lastIndex = 0; let m;
+  while (TOKEN.lastIndex < src.length) {
+    const start = TOKEN.lastIndex;
+    m = TOKEN.exec(src);
+    if (!m) { if (/^\s*$/.test(src.slice(start))) break; throw new Error("bad token at " + start); }
+    if (m[1] !== undefined) out.push({t: "num", v: parseFloat(m[1])});
+    else if (m[2] !== undefined) out.push({t: "str", v: m[2].slice(1, -1).replace(/""/g, '"')});
+    else if (m[3] !== undefined) out.push({t: "ref", v: m[3]});
+    else if (m[4] !== undefined) out.push({t: "name", v: m[4].toUpperCase()});
+    else out.push({t: "op", v: m[5]});
+  }
+  return out;
+}
+function parse(src) {
+  const toks = tokenize(src); let i = 0;
+  const peek = () => toks[i], next = () => toks[i++];
+  const isOp = (v) => toks[i] && toks[i].t === "op" && toks[i].v === v;
+  const expect = v => { if (!isOp(v)) throw new Error(`expected ${v}`); i++; };
+  function cmp() { let l = concat(); while (toks[i] && toks[i].t === "op" && ["=", "<>", "<", ">", "<=", ">="].includes(toks[i].v)) { const op = next().v; l = {k: "bin", op, l, r: concat()}; } return l; }
+  function concat() { let l = add(); while (isOp("&")) { next(); l = {k: "bin", op: "&", l, r: add()}; } return l; }
+  function add() { let l = mul(); while (isOp("+") || isOp("-")) { const op = next().v; l = {k: "bin", op, l, r: mul()}; } return l; }
+  function mul() { let l = pow(); while (isOp("*") || isOp("/")) { const op = next().v; l = {k: "bin", op, l, r: pow()}; } return l; }
+  function pow() { let l = unary(); while (isOp("^")) { next(); l = {k: "bin", op: "^", l, r: unary()}; } return l; }
+  function unary() { if (isOp("-")) { next(); return {k: "neg", e: unary()}; } if (isOp("+")) { next(); return unary(); } return postfix(); }
+  function postfix() { let e = primary(); while (isOp("%")) { next(); e = {k: "bin", op: "/", l: e, r: {k: "num", v: 100}}; } return e; }
+  function primary() {
+    const t = next();
+    if (!t) throw new Error("unexpected end");
+    if (t.t === "num") return {k: "num", v: t.v};
+    if (t.t === "str") return {k: "str", v: t.v};
+    if (t.t === "ref") { if (isOp(":")) { next(); const t2 = next(); if (!t2 || t2.t !== "ref") throw new Error("bad range"); return {k: "range", a: t.v, b: t2.v}; } return {k: "ref", v: t.v}; }
+    if (t.t === "name") {
+      if (t.v === "TRUE" || t.v === "FALSE") return {k: "bool", v: t.v === "TRUE"};
+      if (isOp("(")) { next(); const args = []; if (!isOp(")")) { args.push(cmp()); while (isOp(",")) { next(); args.push(cmp()); } } expect(")"); return {k: "fn", name: t.v, args}; }
+      throw new Error("unknown name " + t.v);
+    }
+    if (t.t === "op" && t.v === "(") { const e = cmp(); expect(")"); return e; }
+    throw new Error("unexpected " + t.v);
+  }
+  const ast = cmp();
+  if (i < toks.length) throw new Error("unexpected " + toks[i].v);
+  return ast;
+}
+
+class Engine {
+  constructor() { this.raw = {}; this.vals = {}; this.astCache = new Map(); this.data = new Map(); this.pending = new Set(); this.cellData = {}; }
+  ast(src) { if (!this.astCache.has(src)) { try { this.astCache.set(src, parse(src)); } catch (e) { this.astCache.set(src, {k: "error", e: "#PARSE!", msg: e.message}); } } return this.astCache.get(src); }
+  recalc() { this.vals = {}; this.cellData = {}; this.pending = new Set(); for (const k of Object.keys(this.raw)) this.get(k, []); return this.pending; }
+  get(k, stack) {
+    if (k in this.vals) return this.vals[k];
+    const raw = this.raw[k];
+    if (raw === undefined || raw === "") return null;
+    if (stack.includes(k)) return ERR("#CYCLE!");
+    let v;
+    if (typeof raw === "string" && raw.startsWith("=")) {
+      stack.push(k); this._cur = this._cur || []; this._cur.push(k);
+      v = this.ev(this.ast(raw.slice(1)), stack);
+      if (v && v.range) v = v.vals[0] ?? null;
+      this._cur.pop(); stack.pop();
+    } else {
+      const s = String(raw).trim(), n = s.replace(/,/g, "");
+      v = /^-?\d*\.?\d+(e-?\d+)?%?$/i.test(n) ? (n.endsWith("%") ? parseFloat(n) / 100 : parseFloat(n)) : (s.toUpperCase() === "TRUE" ? true : s.toUpperCase() === "FALSE" ? false : String(raw));
+    }
+    this.vals[k] = v;
+    return v;
+  }
+  num(v) { if (isErr(v)) return v; if (v === null || v === "") return 0; if (typeof v === "boolean") return v ? 1 : 0; if (typeof v === "number") return v; const n = parseFloat(String(v).replace(/,/g, "")); return isNaN(n) ? ERR("#VALUE!") : n; }
+  flat(args, stack) {
+    const out = [];
+    for (const a of args) { const v = this.ev(a, stack); if (v && v.range) out.push(...v.vals); else out.push(v); }
+    return out;
+  }
+  nums(args, stack) { return this.flat(args, stack).filter(v => typeof v === "number" && isFinite(v)); }  // aggregates skip text, blanks and errors
+  ev(n, stack) {
+    switch (n.k) {
+      case "num": case "str": case "bool": return n.v;
+      case "error": return ERR(n.e);
+      case "ref": { const p = parseRef(n.v); return p ? this.get(key(p.r, p.c), stack) : ERR("#REF!"); }
+      case "range": {
+        const a = parseRef(n.a), b = parseRef(n.b); if (!a || !b) return ERR("#REF!");
+        const vals = [];
+        for (let r = Math.min(a.r, b.r); r <= Math.max(a.r, b.r); r++) for (let c = Math.min(a.c, b.c); c <= Math.max(a.c, b.c); c++) vals.push(this.get(key(r, c), stack));
+        return {range: true, vals};
+      }
+      case "neg": { const v = this.num(this.ev(n.e, stack)); return isErr(v) ? v : -v; }
+      case "bin": {
+        let l = this.ev(n.l, stack), r = this.ev(n.r, stack);
+        if (l && l.range) l = l.vals[0]; if (r && r.range) r = r.vals[0];
+        if (isErr(l)) return l; if (isErr(r)) return r;
+        if (n.op === "&") return `${l ?? ""}${r ?? ""}`;
+        if (["=", "<>", "<", ">", "<=", ">="].includes(n.op)) {
+          const A = typeof l === "string" ? l.toLowerCase() : (l ?? 0), B = typeof r === "string" ? r.toLowerCase() : (r ?? 0);
+          return {"=": A == B, "<>": A != B, "<": A < B, ">": A > B, "<=": A <= B, ">=": A >= B}[n.op];
+        }
+        const x = this.num(l), y = this.num(r); if (isErr(x)) return x; if (isErr(y)) return y;
+        if (n.op === "+") return x + y; if (n.op === "-") return x - y; if (n.op === "*") return x * y;
+        if (n.op === "/") return y === 0 ? ERR("#DIV/0!") : x / y; if (n.op === "^") return Math.pow(x, y);
+        return ERR("#VALUE!");
+      }
+      case "fn": return this.fn(n.name, n.args, stack);
+    }
+    return ERR("#VALUE!");
+  }
+  fn(name, args, stack) {
+    const E = a => this.ev(a, stack), N = a => this.num(E(a));
+    const nums = () => this.nums(args, stack);
+    const quart = (xs, q) => { xs = [...xs].sort((a, b) => a - b); if (!xs.length) return ERR("#NUM!"); const pos = (xs.length - 1) * q, lo = Math.floor(pos); return xs[lo] + (xs[Math.min(lo + 1, xs.length - 1)] - xs[lo]) * (pos - lo); };
+    switch (name) {
+      case "SUM": return nums().reduce((a, b) => a + b, 0);
+      case "AVERAGE": { const x = nums(); return x.length ? x.reduce((a, b) => a + b, 0) / x.length : ERR("#DIV/0!"); }
+      case "MEDIAN": { const x = nums(); return x.length ? quart(x, 0.5) : ERR("#NUM!"); }
+      case "MIN": { const x = nums(); return x.length ? Math.min(...x) : 0; }
+      case "MAX": { const x = nums(); return x.length ? Math.max(...x) : 0; }
+      case "COUNT": return nums().length;
+      case "COUNTA": return this.flat(args, stack).filter(v => v !== null && v !== "").length;
+      case "QUARTILE": { const x = this.nums([args[0]], stack), q = N(args[1]); return isErr(q) ? q : quart(x, q / 4); }
+      case "PERCENTILE": { const x = this.nums([args[0]], stack), q = N(args[1]); return isErr(q) ? q : quart(x, q); }
+      case "IF": { const c = E(args[0]); if (isErr(c)) return c; return (c && c !== 0) ? (args[1] ? E(args[1]) : true) : (args[2] ? E(args[2]) : false); }
+      case "IFERROR": { const v = E(args[0]); return isErr(v) && v.err !== "#LOADING" ? E(args[1]) : v; }
+      case "ISERROR": return isErr(E(args[0]));
+      case "ROUND": { const x = N(args[0]), d = args[1] ? N(args[1]) : 0; if (isErr(x)) return x; const f = Math.pow(10, d); return Math.round(x * f) / f; }
+      case "ABS": { const x = N(args[0]); return isErr(x) ? x : Math.abs(x); }
+      case "SQRT": { const x = N(args[0]); return isErr(x) ? x : x < 0 ? ERR("#NUM!") : Math.sqrt(x); }
+      case "POWER": { const x = N(args[0]), y = N(args[1]); return isErr(x) ? x : isErr(y) ? y : Math.pow(x, y); }
+      case "AND": return this.flat(args, stack).every(v => !!v);
+      case "OR": return this.flat(args, stack).some(v => !!v);
+      case "NOT": return !E(args[0]);
+      case "NPV": { const r = N(args[0]); if (isErr(r)) return r; return this.nums(args.slice(1), stack).reduce((a, v, i) => a + v / Math.pow(1 + r, i + 1), 0); }
+      case "CONCAT": case "CONCATENATE": return this.flat(args, stack).map(v => v ?? "").join("");
+      case "LEN": return String(E(args[0]) ?? "").length;
+      case "UPPER": return String(E(args[0]) ?? "").toUpperCase();
+      case "LOWER": return String(E(args[0]) ?? "").toLowerCase();
+      case "OM": case "OMNAME": case "MATRIX": {
+        const vals = args.map(a => { let v = E(a); if (v && v.range) v = v.vals[0]; return v; });
+        const bad = vals.find(isErr); if (bad) return bad;
+        const k = JSON.stringify([name, ...vals.map(v => String(v ?? ""))]);
+        const cur = this._cur[this._cur.length - 1]; (this.cellData[cur] ||= new Set()).add(k);
+        if (!this.data.has(k)) { this.pending.add(k); return ERR("#LOADING"); }
+        const d = this.data.get(k); return d.error ? ERR(d.error) : d.value;
+      }
+    }
+    return ERR("#NAME?");
+  }
+}
+
+// shift relative references when copying a formula by (dr, dc)
+function shiftFormula(raw, dr, dc) {
+  if (typeof raw !== "string" || !raw.startsWith("=")) return raw;
+  let out = "", inStr = false;
+  const src = raw;
+  for (let i = 0; i < src.length;) {
+    if (src[i] === '"') { inStr = !inStr; out += src[i++]; continue; }
+    if (!inStr) {
+      const m = /^(\$?)([A-Z]{1,2})(\$?)(\d+)(?![A-Za-z0-9_(])/.exec(src.slice(i));
+      const prev = src[i - 1] || "";
+      if (m && !/[A-Za-z0-9_.]/.test(prev)) {
+        const c = m[1] ? colIndex(m[2]) : colIndex(m[2]) + dc, r = m[3] ? +m[4] : +m[4] + dr;
+        out += (c < 0 || r < 1) ? "#REF!" : `${m[1]}${colName(c)}${m[3]}${r}`;
+        i += m[0].length; continue;
+      }
+    }
+    out += src[i++];
+  }
+  return out;
+}
+
+// =====================================================================================
+// UI
+// =====================================================================================
+const ROWS = 200, COLS = 26;
+const $ = id => document.getElementById(id);
+const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({"&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;"}[c]));
+const eng = new Engine();
+let sheet = null, meta = {formats: {}, bold: {}}, cur = {r: 0, c: 0}, anchor = null, editing = false, saveTimer = null, clip = null;
+
+function applyWidths() {
+  const ths = $("grid").tHead.rows[0].cells;
+  for (let c = 0; c < COLS; c++) {
+    const w = (meta.widths || {})[colName(c)] || 110;
+    ths[c + 1].style.width = ths[c + 1].style.maxWidth = w + "px";
+    for (const row of $("grid").tBodies[0].rows) row.cells[c + 1].style.maxWidth = w + "px";
+  }
+}
+function buildGrid() {
+  let h = `<thead><tr><th class="corner"></th>${Array.from({length: COLS}, (_, c) => `<th>${colName(c)}</th>`).join("")}</tr></thead><tbody>`;
+  for (let r = 0; r < ROWS; r++) h += `<tr><td class="rh">${r + 1}</td>${Array.from({length: COLS}, (_, c) => `<td class="c" data-r="${r}" data-c="${c}"></td>`).join("")}</tr>`;
+  $("grid").innerHTML = h + "</tbody>";
+}
+const cellEl = (r, c) => $("grid").tBodies[0].rows[r]?.cells[c + 1];
+
+function fmtVal(v, f) {
+  if (v === null || v === undefined) return "";
+  if (isErr(v)) return v.err;
+  if (typeof v === "boolean") return v ? "TRUE" : "FALSE";
+  if (typeof v !== "number") return String(v);
+  if (!isFinite(v)) return "#NUM!";
+  const loc = (x, d) => x.toLocaleString(undefined, {minimumFractionDigits: d, maximumFractionDigits: d});
+  if (f === "pct") return loc(v * 100, 1) + "%";
+  if (f === "x") return loc(v, 1) + "x";
+  if (f === "num0") return v < 0 ? `(${loc(-v, 0)})` : loc(v, 0);
+  if (f === "num1") return loc(v, 1);
+  if (f === "num2") return loc(v, 2);
+  if (Number.isInteger(v)) return Math.abs(v) >= 1e4 || Math.abs(v) < 3000 ? loc(v, 0) : String(v);
+  return Math.abs(v) >= 1000 ? loc(v, 0) : Math.abs(v) >= 100 ? loc(v, 1) : loc(v, 2);
+}
+
+let preview = null;   // {eng, meta, changed:Set} while an agent proposal is shown
+function render() {
+  const E = preview ? preview.eng : eng, M = preview ? preview.meta : meta;
+  for (let r = 0; r < ROWS; r++) for (let c = 0; c < COLS; c++) {
+    const k = key(r, c), el = cellEl(r, c), raw = E.raw[k], changed = preview && preview.changed.has(k);
+    if (raw === undefined) { el.textContent = ""; el.className = "c" + (changed ? " prop" : ""); continue; }
+    const v = E.vals[k];
+    el.textContent = fmtVal(v, M.formats[k]);
+    const isF = typeof raw === "string" && raw.startsWith("=");
+    el.className = "c" + (typeof v === "number" ? " num" : "") + (isErr(v) ? " err" : "") + (E.cellData[k] ? " data" : "") +
+      (!isF && typeof v === "number" ? " input" : "") + (M.bold[k] ? " bold" : "") + (changed ? " prop" : "");  // hard-coded numbers = blue inputs
+    el.title = isErr(v) && E.cellData[k] ? errDetail(k) : "";
+  }
+  paintSel();
+}
+function errDetail(k) { for (const dk of eng.cellData[k] || []) { const d = eng.data.get(dk); if (d && d.error) return `${d.error}: ${d.detail || ""}`; } return ""; }
+function selBox() { const a = anchor || cur; return {r1: Math.min(a.r, cur.r), r2: Math.max(a.r, cur.r), c1: Math.min(a.c, cur.c), c2: Math.max(a.c, cur.c)}; }
+function paintSel() {
+  document.querySelectorAll("td.sel,td.cur").forEach(e => e.classList.remove("sel", "cur"));
+  const b = selBox();
+  for (let r = b.r1; r <= b.r2; r++) for (let c = b.c1; c <= b.c2; c++) cellEl(r, c).classList.add("sel");
+  cellEl(cur.r, cur.c).classList.add("cur");
+  const k = key(cur.r, cur.c);
+  $("addr").value = b.r1 === b.r2 && b.c1 === b.c2 ? k : `${key(b.r1, b.c1)}:${key(b.r2, b.c2)}`;
+  if (!editing) $("fx").value = eng.raw[k] ?? "";
+  status(k);
+}
+function status(k) {
+  const v = eng.vals[k], parts = [];
+  if (eng.raw[k] !== undefined) parts.push(`<b>${k}</b> = ${esc(fmtVal(v, meta.formats[k]))}`);
+  for (const dk of eng.cellData[k] || []) {
+    const d = eng.data.get(dk); if (!d) continue;
+    const [fn, ...a] = JSON.parse(dk);
+    let s = `<code>${fn}(${a.map(x => JSON.stringify(x)).join(",")})</code> → `;
+    if (d.error) s += `<span style="color:var(--err)">${esc(d.error)} ${esc(d.detail || "")}</span>`;
+    else if (d.source?.url) s += `${esc(d.source.concept)} · ${esc(d.source.form)} filed ${esc(d.source.filed)} · ${esc(d.source.basis)} · <a href="${esc(d.source.url)}" target="_blank" rel="noopener">filing ↗</a>`;
+    else if (d.source?.matrix) s += `matrix “${esc(d.source.matrix)}” · ${esc(d.source.document)} ${d.source.section ? "· " + esc(d.source.section) : ""} · “${esc((d.source.quote || "").slice(0, 120))}”`;
+    else if (d.source) s += esc(d.source.basis || "");
+    parts.push(s);
+  }
+  $("status").innerHTML = parts.join("<br>") || '<span class="muted">Empty cell</span>';
+}
+
+async function calc(E) {
+  // recalculate an engine, fetching any =OM()/=MATRIX() values it needs (shared cache)
+  const pending = E.recalc();
+  if (pending.size) {
+    const keys = [...pending];
+    $("saveState").textContent = `fetching ${keys.length} data value(s)…`;
+    try {
+      const res = await fetch("/api/sheet/resolve", {method: "POST", body: JSON.stringify({calls: keys.map(k => JSON.parse(k))})}).then(r => r.json());
+      keys.forEach((k, i) => E.data.set(k, res[i] || {error: "#ERROR"}));
+    } catch (e) { keys.forEach(k => E.data.set(k, {error: "#ERROR", detail: e.message})); }
+    $("saveState").textContent = "";
+    E.recalc();
+  }
+}
+async function recalc() {
+  if (eng.recalc().size) render();   // show #LOADING while data is fetched
+  await calc(eng);
+  render();
+}
+
+function setCell(k, raw, silent) {
+  if (raw === "" || raw === null || raw === undefined) delete eng.raw[k]; else eng.raw[k] = raw;
+  if (!silent) { recalc(); scheduleSave(); }
+}
+function scheduleSave() {
+  if (!sheet) return;
+  $("saveState").textContent = "editing…";
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(async () => {
+    await fetch("/api/sheet/save", {method: "POST", body: JSON.stringify({id: sheet.id, cells: eng.raw, meta, name: $("sname").value})});
+    $("saveState").textContent = "saved";
+  }, 700);
+}
+
+// ---------------------------------------------------------------- editing
+const ed = $("editor");
+function startEdit(initial) {
+  const el = cellEl(cur.r, cur.c), wrap = $("wrap").getBoundingClientRect(), rc = el.getBoundingClientRect();
+  editing = true;
+  Object.assign(ed.style, {display: "block", left: rc.left - wrap.left + $("wrap").scrollLeft + "px", top: rc.top - wrap.top + $("wrap").scrollTop + "px", width: Math.max(rc.width, 220) + "px", height: rc.height + "px"});
+  ed.value = initial ?? (eng.raw[key(cur.r, cur.c)] ?? "");
+  ed.focus(); ed.setSelectionRange(ed.value.length, ed.value.length);
+}
+function commit(move) {
+  if (!editing) return;
+  editing = false; ed.style.display = "none";
+  setCell(key(cur.r, cur.c), ed.value);
+  if (move) moveTo(cur.r + move[0], cur.c + move[1]);
+  $("wrap").focus();
+}
+function cancelEdit() { editing = false; ed.style.display = "none"; paintSel(); $("wrap").focus(); }
+function moveTo(r, c, extend) {
+  if (!extend) anchor = null; else if (!anchor) anchor = {...cur};
+  cur = {r: Math.max(0, Math.min(ROWS - 1, r)), c: Math.max(0, Math.min(COLS - 1, c))};
+  paintSel();
+  cellEl(cur.r, cur.c).scrollIntoView({block: "nearest", inline: "nearest"});
+}
+ed.addEventListener("keydown", e => {
+  if (e.key === "Enter") { e.preventDefault(); commit([e.shiftKey ? -1 : 1, 0]); }
+  else if (e.key === "Tab") { e.preventDefault(); commit([0, e.shiftKey ? -1 : 1]); }
+  else if (e.key === "Escape") cancelEdit();
+});
+ed.addEventListener("input", () => $("fx").value = ed.value);
+$("fx").addEventListener("keydown", e => {
+  if (e.key === "Enter") { e.preventDefault(); setCell(key(cur.r, cur.c), $("fx").value); moveTo(cur.r + 1, cur.c); $("wrap").focus(); }
+  if (e.key === "Escape") { $("fx").value = eng.raw[key(cur.r, cur.c)] ?? ""; $("wrap").focus(); }
+});
+$("grid").addEventListener("mousedown", e => {
+  const td = e.target.closest("td.c"); if (!td) return;
+  if (editing) commit();
+  moveTo(+td.dataset.r, +td.dataset.c, e.shiftKey);
+  $("wrap").focus(); e.preventDefault();
+});
+$("grid").addEventListener("dblclick", e => { if (e.target.closest("td.c")) startEdit(); });
+$("wrap").tabIndex = 0;
+$("wrap").addEventListener("keydown", e => {
+  if (editing || !sheet) return;
+  const mod = e.metaKey || e.ctrlKey;
+  const arrows = {ArrowUp: [-1, 0], ArrowDown: [1, 0], ArrowLeft: [0, -1], ArrowRight: [0, 1]};
+  if (arrows[e.key]) { e.preventDefault(); moveTo(cur.r + arrows[e.key][0], cur.c + arrows[e.key][1], e.shiftKey); return; }
+  if (e.key === "Enter" || e.key === "F2") { e.preventDefault(); startEdit(); return; }
+  if (e.key === "Tab") { e.preventDefault(); moveTo(cur.r, cur.c + (e.shiftKey ? -1 : 1)); return; }
+  if (e.key === "Delete" || e.key === "Backspace") { e.preventDefault(); const b = selBox(); for (let r = b.r1; r <= b.r2; r++) for (let c = b.c1; c <= b.c2; c++) setCell(key(r, c), "", true); recalc(); scheduleSave(); return; }
+  if (mod && e.key.toLowerCase() === "d") { e.preventDefault(); fill("down"); return; }
+  if (mod && e.key.toLowerCase() === "r") { e.preventDefault(); fill("right"); return; }
+  if (mod && e.key.toLowerCase() === "c") { copySel(); return; }
+  if (mod && e.key.toLowerCase() === "b") { e.preventDefault(); toggleBold(); return; }
+  if (!mod && e.key.length === 1) { e.preventDefault(); startEdit(e.key); }
+});
+function copySel() {
+  const b = selBox(), rows = [];
+  clip = {r: b.r1, c: b.c1, cells: []};
+  for (let r = b.r1; r <= b.r2; r++) { const row = [], craw = []; for (let c = b.c1; c <= b.c2; c++) { row.push(fmtVal(eng.vals[key(r, c)], meta.formats[key(r, c)])); craw.push(eng.raw[key(r, c)]); } rows.push(row.join("\t")); clip.cells.push(craw); }
+  clip.text = rows.join("\n");
+  navigator.clipboard?.writeText(clip.text).catch(() => {});
+}
+document.addEventListener("paste", e => {
+  if (editing || !sheet || document.activeElement === $("fx") || document.activeElement === $("sname")) return;
+  const text = e.clipboardData.getData("text/plain");
+  e.preventDefault();
+  if (clip && text === clip.text) {
+    clip.cells.forEach((row, i) => row.forEach((raw, j) => setCell(key(cur.r + i, cur.c + j), shiftFormula(raw, cur.r - clip.r, cur.c - clip.c), true)));
+  } else {
+    text.replace(/\r/g, "").split("\n").filter((l, i, a) => l || i < a.length - 1).forEach((line, i) => line.split("\t").forEach((v, j) => setCell(key(cur.r + i, cur.c + j), v, true)));
+  }
+  recalc(); scheduleSave();
+});
+function fill(dir) {
+  const b = selBox();
+  if (dir === "down") { for (let c = b.c1; c <= b.c2; c++) { const src = eng.raw[key(b.r1, c)]; for (let r = b.r1 + 1; r <= b.r2; r++) setCell(key(r, c), shiftFormula(src, r - b.r1, 0), true); } }
+  else { for (let r = b.r1; r <= b.r2; r++) { const src = eng.raw[key(r, b.c1)]; for (let c = b.c1 + 1; c <= b.c2; c++) setCell(key(r, c), shiftFormula(src, 0, c - b.c1), true); } }
+  recalc(); scheduleSave();
+}
+function fmt(f) { const b = selBox(); for (let r = b.r1; r <= b.r2; r++) for (let c = b.c1; c <= b.c2; c++) { if (f) meta.formats[key(r, c)] = f; else delete meta.formats[key(r, c)]; } render(); scheduleSave(); }
+function toggleBold() { const b = selBox(), on = !meta.bold[key(b.r1, b.c1)]; for (let r = b.r1; r <= b.r2; r++) for (let c = b.c1; c <= b.c2; c++) { if (on) meta.bold[key(r, c)] = 1; else delete meta.bold[key(r, c)]; } render(); scheduleSave(); }
+$("sname").addEventListener("change", scheduleSave);
+
+// ---------------------------------------------------------------- sheets
+async function loadList(sel) {
+  const ss = await fetch("/api/sheets").then(r => r.json());
+  $("pick").innerHTML = '<option value="">Open a sheet…</option>' + ss.map(s => `<option value="${s.id}">${esc(s.name)}</option>`).join("");
+  if (sel) $("pick").value = sel;
+}
+$("pick").onchange = () => $("pick").value && openSheet(+$("pick").value);
+async function openSheet(id) {
+  sheet = await fetch("/api/sheet?id=" + id).then(r => r.json());
+  history.replaceState(null, "", "?id=" + id);
+  eng.raw = {...sheet.cells}; meta = Object.assign({formats: {}, bold: {}}, sheet.meta || {});
+  meta.formats ||= {}; meta.bold ||= {};
+  $("sname").value = sheet.name; $("pick").value = id;
+  cur = {r: 0, c: 0}; anchor = null; applyWidths();
+  await recalc(); $("wrap").focus();
+}
+async function delSheet() { if (sheet && confirm(`Delete sheet “${sheet.name}”?`)) { await fetch("/api/sheet/delete", {method: "POST", body: JSON.stringify({id: sheet.id})}); sheet = null; eng.raw = {}; await recalc(); loadList(); } }
+function refreshData() { eng.data.clear(); recalc(); }
+function tplFields() {
+  const t = $("tpl").value;
+  $("tplFields").innerHTML = t === "comps" ? '<label>Peer tickers</label><input id="tTickers" placeholder="AAPL MSFT NVDA GOOGL META" value="AAPL MSFT NVDA"><label>Target to value (optional)</label><input id="tTarget" placeholder="defaults to the first ticker">'
+    : (t === "dcf" || t === "lbo") ? '<label>Ticker</label><input id="tTicker" placeholder="AAPL" value="AAPL">'
+    : t === "precedents" ? '<label>Filter (optional)</label><input id="tQuery" placeholder="e.g. diagnostics, Centerview">' : "";
+}
+$("createBtn").onclick = async e => {
+  e.preventDefault();
+  const t = $("tpl").value, body = {template: t, name: $("newName").value.trim() || undefined};
+  if (t === "comps") { body.tickers = $("tTickers").value; body.target = $("tTarget").value || undefined; }
+  if (t === "dcf" || t === "lbo") body.ticker = $("tTicker").value;
+  if (t === "precedents") body.query = $("tQuery").value;
+  const r = await fetch("/api/sheets", {method: "POST", body: JSON.stringify(body)}).then(r => r.json());
+  newDlg.close(); $("newName").value = "";
+  await loadList(r.id); openSheet(r.id);
+};
+
+// ---------------------------------------------------------------- export
+async function exportSlides(btn) {
+  if (sheet && meta.template === "dcf") {
+    const values = {}; for (const k in eng.raw) { const v = eng.vals[k]; values[k] = isErr(v) ? null : v; }
+    return downloadDeck({kind: "dcf", id: sheet.id, values}, btn);
+  }
+  if (sheet && meta.template === "comps" && meta.tickers?.length) return downloadDeck({kind: "comps", tickers: meta.tickers}, btn);
+  const t = prompt("Slides from SEC data — enter several tickers for a trading-comps deck, or one ticker for a company profile:", "");
+  if (!t || !t.trim()) return;
+  const ts = t.trim().split(/[\s,]+/).filter(Boolean);
+  downloadDeck(ts.length === 1 ? {kind: "tearsheet", ticker: ts[0]} : {kind: "comps", tickers: ts}, btn);
+}
+async function exportXlsx() {
+  if (!sheet) return;
+  await fetch("/api/sheet/save", {method: "POST", body: JSON.stringify({id: sheet.id, cells: eng.raw, meta, name: $("sname").value})});
+  const values = {}; for (const k in eng.raw) { const v = eng.vals[k]; values[k] = isErr(v) ? v.err : v; }
+  const r = await fetch("/api/sheet/xlsx", {method: "POST", body: JSON.stringify({id: sheet.id, values})});
+  const blob = await r.blob(), a = document.createElement("a");
+  a.href = URL.createObjectURL(blob); a.download = ($("sname").value || "sheet") + ".xlsx"; a.click();
+}
+function exportCsv() {
+  let maxR = 0, maxC = 0; for (const k in eng.raw) { const p = parseRef(k); maxR = Math.max(maxR, p.r); maxC = Math.max(maxC, p.c); }
+  const lines = [];
+  for (let r = 0; r <= maxR; r++) { const row = []; for (let c = 0; c <= maxC; c++) { let v = eng.vals[key(r, c)]; v = isErr(v) ? v.err : (v ?? ""); row.push(/[",\n]/.test(String(v)) ? `"${String(v).replace(/"/g, '""')}"` : v); } lines.push(row.join(",")); }
+  const a = document.createElement("a"); a.href = URL.createObjectURL(new Blob([lines.join("\n")], {type: "text/csv"})); a.download = ($("sname").value || "sheet") + ".csv"; a.click();
+}
+
+// =====================================================================================
+// Agent
+// =====================================================================================
+const history_ = [];
+const HARD_ERRORS = ["#NAME?", "#REF!", "#PARSE!", "#CYCLE!", "#DIV/0!", "#VALUE!", "#NUM!"];
+function say(role, text) {
+  const d = document.createElement("div"); d.className = "msg " + role; d.textContent = text;
+  $("msgs").appendChild(d); $("msgs").scrollTop = 1e9;
+  if (role !== "sys") history_.push({role: role === "user" ? "user" : "assistant", text});
+  return d;
+}
+function serializableValues(E) { const out = {}; for (const k in E.raw) { const v = E.vals[k]; out[k] = isErr(v) ? v.err : v; } return out; }
+
+async function slash(cmd) {
+  const [name, ...rest] = cmd.slice(1).trim().split(/\s+/), arg = rest.join(" ");
+  const map = {comps: {template: "comps", tickers: arg}, dcf: {template: "dcf", ticker: arg}, lbo: {template: "lbo", ticker: arg},
+               precedents: {template: "precedents", query: arg}};
+  if (!map[name] || (name !== "precedents" && !arg)) { say("sys", "Commands: /comps AAPL MSFT NVDA · /dcf NVDA · /lbo AAPL · /precedents [filter]"); return; }
+  const r = await fetch("/api/sheets", {method: "POST", body: JSON.stringify(map[name])}).then(r => r.json());
+  await loadList(r.id); await openSheet(r.id);
+  say("bot", `Built a new ${name.toUpperCase()} sheet${arg ? " for " + arg.toUpperCase() : ""} from the template. Blue cells are assumptions; green cells are live from filings.`);
+}
+
+async function sendAgent() {
+  const text = $("agentInput").value.trim(); if (!text) return;
+  $("agentInput").value = "";
+  say("user", text);
+  if (text.startsWith("/")) return slash(text);
+  if (!sheet) { say("sys", "Open or create a sheet first (or use a /command)."); return; }
+  if (preview) discardProposal(true);
+  $("agentSend").disabled = true;
+  const thinking = say("sys", "Working…");
+  try {
+    let errors = null, plan = null;
+    for (let round = 0; round < 3; round++) {
+      const res = await fetch("/api/sheet/agent", {method: "POST", body: JSON.stringify({
+        id: sheet.id, instruction: text, cells: eng.raw, values: serializableValues(eng), selection: $("addr").value,
+        errors, history: history_.slice(0, -1)})});
+      const j = await res.json();
+      if (!res.ok) { thinking.remove(); say("sys", j.detail || j.error); return; }
+      plan = j;
+      // apply to a scratch copy and check what the plan actually computes to
+      const scratch = new Engine(); scratch.raw = {...eng.raw}; scratch.data = eng.data;
+      const m = {formats: {...meta.formats}, bold: {...meta.bold}, widths: meta.widths}, changed = new Set();
+      applyOps(plan.operations, scratch.raw, m, changed);
+      await calc(scratch);
+      const bad = [...changed].filter(k => isErr(scratch.vals[k]) && HARD_ERRORS.includes(scratch.vals[k].err))
+                              .map(k => `${k} = ${scratch.raw[k]} → ${scratch.vals[k].err}`);
+      const problems = [...(plan.problems || []), ...bad];
+      if (!problems.length || round === 2) {
+        preview = {eng: scratch, meta: m, changed, problems, plan};
+        break;
+      }
+      thinking.textContent = `Fixing ${problems.length} issue(s) (round ${round + 1})…`;
+      errors = problems;
+    }
+    thinking.remove();
+    say("bot", plan.message || "Done.");
+    if (preview.changed.size) showProposal(); else preview = null;
+    render();
+    $("agentModel").textContent = plan.model || "";
+  } catch (e) { thinking.remove(); say("sys", "Agent error: " + e.message); }
+  finally { $("agentSend").disabled = false; }
+}
+function applyOps(ops, raw, m, changed) {
+  for (const op of ops) {
+    if (op.op === "clear") {
+      const [a, b] = op.cell.split(":"), p = parseRef(a), q = parseRef(b || a);
+      for (let r = Math.min(p.r, q.r); r <= Math.max(p.r, q.r); r++) for (let c = Math.min(p.c, q.c); c <= Math.max(p.c, q.c); c++) {
+        const k = key(r, c); if (k in raw) { delete raw[k]; changed.add(k); }
+      }
+      continue;
+    }
+    if (op.value === "") delete raw[op.cell]; else raw[op.cell] = op.value;
+    if (op.format) m.formats[op.cell] = op.format;
+    if (op.bold) m.bold[op.cell] = 1;
+    changed.add(op.cell);
+  }
+}
+function showProposal() {
+  const p = preview, n = p.changed.size;
+  $("propTitle").textContent = `${n} cell${n > 1 ? "s" : ""} to change` + (p.problems.length ? ` · ${p.problems.length} unresolved issue(s)` : "");
+  $("propList").innerHTML = [...p.changed].slice(0, 120).map(k => `<li>${k}: ${esc(String(p.eng.raw[k] ?? "(clear)").slice(0, 80))}</li>`).join("") +
+    p.problems.map(x => `<li style="color:var(--err)">${esc(x)}</li>`).join("");
+  $("proposal").style.display = "block";
+  const first = [...p.changed].sort((a, b) => parseRef(a).r - parseRef(b).r)[0];
+  if (first) { const q = parseRef(first); cellEl(q.r, q.c).scrollIntoView({block: "center", inline: "nearest"}); }
+}
+function applyProposal() {
+  if (!preview) return;
+  eng.raw = {...preview.eng.raw}; meta.formats = preview.meta.formats; meta.bold = preview.meta.bold;
+  preview = null; $("proposal").style.display = "none";
+  say("sys", "Applied.");
+  recalc(); scheduleSave();
+}
+function discardProposal(silent) {
+  preview = null; $("proposal").style.display = "none";
+  if (!silent) say("sys", "Discarded.");
+  render();
+}
+$("agentInput").addEventListener("keydown", e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); sendAgent(); } });
+$("chips").innerHTML = ["Add EV/Sales and P/E columns with medians", "Explain the selected cell", "Add a WACC × exit multiple sensitivity",
+  "Add a 3-year revenue CAGR column", "/comps AAPL MSFT GOOGL META"].map(t => `<button>${esc(t)}</button>`).join("");
+$("chips").addEventListener("click", e => { if (e.target.tagName === "BUTTON") { $("agentInput").value = e.target.textContent; $("agentInput").focus(); } });
+fetch("/api/engine").then(r => r.json()).then(e => $("agentModel").textContent = e.agent_model || "no model — /commands only");
+
+buildGrid(); tplFields(); paintSel();
+loadList().then(() => { const id = new URLSearchParams(location.search).get("id"); if (id) openSheet(+id); });
+window.__engine = {Engine, parse, shiftFormula, eng};   // for tests
+async function buildModel(btn) {
+  const t = (prompt("Ticker for the integrated three-statement model (e.g. AAPL):") || "").trim().toUpperCase();
+  if (!t) return;
+  const label = btn.textContent; btn.disabled = true; btn.textContent = "Building " + t + "…";
+  try {
+    const r = await fetch("/api/model", {method: "POST", headers: {"Content-Type": "application/json"}, body: JSON.stringify({ticker: t})});
+    if (!r.ok) { const e = await r.json().catch(() => ({})); throw new Error(e.error || r.statusText); }
+    const grade = JSON.parse(r.headers.get("X-Model-Grade") || "{}");
+    const a = document.createElement("a"); a.href = URL.createObjectURL(await r.blob()); a.download = t + " three-statement model.xlsx"; a.click();
+    alert(`${t}: model graded ${grade.score}/100 — ${grade.production_ready ? "every critical check passes" : "NOT production-ready: " + (grade.failing || []).join(", ")}` +
+          ((grade.warnings || []).length ? "\n\nMapping notes:\n- " + grade.warnings.join("\n- ") : ""));
+  } catch (e) { alert("Couldn't build the model: " + e.message); }
+  finally { btn.disabled = false; btn.textContent = label; }
+}
+</script>
+</body>
+</html>

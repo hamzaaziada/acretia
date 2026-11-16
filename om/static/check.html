@@ -1,0 +1,163 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Consistency Check</title>
+<style>
+:root{--bg:#fafaf9;--panel:#fff;--ink:#1c1917;--muted:#78716c;--line:#e7e5e4;--accent:#2563eb;--chip:#f5f5f4;--hi:#b91c1c;--hibg:#fef2f2;--md:#b45309;--mdbg:#fffbeb;--lo:#57534e;--lobg:#f5f5f4;--ok:#15803d}
+@media (prefers-color-scheme: dark){:root{--bg:#0c0a09;--panel:#1c1917;--ink:#f5f5f4;--muted:#a8a29e;--line:#292524;--accent:#60a5fa;--chip:#292524;--hi:#f87171;--hibg:#2a1414;--md:#fbbf24;--mdbg:#2a2110;--lo:#a8a29e;--lobg:#292524;--ok:#4ade80}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:14px/1.5 ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,sans-serif}
+header{display:flex;gap:16px;align-items:center;padding:12px 16px;border-bottom:1px solid var(--line);flex-wrap:wrap}
+header a{color:var(--muted);text-decoration:none}header a.on{color:var(--ink);font-weight:600}
+.wrap{max-width:1100px;margin:16px auto;padding:0 16px}
+.grid{display:grid;grid-template-columns:1.3fr 1fr;gap:12px}
+@media (max-width:800px){.grid{grid-template-columns:1fr}}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:14px;margin-bottom:12px}
+h2{font-size:15px;margin:0 0 4px}h3{font-size:13px;margin:0}
+p.sub{margin:0 0 10px;color:var(--muted);font-size:13px}
+input,select,button{padding:8px 10px;border:1px solid var(--line);border-radius:8px;background:var(--panel);color:var(--ink);font:inherit}
+button{cursor:pointer}button.primary{background:var(--accent);border-color:var(--accent);color:#fff}button:disabled{opacity:.6;cursor:default}
+.drop{display:block;border:1.5px dashed var(--line);border-radius:10px;padding:18px;text-align:center;color:var(--muted);cursor:pointer}
+.drop.over{border-color:var(--accent);color:var(--ink)}
+.opts{display:flex;gap:14px;flex-wrap:wrap;align-items:center;margin-top:10px;font-size:13px}
+.row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.muted{color:var(--muted)}a{color:var(--accent)}
+.summary{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:6px}
+.pill{border-radius:999px;padding:2px 10px;font-size:12px;font-weight:600;border:1px solid transparent;cursor:pointer;background:var(--chip)}
+.pill.high{color:var(--hi);background:var(--hibg)}.pill.medium{color:var(--md);background:var(--mdbg)}.pill.low{color:var(--lo);background:var(--lobg)}
+.pill.off{opacity:.35}
+.issue{border:1px solid var(--line);border-left:4px solid var(--lo);border-radius:8px;padding:10px 12px;margin:8px 0;background:var(--panel)}
+.issue.high{border-left-color:var(--hi)}.issue.medium{border-left-color:var(--md)}
+.issue .t{font-weight:600}
+.issue .k{font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);margin-right:6px}
+.issue .d{color:var(--muted);font-size:13px;margin-top:2px}
+.ev{margin-top:8px;display:grid;gap:4px}
+.ev .g{border-top:1px dashed var(--line);padding-top:4px}
+.ev .it{display:grid;grid-template-columns:110px 1fr;gap:8px;font-size:12.5px}
+.ev .v{font-weight:600;font-variant-numeric:tabular-nums}
+.ev .q{color:var(--muted)}
+.ok{color:var(--ok);font-weight:600}
+.stat{font-size:13px;color:var(--muted)}
+.empty{text-align:center;padding:24px;color:var(--muted)}
+</style>
+</head>
+<body>
+<header><b>Research</b><a href="/ask.html">Ask</a><a href="/rooms.html">Data Rooms</a><a href="/">Search</a><a href="/matrix.html">Matrix</a><a href="/sheets.html">Sheets</a><a href="/studio.html">Deck Studio</a><a href="/rounds.html">Funding Rounds</a><a href="/check.html" class="on">Check</a><a href="/settings.html">Settings</a></header>
+<div class="wrap">
+  <div class="grid">
+    <div class="panel">
+      <h2>Check a deck or model</h2>
+      <p class="sub">Finds numbers that disagree across slides or sheets, totals and medians that don't foot, margins and growth that don't follow from the amounts, sums in the text that don't add, error cells and failing checks — and ties company figures to SEC filings.</p>
+      <label class="drop" id="drop">Drop a .pptx or .xlsx here, or <u>choose a file</u><input type="file" id="file" accept=".pptx,.xlsx" hidden></label>
+      <div class="opts">
+        <label><input type="checkbox" id="tie" checked> Tie company figures to SEC filings</label>
+        <label><input type="checkbox" id="notes"> Include speaker notes</label>
+        <label>Also compare with data room <select id="deckRoom"><option value="">—</option></select></label>
+      </div>
+    </div>
+    <div class="panel">
+      <h2>Check a data room</h2>
+      <p class="sub">Compares the same figures across every document in a room — CIM vs model vs management presentation — and checks the stated margins and growth.</p>
+      <div class="row"><select id="room"><option value="">Choose a room…</option></select><button class="primary" id="runRoom">Run check</button></div>
+      <p class="muted" id="modelNote" style="font-size:12px;margin:10px 0 0"></p>
+    </div>
+  </div>
+  <div class="panel" id="out"><div class="empty">Results appear here.</div></div>
+</div>
+<script>
+const $ = id => document.getElementById(id);
+const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const TYPE = {conflict: "Mismatch", aggregate: "Total / median", math: "Math", arithmetic: "Sum in text", bridge: "Bridge", source: "vs SEC filings",
+              units: "Units", error_cells: "Error cells", checks: "Checks tab", not_calculated: "Not calculated"};
+let last = null, hidden = new Set();
+
+async function rooms() {
+  const rs = await fetch("/api/rooms").then(r => r.json());
+  const opts = rs.map(r => `<option value="${r.id}">${esc(r.name)} (${r.documents} docs)</option>`).join("");
+  $("room").innerHTML = '<option value="">Choose a room…</option>' + opts;
+  $("deckRoom").innerHTML = '<option value="">—</option>' + opts;
+  const s = await fetch("/api/settings").then(r => r.json()).catch(() => null);
+  const m = s && s.stages && s.stages.check;
+  $("modelNote").textContent = m && !/none/i.test(m) ? `AI model for checks: ${m} (adds extraction from prose and reviews each mismatch).`
+    : "Rules only (no AI model set). Add one in Settings to also read harder prose and review each mismatch.";
+}
+
+async function poll(id, label) {
+  $("out").innerHTML = `<div class="empty">Checking ${esc(label)}…</div>`;
+  for (;;) {
+    await new Promise(r => setTimeout(r, 700));
+    const st = await fetch("/api/check/status?id=" + id).then(r => r.json());
+    if (st.state === "running") continue;
+    if (st.state === "error") { $("out").innerHTML = `<div class="empty" style="color:var(--hi)">${esc(st.error)}</div>`; return; }
+    last = st; hidden = new Set(); render(); return;
+  }
+}
+
+async function runFile(f) {
+  if (!f) return;
+  const q = new URLSearchParams({name: f.name, tie: $("tie").checked ? "1" : "0", notes: $("notes").checked ? "1" : "0"});
+  if ($("deckRoom").value) q.set("room", $("deckRoom").value);
+  const r = await fetch("/api/check/file?" + q, {method: "PUT", body: f}); const j = await r.json();
+  if (!r.ok) { $("out").innerHTML = `<div class="empty" style="color:var(--hi)">${esc(j.error)}</div>`; return; }
+  poll(j.id, f.name);
+}
+$("file").onchange = e => runFile(e.target.files[0]);
+const drop = $("drop");
+["dragenter", "dragover"].forEach(ev => drop.addEventListener(ev, e => { e.preventDefault(); drop.classList.add("over"); }));
+["dragleave", "drop"].forEach(ev => drop.addEventListener(ev, e => { e.preventDefault(); drop.classList.remove("over"); }));
+drop.addEventListener("drop", e => runFile(e.dataTransfer.files[0]));
+$("runRoom").onclick = async () => {
+  if (!$("room").value) return;
+  const r = await fetch("/api/check/room", {method: "POST", body: JSON.stringify({room: +$("room").value})}); const j = await r.json();
+  if (!r.ok) { $("out").innerHTML = `<div class="empty" style="color:var(--hi)">${esc(j.error)}</div>`; return; }
+  poll(j.id, $("room").selectedOptions[0].textContent);
+};
+
+function scope(r) {
+  const bits = [`${r.facts} figures read`];
+  if (r.slides) bits.push(`${r.slides} slides, ${r.tables} tables`);
+  if (r.documents) bits.push(`${r.documents} documents`);
+  if (r.sheets) bits.push(`${r.sheets.length} sheets${r.recalculated ? " (recalculated)" : ""}`);
+  if (r.tie_out && r.tie_out.checked) bits.push(`<span class="${r.tie_out.matched === r.tie_out.checked ? "ok" : ""}">${r.tie_out.matched} of ${r.tie_out.checked} company figures match SEC filings</span>`);
+  if (r.model) bits.push("AI review on");
+  return bits.join(" · ");
+}
+
+function render() {
+  const r = last, c = r.counts;
+  const issues = r.issues.filter(i => !hidden.has(i.severity));
+  const pill = s => `<span class="pill ${s} ${hidden.has(s) ? "off" : ""}" data-s="${s}">${c[s]} ${s}</span>`;
+  let h = `<div class="summary"><h3 style="margin-right:6px">${esc(r.name)}</h3>${pill("high")}${pill("medium")}${pill("low")}
+    <span style="margin-left:auto" class="row"><button onclick="csv()">Download CSV</button></span></div>
+    <div class="stat">${scope(r)}</div>`;
+  if (r.model_grade) {
+    const g = r.model_grade;
+    h += `<div class="issue ${g.production_ready ? "low" : "high"}"><div><span class="k">Model grade</span><span class="t">${g.score}/100 — ${g.production_ready ? "passes every critical check" : "not production-ready"}</span></div>` +
+      g.graders.map(x => `<div class="d"><b>${x.passed === null ? "–" : x.passed ? "✓" : "✗"} ${esc(x.title)}</b> — ${esc(x.detail)}${x.passed === false && x.cells.length ? `<br><span class="muted">${esc(x.cells.slice(0, 6).join(" · "))}${x.n_cells > 6 ? ` (+${x.n_cells - 6} more)` : ""}</span>` : ""}</div>`).join("") + `</div>`;
+  }
+  if (!r.issues.length) h += `<div class="empty"><span class="ok">No inconsistencies found.</span><br>Checked ${r.facts} figures${r.metrics ? " (" + esc(r.metrics.join(", ")) + ")" : ""}.</div>`;
+  for (const i of issues) {
+    h += `<div class="issue ${i.severity}"><div><span class="k">${esc(TYPE[i.type] || i.type)}</span><span class="t">${esc(i.title)}</span></div>` +
+      (i.detail ? `<div class="d">${esc(i.detail)}</div>` : "") + (i.review ? `<div class="d"><b>AI review:</b> ${esc(i.review)}</div>` : "") +
+      `<div class="ev">${(i.groups || []).map(g => `<div class="g">${g.slice(0, 4).map(it => `<div class="it"><span class="v">${esc(it.value)}</span>
+        <span><span>${esc(it.where || "")}</span>${it.link ? ` · <a href="${esc(it.link)}" target="_blank" rel="noopener">filing ↗</a>` : ""}${it.doc_id ? ` · <a href="/api/file?doc_id=${it.doc_id}" target="_blank">open ↗</a>` : ""}
+        ${it.quote && it.quote !== it.where ? `<div class="q">“${esc(it.quote)}”</div>` : ""}</span></div>`).join("")}${g.length > 4 ? `<div class="muted" style="font-size:12px">+${g.length - 4} more</div>` : ""}</div>`).join("")}</div></div>`;
+  }
+  $("out").innerHTML = h;
+  document.querySelectorAll(".pill[data-s]").forEach(p => p.onclick = () => { const s = p.dataset.s; hidden.has(s) ? hidden.delete(s) : hidden.add(s); render(); });
+}
+
+function csv() {
+  const rows = [["#", "severity", "type", "issue", "detail", "values", "where"]];
+  for (const i of last.issues) rows.push([i.id, i.severity, TYPE[i.type] || i.type, i.title, i.detail || "",
+    (i.groups || []).flat().map(x => x.value).join(" | "), (i.groups || []).flat().map(x => x.where).join(" | ")]);
+  const body = rows.map(r => r.map(x => `"${String(x ?? "").replace(/"/g, '""')}"`).join(",")).join("\n");
+  const a = document.createElement("a"); a.href = URL.createObjectURL(new Blob([body], {type: "text/csv"}));
+  a.download = (last.name || "check").replace(/\.[^.]+$/, "") + " - consistency.csv"; a.click();
+}
+rooms();
+</script>
+</body>
+</html>

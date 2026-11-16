@@ -1,0 +1,199 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Deck Studio</title>
+<style>
+:root{--bg:#fafaf9;--panel:#fff;--ink:#1c1917;--muted:#78716c;--line:#e7e5e4;--accent:#2563eb;--chip:#f5f5f4;--ok:#15803d;--warn:#b45309;--bad:#b91c1c}
+@media (prefers-color-scheme: dark){:root{--bg:#0c0a09;--panel:#1c1917;--ink:#f5f5f4;--muted:#a8a29e;--line:#292524;--accent:#60a5fa;--chip:#292524;--ok:#4ade80;--warn:#fbbf24;--bad:#f87171}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:14px/1.5 ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,sans-serif}
+header{display:flex;gap:16px;align-items:center;padding:12px 16px;border-bottom:1px solid var(--line);flex-wrap:wrap}
+header a{color:var(--muted);text-decoration:none}header a.on{color:var(--ink);font-weight:600}
+.wrap{display:grid;grid-template-columns:360px 1fr;gap:14px;max-width:1500px;margin:14px auto;padding:0 16px}
+@media (max-width:980px){.wrap{grid-template-columns:1fr}}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:14px;margin-bottom:12px}
+h2{font-size:15px;margin:0 0 8px}h3{font-size:13px;margin:0 0 6px}
+label{display:block;font-size:12px;color:var(--muted);margin:10px 0 4px}
+input,select,textarea,button{padding:8px 10px;border:1px solid var(--line);border-radius:8px;background:var(--panel);color:var(--ink);font:inherit;width:100%}
+textarea{resize:vertical;min-height:90px}
+button{cursor:pointer;width:auto}button.primary{background:var(--accent);border-color:var(--accent);color:#fff}button:disabled{opacity:.55;cursor:default}
+.row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}.row>*{flex:1}
+.muted{color:var(--muted)}a{color:var(--accent)}
+#ready>div{display:flex;justify-content:space-between;gap:8px;font-size:12.5px;padding:2px 0}
+.ok{color:var(--ok)}.bad{color:var(--bad)}.warn{color:var(--warn)}
+.runs a{display:block;padding:6px 0;border-bottom:1px solid var(--line);text-decoration:none;color:var(--ink);font-size:13px}
+.runs small{color:var(--muted)}
+.flow{display:flex;gap:6px;flex-wrap:wrap;margin:6px 0 10px}
+.flow span{background:var(--chip);border-radius:999px;padding:3px 10px;font-size:12px;color:var(--muted)}
+.flow span.done{color:var(--ok)}.flow span.on{background:var(--accent);color:#fff}
+.slide{display:grid;grid-template-columns:1fr 1fr;gap:12px;border-top:1px solid var(--line);padding:12px 0}
+@media (max-width:1200px){.slide{grid-template-columns:1fr}}
+.slide img{width:100%;border:1px solid var(--line);border-radius:6px;background:#fff;display:block}
+.slide .t{font-weight:600;margin-bottom:4px}
+.rev{font-size:12.5px;margin-top:6px}.rev li{margin:2px 0}
+.thumbs{display:flex;gap:6px;margin-top:6px;flex-wrap:wrap}.thumbs img{width:90px;cursor:pointer;opacity:.75}.thumbs img.sel{opacity:1;outline:2px solid var(--accent)}
+.score{font-weight:600}
+.log{max-height:160px;overflow:auto;font-size:12px;color:var(--muted);font-family:ui-monospace,Menlo,monospace}
+.sb li{margin:3px 0}
+.empty{color:var(--muted);text-align:center;padding:40px 10px}
+.approve{margin-top:8px;border:1px solid var(--accent);border-radius:8px;padding:8px}
+.graders{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:6px 0}
+.grader{background:var(--chip);border-radius:8px;padding:6px 8px;font-size:12px}
+.dims{display:flex;flex-wrap:wrap;gap:4px;margin:4px 0}.dim{background:var(--panel);border-radius:4px;padding:0 5px;font-size:11px}.dim.low{color:var(--bad);font-weight:600}
+.bar{font-size:12px;color:var(--muted);margin:4px 0 10px}
+</style>
+</head>
+<body>
+<header><b>Research</b><a href="/ask.html">Ask</a><a href="/rooms.html">Data Rooms</a><a href="/">Search</a><a href="/matrix.html">Matrix</a><a href="/sheets.html">Sheets</a><a href="/studio.html" class="on">Deck Studio</a><a href="/rounds.html">Funding Rounds</a><a href="/check.html">Check</a><a href="/settings.html">Settings</a></header>
+<div class="wrap">
+  <div>
+    <div class="panel">
+      <h2>New deck</h2>
+      <label for="brief">Brief</label>
+      <textarea id="brief" placeholder="e.g. Board briefing for Costco on capital allocation: can it fund the FY27 warehouse plan and still return cash? Recommend a sized answer."></textarea>
+      <div class="row">
+        <div><label for="persona">Storyboard as</label><select id="persona"><option value="md">MD, investment bank</option><option value="partner">Partner, strategy firm</option></select></div>
+        <div><label for="slides">Pages</label><input id="slides" type="number" min="2" max="20" value="6"></div>
+        <div><label for="budget">Token budget</label><input id="budget" type="number" min="50000" step="50000" value="800000" title="Total tokens for this deck; reviews stop early to finish inside it"></div>
+      </div>
+      <label for="mode">Slide images approved by</label>
+      <select id="mode"><option value="auto">The partner/MD reviewer (automatic)</option><option value="human">Me, one slide at a time</option></select>
+      <label for="tickers">Company data (tickers, from SEC filings)</label><input id="tickers" placeholder="COST, WMT">
+      <label for="room">Data room facts</label><select id="room"><option value="">—</option></select>
+      <label for="ctx">More facts (optional; numbers here are allowed on slides)</label><textarea id="ctx" style="min-height:60px" placeholder="Paste figures with their sources"></textarea>
+      <div class="row" style="margin-top:12px"><button class="primary" id="go">Make the deck</button></div>
+      <p class="muted" id="goMsg" style="font-size:12px;margin:8px 0 0"></p>
+    </div>
+    <div class="panel ready"><h3>Models</h3><div id="ready" class="muted">…</div>
+      <p class="muted" style="font-size:12px;margin:8px 0 0">Set them in <a href="/settings.html">Settings</a>. One Gemini key covers all four (text, vision and Nano Banana images).</p></div>
+    <div class="panel"><h3>Decks</h3><div class="runs" id="runs"></div></div>
+  </div>
+  <div class="panel" id="view"><div class="empty">Write a brief to start. Each deck runs the workflow: storyboard → slide prompts → slide images (reviewed) → editable slides rebuilt from the images (reviewed) → .pptx.</div></div>
+</div>
+<script>
+const $ = id => document.getElementById(id);
+const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const STAGES = [["storyboard","Storyboard"],["prompts","Slide prompts"],["images","Slide images"],["build","Editable slides"],["assemble","Output"]];
+let cur = null, timer = null, picked = {};
+const file = (n) => `/api/studio/file?id=${encodeURIComponent(cur)}&name=${encodeURIComponent(n)}`;
+
+async function ready() {
+  const r = await fetch("/api/studio/ready").then(r => r.json());
+  const row = (k, lab) => `<div><span>${lab}</span><span class="${r[k].ok ? "ok" : "bad"}">${esc(r[k].ok ? r[k].model : "not set")}</span></div>`;
+  $("ready").innerHTML = row("storyboard", "Storyboard (text)") + row("slide_review", "Reviewer (vision)") + row("slide_build", "Slides engine (vision)") +
+    row("image", "Image model") + `<div><span>Rendering for review</span><span class="${r.render.ok ? "ok" : "warn"}">${r.render.ok ? "LibreOffice" : "not installed"}</span></div>`;
+  $("go").disabled = !(r.storyboard.ok && r.slide_review.ok && r.slide_build.ok && r.image.ok);
+  $("goMsg").textContent = $("go").disabled ? "Add the missing models in Settings to start." : "";
+}
+async function lists() {
+  const rs = await fetch("/api/rooms").then(r => r.json());
+  $("room").innerHTML = '<option value="">—</option>' + rs.map(r => `<option value="${r.id}">${esc(r.name)}</option>`).join("");
+  const runs = await fetch("/api/studio/runs").then(r => r.json());
+  $("runs").innerHTML = runs.length ? runs.map(r => `<a href="#${r.id}" onclick="openRun('${r.id}');return false">${esc(r.title || r.brief.slice(0, 70))}<br>
+    <small>${new Date(r.created * 1000).toLocaleString()} · ${r.slides || "–"} pages · ${esc(r.status)}</small></a>`).join("") : '<span class="muted" style="font-size:13px">None yet.</span>';
+}
+$("go").onclick = async () => {
+  $("go").disabled = true;
+  const body = {brief: $("brief").value, persona: $("persona").value, mode: $("mode").value, slides: +$("slides").value,
+                tickers: $("tickers").value, room: $("room").value ? +$("room").value : null, context: $("ctx").value,
+                token_budget: +$("budget").value || 800000};
+  const r = await fetch("/api/studio/start", {method: "POST", body: JSON.stringify(body)}); const j = await r.json();
+  $("go").disabled = false;
+  if (!r.ok) { $("goMsg").textContent = j.error; return; }
+  openRun(j.id); lists();
+};
+
+async function openRun(id) { cur = id; location.hash = id; picked = {}; await refresh(); }
+async function refresh() {
+  clearTimeout(timer);
+  if (!cur) return;
+  const run = await fetch("/api/studio/run?id=" + encodeURIComponent(cur)).then(r => r.json());
+  render(run);
+  if (run.running || run.status === "running" || run.status === "queued") timer = setTimeout(refresh, 2500);
+}
+
+function render(run) {
+  const sb = run.storyboard || {};
+  const idx = STAGES.findIndex(s => s[0] === (run.stage === "waiting" ? "images" : run.stage));
+  const flow = STAGES.map(([k, l], i) => `<span class="${run.stage === "done" || i < idx ? "done" : i === idx ? "on" : ""}">${i < idx || run.stage === "done" ? "✓ " : ""}${l}</span>`).join("");
+  let h = `<div class="row" style="align-items:flex-start"><div style="flex:3"><h2 style="margin:0">${esc(sb.title || run.brief.slice(0, 120))}</h2>
+    <div class="muted" style="font-size:12.5px">${usageHtml(run)} · ${esc(run.persona === "md" ? "MD, investment bank" : "Partner, strategy firm")} · ${run.mode === "human" ? "you approve images" : "reviewer approves images"} · ${esc(run.status)}${run.running ? " …" : ""}</div></div>
+    <div style="flex:1;text-align:right">${run.deck ? `<a href="${file(run.deck)}"><button class="primary">Download .pptx</button></a>` : ""}
+    ${run.status === "error" || run.status === "paused" ? `<button onclick="resume()">Resume</button>` : ""}</div></div>
+    <div class="flow">${flow}</div>`;
+  if (run.error) h += `<p class="bad">${esc(run.error)}</p>`;
+  h += `<div class="bar">Bar: partner and MD must both sign off — overall ≥ 8, every dimension (spacing included) ≥ 7, no blocking or major issue.</div>`;
+  if (run.stage === "done") h += `<p style="font-size:14px"><b class="${run.signed_off ? "ok" : "bad"}">${run.signed_off ? "Signed off by the partner and the MD." : "Not signed off."}</b>
+    ${run.signed_off ? "" : ` <span class="muted">${(run.slides || []).filter(s => !s.signed_off).length} of ${(run.slides || []).length} slides didn't clear the bar; their best versions are in the deck.</span>`}</p>`;
+  const dr = run.deck_reviews || [];
+  if (dr.length) h += `<details><summary><b>Whole-deck review</b> <span class="muted">— round ${dr.length}</span></summary>${reviewHtml("Deck", dr[dr.length - 1])}</details>`;
+  if (run.check) { const c = run.check.counts; h += `<p style="font-size:13px">Consistency check on the finished deck: <b class="${c.high ? "bad" : "ok"}">${c.high} high</b> · ${c.medium} medium · ${c.low} low${run.check.issues.length ? " — " + run.check.issues.slice(0, 3).map(i => esc(i.title)).join("; ") : ""}</p>`; }
+  if (sb.slides) {
+    const rv = run.storyboard_reviews || [];
+    h += `<details ${run.stage === "storyboard" || run.stage === "prompts" ? "open" : ""}><summary><b>Storyboard</b> <span class="muted">— ${esc(sb.answer || "")}${rv.length ? ` · review ${rv[rv.length - 1].score}/10` : ""}</span></summary>
+      <ol class="sb">${sb.slides.map(s => `<li><b>${esc(s.title)}</b> <span class="muted">(${esc(s.exhibit)})</span></li>`).join("")}</ol>
+      ${rv.map(r => reviewHtml(`Round ${r.round}`, r)).join("")}</details>`;
+  }
+  for (const sl of run.slides || []) {
+    const imgs = sl.images || [], last = imgs[imgs.length - 1];
+    const shown = picked[sl.n] || sl.approved_image || (last && last.file);
+    const shownEntry = imgs.find(e => e.file === shown) || last;
+    const b = (sl.builds || [])[sl.builds.length - 1];
+    const finalImg = sl.final || (b && b.render);
+    h += `<div class="slide"><div><div class="t">${sl.n}. ${esc(sl.spec.title)}</div>
+        ${shown ? `<img src="${file(shown)}" alt="slide ${sl.n} draft">` : `<div class="empty">${sl.image_status === "pending" ? "Waiting to draw…" : ""}</div>`}
+        ${imgs.length > 1 ? `<div class="thumbs">${imgs.map(e => `<img src="${file(e.file)}" class="${e.file === shown ? "sel" : ""}" title="Draft ${e.round}${e.review ? " · " + e.review.score + "/10" : ""}" onclick="picked[${sl.n}]='${e.file}';refresh()">`).join("")}</div>` : ""}
+        ${shownEntry && shownEntry.review ? reviewHtml(`Draft ${shownEntry.round}`, shownEntry.review) : ""}
+        ${shownEntry && shownEntry.advice ? reviewHtml(`Graders on draft ${shownEntry.round} (advice)`, shownEntry.advice) : ""}
+        ${sl.image_status === "waiting_human" ? `<div class="approve"><b>Your call on draft ${last.round}</b>
+          <textarea id="c${sl.n}" style="min-height:50px;margin-top:6px" placeholder="Comments for the redraw (one per line)"></textarea>
+          <div class="row" style="margin-top:6px"><button class="primary" onclick="decide(${sl.n},true)">Approve</button><button onclick="decide(${sl.n},false)">Redraw with comments</button></div></div>` : ""}
+        ${run.stage === "done" ? `<details style="margin-top:8px"><summary class="muted" style="font-size:12.5px">Redo this slide</summary>
+          <textarea id="r${sl.n}" style="min-height:44px;margin-top:6px" placeholder="What to change (optional), e.g. too dense; show the cash walk as a bridge"></textarea>
+          <button style="margin-top:6px" onclick="redo(${sl.n})">Redo slide ${sl.n}</button></details>` : ""}
+      </div><div><div class="t">Editable slide ${sl.build_status === "approved" ? (sl.signed_off ? '<span class="ok">signed off</span>' : '<span class="bad">not signed off</span>') : ""}</div>
+        ${finalImg ? `<img src="${file(finalImg)}" alt="rebuilt slide ${sl.n}">` : `<div class="empty">${sl.image_status === "approved" ? "Rebuilding…" : "After the image is approved"}</div>`}
+        ${b ? reviewHtml(`Build ${b.round} review`, b.review) + (b.findings && b.findings.length ? `<ul class="rev warn">${b.findings.map(f => `<li>${esc(f)}</li>`).join("")}</ul>` : "") : ""}
+      </div></div>`;
+  }
+  h += `<details><summary class="muted">Log</summary><div class="log">${(run.log || []).map(l => `${new Date(l.t * 1000).toLocaleTimeString()}  ${esc(l.msg)}`).join("<br>")}</div></details>`;
+  $("view").innerHTML = h;
+}
+const SEV = {blocking: "bad", major: "warn", minor: "muted"};
+function usageHtml(run) {
+  const u = run.usage || {tokens: 0}, b = (run.options || {}).token_budget || 800000;
+  const pct = Math.min(100, Math.round(100 * u.tokens / b));
+  return `<span title="${u.calls || 0} model calls">${(u.tokens || 0).toLocaleString()} of ${b.toLocaleString()} tokens (${pct}%)${run.budget_hit ? " — budget reached" : ""}</span>`;
+}
+function reviewHtml(label, r) {
+  if (!r) return "";
+  if (!r.panel) return `<div class="rev"><span class="score ${r.approve ? "ok" : "warn"}">${label}: ${r.approve ? "approved" : "redraw"}${r.by === "you" ? " (you)" : ""}</span>
+    ${(r.comments || []).length ? `<ul>${r.comments.map(c => `<li>${esc(c)}</li>`).join("")}</ul>` : ""}</div>`;
+  const g = r.panel.map(p => `<div class="grader"><b>${p.persona === "md" ? "MD" : "Partner"} ${p.overall}</b> <span class="${p.sign_off ? "ok" : "bad"}">${p.sign_off ? "signs off" : "won't sign"}</span>
+      <div class="dims">${Object.entries(p.scores).map(([d, v]) => `<span class="dim ${v < 7 ? "low" : ""}" title="${esc((p.why || {})[d] || "")}">${esc(d)} ${v}</span>`).join("")}</div>
+      ${p.headline ? `<div class="muted">${esc(p.headline)}</div>` : ""}</div>`).join("");
+  const iss = (r.issues || []).filter(i => i.severity !== "minor").slice(0, 8);
+  return `<div class="rev"><span class="score ${r.approve ? "ok" : "warn"}">${label}: ${r.approve ? "signed off by both" : "not signed off"}</span>
+    <div class="graders">${g}</div>
+    ${iss.length ? `<ul>${iss.map(i => `<li><span class="${SEV[i.severity]}">${i.severity}</span> ${esc(i.where || "")}: ${esc(i.issue)}${i.fix ? ` <span class="muted">→ ${esc(i.fix)}</span>` : ""}</li>`).join("")}</ul>` : ""}</div>`;
+}
+async function decide(n, approve) {
+  const comments = (($("c" + n) || {}).value || "").split("\n");
+  if (!approve && !comments.some(c => c.trim())) { alert("Add at least one comment for the redraw."); return; }
+  await fetch("/api/studio/approve", {method: "POST", body: JSON.stringify({id: cur, n, approve, comments})});
+  setTimeout(refresh, 600);
+}
+async function redo(n) {
+  const note = (($("r" + n) || {}).value || "").trim();
+  const r = await fetch("/api/studio/redo", {method: "POST", body: JSON.stringify({id: cur, slides: [n], note, budget: 200000})}); const j = await r.json();
+  if (!r.ok) { alert(j.error); return; }
+  setTimeout(refresh, 800);
+}
+async function resume() { await fetch("/api/studio/resume", {method: "POST", body: JSON.stringify({id: cur})}); setTimeout(refresh, 800); }
+ready(); lists();
+if (location.hash.length > 1) openRun(location.hash.slice(1));
+</script>
+</body>
+</html>

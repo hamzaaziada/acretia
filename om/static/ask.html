@@ -1,0 +1,161 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ask</title>
+<style>
+:root{--bg:#fafaf9;--panel:#fff;--ink:#1c1917;--muted:#78716c;--line:#e7e5e4;--accent:#2563eb;--chip:#f5f5f4;--ok:#15803d;--warn:#b45309;--hl:#fef3c7}
+@media (prefers-color-scheme: dark){:root{--bg:#0c0a09;--panel:#1c1917;--ink:#f5f5f4;--muted:#a8a29e;--line:#292524;--accent:#60a5fa;--chip:#292524;--ok:#4ade80;--warn:#fbbf24;--hl:#422006}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.6 ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,sans-serif}
+header{display:flex;gap:16px;align-items:center;padding:12px 16px;border-bottom:1px solid var(--line);flex-wrap:wrap;font-size:14px}
+header a{color:var(--muted);text-decoration:none}header a.on{color:var(--ink);font-weight:600}
+.layout{display:grid;grid-template-columns:minmax(0,1fr) 380px;gap:24px;max-width:1280px;margin:0 auto;padding:20px 16px}
+@media (max-width:900px){.layout{grid-template-columns:1fr}}
+.ask{display:flex;gap:8px;align-items:flex-end;background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:10px;position:sticky;bottom:12px;margin-top:16px}
+.ask textarea{flex:1;border:0;background:transparent;color:var(--ink);font:inherit;resize:none;outline:none;min-height:48px;max-height:200px}
+select,button{padding:8px 12px;border:1px solid var(--line);border-radius:9px;background:var(--panel);color:var(--ink);font:inherit;font-size:13px;cursor:pointer}
+button.primary{background:var(--accent);border-color:var(--accent);color:#fff}
+.turn{margin-bottom:28px}
+.q{font-size:20px;font-weight:650;margin:0 0 10px}
+.steps{color:var(--muted);font-size:13px}
+.answer p{margin:0 0 10px}.answer ul{margin:0 0 10px;padding-left:20px}.answer li{margin:3px 0}
+.answer h3,.answer h4{margin:14px 0 6px;font-size:15px}
+sup.c{display:inline-block;min-width:18px;padding:0 4px;margin-left:2px;border-radius:5px;background:var(--chip);color:var(--accent);font-size:11px;font-weight:600;cursor:pointer;line-height:16px;text-align:center;vertical-align:2px}
+sup.c.bad{color:var(--warn)}
+.meta{color:var(--muted);font-size:12px;margin-top:6px}
+.fu{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px}
+.fu button{font-size:12px;border-radius:999px}
+aside h4{margin:0 0 8px;font-size:12px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted)}
+.src{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:10px 12px;margin-bottom:8px;font-size:13px;line-height:1.45}
+.src.hl{border-color:var(--accent);box-shadow:0 0 0 2px var(--accent) inset}
+.src .t{font-weight:600}
+.src .k{display:inline-block;font-size:10px;font-weight:700;border-radius:4px;padding:0 5px;margin-right:6px;background:var(--chip);text-transform:uppercase}
+.src .x{color:var(--muted);margin-top:4px;max-height:7.2em;overflow:hidden}
+.src a{color:var(--accent);font-size:12px}
+.v{font-size:11px;margin-left:4px}.v.ok{color:var(--ok)}.v.no{color:var(--warn)}
+.empty{color:var(--muted);text-align:center;padding:60px 10px}
+.empty .ex{display:flex;flex-direction:column;gap:6px;align-items:center;margin-top:14px}
+.empty .ex button{border-radius:999px}
+mark{background:var(--hl);color:inherit}
+table.fin{border-collapse:collapse;font-size:12px;margin-top:4px;width:100%}table.fin td{padding:2px 4px;border-bottom:1px solid var(--line)}table.fin td:last-child{text-align:right;font-variant-numeric:tabular-nums}
+.answer button.slides{margin-top:10px;font-size:12px}
+</style>
+</head>
+<body>
+<header><b>Research</b><a href="/ask.html" class="on">Ask</a><a href="/rooms.html">Data Rooms</a><a href="/">Search</a><a href="/matrix.html">Matrix</a><a href="/sheets.html">Sheets</a><a href="/studio.html">Deck Studio</a><a href="/rounds.html">Funding Rounds</a><a href="/check.html">Check</a><a href="/settings.html">Settings</a><span id="model" class="muted" style="margin-left:auto;font-size:12px"></span></header>
+<div class="layout">
+  <main>
+    <div id="thread"><div class="empty" id="empty"><div style="font-size:22px;color:var(--ink);font-weight:650">What do you want to know?</div>
+      Answers come from SEC filings, your data rooms, company financials, Form D funding rounds and precedent deals — every sentence cited.
+      <div class="ex">
+        <button>How is Apple affected by tariffs, and what did it say about memory costs?</button>
+        <button>Compare NVDA and MSFT revenue growth and EBITDA margins</button>
+        <button>What were the largest AI infrastructure funding rounds since July 2026?</button>
+        <button>What change of control provisions are in Project Falcon's contracts?</button>
+      </div></div></div>
+    <div class="ask">
+      <textarea id="q" placeholder="Ask about companies, filings, deals, rounds or your data rooms…" rows="2"></textarea>
+      <select id="scope" title="Where to look"><option value="">Everything</option><option value="public">Public filings</option></select>
+      <button class="primary" id="go">Ask</button>
+    </div>
+  </main>
+  <aside><h4>Sources</h4><div id="sources"><p class="muted" style="font-size:13px">Sources for the latest answer appear here.</p></div></aside>
+</div>
+<script src="/deck.js"></script>
+<script>
+const $ = id => document.getElementById(id);
+const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const money = v => v == null ? "—" : Math.abs(v) >= 1e9 ? "$" + (v / 1e9).toFixed(1) + "bn" : Math.abs(v) >= 1e6 ? "$" + (v / 1e6).toFixed(1) + "m" : "$" + Math.round(v).toLocaleString();
+const history_ = [];
+let busy = false;
+
+function fileLink(s) {
+  if (!String(s.url || "").startsWith("room://")) return s.url;
+  const page = /p\.(\d+)/.exec(s.section || "");
+  return `/api/file?doc_id=${s.doc_id}` + (page && /pdf$/i.test(s.url) ? `#page=${page[1]}` : "");
+}
+function md(text, cites) {
+  const byN = Object.fromEntries((cites || []).map(c => [c.n, c]));
+  const inline = t => esc(t).replace(/\*\*(.+?)\*\*/g, "<b>$1</b>").replace(/\[(\d+)\]/g, (m, n) => {
+    const c = byN[n]; if (!c) return "";
+    return `<sup class="c ${c.verified ? "" : "bad"}" data-sid="${esc(c.source_id)}" title="${esc(c.quote)}${c.verified ? "" : " (quote not verified)"}">${n}</sup>`;
+  });
+  const out = []; let list = null;
+  for (const line of String(text).split("\n")) {
+    const li = /^\s*[-*•]\s+(.*)/.exec(line), h = /^#{1,4}\s+(.*)/.exec(line);
+    if (li) { if (!list) { list = []; } list.push(`<li>${inline(li[1])}</li>`); continue; }
+    if (list) { out.push(`<ul>${list.join("")}</ul>`); list = null; }
+    if (h) out.push(`<h4>${inline(h[1])}</h4>`); else if (line.trim()) out.push(`<p>${inline(line)}</p>`);
+  }
+  if (list) out.push(`<ul>${list.join("")}</ul>`);
+  return out.join("");
+}
+function sourceCard(s, verifiedIds) {
+  const v = verifiedIds[s.id];
+  const badge = v === undefined ? "" : v ? '<span class="v ok">✓ quote verified</span>' : '<span class="v no">⚠ not verified</span>';
+  if (s.kind === "document") {
+    const room = String(s.url).startsWith("room://");
+    return `<div class="src" id="s-${s.id}"><span class="k">${s.id} · ${room ? "data room" : esc(s.form)}</span>${badge}
+      <div class="t">${esc(room ? s.title : `${s.company} — ${s.form} ${s.filed}`)}</div><div class="muted" style="font-size:12px">${esc(s.section || "")}</div>
+      <div class="x">${esc(s.text.slice(0, 420))}…</div><a href="${esc(fileLink(s))}" target="_blank" rel="noopener">${room ? "Open document at page" : "Open filing on sec.gov"} ↗</a></div>`;
+  }
+  if (s.kind === "financials") {
+    const rows = Object.entries(s.values).filter(([k]) => k !== "name").slice(0, 14).map(([k, v]) => `<tr><td>${esc(k)}</td><td>${typeof v === "number" ? v.toLocaleString(undefined, {maximumFractionDigits: 1}) : esc(v)}</td></tr>`).join("");
+    return `<div class="src" id="s-${s.id}"><span class="k">${s.id} · financials</span>${badge}<div class="t">${esc(s.company)} (${esc(s.ticker)})</div><table class="fin">${rows}</table>${s.url ? `<a href="${esc(s.url)}" target="_blank" rel="noopener">Source filing ↗</a>` : ""}</div>`;
+  }
+  if (s.kind === "round") return `<div class="src" id="s-${s.id}"><span class="k">${s.id} · Form D</span>${badge}<div class="t">${esc(s.company)} — ${money(s.amount_sold)}</div>
+    <div class="muted" style="font-size:12px">${esc(s.industry)} · ${esc(s.city)}${s.state ? ", " + esc(s.state) : ""} · first sale ${esc(s.first_sale_date || "—")} · ${s.investors} investors</div><a href="${esc(s.url)}" target="_blank" rel="noopener">Form D filing ↗</a></div>`;
+  if (s.kind === "deal") return `<div class="src" id="s-${s.id}"><span class="k">${s.id} · precedent</span>${badge}<div class="t">${esc(s.target)} ← ${esc(s.acquirer)}</div>
+    <div class="muted" style="font-size:12px">${esc(s.announced)} · ${esc(s.advisors)} · ${esc(Object.entries(s.multiples).map(([k, v]) => k + " " + v).join(", "))}</div><a href="${esc(s.url)}" target="_blank" rel="noopener">Merger filing ↗</a></div>`;
+  return "";
+}
+function showSources(res) {
+  const ver = {}; for (const c of res.citations || []) ver[c.source_id] = (ver[c.source_id] ?? true) && c.verified;
+  $("sources").innerHTML = (res.sources || []).map(s => sourceCard(s, ver)).join("") || '<p class="muted">No sources found.</p>';
+}
+async function ask(question) {
+  if (busy || !question.trim()) return;
+  busy = true; $("go").disabled = true; $("empty")?.remove();
+  const turn = document.createElement("div"); turn.className = "turn";
+  turn.innerHTML = `<div class="q">${esc(question)}</div><div class="steps">Starting…</div><div class="answer"></div>`;
+  $("thread").appendChild(turn); turn.scrollIntoView({block: "end"});
+  const sc = $("scope").value, scope = sc === "public" ? {public_only: true} : sc ? {room: +sc} : {};
+  try {
+    const {id} = await fetch("/api/ask", {method: "POST", body: JSON.stringify({question, history: history_, scope})}).then(r => r.json());
+    let st;
+    for (;;) {
+      await new Promise(r => setTimeout(r, 600));
+      st = await fetch("/api/ask/status?id=" + id).then(r => r.json());
+      if (st.state === "running") { turn.querySelector(".steps").textContent = st.step || "Working…"; continue; }
+      break;
+    }
+    if (st.state === "error") { turn.querySelector(".steps").innerHTML = `<span style="color:var(--warn)">${esc(st.error)}</span>`; return; }
+    const a = turn.querySelector(".answer");
+    if (st.no_model) {
+      turn.querySelector(".steps").innerHTML = `Found ${st.sources.length} sources in ${st.seconds}s. <span class="muted">No AI model is configured, so here are the matching sources without a written answer — add a model in <a href="/settings.html">Settings</a>.</span>`;
+    } else {
+      turn.querySelector(".steps").textContent = "";
+      a.innerHTML = md(st.answer, st.citations) +
+        `<div class="meta">${st.verified} citation${st.verified === 1 ? "" : "s"} verified${st.unverified ? ` · ${st.unverified} not verified` : ""} · ${st.sources.length} sources · ${st.tool_calls.length} lookups · ${st.seconds}s · ${esc(st.models.join(", "))}</div>` +
+        (st.follow_ups?.length ? `<div class="fu">${st.follow_ups.map(f => `<button>${esc(f)}</button>`).join("")}</div>` : "");
+      history_.push({role: "user", text: question}, {role: "assistant", text: st.answer});
+    }
+    showSources(st);
+    const xb = document.createElement("button"); xb.className = "slides"; xb.textContent = "Export to slides";
+    xb.onclick = () => downloadDeck({kind: "answer", ask_id: id, question}, xb);
+    a.appendChild(xb);
+    a.querySelectorAll("sup.c").forEach(el => el.onclick = () => { document.querySelectorAll(".src.hl").forEach(x => x.classList.remove("hl")); const t = $("s-" + el.dataset.sid); if (t) { t.classList.add("hl"); t.scrollIntoView({block: "center", behavior: "smooth"}); } });
+    a.querySelectorAll(".fu button").forEach(b => b.onclick = () => ask(b.textContent));
+  } catch (e) { turn.querySelector(".steps").textContent = "Error: " + e.message; }
+  finally { busy = false; $("go").disabled = false; }
+}
+$("go").onclick = () => { const q = $("q").value; $("q").value = ""; ask(q); };
+$("q").addEventListener("keydown", e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); $("go").click(); } });
+document.querySelectorAll(".empty .ex button").forEach(b => b.onclick = () => ask(b.textContent));
+fetch("/api/rooms").then(r => r.json()).then(rs => { $("scope").insertAdjacentHTML("beforeend", rs.map(r => `<option value="${r.id}">Room: ${esc(r.name)}</option>`).join("")); const p = new URLSearchParams(location.search); if (p.get("room")) $("scope").value = p.get("room"); if (p.get("q")) ask(p.get("q")); });
+fetch("/api/settings").then(r => r.json()).then(s => $("model").textContent = "Model: " + s.stages.ask);
+</script>
+</body>
+</html>

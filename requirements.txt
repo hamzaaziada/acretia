@@ -1,0 +1,1 @@
+anthropic>=1.0  # only needed for the Matrix (LLM) features; everything else is stdlib

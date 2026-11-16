@@ -1,0 +1,229 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Settings</title>
+<style>
+:root{--bg:#fafaf9;--panel:#fff;--ink:#1c1917;--muted:#78716c;--line:#e7e5e4;--accent:#2563eb;--chip:#f5f5f4;--ok:#15803d;--bad:#b91c1c}
+@media (prefers-color-scheme: dark){:root{--bg:#0c0a09;--panel:#1c1917;--ink:#f5f5f4;--muted:#a8a29e;--line:#292524;--accent:#60a5fa;--chip:#292524;--ok:#4ade80;--bad:#f87171}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:14px/1.5 ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,sans-serif}
+header{display:flex;gap:16px;align-items:center;padding:12px 16px;border-bottom:1px solid var(--line);flex-wrap:wrap}
+header a{color:var(--muted);text-decoration:none}header a.on{color:var(--ink);font-weight:600}
+.wrap{max-width:760px;margin:20px auto;padding:0 16px}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:18px;margin-bottom:16px}
+h2{margin:0 0 4px;font-size:17px}h3{margin:0 0 10px;font-size:14px}
+label{display:block;font-weight:600;margin:12px 0 4px}
+input,select{width:100%;padding:9px 11px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--ink);font:inherit}
+button{padding:9px 16px;border-radius:8px;border:1px solid var(--line);background:var(--panel);color:var(--ink);cursor:pointer;font:inherit}
+button.primary{background:var(--accent);border-color:var(--accent);color:#fff}
+.row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.muted{color:var(--muted)}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+@media (max-width:600px){.grid{grid-template-columns:1fr}}
+table{width:100%;border-collapse:collapse;font-size:13px}
+td,th{padding:6px 4px;border-bottom:1px solid var(--line);text-align:left}
+.ok{color:var(--ok)}.bad{color:var(--bad)}
+.checks label{display:inline-flex;gap:6px;align-items:center;font-weight:400;margin:6px 16px 0 0}
+.checks input{width:auto}
+code{background:var(--chip);padding:1px 5px;border-radius:4px}
+.secure{font-size:12.5px;border:1px solid var(--line);border-radius:8px;padding:8px 10px;margin-top:8px;line-height:1.55}
+.secure b{color:var(--ink)}
+</style>
+</head>
+<body>
+<header><b>Research</b><a href="/ask.html">Ask</a><a href="/rooms.html">Data Rooms</a><a href="/">Search</a><a href="/matrix.html">Matrix</a><a href="/sheets.html">Sheets</a><a href="/studio.html">Deck Studio</a><a href="/rounds.html">Funding Rounds</a><a href="/check.html">Check</a><a href="/settings.html" class="on">Settings</a></header>
+<div class="wrap">
+  <div class="panel">
+    <h2>OpenAI-compatible endpoint</h2>
+    <p class="muted" style="margin:0">One gateway (e.g. MeshPool) for every stage.</p>
+    <div class="secure" id="gwSecure"></div>
+    <div class="grid">
+      <div><label for="gwUrl">Base URL</label><input id="gwUrl" placeholder="https://api.example.com/v1"></div>
+      <div><label for="gwKey">API key <span id="gwKeyState" class="muted" style="font-weight:400"></span></label>
+        <input id="gwKey" type="password" autocomplete="off" placeholder="Paste the key (leave empty to keep the saved one)"></div>
+    </div>
+    <div class="row" style="margin-top:10px"><button onclick="gwSave(false)">Save endpoint and key</button><button onclick="gwList()">List models</button><button onclick="gwRemove()" title="Delete the saved key">Remove key</button><span id="gwMsg"></span></div>
+    <datalist id="gwModels"></datalist>
+    <div class="grid" style="margin-top:10px">
+      <div><label for="gwText">Writing model (all text stages)</label><input id="gwText" list="gwModels" placeholder="e.g. deepseek-chat"></div>
+      <div><label for="gwVision">Vision model (reviewer + slides engine)</label><input id="gwVision" list="gwModels" placeholder="must read images, e.g. a GPT or Gemini model"></div>
+    </div>
+    <div class="grid">
+      <div><label for="gwImage">Image model (Deck Studio drafts)</label><input id="gwImage" list="gwModels" placeholder="e.g. gpt-image-2, or svg:gpt-6.1-terra to draw slides as SVG"></div>
+      <div></div>
+    </div>
+    <div class="row" style="margin-top:12px">
+      <button class="primary" onclick="gwSave(true)">Save and use these models</button>
+      <button onclick="test('storyboard','gwMsg2')">Test writing</button><button onclick="test('slide_review','gwMsg2')">Test vision</button><span id="gwMsg2"></span>
+    </div>
+    <p class="muted" style="font-size:12px;margin:8px 0 0">Leave a model empty to keep the current one. DeepSeek models can't read images, so the vision slot needs a different model.</p>
+  </div>
+  <div class="panel">
+    <h2>AI model &amp; API key</h2>
+    <p class="muted" style="margin:0">Keys are stored in the macOS Keychain on this computer — encrypted, never in <code>.env</code> or any project file — and sent only to the provider you pick. They're never shown again in full.</p>
+    <div class="grid">
+      <div><label for="provider">Provider</label><select id="provider" onchange="onProvider()"></select></div>
+      <div><label for="model">Model</label><input id="model" placeholder="model id"></div>
+    </div>
+    <div id="customRow" hidden><label for="baseUrl">Base URL (OpenAI-compatible)</label><input id="baseUrl" placeholder="http://gpu-box:8000/v1"></div>
+    <label for="key">API key <span id="keyState" class="muted" style="font-weight:400"></span></label>
+    <input id="key" type="password" autocomplete="off" placeholder="Paste your key (leave empty to keep the saved one)">
+    <div class="checks"><span class="muted">Use this model for:</span>
+      <label><input type="checkbox" id="useDefault" checked> everything (default)</label>
+      <label><input type="checkbox" id="useAsk"> Ask only</label>
+      <label><input type="checkbox" id="useMatrix"> Matrix only</label>
+      <label><input type="checkbox" id="useAgent"> Sheets agent only</label>
+      <label><input type="checkbox" id="useStudio"> Deck Studio only</label>
+    </div>
+    <div class="row" style="margin-top:16px">
+      <button class="primary" onclick="save()">Save</button>
+      <button onclick="test('ask')">Test Ask</button>
+      <button onclick="test('sheets_agent')">Test sheets agent</button>
+      <button onclick="test('matrix')">Test matrix</button>
+      <button onclick="removeKey()" title="Delete the saved key for this provider">Remove key</button>
+      <span id="msg"></span>
+    </div>
+  </div>
+  <div class="panel">
+    <h3>Current routing</h3>
+    <table id="routing"></table>
+    <p class="muted" style="font-size:12px;margin:10px 0 0">With no model, the Matrix uses its extractive engine (quotes from the documents) and the agent offers /commands only.</p>
+  </div>
+  <div class="panel">
+    <h3>Image model (Deck Studio)</h3>
+    <p class="muted" style="margin:0 0 6px;font-size:13px">Draws each slide as a picture before it is rebuilt as an editable slide. Uses the provider's key saved above.</p>
+    <div class="row"><select id="imgProv" style="max-width:220px"><option value="gemini">Google Gemini (Nano Banana)</option><option value="openai">OpenAI (GPT Image)</option><option value="custom">OpenAI-compatible endpoint</option></select>
+      <input id="imgModel" placeholder="model id" style="max-width:280px"><button onclick="saveImage()">Save</button><span id="imgMsg"></span></div>
+    <p class="muted" style="font-size:12px;margin:8px 0 0">In use: <span id="imgNow">—</span>. Defaults: gemini-nano-banana-2.1 · gpt-image-2.5-flare.</p>
+  </div>
+  <div class="panel">
+    <h3>Slides</h3>
+    <label for="brand">Firm name on slides</label>
+    <div class="row"><input id="brand" maxlength="40" placeholder="e.g. Acme Capital" style="max-width:320px"><button onclick="saveBrand()">Save</button><span id="brandMsg"></span></div>
+    <p class="muted" style="font-size:12px;margin:8px 0 0">Printed on every slide footer and cover of exported decks.</p>
+  </div>
+  <div class="panel">
+    <h3>Saved keys</h3>
+    <table id="keys"></table>
+  </div>
+</div>
+<script>
+const $ = id => document.getElementById(id);
+const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+let S = null;
+const LABEL = {anthropic: "Anthropic (Claude)", deepseek: "DeepSeek", openai: "OpenAI", openrouter: "OpenRouter (many models)", groq: "Groq",
+               together: "Together AI", gemini: "Google Gemini (text + vision)", fireworks: "Fireworks", mistral: "Mistral", ollama: "Ollama (local, no key)", custom: "Custom OpenAI-compatible server"};
+
+async function load(keepForm) {
+  S = await fetch("/api/settings").then(r => r.json());
+  if (!keepForm) {
+    $("provider").innerHTML = S.providers.map(p => `<option value="${p}">${esc(LABEL[p] || p)}</option>`).join("");
+    const cur = (S.models.OM_MODEL_DEFAULT || S.models.OM_MODEL_SHEETS_AGENT || "deepseek").split(":")[0];
+    $("provider").value = S.providers.includes(cur) ? cur : "deepseek";
+    onProvider(true);
+  }
+  $("routing").innerHTML = `<tr><th>Stage</th><th>Model in use</th><th>Setting</th></tr>` +
+    [["Ask", "ask", "OM_MODEL_ASK"], ["Matrix answers", "matrix", "OM_MODEL_MATRIX"], ["Sheets agent", "sheets_agent", "OM_MODEL_SHEETS_AGENT"], ["Consistency checks", "check", "OM_MODEL_CHECK"],
+     ["Deck Studio: storyboard", "storyboard", "OM_MODEL_STORYBOARD"], ["Deck Studio: reviewer (vision)", "slide_review", "OM_MODEL_SLIDE_REVIEW"],
+     ["Deck Studio: slides engine (vision)", "slide_build", "OM_MODEL_SLIDE_BUILD"]].map(([n, s, v]) =>
+      `<tr><td>${n}</td><td>${esc(S.stages[s])}</td><td class="muted">${esc(S.models[v] || (S.models.OM_MODEL_DEFAULT ? "default: " + S.models.OM_MODEL_DEFAULT : "auto"))}</td></tr>`).join("");
+  $("keys").innerHTML = `<tr><th>Provider</th><th>Variable</th><th>Status</th></tr>` +
+    Object.entries(S.keys).map(([p, k]) => `<tr><td>${esc(LABEL[p] || p)}</td><td class="muted">${k.env}</td><td class="${k.set ? "ok" : "muted"}">${k.set ? "saved " + esc(k.hint) : "—"}</td></tr>`).join("");
+  showKeyState();
+  if (document.activeElement !== $("brand")) $("brand").value = S.brand === "Research" ? "" : S.brand;
+  $("imgNow").textContent = S.image_model || "none";
+  gwState();
+  const im = S.models.OM_IMAGE_MODEL || "";
+  if (im && document.activeElement !== $("imgModel")) { $("imgProv").value = im.split(":")[0]; $("imgModel").value = im.split(":").slice(1).join(":"); }
+}
+function onProvider(initial) {
+  const p = $("provider").value, existing = (S.models.OM_MODEL_DEFAULT || "").startsWith(p + ":") ? S.models.OM_MODEL_DEFAULT.slice(p.length + 1) : "";
+  $("model").value = existing || S.defaults[p] || "";
+  $("customRow").hidden = p !== "custom"; $("baseUrl").value = S.custom_base_url || "";
+  $("key").disabled = p === "ollama"; $("key").value = "";
+  showKeyState();
+}
+function showKeyState() { const k = S.keys[$("provider").value]; $("keyState").textContent = $("provider").value === "ollama" ? "(not needed)" : k && k.set ? `— saved ${k.hint}` : "— not set"; }
+function flash(text, ok) { $("msg").innerHTML = `<span class="${ok ? "ok" : "bad"}">${esc(text)}</span>`; }
+
+async function save() {
+  const p = $("provider").value, model = $("model").value.trim(), spec = model ? `${p}:${model}` : p, set = {};
+  const keyVar = S.keys[p]?.env;
+  if ($("key").value.trim() && keyVar) set[keyVar] = $("key").value.trim();
+  if (p !== "ollama" && keyVar && !S.keys[p].set && !set[keyVar]) return flash("Paste an API key first.", false);
+  if (p === "custom") set.OM_PROVIDER_CUSTOM_BASE_URL = $("baseUrl").value.trim();
+  if ($("useDefault").checked) set.OM_MODEL_DEFAULT = spec;
+  if ($("useAsk").checked) set.OM_MODEL_ASK = spec;
+  if ($("useMatrix").checked) set.OM_MODEL_MATRIX = spec;
+  if ($("useAgent").checked) set.OM_MODEL_SHEETS_AGENT = spec;
+  if ($("useStudio").checked) { set.OM_MODEL_STORYBOARD = spec; set.OM_MODEL_SLIDE_REVIEW = spec; set.OM_MODEL_SLIDE_BUILD = spec; }
+  if (!$("useDefault").checked && !$("useAsk").checked && !$("useMatrix").checked && !$("useAgent").checked && !$("useStudio").checked) return flash("Pick where to use this model.", false);
+  const r = await fetch("/api/settings", {method: "POST", body: JSON.stringify({set})}); const j = await r.json();
+  if (!r.ok) return flash(j.error || "Save failed", false);
+  $("key").value = ""; flash("Saved. Click Test to check the connection.", true); load(true);
+}
+function gwState() {
+  $("gwKeyState").textContent = S.custom_key && S.custom_key.set ? `— saved ${S.custom_key.hint}` : "— not set";
+  $("gwSecure").innerHTML = `🔒 <b>Where the key goes:</b> the ${esc(S.key_store || "key store")} on this Mac — encrypted, outside the project folder, never in <code>.env</code>, logs or this page (only the last 4 characters are shown).
+    It is sent only to <b>${esc(S.custom_key_host || "the endpoint you save with it")}</b> over HTTPS; if the endpoint's address changes, the key stops being sent until you enter it again.
+    This page only accepts changes from itself on this computer, so other websites can't read or redirect the key.`;
+  if (document.activeElement !== $("gwUrl")) $("gwUrl").value = S.custom_base_url || "";
+  const m = S.models, strip = v => (v || "").startsWith("custom:") ? v.slice(7) : "";
+  if (!$("gwText").value) $("gwText").value = strip(m.OM_MODEL_DEFAULT);
+  if (!$("gwVision").value) $("gwVision").value = strip(m.OM_MODEL_VISION);
+  if (!$("gwImage").value) $("gwImage").value = (m.OM_IMAGE_MODEL || "").startsWith("svg:custom:") ? "svg:" + m.OM_IMAGE_MODEL.slice(11) : strip(m.OM_IMAGE_MODEL);
+}
+async function gwSave(models) {
+  const set = {}, url = $("gwUrl").value.trim();
+  if (url) { set.OM_PROVIDER_CUSTOM_BASE_URL = url; set.OM_PROVIDER_CUSTOM_API_KEY_ENV = "CUSTOM_API_KEY"; }
+  if ($("gwKey").value.trim()) set.CUSTOM_API_KEY = $("gwKey").value.trim();
+  if (models) {
+    if ($("gwText").value.trim()) set.OM_MODEL_DEFAULT = "custom:" + $("gwText").value.trim();
+    if ($("gwVision").value.trim()) set.OM_MODEL_VISION = "custom:" + $("gwVision").value.trim();
+    const im = $("gwImage").value.trim();
+    if (im) set.OM_IMAGE_MODEL = im.startsWith("svg:") ? "svg:custom:" + im.slice(4) : "custom:" + im;
+  }
+  if (!Object.keys(set).length) return $("gwMsg").innerHTML = `<span class="bad">Nothing to save.</span>`;
+  const r = await fetch("/api/settings", {method: "POST", body: JSON.stringify({set})}); const j = await r.json();
+  $("gwMsg").innerHTML = r.ok ? `<span class="ok">Saved${models ? " — models in use" : ""}.</span>` : `<span class="bad">${esc(j.error)}</span>`;
+  if (r.ok) { $("gwKey").value = ""; load(true); }
+}
+async function gwRemove() {
+  if (!S.custom_key || !S.custom_key.set) return $("gwMsg").innerHTML = `<span class="bad">No saved key.</span>`;
+  if (!confirm("Delete the saved endpoint key from the key store?")) return;
+  const r = await fetch("/api/settings", {method: "POST", body: JSON.stringify({set: {CUSTOM_API_KEY: ""}})}); const j = await r.json();
+  $("gwMsg").innerHTML = r.ok ? `<span class="ok">Key removed.</span>` : `<span class="bad">${esc(j.error)}</span>`; if (r.ok) load(true);
+}
+async function gwList() {
+  $("gwMsg").textContent = "Asking the endpoint…";
+  const j = await fetch("/api/settings/models").then(r => r.json());
+  if (!j.ok) return $("gwMsg").innerHTML = `<span class="bad">${esc(j.detail)}</span>`;
+  $("gwModels").innerHTML = j.models.map(m => `<option value="${esc(m)}">`).join("");
+  $("gwMsg").innerHTML = `<span class="ok">${j.models.length} models — pick from the model fields below.</span> <span class="muted" style="font-size:12px">${esc(j.models.slice(0, 12).join(", "))}${j.models.length > 12 ? "…" : ""}</span>`;
+}
+async function saveImage() {
+  const v = $("imgProv").value + ($("imgModel").value.trim() ? ":" + $("imgModel").value.trim() : "");
+  const r = await fetch("/api/settings", {method: "POST", body: JSON.stringify({set: {OM_IMAGE_MODEL: v}})}); const j = await r.json();
+  $("imgMsg").innerHTML = r.ok ? `<span class="ok">Saved</span>` : `<span class="bad">${esc(j.error)}</span>`; if (r.ok) load(true);
+}
+async function saveBrand() {
+  const r = await fetch("/api/settings", {method: "POST", body: JSON.stringify({set: {OM_BRAND: $("brand").value.trim()}})}); const j = await r.json();
+  $("brandMsg").innerHTML = r.ok ? `<span class="ok">Saved</span>` : `<span class="bad">${esc(j.error)}</span>`;
+}
+async function test(stage, target) {
+  const out = (text, ok) => target ? $(target).innerHTML = `<span class="${ok ? "ok" : "bad"}">${esc(text)}</span>` : flash(text, ok);
+  out("Testing…", true);
+  const j = await fetch("/api/settings/test", {method: "POST", body: JSON.stringify({stage})}).then(r => r.json());
+  out(j.ok ? `✓ ${j.model} answered in ${j.seconds}s${j.detail ? " — “" + j.detail + "”" : ""}` : `✗ ${j.model ? j.model + ": " : ""}${j.detail}`, j.ok);
+}
+async function removeKey() {
+  const k = S.keys[$("provider").value]; if (!k || !k.set) return flash("No saved key for this provider.", false);
+  if (!confirm(`Delete the saved ${LABEL[$("provider").value]} key from .env?`)) return;
+  await fetch("/api/settings", {method: "POST", body: JSON.stringify({set: {[k.env]: ""}})}); flash("Key removed.", true); load(true);
+}
+load();
+</script>
+</body>
+</html>

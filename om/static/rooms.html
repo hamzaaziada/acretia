@@ -1,0 +1,207 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Data Rooms</title>
+<style>
+:root{--bg:#fafaf9;--panel:#fff;--ink:#1c1917;--muted:#78716c;--line:#e7e5e4;--accent:#2563eb;--chip:#f5f5f4;--ok:#15803d;--warn:#b45309;--bad:#b91c1c}
+@media (prefers-color-scheme: dark){:root{--bg:#0c0a09;--panel:#1c1917;--ink:#f5f5f4;--muted:#a8a29e;--line:#292524;--accent:#60a5fa;--chip:#292524;--ok:#4ade80;--warn:#fbbf24;--bad:#f87171}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:14px/1.5 ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,sans-serif}
+header{display:flex;gap:16px;align-items:center;padding:12px 16px;border-bottom:1px solid var(--line);flex-wrap:wrap}
+header a{color:var(--muted);text-decoration:none}header a.on{color:var(--ink);font-weight:600}
+.layout{display:grid;grid-template-columns:260px 1fr;gap:20px;max-width:1300px;margin:16px auto;padding:0 16px}
+@media (max-width:820px){.layout{grid-template-columns:1fr}}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:14px;margin-bottom:14px}
+h2{margin:0;font-size:18px}h3{margin:0 0 10px;font-size:14px}
+input,select{padding:8px 10px;border:1px solid var(--line);border-radius:8px;background:var(--panel);color:var(--ink);font:inherit;width:100%}
+button{padding:8px 14px;border-radius:8px;border:1px solid var(--line);background:var(--panel);color:var(--ink);cursor:pointer;font:inherit}
+button.primary{background:var(--accent);border-color:var(--accent);color:#fff}
+.room{padding:8px 10px;border-radius:8px;cursor:pointer;margin-bottom:4px}
+.room:hover{background:var(--chip)}.room.on{background:var(--chip);font-weight:600}
+.room small{display:block;color:var(--muted);font-weight:400}
+.muted{color:var(--muted)}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.stats{display:flex;gap:18px;flex-wrap:wrap;margin:6px 0 0}
+.stats b{font-size:18px;display:block}
+#drop{border:2px dashed var(--line);border-radius:12px;padding:28px;text-align:center;transition:.15s}
+#drop.over{border-color:var(--accent);background:var(--chip)}
+.bar{height:6px;background:var(--chip);border-radius:3px;overflow:hidden;margin-top:10px}
+.bar div{height:100%;background:var(--accent);width:0;transition:width .2s}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th,td{text-align:left;padding:6px 8px;border-bottom:1px solid var(--line);vertical-align:top}
+th{font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted)}
+tr.folder td{background:var(--chip);font-weight:600;font-size:12px}
+.tag{background:var(--chip);border-radius:4px;padding:1px 6px;font-size:11px;font-weight:600}
+.warn{color:var(--warn);font-size:12px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+@media (max-width:600px){.grid2{grid-template-columns:1fr}}
+.empty{padding:40px;text-align:center;color:var(--muted)}
+a{color:var(--accent)}
+</style>
+</head>
+<body>
+<header><b>Research</b><a href="/ask.html">Ask</a><a href="/rooms.html" class="on">Data Rooms</a><a href="/">Search</a><a href="/matrix.html">Matrix</a><a href="/sheets.html">Sheets</a><a href="/studio.html">Deck Studio</a><a href="/rounds.html">Funding Rounds</a><a href="/check.html">Check</a><a href="/settings.html">Settings</a><span class="muted" style="margin-left:auto;font-size:12px" id="engine"></span></header>
+<div class="layout">
+  <aside>
+    <div class="panel">
+      <h3>Data rooms</h3>
+      <div id="roomList" class="muted">Loading…</div>
+      <form id="newRoom" style="margin-top:10px;display:grid;gap:6px">
+        <input id="roomName" placeholder="New room, e.g. Project Falcon" required>
+        <button class="primary" type="submit">Create room</button>
+      </form>
+    </div>
+  </aside>
+  <main id="main"><div class="panel empty">Create or pick a data room. Add documents by dragging in files, folders, or a VDR export (.zip), or connect Box, SharePoint/OneDrive, Dropbox or a synced folder.</div></main>
+</div>
+<script>
+const $ = id => document.getElementById(id);
+const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+let room = null, syncPoll = null;
+const api = async (path, opts) => { const r = await fetch(path, opts); const j = await r.json(); if (!r.ok) throw new Error(j.error || r.status); return j; };
+
+async function loadRooms() {
+  const rs = await api("/api/rooms");
+  $("roomList").innerHTML = rs.length ? rs.map(r => `<div class="room ${room===r.id?"on":""}" onclick="openRoom(${r.id})">${esc(r.name)}<small>${r.documents} docs · ${r.pages} pages</small></div>`).join("") : '<span class="muted">No rooms yet</span>';
+}
+$("newRoom").onsubmit = async e => {
+  e.preventDefault();
+  try { const r = await api("/api/rooms", {method:"POST", body: JSON.stringify({name: $("roomName").value})}); $("roomName").value = ""; await loadRooms(); openRoom(r.id); }
+  catch (err) { alert(err.message); }
+};
+
+async function openRoom(id) {
+  room = id; history.replaceState(null, "", "?room=" + id);
+  const r = await api("/api/room?id=" + id);
+  loadRooms();
+  const pages = r.documents.reduce((a, d) => a + (d.pages || 0), 0), passages = r.documents.reduce((a, d) => a + (d.passages || 0), 0);
+  $("main").innerHTML = `
+    <div class="panel">
+      <div class="row" style="justify-content:space-between"><h2>${esc(r.name)}</h2>
+        <div class="row"><a href="/?room=${id}"><button>Search this room</button></a><a href="/matrix.html?room=${id}"><button class="primary">Build a matrix</button></a></div></div>
+      <div class="stats"><div><b>${r.documents.length}</b><span class="muted">documents</span></div><div><b>${pages.toLocaleString()}</b><span class="muted">pages</span></div><div><b>${passages.toLocaleString()}</b><span class="muted">indexed passages</span></div></div>
+    </div>
+    <div class="panel">
+      <h3>Add documents</h3>
+      <div id="drop">Drop files, folders or a VDR export (.zip) here<br><span class="muted">PDF · Word · PowerPoint · Excel · HTML · text · email</span>
+        <div class="row" style="justify-content:center;margin-top:12px">
+          <label><button type="button" onclick="this.nextElementSibling.click()">Choose files</button><input type="file" multiple hidden onchange="uploadFiles([...this.files].map(f=>[f, f.name]))"></label>
+          <label><button type="button" onclick="this.nextElementSibling.click()">Choose folder</button><input type="file" webkitdirectory hidden onchange="uploadFiles([...this.files].map(f=>[f, f.webkitRelativePath]))"></label>
+        </div>
+        <div class="bar" id="bar" hidden><div></div></div><div id="upStatus" class="muted" style="margin-top:6px"></div>
+      </div>
+    </div>
+    <div class="panel">
+      <h3>Connectors <span class="muted" style="font-weight:400">keep this room in sync with where the documents live</span></h3>
+      <div id="conns">${r.connectors.length ? r.connectors.map(c => `<div class="row" style="justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--line)"><span><span class="tag">${esc(c.type)}</span> ${esc(c.path || c.folder_id || c.share_url || c.folder || "")} <span class="muted">· ${c.items_tracked} files tracked${c.token_env ? " · token from $" + esc(c.token_env) : ""}</span></span><button onclick="sync(${c.id})">Sync</button></div>`).join("") : '<p class="muted">None yet.</p>'}</div>
+      <details style="margin-top:10px"><summary>Add a connector</summary>
+        <div style="display:grid;gap:8px;margin-top:10px">
+          <select id="ctype" onchange="connFields()"><option value="synced_folder">Synced folder (Box Drive, OneDrive, Dropbox, Google Drive, unzipped VDR export)</option><option value="box">Box (API)</option><option value="sharepoint">SharePoint / OneDrive (Microsoft Graph)</option><option value="dropbox">Dropbox (API)</option></select>
+          <div id="cfields" class="grid2"></div>
+          <p class="muted" style="margin:0;font-size:12px">Datasite, Intralinks, Ansarada and Firmex offer APIs only through partner agreements — export the room as a .zip and drop it above; folder numbering is preserved. API tokens are read from the environment variable you name (in <code>.env</code>), never stored here.</p>
+          <div><button class="primary" onclick="addConn()">Add connector</button></div>
+        </div>
+      </details>
+      <div id="syncStatus" class="muted" style="margin-top:8px"></div>
+    </div>
+    <div class="panel"><h3>Documents</h3>${docTable(r.documents)}</div>
+    <div class="panel"><h3>Activity</h3>${r.events.map(e => `<div class="muted" style="font-size:12px">${new Date(e.at*1000).toLocaleString()} · ${esc(e.kind)} · ${esc(e.detail)}</div>`).join("") || '<span class="muted">Nothing yet</span>'}</div>`;
+  connFields(); wireDrop();
+  if (r.sync?.state === "running") pollSync();
+  else if (r.sync) showSync(r.sync);
+}
+function docTable(docs) {
+  if (!docs.length) return '<p class="muted">No documents yet.</p>';
+  let html = "<table><tr><th>Document</th><th>Type</th><th>Pages</th><th>Passages</th><th></th></tr>", folder = null;
+  for (const d of docs) {
+    const parts = d.path.split("/"), f = parts.slice(0, -1).join(" / ") || "(root)";
+    if (f !== folder) { folder = f; html += `<tr class="folder"><td colspan="5">${esc(f)}</td></tr>`; }
+    const warn = d.warnings ? JSON.parse(d.warnings).map(w => `<div class="warn">${esc(w)}</div>`).join("") : "";
+    html += `<tr><td><a href="/api/file?doc_id=${d.doc_id}" target="_blank" rel="noopener">${esc(parts.at(-1))}</a>${warn}</td><td><span class="tag">${esc(d.form)}</span></td><td>${d.pages ?? ""}</td><td>${d.passages}</td><td><button onclick="removeDoc(${d.doc_id})" title="Remove">×</button></td></tr>`;
+  }
+  return html + "</table>";
+}
+const FIELDS = {
+  synced_folder: [["path","Folder path on this computer, e.g. ~/Library/CloudStorage/Box-Box/Project Falcon"]],
+  box: [["folder_id","Box folder id (from the folder URL)"],["token_env","Token env var","BOX_ACCESS_TOKEN"]],
+  sharepoint: [["share_url","Sharing link to the folder (or leave blank and use drive id + folder)"],["drive_id","Drive id (optional)"],["folder","Folder path in drive (optional)"],["token_env","Token env var","MS_GRAPH_TOKEN"]],
+  dropbox: [["path","Dropbox folder path, e.g. /Deals/Project Falcon"],["token_env","Token env var","DROPBOX_ACCESS_TOKEN"]],
+};
+function connFields() { const t = $("ctype")?.value; if (!t) return; $("cfields").innerHTML = FIELDS[t].map(([k, ph, v]) => `<input data-k="${k}" placeholder="${esc(ph)}" value="${esc(v||"")}">`).join(""); }
+async function addConn() {
+  const cfg = {type: $("ctype").value};
+  document.querySelectorAll("#cfields input").forEach(i => { if (i.value.trim()) cfg[i.dataset.k] = i.value.trim(); });
+  try { await api("/api/room/connector", {method:"POST", body: JSON.stringify({id: room, config: cfg})}); openRoom(room); } catch (e) { alert(e.message); }
+}
+async function sync(cid) {
+  try { await api("/api/room/sync", {method:"POST", body: JSON.stringify({id: room, connector_id: cid})}); pollSync(); } catch (e) { $("syncStatus").textContent = e.message; }
+}
+function pollSync() {
+  clearInterval(syncPoll);
+  syncPoll = setInterval(async () => {
+    const r = await api("/api/room?id=" + room);
+    if (r.sync?.state === "running") $("syncStatus").textContent = `Syncing… ${r.sync.done || 0} files fetched`;
+    else { clearInterval(syncPoll); openRoom(room); }
+  }, 2000);
+}
+function showSync(s) {
+  if (s.state === "error") { $("syncStatus").innerHTML = `<span style="color:var(--bad)">Sync failed: ${esc(s.error)}</span>`; return; }
+  const parts = Object.values(s.results || {}).map(x => `${x.added} added · ${x.updated} updated · ${x.unchanged} unchanged · ${x.failed} failed`);
+  $("syncStatus").textContent = "Last sync: " + parts.join(" | ");
+}
+async function removeDoc(id) { if (confirm("Remove this document from the room? The original file is deleted from this app (not from the source).")) { await api("/api/room/remove", {method:"POST", body: JSON.stringify({doc_id: id})}); openRoom(room); } }
+
+// ---------------------------------------------------------------- uploads (files, folders, zips)
+function wireDrop() {
+  const d = $("drop");
+  d.ondragover = e => { e.preventDefault(); d.classList.add("over"); };
+  d.ondragleave = () => d.classList.remove("over");
+  d.ondrop = async e => {
+    e.preventDefault(); d.classList.remove("over");
+    const entries = [...e.dataTransfer.items].map(i => i.webkitGetAsEntry && i.webkitGetAsEntry()).filter(Boolean);
+    const files = [];
+    await Promise.all(entries.map(en => walk(en, "", files)));
+    uploadFiles(files);
+  };
+}
+function walk(entry, prefix, out) {
+  return new Promise(res => {
+    if (entry.isFile) entry.file(f => { out.push([f, prefix + f.name]); res(); });
+    else if (entry.isDirectory) {
+      const reader = entry.createReader(), all = [];
+      const read = () => reader.readEntries(async batch => {
+        if (!batch.length) { await Promise.all(all.map(c => walk(c, prefix + entry.name + "/", out))); res(); }
+        else { all.push(...batch); read(); }
+      });
+      read();
+    } else res();
+  });
+}
+async function uploadFiles(files) {
+  if (!files.length) return;
+  $("bar").hidden = false; let done = 0; const tally = {added:0, updated:0, unchanged:0, skipped:0, failed:0}, warnings = [];
+  const queue = [...files];
+  const worker = async () => {
+    while (queue.length) {
+      const [f, path] = queue.shift();
+      try {
+        const r = await api(`/api/room/upload?id=${room}&path=${encodeURIComponent(path)}&source=${f.name.toLowerCase().endsWith(".zip") ? "vdr-export" : "upload"}`, {method:"PUT", body: f});
+        for (const k in tally) tally[k] += r[k] || 0; warnings.push(...(r.warnings || []));
+      } catch (e) { tally.failed++; warnings.push(`${path}: ${e.message}`); }
+      done++;
+      $("bar").firstElementChild.style.width = (100 * done / files.length) + "%";
+      $("upStatus").textContent = `${done}/${files.length} uploaded · ${tally.added} added · ${tally.updated} updated · ${tally.unchanged} unchanged · ${tally.skipped} skipped · ${tally.failed} failed`;
+    }
+  };
+  await Promise.all([worker(), worker(), worker()]);
+  if (warnings.length) $("upStatus").innerHTML += "<br>" + warnings.slice(0, 8).map(w => `<span class="warn">${esc(w)}</span>`).join("<br>");
+  setTimeout(() => openRoom(room).then(() => { if (warnings.length) {} }), 600);
+}
+
+fetch("/api/engine").then(r => r.json()).then(e => $("engine").textContent = e.engine === "extractive" ? "Matrix engine: extractive (no model configured)" : "Matrix engine: " + e.model);
+loadRooms().then(() => { const id = new URLSearchParams(location.search).get("room"); if (id) openRoom(+id); });
+</script>
+</body>
+</html>

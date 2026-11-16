@@ -1,0 +1,187 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Filing Search</title>
+<style>
+:root{--bg:#fafaf9;--panel:#fff;--ink:#1c1917;--muted:#78716c;--line:#e7e5e4;--accent:#2563eb;--mark:#fde68a;--chip:#f5f5f4}
+@media (prefers-color-scheme: dark){:root{--bg:#0c0a09;--panel:#1c1917;--ink:#f5f5f4;--muted:#a8a29e;--line:#292524;--accent:#60a5fa;--mark:#854d0e;--chip:#292524}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:14px/1.5 ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,sans-serif}
+header{position:sticky;top:0;z-index:5;background:var(--bg);border-bottom:1px solid var(--line);padding:12px 16px}
+.bar{display:flex;gap:8px;max-width:1200px;margin:0 auto;flex-wrap:wrap}
+.bar input[type=search]{flex:1 1 360px;font-size:16px;padding:10px 12px;border:1px solid var(--line);border-radius:8px;background:var(--panel);color:var(--ink)}
+.bar input,.bar select{padding:8px 10px;border:1px solid var(--line);border-radius:8px;background:var(--panel);color:var(--ink);font-size:13px}
+button{padding:8px 14px;border-radius:8px;border:1px solid var(--line);background:var(--panel);color:var(--ink);cursor:pointer;font-size:13px}
+button.primary{background:var(--accent);border-color:var(--accent);color:#fff}
+.filters{display:flex;gap:8px;max-width:1200px;margin:8px auto 0;flex-wrap:wrap;color:var(--muted);font-size:12px;align-items:center}
+.filters input{width:120px}
+main{display:grid;grid-template-columns:240px 1fr;gap:20px;max-width:1200px;margin:16px auto;padding:0 16px}
+@media (max-width:800px){main{grid-template-columns:1fr}aside{order:2}}
+aside h4{margin:16px 0 6px;font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted)}
+.facet{display:flex;justify-content:space-between;padding:3px 6px;border-radius:6px;cursor:pointer;font-size:13px;gap:8px}
+.facet:hover{background:var(--chip)}
+.facet span:first-child{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.facet span:last-child{color:var(--muted);font-variant-numeric:tabular-nums}
+.summary{color:var(--muted);margin-bottom:8px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:12px 14px;margin-bottom:10px}
+.meta{display:flex;gap:8px;align-items:center;flex-wrap:wrap;font-size:12px;color:var(--muted)}
+.tag{background:var(--chip);border-radius:4px;padding:1px 6px;color:var(--ink);font-weight:600}
+.title{font-weight:600;margin:4px 0}
+.title a{color:var(--ink);text-decoration:none}.title a:hover{color:var(--accent)}
+.snip{margin:6px 0 0;padding:6px 8px;border-left:3px solid var(--line);cursor:pointer;border-radius:0 6px 6px 0}
+.snip:hover{background:var(--chip)}
+.snip .sec{font-size:11px;color:var(--muted);display:block}
+mark{background:var(--mark);color:inherit;border-radius:2px;padding:0 1px}
+#trend{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:10px 12px;margin-bottom:12px}
+#trend svg{width:100%;height:110px;display:block}
+#trend text{fill:var(--muted);font-size:10px}
+.muted{color:var(--muted)}
+dialog{max-width:860px;width:calc(100% - 32px);border:1px solid var(--line);border-radius:12px;background:var(--panel);color:var(--ink);padding:0}
+dialog .hd{padding:12px 16px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;gap:12px;align-items:center}
+dialog .bd{padding:12px 16px;max-height:65vh;overflow:auto}
+dialog .bd p{margin:0 0 12px}
+dialog .focus{background:var(--chip);border-radius:6px;padding:8px}
+.saved{display:flex;justify-content:space-between;align-items:center;font-size:13px;padding:3px 6px;border-radius:6px;cursor:pointer}
+.saved:hover{background:var(--chip)}
+.saved .x{color:var(--muted);padding:0 4px}
+.empty{padding:40px;text-align:center;color:var(--muted)}
+.pager{display:flex;gap:8px;justify-content:center;margin:12px 0}
+</style>
+</head>
+<body>
+<header>
+  <div class="bar" style="margin-bottom:8px;gap:16px;font-size:13px"><b>Research</b><a href="/ask.html" style="color:var(--muted);text-decoration:none">Ask</a><a href="/rooms.html" style="color:var(--muted);text-decoration:none">Data Rooms</a><a href="/" style="color:var(--ink);font-weight:600;text-decoration:none">Search</a><a href="/matrix.html" style="color:var(--muted);text-decoration:none">Matrix</a><a href="/sheets.html" style="color:var(--muted);text-decoration:none">Sheets</a><a href="/studio.html">Deck Studio</a><a href="/rounds.html" style="color:var(--muted);text-decoration:none">Funding Rounds</a><a href="/check.html">Check</a><a href="/settings.html" style="color:var(--muted);text-decoration:none">Settings</a></div>
+  <form class="bar" id="f">
+    <input type="search" id="q" placeholder='Search filings — e.g. "pricing pressure", tariff* NOT china, NEAR(price increase, 10)' autofocus>
+    <button class="primary" type="submit">Search</button>
+    <button type="button" id="save">Save &amp; alert</button>
+  </form>
+  <div class="filters">
+    <select id="scope" title="What to search"><option value="">Everything</option><option value="public">Public filings</option></select>
+    <input id="tickers" placeholder="Tickers (AAPL MSFT)">
+    <input id="forms" placeholder="Forms (10-K,8-K)">
+    <input id="section" placeholder="Section (Risk Factors)">
+    <label>From <input id="date_from" type="date"></label>
+    <label>To <input id="date_to" type="date"></label>
+    <select id="sort"><option value="relevance">Relevance</option><option value="date">Newest</option></select>
+    <span id="stats" class="muted"></span>
+  </div>
+</header>
+<main>
+  <aside>
+    <h4>Saved searches</h4><div id="savedList" class="muted">None yet</div>
+    <div id="facets"></div>
+  </aside>
+  <section>
+    <div id="trend" hidden></div>
+    <div id="summary" class="summary"></div>
+    <div id="results"><div class="empty">Search the indexed SEC filings. Every result links to the source document.</div></div>
+    <div class="pager" id="pager"></div>
+  </section>
+</main>
+<dialog id="dlg"><div class="hd"><div id="dlgTitle"></div><button onclick="dlg.close()">Close</button></div><div class="bd" id="dlgBody"></div></dialog>
+<script>
+const $ = id => document.getElementById(id);
+const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const snip = s => esc(s).replace(/&lt;mark&gt;/g,"<mark>").replace(/&lt;\/mark&gt;/g,"</mark>");
+let page = 0;
+
+const fileUrl = d => String(d.url || "").startsWith("room://") ? `/api/file?doc_id=${d.doc_id}` : d.url;
+function params(extra = {}) {
+  const p = new URLSearchParams({q: $("q").value});
+  for (const k of ["tickers","forms","section","date_from","date_to","sort"]) if ($(k).value) p.set(k, $(k).value);
+  const sc = $("scope").value; if (sc === "public") p.set("scope", "public"); else if (sc) p.set("room", sc);
+  for (const [k,v] of Object.entries(extra)) p.set(k, v);
+  return p;
+}
+async function api(path, p) { const r = await fetch(path + "?" + p); return r.json(); }
+
+async function run(resetPage = true) {
+  if (resetPage) page = 0;
+  const q = $("q").value.trim();
+  if (!q) return;
+  history.replaceState(null, "", "?" + params());
+  $("results").innerHTML = '<div class="empty">Searching…</div>';
+  const [res, fac, tr] = await Promise.all([api("/api/search", params({page})), api("/api/facets", params()), api("/api/trend", params())]);
+  if (res.error) { $("results").innerHTML = `<div class="empty">${esc(res.error)}</div>`; return; }
+  $("summary").textContent = `${res.total_documents.toLocaleString()} documents · ${res.total_passages.toLocaleString()} passages` + (res.fts !== res.query ? `  (interpreted as ${res.fts})` : "");
+  $("results").innerHTML = res.results.length ? res.results.map(card).join("") : '<div class="empty">No matches.</div>';
+  renderFacets(fac); renderTrend(tr);
+  const pages = Math.ceil(res.total_documents / 20);
+  $("pager").innerHTML = pages > 1 ? `<button ${page===0?"disabled":""} onclick="page--;run(false)">Previous</button><span class="muted">Page ${page+1} of ${pages}</span><button ${page>=pages-1?"disabled":""} onclick="page++;run(false)">Next</button>` : "";
+}
+function card(d) {
+  return `<div class="card">
+    <div class="meta"><span class="tag">${esc(d.ticker || "—")}</span><span>${esc(d.form)}</span><span>${esc(d.filed)}</span><span>${d.hits} matching passage${d.hits>1?"s":""}</span></div>
+    <div class="title"><a href="${esc(fileUrl(d))}" target="_blank" rel="noopener">${esc(d.company)} — ${esc(d.title)}</a></div>
+    ${d.passages.map(p => `<div class="snip" onclick="openPassage(${p.chunk_id})"><span class="sec">${esc(p.section || "")}</span>${snip(p.snippet)}</div>`).join("")}
+  </div>`;
+}
+function renderFacets(f) {
+  const block = (title, key, items) => items?.length ? `<h4>${title}</h4>` + items.map(i =>
+    `<div class="facet" onclick="applyFacet('${key}', ${JSON.stringify(String(i.key)).replace(/"/g,"&quot;")})"><span>${esc(i.key)}</span><span>${i.documents}</span></div>`).join("") : "";
+  $("facets").innerHTML = block("Company","tickers",f.company) + block("Form","forms",f.form) + block("Year","year",f.year) + block("Section","section",f.section);
+}
+function applyFacet(key, val) {
+  if (key === "year") { $("date_from").value = `${val}-01-01`; $("date_to").value = `${val}-12-31`; }
+  else $(key).value = val;
+  run();
+}
+function renderTrend(rows) {
+  if (!rows?.length || rows.length < 2) { $("trend").hidden = true; return; }
+  $("trend").hidden = false;
+  const W = 800, H = 110, pad = 18, max = Math.max(...rows.map(r => r.documents)), bw = (W - pad) / rows.length;
+  const bars = rows.map((r, i) => {
+    const h = Math.max(2, (r.documents / max) * (H - 34)), x = pad + i * bw;
+    return `<rect x="${x+2}" y="${H-18-h}" width="${Math.max(2,bw-4)}" height="${h}" rx="2" fill="var(--accent)"><title>${r.quarter}: ${r.documents} documents, ${r.passages} passages</title></rect>` +
+      (rows.length <= 24 || i % Math.ceil(rows.length/12) === 0 ? `<text x="${x+bw/2}" y="${H-4}" text-anchor="middle">${r.quarter}</text>` : "");
+  }).join("");
+  $("trend").innerHTML = `<div class="muted" style="font-size:12px">Documents mentioning the query, by filing quarter</div><svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="none">${bars}</svg>`;
+}
+async function openPassage(id) {
+  const r = await api("/api/passage", new URLSearchParams({id}));
+  const d = r.document;
+  const room = String(d.url).startsWith("room://");
+  $("dlgTitle").innerHTML = `<b>${esc(d.company)}</b> · ${esc(room ? d.path : d.form)} · ${esc(d.filed)} · <a href="${esc(fileUrl(d))}" target="_blank" rel="noopener">${room ? "Open file" : "Open on sec.gov"} ↗</a><div class="muted" style="font-size:12px">${room ? "" : "Accession " + esc(d.accession) + " · "}${esc(r.section || "")}</div>`;
+  const terms = $("q").value.replace(/\b(AND|OR|NOT|NEAR)\b|[()"*,]/g, " ").split(/\s+/).filter(t => t.length > 2);
+  const hl = t => terms.reduce((s, w) => s.replace(new RegExp(`\\b(${w.replace(/[.*+?^${}()|[\]\\]/g,"\\$&")}\\w*)`, "gi"), "<mark>$1</mark>"), esc(t));
+  $("dlgBody").innerHTML = r.passages.map(p => `<p class="${p.ord===r.ord?"focus":""}">${hl(p.text)}</p>`).join("");
+  $("dlg").showModal();
+}
+async function loadSaved() {
+  const [s, a] = await Promise.all([fetch("/api/saved").then(r=>r.json()), fetch("/api/alerts").then(r=>r.json())]);
+  const counts = Object.fromEntries(a.map(x => [x.name, x.new_documents]));
+  $("savedList").innerHTML = s.length ? s.map(x => `<div class="saved" onclick='useSaved(${JSON.stringify(x).replace(/'/g,"&#39;")})'><span>${esc(x.name)}${counts[x.name] ? ` <span class="tag">${counts[x.name]} new</span>` : ""}</span><span class="x" onclick="event.stopPropagation();delSaved(${JSON.stringify(x.name).replace(/"/g,"&quot;")})">×</span></div>`).join("") : "None yet";
+}
+function useSaved(x) {
+  $("q").value = x.query; const f = JSON.parse(x.filters || "{}");
+  $("tickers").value = (f.tickers || []).join(" "); $("forms").value = (f.forms || []).join(",");
+  for (const k of ["section","date_from","date_to"]) $(k).value = f[k] || "";
+  run();
+}
+async function delSaved(name) { await fetch("/api/saved/delete", {method:"POST", body: JSON.stringify({name})}); loadSaved(); }
+$("save").onclick = async () => {
+  const q = $("q").value.trim(); if (!q) return;
+  const name = prompt("Name this saved search", q); if (!name) return;
+  const f = {}; if ($("tickers").value) f.tickers = $("tickers").value.split(/[\s,]+/).filter(Boolean);
+  if ($("forms").value) f.forms = $("forms").value.split(",").map(s=>s.trim()).filter(Boolean);
+  for (const k of ["section","date_from","date_to"]) if ($(k).value) f[k] = $(k).value;
+  await fetch("/api/saved", {method:"POST", body: JSON.stringify({name, query:q, filters:f})}); loadSaved();
+};
+$("f").onsubmit = e => { e.preventDefault(); run(); };
+for (const k of ["sort"]) $(k).onchange = () => run();
+fetch("/api/stats").then(r=>r.json()).then(s => $("stats").textContent = `${s.documents.toLocaleString()} documents · ${s.rooms} data rooms`);
+loadSaved();
+const init = new URLSearchParams(location.search);
+fetch("/api/rooms").then(r=>r.json()).then(rs => {
+  $("scope").insertAdjacentHTML("beforeend", rs.map(r => `<option value="${r.id}">Room: ${esc(r.name)}</option>`).join(""));
+  if (init.get("room")) $("scope").value = init.get("room");
+});
+$("scope").onchange = () => $("q").value && run();
+for (const k of ["q","tickers","forms","section","date_from","date_to","sort"]) if (init.get(k)) $(k).value = init.get(k);
+if (init.get("q")) run();
+</script>
+</body>
+</html>
