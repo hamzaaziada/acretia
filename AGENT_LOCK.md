@@ -11,12 +11,6 @@ One row per active claim. Claim a packet before you touch its files, commit the 
 | S5.4 evals (session D) | worker | main | 2026-11-16 | evals/tenk/*, evals/odl_bench/*, scripts/build_tenk_corpus.py, scripts/eval_s5.py, tests/test_s5_evals.py, scorecard.csv (S5 rows only) |
 | S5 gate (session D) | Boss | main | 2026-11-16 | scripts/verify_s5.py, docs/s5/* |
 | S1 gate | Boss | claude/dreamy-ramanujan-k8p2xt | 2026-11-16 | scripts/verify_s1.py |
-| S4.2 three-engine recalc | worker (session C) | claude/busy-knuth-i3ewp5 | 2026-11-16 | om/recalc.py, om/formula.py, tests/test_recalc.py, tests/test_formula_ext.py |
-| S4.3a LBO | worker (session C) | claude/busy-knuth-i3ewp5 | 2026-11-16 | om/lbo.py, tests/test_lbo.py |
-| S4.3b merger | worker (session C) | claude/busy-knuth-i3ewp5 | 2026-11-16 | om/merger.py, tests/test_merger.py |
-| S4.3c comps | worker (session C) | claude/busy-knuth-i3ewp5 | 2026-11-16 | om/comps.py, om/market.py, tests/test_comps.py |
-| S4.4 graph/ask/edit/roll-forward | worker (session C) | claude/busy-knuth-i3ewp5 | 2026-11-16 | om/wbgraph.py, om/wbedit.py, om/rollforward.py, tests/test_wbgraph.py, tests/test_wbedit.py, tests/test_rollforward.py |
-| S4.6 bench + S4 gate | Boss (session C) | claude/busy-knuth-i3ewp5 | 2026-11-16 | om/bench.py, scripts/verify_s4.py, tests/test_bench.py, docs/s4/* |
 | S3.3a archetypes: text/structure + registry examples | session B worker | claude/upbeat-mccarthy-viqjuo | 2026-11-16 | om/deck/archetypes/__init__.py, om/deck/archetypes/core.py, om/deck/archetypes/text.py, tests/test_deck_arch_text.py |
 | S3.3b archetypes: charts + renderer chart polish | session B worker | claude/upbeat-mccarthy-viqjuo | 2026-11-16 | om/deck/archetypes/charts.py, om/deck/render.py, tests/test_deck_arch_charts.py, tests/test_deck_render.py |
 | S3.3c archetypes: tables/frameworks | session B worker | claude/upbeat-mccarthy-viqjuo | 2026-11-16 | om/deck/archetypes/frameworks.py, tests/test_deck_arch_frameworks.py |
@@ -38,13 +32,18 @@ One row per active claim. Claim a packet before you touch its files, commit the 
 | SF.2 frontend app (session F) | session F workers | main | 2026-11-16 | frontend/** |
 | SF.3 e2e journeys + product gate (session F) | session F gate worker | main | 2026-11-16 | e2e/**, scripts/verify_product.py |
 | SF.4 TSB + reliability harness (session F, D-032) | session F workers | main | 2026-11-16 | eval/tsb/**, eval/reliability/** |
-| S4.7b polish layer + model3 dashboard | worker (session C) | claude/busy-knuth-i3ewp5 | 2026-11-16 | om/polish.py, om/model3.py, tests/test_polish.py |
 | FP-R4 ledger rows for new imports | worker (session A) | claude/dreamy-ramanujan-k8p2xt | 2026-11-16 | license-and-repo-ledger.csv, docs/ledger-notes.md |
 | S2-gate-conn connector gate section | gate-writer (session A) | claude/dreamy-ramanujan-k8p2xt | 2026-11-16 | scripts/verify_s2.py |
 | S6.1a agent loop | worker (session A) | claude/dreamy-ramanujan-k8p2xt | 2026-11-16 | src/harness/research/agent.py, src/harness/research/planner.py, src/harness/research/scratchpad.py, src/harness/research/api.py, tests/test_research_agent.py, tests/fixtures/research/agent/* |
 | S6.1b research tools | worker (session A) | claude/dreamy-ramanujan-k8p2xt | 2026-11-16 | src/harness/research/tools.py, tests/test_research_tools.py, tests/fixtures/research/tools/* |
 | S6.2 figure verifier | worker (session A) | claude/dreamy-ramanujan-k8p2xt | 2026-11-16 | src/harness/research/verify.py, tests/test_research_verify.py |
 | S6.3 research evals | worker (session A) | claude/dreamy-ramanujan-k8p2xt | 2026-11-16 | eval/research/**, tests/test_research_evals.py |
+| S4.7c dashboards for LBO/merger/comps | worker (session C) | claude/busy-knuth-i3ewp5 | 2026-11-16 | om/lbo.py, om/merger.py, om/comps.py, tests/test_polish_models.py |
+| S4.6a OM-Bench 10 + planted audit | worker (session C) | claude/busy-knuth-i3ewp5 | 2026-11-16 | om/bench.py, om/validate_xlsx.py, tests/test_bench.py, tests/test_validate_xlsx.py |
+| S4.6b SpreadsheetBench | worker (session C) | claude/busy-knuth-i3ewp5 | 2026-11-16 | om/sbench.py, tests/test_sbench.py |
+| S4.6c reliability-100 + timing | worker (session C) | claude/busy-knuth-i3ewp5 | 2026-11-16 | om/reliability.py, tests/test_reliability.py |
+| S4.fix1 deterministic xlsx bytes | worker (session C) | claude/busy-knuth-i3ewp5 | 2026-11-16 | om/xlsx.py, tests/test_xlsx_determinism.py |
+| S4 gate script | gate worker (session C) | claude/busy-knuth-i3ewp5 | 2026-11-16 | scripts/verify_s4.py |
 
 ## Log
 - 2026-11-16: created; no active claims.
@@ -67,3 +66,4 @@ One row per active claim. Claim a packet before you touch its files, commit the 
 - 2026-11-16: Session F claimed eval/tsb/ and eval/reliability/ (D-032 measurement harness).
 - 2026-11-16: session A: FP-R1, FP-R3, S6.0 landed on main (f8bc923); FP-R4 and S2 connector gate section claimed.
 - 2026-11-16: session A: S6.1a, S6.1b, S6.2, S6.3 claimed.
+- 2026-11-16: S4.2, S4.3a/b/c, S4.4, S4.7b merged and released. Session C wave 2 claimed: S4.7c, S4.6a/b/c, S4.fix1, S4 gate script.
