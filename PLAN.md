@@ -38,6 +38,45 @@ Each journey is scripted as an end-to-end browser test (Playwright, Apache-2.0, 
 | P-J7 Firm setup | An admin uploads templates and sample decks, defines Adjusted EBITDA and Net Debt, adds users and roles, connects SharePoint/Drive/VDR | House style cloned and applied everywhere; definitions used in every model; RBAC enforced |
 | P-J8 Agent library | Picks a pre-built agent (comps, DCF, LBO, merger, CIM summary, teaser, buyer list, earnings recap, IC memo) or saves their own prompt chain | Repeatable runs, shareable within the org, run history |
 
+### North-star metrics: claims we must be able to defend (goal: Hebbia/Rogo parity)
+
+We claim what Rogo and Hebbia claim, time saved, reliability and usefulness, **only when measured**.
+
+1. **Time-saved benchmark (TSB).** For each catalogue task:
+   - **Catalogue tasks:**
+     - trading comps
+     - precedents
+     - 3-statement from 10-K or annual report
+     - DCF
+     - LBO
+     - merger model
+     - CIM / VDR first-pass review (per 50 docs)
+     - company profile / one-pager
+     - pitchbook section
+     - teaser
+     - IC memo
+     - earnings model update
+     - earnings recap
+     - buyer list
+   - **Measure** `T_h`, the human baseline: sourced ranges in `docs/time-saved-baselines.md`, later validated with timed analysts.
+   - **Measure** `T_a` = wall-clock to deliverable + review-and-fix time to client-ready.
+   - **Client-ready** means: every deterministic gate passes, the personas score ≥ 8.5, and the remaining edits are logged.
+   - **Review-and-fix time:** first estimated from the persona's "edits needed" list × a published minutes-per-edit table, then replaced by real reviewer timings from a pilot of 3–5 analysts.
+   - **Report** `1 − T_a/T_h` per task (median, IQR, n ≥ 10 companies or briefs) in `eval/tsb/report.md`.
+   - **Claim** a figure only when it is human-validated and at or above the published competitor claim for that task (sources in the baselines doc).
+2. **Reliability SLOs**, on scripted runs of every journey across ≥ 100 varied companies and briefs (US, IFRS, MENA):
+   - task success ≥ 97%;
+   - **zero silent wrong numbers**: every figure is either tied to a source or flagged;
+   - identical inputs give identical numbers (the data layer is deterministic);
+   - 100% of failed jobs resume cleanly;
+   - p95 latency and cost per deliverable published.
+3. **Usefulness.** The whole catalogue runs end to end from the command bar and the agent library. The PE-principal persona says "would pay $10K+/seat" on each deliverable type.
+
+**Ownership:**
+- the product session builds the TSB/reliability harness (`eval/tsb/`, job telemetry);
+- live measurement runs on the user's Mac with the Keychain key (D-021);
+- the independent reviewer re-checks the numbers before any claim.
+
 **Production bar:**
 - multi-tenant auth with roles; audit log of every action and agent step;
 - streamed progress; cost shown per task; resumable jobs; notifications;
@@ -150,7 +189,7 @@ v1 M1 is done (see §1): extend `om/contracts.py`, `om/pii.py`, `om/replay.py`, 
 |---|---|
 | S6.1 | **Research agent:** gpt-researcher (Apache-2.0) as the base, dexter (MIT) task planning with self-reflection and a source-logged scratchpad, FinRobot report structures; all tools through the harness router (edgartools, FinanceToolkit, crawl4ai, Matrix, Excel daemon) |
 | S6.2 | **Outputs:** only SlideSpecs and Excel input payloads, never free prose. Any figure without a verifiable source and as-of date is rejected |
-| S6.3 | **Evals:** Vals Finance Agent (50 public questions) + FinanceBench subset, scored with evidence |
+| S6.3 | **Evals:** Vals Finance Agent v1 public set (50 questions) and v2 where public, the FinanceBench subset, and BankerToolBench tasks where public (ICLR 2026; 502-banker rubric; frontier models scored 0% client-ready), all scored with evidence. Also the Wall Street Prep Apple 3-statement task (same prompt) through S4 |
 | Gate | `scripts/verify_s6.py` (0 unsourced figures, eval pass rates recorded), then **persona gate** |
 
 ### Stage 7 — The product app (session F) + security review, Docker and CI (session A)
@@ -172,13 +211,14 @@ Acretia must be as fluent outside the US as inside it: IFRS, Egyptian Accounting
 
 | Packet | Scope |
 |---|---|
+| S8.0 | **Order and anchor companies (user direction).** IFRS first: full depth on IFRS presentation, measurement and disclosures. Then the local variants: Egyptian EAS, SOCPA-endorsed IFRS (KSA), UAE IFRS. The engine must *understand what these companies' statements actually look like*. Anchor set, non-financial and listed:<br>• **Egypt (EGX):** Elsewedy Electric (SWDY), Eastern Company (EAST), Talaat Moustafa Group (TMGH)<br>• **Saudi Arabia (Tadawul):** Almarai (2280), Jarir Marketing (4190), SABIC (2010)<br>• **UAE (DFM/ADX):** Emaar Properties (EMAAR), ADNOC Distribution (ADNOCDIST), Aldar Properties (ALDAR)<br>For each: the latest two annual audited financial statements **and** the latest quarterly earnings releases or investor presentations. Use them to (a) extract full IS/BS/CF with citations; (b) check that the earnings-release figures tie to the statements and explain every difference (adjusted vs reported, segment vs group, restatements); (c) write a per-company "how to read these statements" note: framework, layout quirks, non-standard line items, zakat or tax, IFRS 16, FX/devaluation, related parties, units, fiscal year; (d) answer 10 analyst questions per company with cited answers. Store facts, notes and links; commit source PDFs only where the publisher's terms allow, otherwise record URL + sha256 |
 | S8.1 | **Accounting-standards knowledge base** (`om/intl/standards/`, YAML + docs; written in our own words, sources cited, no copied standard text). For each framework: statement layouts (function vs nature P&L, current/non-current ordering, OCI), required line items, and the key differences from US GAAP and IFRS: leases (IFRS 16 vs ASC 842 vs EAS 49), revenue, inventory (no LIFO under IFRS), development-cost capitalisation, revaluation model, impairment reversals, borrowing costs, associates/JVs, IAS 29 hyperinflation, IAS 21 FX translation and devaluation effects (critical for Egypt), zakat vs income tax (KSA), employee end-of-service benefits, government grants, plus EAS-specific items and the EAS ↔ IFRS mapping (e.g. EAS 47/48/49). Each difference carries an **analyst adjustment recipe** (how to make companies comparable: IFRS 16 EBITDA vs pre-16, lease-adjusted net debt, zakat treatment) |
 | S8.2 | **Concept mapping:** IFRS (`ifrs-full`), ESEF and local taxonomies, plus PDF line-item labels in English and Arabic, mapped to the canonical `om.statements` lines with confidence. A bilingual label dictionary (e.g. "صافي الربح" → net income, "إيرادات النشاط" → revenue, "تكلفة المبيعات" → cost of revenue) |
 | S8.3 | **OCR and unstructured extraction pipeline:**<br>• scanned and native PDFs; Arabic and English;<br>• OCR engines per the licence ledger (tesseract `ara+eng` as an isolated service; PaddleOCR/EasyOCR if the ledger allows) with per-word confidence and bboxes;<br>• Eastern Arabic digits (٠–٩) and Persian digits normalised; Arabic thousands and decimal separators (٬ ٫); RTL table reconstruction; brackets and minus negatives; units ("بالألف جنيه", "EGP '000", "SAR million"); multi-column bilingual reports;<br>• fiscal years ending other than in December;<br>• output: `Statements` objects with a Citation per figure (page, bbox, OCR confidence), so `om/model3.py` and the S4 models work unchanged |
 | S8.4 | **Tie-out and confidence gate for extracted statements:**<br>• subtotals add up, BS balances, CF ties to the change in cash, IS/CF net income agree, prior-year comparatives match the previous report;<br>• low OCR confidence or a failed tie routes the figure to a review queue with the highlighted bbox, never silently into a model |
 | S8.5 | **Sources (public, licence- and ToS-respecting):**<br>• EGX company disclosures and annual reports (public PDFs; robots.txt and rate limits honoured, facts and links stored, never re-hosted);<br>• Saudi Exchange (Tadawul) XBRL/financial statements;<br>• ESEF filings via filings.xbrl.org (EU/UK IFRS: XBRL plus the report);<br>• UK Companies House;<br>• SEC 20-F/40-F (IFRS), already in `om/statements.py`;<br>• user uploads and VDRs.<br>Connector files go under `src/harness/connectors/intl_*.py` |
 | S8.6 | **Model and comps support:**<br>• IFRS by-nature P&L (no reported operating income → computed EBIT with a flagged basis);<br>• IFRS 16 toggles;<br>• zakat;<br>• EGP/SAR/AED with FX at period-end vs average and devaluation flags (`om/fx.py`);<br>• calendarisation of non-December years.<br>Coordinate with S4 (which owns `om/model3.py`, `om/comps.py`): S8 supplies Statements + flags; S4 adapts the builders. Lock-coordinated |
-| S8.7 | **Evals:**<br>• (a) **automatic gold:** ESEF and SEC 20-F filers have both XBRL and a PDF/HTML report. Extract from the PDF and compare against the XBRL values, figure by figure, for 20 IFRS companies across ≥ 5 countries;<br>• (b) **MENA set:** 10 EGX + 5 Tadawul non-bank companies (≥ 5 reports scanned or Arabic-only): tie-out pass rate, figure accuracy on a hand-verified subset (≥ 300 figures), and OCR character accuracy on Arabic numerals;<br>• (c) **standards QA:** 50 questions on IFRS/EAS/US GAAP differences with cited answers.<br>Results go to `scorecard.csv` |
+| S8.7 | **Evals:**<br>• (a) **automatic gold:** ESEF and SEC 20-F filers have both XBRL and a PDF/HTML report. Extract from the PDF and compare against the XBRL values, figure by figure, for 20 IFRS companies across ≥ 5 countries;<br>• (b) **MENA set:** the 9 S8.0 anchor companies first, then 10 EGX + 5 Tadawul non-bank companies (≥ 5 reports scanned or Arabic-only): tie-out pass rate, earnings-release-to-statements reconciliation, figure accuracy on a hand-verified subset (≥ 300 figures, anchors included), and OCR character accuracy on Arabic numerals;<br>• (c) **standards QA:** 50 questions on IFRS/EAS/US GAAP differences with cited answers.<br>Results go to `scorecard.csv` |
 | Gate | `scripts/verify_s8.py` (≥ 99% figure accuracy on the XBRL-gold set; ≥ 98% on the hand-verified MENA subset; 100% of figures carry page + bbox + confidence; failed ties never reach a model), then the **persona gate** with a fourth persona: **MENA PE/IB associate** (Cairo/Riyadh), who grades EAS/IFRS handling, Arabic reports, EGP devaluation and zakat treatment |
 
 ## 2b. Parallel sessions (who builds what)
