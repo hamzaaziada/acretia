@@ -35,15 +35,14 @@ One row per active claim. Claim a packet before you touch its files, commit the 
 | S6.3 research evals | worker (session A) | claude/dreamy-ramanujan-k8p2xt | 2026-11-16 | eval/research/**, tests/test_research_evals.py |
 | S4.7c dashboards for LBO/merger/comps | worker (session C) | claude/busy-knuth-i3ewp5 | 2026-11-16 | om/lbo.py, om/merger.py, om/comps.py, tests/test_polish_models.py |
 | S4.6a OM-Bench 10 + planted audit | worker (session C) | claude/busy-knuth-i3ewp5 | 2026-11-16 | om/bench.py, om/validate_xlsx.py, tests/test_bench.py, tests/test_validate_xlsx.py |
-| S4.6b SpreadsheetBench | worker (session C) | claude/busy-knuth-i3ewp5 | 2026-11-16 | om/sbench.py, tests/test_sbench.py |
 | S4.6c reliability-100 + timing | worker (session C) | claude/busy-knuth-i3ewp5 | 2026-11-16 | om/reliability.py, tests/test_reliability.py |
-| S4.fix1 deterministic xlsx bytes | worker (session C) | claude/busy-knuth-i3ewp5 | 2026-11-16 | om/xlsx.py, tests/test_xlsx_determinism.py, requirements-extras.txt (S4 lines only) |
 | S4 gate script | gate worker (session C) | claude/busy-knuth-i3ewp5 | 2026-11-16 | scripts/verify_s4.py |
 | S4.8 model API for product app | worker (session C) | claude/busy-knuth-i3ewp5 | 2026-11-16 | om/modelapi.py, tests/test_modelapi.py, docs/interfaces.md (Models section only) |
 | S4.9 reference-structure generation + firm templates | worker (session C) | claude/busy-knuth-i3ewp5 | 2026-11-17 | om/templatefit.py, tests/test_templatefit.py |
 | FP-S1a S1 gate strictness | gate-writer (session A) | claude/dreamy-ramanujan-k8p2xt | 2026-11-17 | scripts/verify_s1.py |
 | FP-S1b ledger + notices | worker (session A) | claude/dreamy-ramanujan-k8p2xt | 2026-11-17 | license-and-repo-ledger.csv, docs/ledger-notes.md, THIRD_PARTY_NOTICES.md, requirements.txt (anthropic line only) |
 | FP-S1c buyer-research rubric thresholds | worker (session A) | claude/dreamy-ramanujan-k8p2xt | 2026-11-17 | docs/buyer-research.md |
+| S4.fix2 formula engine coverage (SpreadsheetBench) | worker (session C) | claude/busy-knuth-i3ewp5 | 2026-11-17 | om/formula.py, tests/test_formula_ext2.py |
 
 ## Log
 - 2026-11-16: created; no active claims.
@@ -74,3 +73,4 @@ One row per active claim. Claim a packet before you touch its files, commit the 
 - 2026-11-16: session A: S1.3, FP-R4, S2 connector gate done; S1-fin claimed.
 - 2026-11-16: session A: S7.5a CI on main (a6c1b2b); S1 grader findings → FP-S1a/b/c claimed.
 - 2026-11-16: session B: S3.3a/b/c, S3.int, S3.fix-env merged and released; wave 3 claimed (FP-S3-a, FP-S3-b, S3.12, S3 gate script).
+- 2026-11-17: S4.fix1, S4.6b merged and released; S4.fix2 claimed.
