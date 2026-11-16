@@ -93,37 +93,55 @@ _CACHE: "OrderedDict[str, dict]" = OrderedDict()
 _CACHE_MAX = 8
 
 
-def _styles(z: zipfile.ZipFile) -> list[str]:
-    """Number-format code per cellXfs index."""
+def _styles(z: zipfile.ZipFile) -> list[dict]:
+    """Per cellXfs index: number-format code, fill colour, top/bottom border, indent."""
     if "xl/styles.xml" not in z.namelist():
         return []
     st = ET.fromstring(z.read("xl/styles.xml"))
     custom = {int(n.get("numFmtId")): n.get("formatCode") or "General" for n in st.iter(f"{_NS}numFmt")}
+    fills = []
+    fe = st.find(f"{_NS}fills")
+    for f in (fe.findall(f"{_NS}fill") if fe is not None else []):
+        fg = f.find(f"{_NS}patternFill/{_NS}fgColor")
+        pat = f.find(f"{_NS}patternFill")
+        rgb = fg.get("rgb")[-6:].upper() if fg is not None and fg.get("rgb") and pat is not None and pat.get("patternType") == "solid" else None
+        fills.append(rgb)
+    borders = []
+    be = st.find(f"{_NS}borders")
+    for b in (be.findall(f"{_NS}border") if be is not None else []):
+        t, bt = b.find(f"{_NS}top"), b.find(f"{_NS}bottom")
+        borders.append((t is not None and bool(t.get("style")), bt is not None and bool(bt.get("style"))))
     xe = st.find(f"{_NS}cellXfs")
     out = []
     for xf in (xe.findall(f"{_NS}xf") if xe is not None else []):
         i = int(xf.get("numFmtId") or 0)
-        out.append(custom.get(i) or _BUILTIN_FMT.get(i, "General"))
+        fid, bid = int(xf.get("fillId") or 0), int(xf.get("borderId") or 0)
+        al = xf.find(f"{_NS}alignment")
+        fill = fills[fid] if fid < len(fills) else None
+        bt, bb = borders[bid] if bid < len(borders) else (False, False)
+        out.append({"fmt": custom.get(i) or _BUILTIN_FMT.get(i, "General"), "bg": None if fill in (None, "FFFFFF") else fill,
+                    "bt": bt, "bb": bb, "ind": int(float(al.get("indent") or 0)) if al is not None else 0})
     return out
 
 
 def _sheet_layout(data: bytes) -> dict:
-    """{sheet: {"fmt": {(r,c): code}, "freeze": (rows, cols), "widths": {col: chars}, "indent": ...}} from the raw XML."""
+    """{sheet: {"style": {(r,c): xf dict}, "freeze": (rows, cols), "widths": {col: chars}}} from the raw XML."""
     z = zipfile.ZipFile(io.BytesIO(data))
     names = set(z.namelist())
-    xf_fmt = _styles(z)
+    xfs = _styles(z)
     wb = ET.fromstring(z.read("xl/workbook.xml"))
     rels = {}
     if "xl/_rels/workbook.xml.rels" in names:
         for r in ET.fromstring(z.read("xl/_rels/workbook.xml.rels")).iter(f"{_PNS}Relationship"):
             rels[r.get("Id")] = "xl/" + r.get("Target").lstrip("/").removeprefix("xl/")
+    from ..xlsx import col_index
     out = {}
     for i, sh in enumerate(wb.iter(f"{_NS}sheet")):
         part = rels.get(sh.get(f"{_RNS}id")) or f"xl/worksheets/sheet{i + 1}.xml"
         if part not in names:
             continue
         root = ET.fromstring(z.read(part))
-        fmt, widths, freeze = {}, {}, (0, 0)
+        style, widths, freeze = {}, {}, (0, 0)
         pane = root.find(f".//{_NS}pane")
         if pane is not None and pane.get("state") in ("frozen", "frozenSplit"):
             freeze = (int(float(pane.get("ySplit") or 0)), int(float(pane.get("xSplit") or 0)))
@@ -137,10 +155,11 @@ def _sheet_layout(data: bytes) -> dict:
         for c in root.iter(f"{_NS}c"):
             m = re.match(r"([A-Z]+)(\d+)", c.get("r") or "")
             s = int(c.get("s") or 0)
-            if m and s < len(xf_fmt) and xf_fmt[s] != "General":
-                from ..xlsx import col_index
-                fmt[(int(m.group(2)), col_index(m.group(1)))] = xf_fmt[s]
-        out[sh.get("name")] = {"fmt": fmt, "freeze": freeze, "widths": widths}
+            if m and 0 < s < len(xfs):
+                x = xfs[s]
+                if x["fmt"] != "General" or x["bg"] or x["bt"] or x["bb"] or x["ind"]:
+                    style[(int(m.group(2)), col_index(m.group(1)))] = x
+        out[sh.get("name")] = {"style": style, "freeze": freeze, "widths": widths}
     return out
 
 
@@ -196,7 +215,8 @@ def _bundle(data: bytes) -> dict:
 
 
 def _fmt_of(b: dict, sheet: str, rc: tuple) -> str | None:
-    return (b["layout"].get(sheet) or {}).get("fmt", {}).get(rc)
+    x = ((b["layout"].get(sheet) or {}).get("style") or {}).get(rc)
+    return x["fmt"] if x and x["fmt"] != "General" else None
 
 
 def _citation_tokens(ctx, deal_id: str) -> dict:
@@ -259,7 +279,7 @@ def _checks(b: dict) -> list[dict]:
 
 
 def _view(ctx, deal_id: str, name: str, data: bytes, version: int, latest: int) -> dict:
-    from ..wbgraph import label_of
+    from ..wbgraph import label_of, period_header
     from ..xlsx import col_letter
     b = _bundle(data)
     book = b["book"]
@@ -273,11 +293,23 @@ def _view(ctx, deal_id: str, name: str, data: bytes, version: int, latest: int) 
         fr, fc = lay.get("freeze", (0, 0))
         widths = {col_letter(c): w for c, w in (lay.get("widths") or {}).items() if c <= cmax + 1}
         sheets.append({"name": sh, "rows": rmax, "cols": cmax, "freeze": {"rows": fr, "cols": fc}, "widths": widths})
+        style = lay.get("style") or {}
         for (r, c), cell in grid.items():
-            if cell.formula is None and (cell.value is None or cell.value == ""):
+            empty = cell.formula is None and (cell.value is None or cell.value == "")
+            sx = style.get((r, c))
+            if empty and not (sx and sx["bg"]):
                 continue
             key = f"{sh}!{col_letter(c)}{r}"
             d: dict = {"v": _num(cell.value), "cls": _classify(cell)}
+            if sx:
+                if sx["bg"]:
+                    d["bg"] = sx["bg"]
+                if sx["bt"]:
+                    d["bt"] = 1
+                if sx["bb"]:
+                    d["bb"] = 1
+                if sx["ind"]:
+                    d["ind"] = sx["ind"]
             if cell.formula:
                 d["f"] = cell.formula
             fm = _fmt_of(b, sh, (r, c))
@@ -312,9 +344,10 @@ def _view(ctx, deal_id: str, name: str, data: bytes, version: int, latest: int) 
             base = (cell_label := (book.sheets[sh].get((r, 1)))) and cell_label.value or ""
             n_in_row = sum(1 for (rr, cc), x in book.sheets[sh].items() if rr == r and cc >= 3 and x.formula is None and isinstance(x.value, (int, float)))
             lab = (str(base) if n_in_row == 1 and base else label_of(book, key)) or key
+            period = period_header(book, sh, r, c) if n_in_row > 1 else None
             fm = _fmt_of(b, sh, (r, c))
             assumptions.append({"ref": key, "label": lab or key, "row_label": str(base), "sheet": sh, "section": _section_of(book, sh, r),
-                                "value": _num(cell.value), "fmt": fm, "unit": _unit_of(fm, str(base))})
+                                "period": period, "value": _num(cell.value), "fmt": fm, "unit": _unit_of(fm, str(base))})
     out = {"deal_id": deal_id, "name": name, "version": version, "latest": latest, "editable": ctx.role in ("member", "owner"),
            "sheets": sheets, "cells": cells, "assumptions": assumptions, "checks": _checks(b),
            "outputs": _outputs(b)}
