@@ -2,6 +2,7 @@
 .env.*
 !.env.example
 data/
+!om/intl/data/
 storage/
 __pycache__/
 *.pyc
