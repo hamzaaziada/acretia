@@ -11,6 +11,7 @@
 | S5 Document matrix grid | 🟡 | Session D building S5.1–S5.4 (claimed 2026-11-16). Existing: Matrix with verified quotes (no bbox/DuckDB) |
 | S6 Research agent | 🟡 | Ask with verified citations exists |
 | S7 UI, security, Docker/CI | ⬜ | |
+| S8 International accounting + OCR financials | 🟡 | Session E building S8.1–S8.7 (claimed 2026-11-16) |
 
 ## v1 (superseded)
 

@@ -13,6 +13,39 @@ v1 of this plan (M1–M7) is superseded. Its packets are mapped to v2 stages bel
 
 ---
 
+## North star: the product (read this first)
+
+Acretia ships as a **production-level product that does what Rogo's Felix does, and beats it**. The engines (stages S1–S6, S8) exist to serve this product, and it is judged by what a banker experiences:
+
+1. They open the app (or email it) and ask in plain language: "spread trading comps for ElSewedy vs GCC cable peers and add a football field".
+2. An agent plans the work, shows its steps and cost live, and pulls filings, the VDR and the firm's own files.
+3. It returns **finished deliverables** within minutes: Excel in the firm's conventions, slides in the firm's template, an IC memo. Every number links to the highlighted source.
+4. The banker comments ("make slide 4 a waterfall", "use 9% WACC") and the agent edits in place, with versions and undo.
+5. When new earnings land, the model and deck roll forward by themselves and the user is told.
+
+### User journeys = product acceptance tests (P-J1 … P-J8)
+
+Each journey is scripted as an end-to-end browser test (Playwright, Apache-2.0, ledger row) running against the real app. The Haiku personas also judge it from screenshots and outputs.
+
+| Journey | The user does | They get (acceptance) |
+|---|---|---|
+| P-J1 Ask | Types a request in the command bar (or sends it by email) | A live plan with steps, sources, cost and time; deliverables delivered to the deal's library; p50 under 5 min for comps or a profile deck |
+| P-J2 Deal workspace | Creates a deal, drops a VDR zip (50+ PDFs, some scanned or Arabic) | Documents indexed with progress; diligence matrix with cost estimate; gaps and risks flagged; every cell clickable to its bbox |
+| P-J3 Model | "3-statement + DCF for X" (US XBRL or an annual-report PDF) | A graded, tied Excel model; assumptions editable in the UI with live recompute; download; audit view (blue/black/green, three-engine check) |
+| P-J4 Deck | "Pitch book / IC memo from this model and grid" | Ghost-deck approval, then rendered slides in the firm template with validator badges; comment-to-edit annotator; versions and diffs; model→deck sync |
+| P-J5 Earnings update | A new filing arrives (or the user triggers it) | Model rolled forward, deck refreshed, diff shown, notification sent |
+| P-J6 Trust | Clicks any number in a slide, Excel cell, memo or grid | Split-pane PDF with the exact span highlighted, plus page, as-of date and source link |
+| P-J7 Firm setup | An admin uploads templates and sample decks, defines Adjusted EBITDA and Net Debt, adds users and roles, connects SharePoint/Drive/VDR | House style cloned and applied everywhere; definitions used in every model; RBAC enforced |
+| P-J8 Agent library | Picks a pre-built agent (comps, DCF, LBO, merger, CIM summary, teaser, buyer list, earnings recap, IC memo) or saves their own prompt chain | Repeatable runs, shareable within the org, run history |
+
+**Production bar:**
+- multi-tenant auth with roles; audit log of every action and agent step;
+- streamed progress; cost shown per task; resumable jobs; notifications;
+- fast, dense, institutional UI with keyboard shortcuts; accessible (WCAG AA); English/Arabic UI with RTL;
+- no dead ends: every error says what to do next.
+
+---
+
 ## 0. Ground rules (binding on every packet)
 
 1. **Licence ledger first.** Before adopting, vendoring or borrowing from any repo, inspect its `LICENSE` at a **pinned commit** and add a row to [`license-and-repo-ledger.csv`](license-and-repo-ledger.csv): `repo, commit_hash, license, decision (adopt | borrow_ideas | isolated_service | skip), reason`.
@@ -120,7 +153,9 @@ v1 M1 is done (see §1): extend `om/contracts.py`, `om/pii.py`, `om/replay.py`, 
 | S6.3 | **Evals:** Vals Finance Agent (50 public questions) + FinanceBench subset, scored with evidence |
 | Gate | `scripts/verify_s6.py` (0 unsourced figures, eval pass rates recorded), then **persona gate** |
 
-### Stage 7 — Production UI, security review, Docker and CI
+### Stage 7 — The product app (session F) + security review, Docker and CI (session A)
+
+The product app (P-J1–P-J8 above) is built by session F, starting now: the shell first, then each engine plugged in as it lands on main. S7.4–S7.5 (security, Docker, CI) stay with session A. S7.1–S7.3 below are part of the product app.
 
 | Packet | Scope |
 |---|---|
@@ -131,16 +166,33 @@ v1 M1 is done (see §1): extend `om/contracts.py`, `om/pii.py`, `om/replay.py`, 
 | S7.5 | **Docker and CI** (v1 M7): Dockerfile (non-root, LibreOffice, poppler, tesseract), compose (app, Caddy, optional postgres/redis/minio, isolated GPL services), GitHub Actions (offline suite, all verify scripts, ledger check, secret scan), `DEPLOY.md`, README |
 | Gate | `scripts/verify_s7.py` + `scripts/verify_security.py`, then the final **persona gate** on an end-to-end deal run (CIM + VDR → Matrix → model → deck → memo) |
 
+### Stage 8 — International accounting and unstructured financials (non-US, MENA-first)
+
+Acretia must be as fluent outside the US as inside it: IFRS, Egyptian Accounting Standards (EAS), Saudi IFRS as endorsed by SOCPA, UAE/GCC IFRS, UK FRS 102, Indian Ind AS and others, as well as US GAAP. It must also turn messy, often scanned, often Arabic annual reports into the same tied, sourced statements that SEC XBRL gives us today.
+
+| Packet | Scope |
+|---|---|
+| S8.1 | **Accounting-standards knowledge base** (`om/intl/standards/`, YAML + docs; written in our own words, sources cited, no copied standard text). For each framework: statement layouts (function vs nature P&L, current/non-current ordering, OCI), required line items, and the key differences from US GAAP and IFRS: leases (IFRS 16 vs ASC 842 vs EAS 49), revenue, inventory (no LIFO under IFRS), development-cost capitalisation, revaluation model, impairment reversals, borrowing costs, associates/JVs, IAS 29 hyperinflation, IAS 21 FX translation and devaluation effects (critical for Egypt), zakat vs income tax (KSA), employee end-of-service benefits, government grants, plus EAS-specific items and the EAS ↔ IFRS mapping (e.g. EAS 47/48/49). Each difference carries an **analyst adjustment recipe** (how to make companies comparable: IFRS 16 EBITDA vs pre-16, lease-adjusted net debt, zakat treatment) |
+| S8.2 | **Concept mapping:** IFRS (`ifrs-full`), ESEF and local taxonomies, plus PDF line-item labels in English and Arabic, mapped to the canonical `om.statements` lines with confidence. A bilingual label dictionary (e.g. "صافي الربح" → net income, "إيرادات النشاط" → revenue, "تكلفة المبيعات" → cost of revenue) |
+| S8.3 | **OCR and unstructured extraction pipeline:**<br>• scanned and native PDFs; Arabic and English;<br>• OCR engines per the licence ledger (tesseract `ara+eng` as an isolated service; PaddleOCR/EasyOCR if the ledger allows) with per-word confidence and bboxes;<br>• Eastern Arabic digits (٠–٩) and Persian digits normalised; Arabic thousands and decimal separators (٬ ٫); RTL table reconstruction; brackets and minus negatives; units ("بالألف جنيه", "EGP '000", "SAR million"); multi-column bilingual reports;<br>• fiscal years ending other than in December;<br>• output: `Statements` objects with a Citation per figure (page, bbox, OCR confidence), so `om/model3.py` and the S4 models work unchanged |
+| S8.4 | **Tie-out and confidence gate for extracted statements:**<br>• subtotals add up, BS balances, CF ties to the change in cash, IS/CF net income agree, prior-year comparatives match the previous report;<br>• low OCR confidence or a failed tie routes the figure to a review queue with the highlighted bbox, never silently into a model |
+| S8.5 | **Sources (public, licence- and ToS-respecting):**<br>• EGX company disclosures and annual reports (public PDFs; robots.txt and rate limits honoured, facts and links stored, never re-hosted);<br>• Saudi Exchange (Tadawul) XBRL/financial statements;<br>• ESEF filings via filings.xbrl.org (EU/UK IFRS: XBRL plus the report);<br>• UK Companies House;<br>• SEC 20-F/40-F (IFRS), already in `om/statements.py`;<br>• user uploads and VDRs.<br>Connector files go under `src/harness/connectors/intl_*.py` |
+| S8.6 | **Model and comps support:**<br>• IFRS by-nature P&L (no reported operating income → computed EBIT with a flagged basis);<br>• IFRS 16 toggles;<br>• zakat;<br>• EGP/SAR/AED with FX at period-end vs average and devaluation flags (`om/fx.py`);<br>• calendarisation of non-December years.<br>Coordinate with S4 (which owns `om/model3.py`, `om/comps.py`): S8 supplies Statements + flags; S4 adapts the builders. Lock-coordinated |
+| S8.7 | **Evals:**<br>• (a) **automatic gold:** ESEF and SEC 20-F filers have both XBRL and a PDF/HTML report. Extract from the PDF and compare against the XBRL values, figure by figure, for 20 IFRS companies across ≥ 5 countries;<br>• (b) **MENA set:** 10 EGX + 5 Tadawul non-bank companies (≥ 5 reports scanned or Arabic-only): tie-out pass rate, figure accuracy on a hand-verified subset (≥ 300 figures), and OCR character accuracy on Arabic numerals;<br>• (c) **standards QA:** 50 questions on IFRS/EAS/US GAAP differences with cited answers.<br>Results go to `scorecard.csv` |
+| Gate | `scripts/verify_s8.py` (≥ 99% figure accuracy on the XBRL-gold set; ≥ 98% on the hand-verified MENA subset; 100% of figures carry page + bbox + confidence; failed ties never reach a model), then the **persona gate** with a fourth persona: **MENA PE/IB associate** (Cairo/Riyadh), who grades EAS/IFRS handling, Arabic reports, EGP devaluation and zakat treatment |
+
 ## 2b. Parallel sessions (who builds what)
 
 Several Claude Code cloud sessions build at once, one stage each. Every session follows `CLAUDE.md`.
 
 | Session | Owns | Starts |
 |---|---|---|
-| A: "Acretia: autonomous build" (Boss) | S1 → S2 → S6 → S7 | now |
+| A: "Acretia: autonomous build" (Boss) | S1 → S2 → S6 → S7.4–S7.5 (security, Docker/CI) | now |
 | B: "Acretia: deck engine" | S3 (incl. S3.11 creative layer) | now: deterministic parts first; the VLM critic and image generation use `om/llm.py` until S2.1's adapter lands, then switch |
 | C: "Acretia: Excel engine" | S4 | now |
 | D: "Acretia: document grid" | S5 | now (builds on `om/pdfdoc.py` from S5.1-pre) |
+| F: "Acretia: product app (Felix parity)" | North star P-J1–P-J8, S7.1–S7.3 | now: owns `frontend/`, `om/api/` (or the backend the session chooses per D-029), `e2e/`, `scripts/verify_product.py` |
+| E: "Acretia: international & OCR" | S8 | now: owns `om/intl/`, `src/harness/connectors/intl_*.py`, its own tests and `verify_s8.py`; uses `om/pdfdoc.py` (S5) and the Statements contract; asks S4 through locks for builder changes |
 
 How the sessions share the repo:
 - Lock rows and the stage's PROGRESS row go to `main` immediately, as small rebased commits.

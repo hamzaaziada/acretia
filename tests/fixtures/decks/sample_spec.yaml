@@ -1,0 +1,31 @@
+deck_id: acme-q3
+title: Acme Q3 board update
+lang: en
+client: Acme Bank
+as_of: "2026-09-30"
+art_direction: auto
+theme: house
+slides:
+  - id: s1
+    archetype: exec_summary
+    title: Revenue grew 12% to 4.2bn while cost to income fell 3 points
+    blocks:
+      bullets:
+        - Revenue up 12% year on year
+        - Cost to income at 48%
+    source: Acme management accounts
+    as_of: "2026-09-30"
+    notes: Lead with the answer.
+    visual:
+      concept: abstract growth arc
+      kind: hero
+  - id: s2
+    archetype: chart
+    title: Net interest income drove 70% of the growth
+    blocks:
+      chart:
+        series:
+          - name: NII
+            values: [1.2, 1.4, 1.6]
+    source: Acme management accounts
+    as_of: "2026-09-30"

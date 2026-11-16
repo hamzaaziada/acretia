@@ -50,7 +50,8 @@ class TextSpec: paras: list[Para]; size: float; font: str = "minor"; color: str 
                 valign: str = "t"; inset: float = 0.0; autofit: bool = False      # autofit is always False
 @dataclass
 class Element:
-    id: str            # unique in the deck: f"s{n}.{name}", e.g. "s3.title", "s3.chart", "s3.kpi2.value"
+    id: str            # unique in the deck: f"s{index}.{role}[.{suffix}]", e.g. "s3.title", "s3.chart",
+                       # "s3.kpi.2" -- the validator recovers the role from the id, so the role comes first
     kind: str          # text | rect | line | chart | table | image
     role: str          # title | title_rule | subtitle | body | callout | kpi | label | chart | table | visual
                        # | source | footer_rule | footer | page_number | divider | cover | decor

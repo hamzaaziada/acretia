@@ -14,14 +14,11 @@ One row per active claim. Claim a packet before you touch its files, commit the 
 | FP-R3 gate hardening (gate-writer) | worker | claude/dreamy-ramanujan-k8p2xt | 2026-11-16 | scripts/verify_s1.py, scripts/verify_m1.py, scripts/verify_s2.py |
 | S6.0 research job interface | worker | claude/dreamy-ramanujan-k8p2xt | 2026-11-16 | src/harness/research/__init__.py, src/harness/research/api.py, src/harness/research/jobs.py, docs/interfaces.md (section 'Research agent jobs' only), tests/test_research_api.py |
 | S1 gate | Boss | claude/dreamy-ramanujan-k8p2xt | 2026-11-16 | scripts/verify_s1.py |
-| S4.1 validate_xlsx | worker (session C) | claude/busy-knuth-i3ewp5 | 2026-11-16 | om/validate_xlsx.py, scripts/validate_xlsx.py, tests/test_validate_xlsx.py |
 | S4.2 three-engine recalc | worker (session C) | claude/busy-knuth-i3ewp5 | 2026-11-16 | om/recalc.py, om/formula.py, tests/test_recalc.py, tests/test_formula_ext.py |
 | S4.3a LBO | worker (session C) | claude/busy-knuth-i3ewp5 | 2026-11-16 | om/lbo.py, tests/test_lbo.py |
 | S4.3b merger | worker (session C) | claude/busy-knuth-i3ewp5 | 2026-11-16 | om/merger.py, tests/test_merger.py |
 | S4.3c comps | worker (session C) | claude/busy-knuth-i3ewp5 | 2026-11-16 | om/comps.py, om/market.py, tests/test_comps.py |
 | S4.4 graph/ask/edit/roll-forward | worker (session C) | claude/busy-knuth-i3ewp5 | 2026-11-16 | om/wbgraph.py, om/wbedit.py, om/rollforward.py, tests/test_wbgraph.py, tests/test_wbedit.py, tests/test_rollforward.py |
-| S4.5 manifest + delivery gate | worker (session C) | claude/busy-knuth-i3ewp5 | 2026-11-16 | om/manifest.py, om/delivery.py, tests/test_manifest.py |
-| S4.7a writer polish (styles, charts, print, outline) | worker (session C) | claude/busy-knuth-i3ewp5 | 2026-11-16 | om/xlsx.py, tests/test_xlsx_polish.py |
 | S4.6 bench + S4 gate | Boss (session C) | claude/busy-knuth-i3ewp5 | 2026-11-16 | om/bench.py, scripts/verify_s4.py, tests/test_bench.py, docs/s4/* |
 | S3.core render+theme+model+archetype base | session B worker | claude/upbeat-mccarthy-viqjuo | 2026-11-16 | om/deck/__init__.py, om/deck/model.py, om/deck/theme.py, om/deck/render.py, om/deck/archetypes/__init__.py, om/deck/archetypes/base.py, om/deck/archetypes/core.py, tests/test_deck_render.py |
 | S3.4/S3.5 metrics, fit, RTL | session B worker | claude/upbeat-mccarthy-viqjuo | 2026-11-16 | om/deck/metrics.py, om/deck/fit.py, om/deck/rtl.py, tests/test_deck_fit.py, tests/test_deck_rtl.py |
@@ -29,6 +26,19 @@ One row per active claim. Claim a packet before you touch its files, commit the 
 | S3.6/S3.7 slop + validate_pptx | session B worker | claude/upbeat-mccarthy-viqjuo | 2026-11-16 | om/deck/slop.py, om/deck/validate.py, scripts/validate_pptx.py, tests/test_validate_pptx.py |
 | S3.11 visual layer | session B worker | claude/upbeat-mccarthy-viqjuo | 2026-11-16 | om/deck/visuals/**, tests/test_deck_visuals.py |
 | S3 gate + docs | session B Boss | claude/upbeat-mccarthy-viqjuo | 2026-11-16 | scripts/verify_s3.py, docs/deck-engine.md, PROGRESS.md (S3 row only) |
+| S8.1 standards KB (session E) | worker | main | 2026-11-16 | om/intl/standards/**, docs/s8/standards/**, tests/test_intl_standards.py |
+| S8.2 concepts + bilingual labels (session E) | worker | main | 2026-11-16 | om/intl/concepts.py, om/intl/labels.py, om/intl/data/labels/**, tests/test_intl_concepts.py, tests/test_intl_labels.py |
+| S8.3a numbers + OCR service + synthetic fixtures (session E) | worker | main | 2026-11-16 | om/intl/numparse.py, om/intl/ocr.py, scripts/make_intl_fixtures.py, tests/fixtures/intl/**, tests/test_intl_numparse.py, tests/test_intl_ocr.py, license-and-repo-ledger.csv (S8 rows only) |
+| S8.4 types + tie-out + review queue (session E) | worker | main | 2026-11-16 | om/intl/types.py, om/intl/tieout.py, om/intl/review.py, tests/test_intl_tieout.py |
+| S8.6a FX, calendarisation, adjustments (session E) | worker | main | 2026-11-16 | om/intl/fx.py, om/intl/calendar.py, om/intl/adjust.py, tests/test_intl_fx.py, tests/test_intl_adjust.py, docs/s8-requests-for-s4.md |
+| S8.7-corpus eval sourcing (session E) | worker | main | 2026-11-16 | evals/intl/corpus/**, scripts/fetch_intl_corpus.py, data/raw/intl/** (never committed) |
+| S8.5 intl connectors (session E, wave 2; new files only, base.py untouched) | worker | main | 2026-11-16 | src/harness/connectors/intl_*.py, om/intl/sources/**, tests/test_intl_connectors.py, tests/fixtures/intl_connectors/** |
+| S8 gate + docs (session E) | Boss | main | 2026-11-16 | scripts/verify_s8.py, docs/s8/*.md, om/intl/__init__.py, PROGRESS.md (S8 row only) |
+| SF.0 product spec + gate spec (session F) | Boss | main | 2026-11-16 | docs/product/**, docs/product-requests.md, PROGRESS.md (Product row only), DECISIONS.md (D-SF-* only) |
+| SF.1 API backend (session F) | session F workers | main | 2026-11-16 | om/api/**, tests/test_api_*.py, tests/fixtures/api/** |
+| SF.2 frontend app (session F) | session F workers | main | 2026-11-16 | frontend/** |
+| SF.3 e2e journeys + product gate (session F) | session F gate worker | main | 2026-11-16 | e2e/**, scripts/verify_product.py |
+| S4.7b polish layer + model3 dashboard | worker (session C) | claude/busy-knuth-i3ewp5 | 2026-11-16 | om/polish.py, om/model3.py, tests/test_polish.py |
 
 ## Log
 - 2026-11-16: created; no active claims.
@@ -45,3 +55,5 @@ One row per active claim. Claim a packet before you touch its files, commit the 
 - 2026-11-16: Reviewer findings verified (env-dependent live path in Router chains; OCR test recursion; psycopg/pypdf ledger gap). FP-R1..R3 claimed.
 - 2026-11-16: S2.4, S2.5 done (pending S2 gate); rows released. S6.0 interface claimed early for session F's command bar.
 - 2026-11-16: S1.2 deck teardowns and FP-R2 ledger rows done; rows released.
+- 2026-11-16: session E claimed S8.1–S8.7 and the S8 gate. S8.5 writes only new `src/harness/connectors/intl_*.py` files (inside the S2.5 glob); it waits for S2.5's base.py on main and never edits S2.5 files.
+- 2026-11-16: session A restored session C/F rows that de1725b dropped by mistake, and removed the stale S4.1/S4.5/S4.7a rows it had re-added.
