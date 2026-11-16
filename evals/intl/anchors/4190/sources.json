@@ -1,0 +1,80 @@
+[
+  {
+    "doc_type": "annual_fs",
+    "period_end": "2025-12-31",
+    "fiscal_year_end_month": 12,
+    "language": "en",
+    "scanned": true,
+    "url": "https://argaamplus.s3.amazonaws.com/46ee85d1-dd38-4906-8bc3-bf864f6c5392.pdf",
+    "host": "argaamplus.s3.amazonaws.com",
+    "sha256": "7c1e35764a96d4d66cc748468d4608d9e4d2b13ff159e990596948c6e9ce2f36",
+    "bytes": 2152108,
+    "pages": 58,
+    "retrieved": "2026-11-16",
+    "terms_url": "https://www.argaam.com/en/static-contents/termsandconditions",
+    "committed": false,
+    "primary_statement_pages": {
+      "IS": 10,
+      "BS": 9,
+      "CF": 13,
+      "OCI": 11,
+      "EQ": null
+    },
+    "currency": "SAR",
+    "unit": "SAR thousand",
+    "notes": "Mirror of Tadawul-disclosed audited FS hosted by Argaam (jarir.com IR documents load via JS API; saudiexchange.sa returns 403); auditor EY; primary statement pages are images",
+    "local_path": "anchors/4190/46ee85d1-dd38-4906-8bc3-bf864f6c5392.pdf"
+  },
+  {
+    "doc_type": "annual_fs",
+    "period_end": "2024-12-31",
+    "fiscal_year_end_month": 12,
+    "language": "en",
+    "scanned": true,
+    "url": "https://argaamplus.s3.amazonaws.com/6d97c533-2c17-487e-9c49-c94dabab99f0.pdf",
+    "host": "argaamplus.s3.amazonaws.com",
+    "sha256": "e2657feea7aca43cd10b72ed49412e44833f15dd9689531bfe5f3707ec03bea0",
+    "bytes": 801948,
+    "pages": 63,
+    "retrieved": "2026-11-16",
+    "terms_url": "https://www.argaam.com/en/static-contents/termsandconditions",
+    "committed": false,
+    "primary_statement_pages": {
+      "IS": 10,
+      "BS": 9,
+      "CF": 13,
+      "OCI": 11,
+      "EQ": null
+    },
+    "currency": "SAR",
+    "unit": "SAR thousand",
+    "notes": "Mirror of Tadawul-disclosed audited FS hosted by Argaam (jarir.com IR documents load via JS API; saudiexchange.sa returns 403); auditor EY; primary statement pages are images",
+    "local_path": "anchors/4190/6d97c533-2c17-487e-9c49-c94dabab99f0.pdf"
+  },
+  {
+    "doc_type": "quarterly_fs",
+    "period_end": "2026-09-30",
+    "fiscal_year_end_month": 12,
+    "language": "en",
+    "scanned": true,
+    "url": "https://data.argaam.com/files/download/bead9213-f09d-4369-a090-d47a552f24ec.pdf",
+    "host": "data.argaam.com",
+    "sha256": "68a59b09fbe49c291d26defc6309af09beb04f4768db98ab33af188357418cbf",
+    "bytes": 1067787,
+    "pages": 32,
+    "retrieved": "2026-11-16",
+    "terms_url": "https://www.argaam.com/en/static-contents/termsandconditions",
+    "committed": false,
+    "primary_statement_pages": {
+      "IS": 5,
+      "BS": 4,
+      "CF": 8,
+      "OCI": 6,
+      "EQ": null
+    },
+    "currency": "SAR",
+    "unit": "SAR thousand",
+    "notes": "Mirror of Tadawul-disclosed audited FS hosted by Argaam (jarir.com IR documents load via JS API; saudiexchange.sa returns 403); auditor EY; primary statement pages are images",
+    "local_path": "anchors/4190/bead9213-f09d-4369-a090-d47a552f24ec.pdf"
+  }
+]
