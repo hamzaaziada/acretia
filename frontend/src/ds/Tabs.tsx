@@ -16,6 +16,7 @@ export interface TabsProps {
   label: string;
   idPrefix?: string;
   className?: string;
+  testIds?: (id: string) => string;
 }
 
 export function tabId(prefix: string, id: string) {
@@ -25,7 +26,7 @@ export function panelId(prefix: string, id: string) {
   return `${prefix}-panel-${id}`;
 }
 
-export function Tabs({ items, value, onChange, label, idPrefix = 'tabs', className }: TabsProps) {
+export function Tabs({ items, value, onChange, label, idPrefix = 'tabs', className, testIds }: TabsProps) {
   const refs = useRef<Record<string, HTMLButtonElement | null>>({});
   const enabled = items.filter((i) => !i.disabled);
 
@@ -57,6 +58,7 @@ export function Tabs({ items, value, onChange, label, idPrefix = 'tabs', classNa
             type="button"
             role="tab"
             id={tabId(idPrefix, it.id)}
+            data-testid={testIds?.(it.id)}
             aria-selected={selected}
             aria-controls={panelId(idPrefix, it.id)}
             tabIndex={selected ? 0 : -1}

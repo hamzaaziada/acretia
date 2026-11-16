@@ -27,6 +27,9 @@ export interface TableProps<T> {
   className?: string;
   /** Rows above which windowing kicks in. */
   virtualizeAbove?: number;
+  /** Extra attributes per row (data-testid, data-id, ...). */
+  rowProps?: (row: T) => Record<string, string>;
+  testId?: string;
 }
 
 const ROW_H = 28;
@@ -51,6 +54,8 @@ export function Table<T>({
   initialSort,
   className,
   virtualizeAbove = 200,
+  rowProps,
+  testId,
 }: TableProps<T>) {
   const uid = useId();
   const [sort, setSort] = useState(initialSort ?? null);
@@ -124,6 +129,7 @@ export function Table<T>({
       tabIndex={0}
       role="group"
       aria-label={caption}
+      data-testid={testId}
       aria-activedescendant={activeId}
       onKeyDown={onKey}
       onScroll={virtual ? (e) => setScrollTop(e.currentTarget.scrollTop) : undefined}
@@ -169,6 +175,7 @@ export function Table<T>({
                 key={rowKey(row)}
                 id={`${uid}-r-${idx}`}
                 aria-rowindex={idx + 2}
+                {...(rowProps ? rowProps(row) : {})}
                 className={cx(idx === active && 'is-active', onRowActivate && 'is-clickable')}
                 onClick={() => {
                   setActive(idx);

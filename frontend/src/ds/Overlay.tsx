@@ -14,10 +14,11 @@ interface OverlayProps {
   footer?: ReactNode;
   size?: 'sm' | 'md' | 'lg';
   description?: string;
+  testId?: string;
 }
 
 /** Modal dialog: focus-trapped, Esc closes, focus returns to the trigger. */
-export function Dialog({ open, onClose, title, closeLabel, children, footer, size = 'md', description }: OverlayProps) {
+export function Dialog({ open, onClose, title, closeLabel, children, footer, size = 'md', description, testId }: OverlayProps) {
   const ref = useRef<HTMLDivElement>(null);
   const titleId = useId();
   const descId = useId();
@@ -29,6 +30,7 @@ export function Dialog({ open, onClose, title, closeLabel, children, footer, siz
         ref={ref}
         role="dialog"
         aria-modal="true"
+        data-testid={testId}
         aria-labelledby={titleId}
         aria-describedby={description ? descId : undefined}
         tabIndex={-1}
@@ -56,14 +58,14 @@ export function Dialog({ open, onClose, title, closeLabel, children, footer, siz
 }
 
 /** Side drawer that slides in from the inline end (right in LTR, left in RTL). */
-export function Drawer({ open, onClose, title, closeLabel, children, footer, size = 'md' }: OverlayProps) {
+export function Drawer({ open, onClose, title, closeLabel, children, footer, size = 'md', testId }: OverlayProps) {
   const ref = useRef<HTMLDivElement>(null);
   const titleId = useId();
   useFocusTrap(open, ref, onClose);
   if (!open) return null;
   return createPortal(
     <div className="acr-scrim acr-scrim--drawer" onMouseDown={(e) => e.target === e.currentTarget && onClose()}>
-      <aside ref={ref} role="dialog" aria-modal="true" aria-labelledby={titleId} tabIndex={-1} className={cx('acr-drawer', `acr-drawer--${size}`)}>
+      <aside ref={ref} role="dialog" aria-modal="true" data-testid={testId} aria-labelledby={titleId} tabIndex={-1} className={cx('acr-drawer', `acr-drawer--${size}`)}>
         <header className="acr-dialog__head">
           <h2 id={titleId} className="acr-dialog__title">
             {title}

@@ -57,7 +57,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(function Input(
         <input
           ref={ref}
           id={id}
-          className={cx('acr-input', mono && 'acr-mono', startSlot && 'has-slot', className)}
+          className={cx('acr-input', mono && 'acr-mono', !!startSlot && 'has-slot', className)}
           aria-invalid={error ? true : undefined}
           aria-describedby={error ? `${id}-err` : hint ? `${id}-hint` : undefined}
           {...rest}
