@@ -515,6 +515,23 @@ class NoProviderSdkTests(unittest.TestCase):
         mods |= {n.module for n in ast.walk(tree) if isinstance(n, ast.ImportFrom) and n.module}
         self.assertFalse({m.split(".")[0] for m in mods} & {"anthropic", "openai", "mistralai", "cohere", "litellm"})
 
+class HeaderEncodingTests(unittest.TestCase):
+    def test_bad_key_is_a_clear_error_without_the_value(self):
+        for bad in ("k\u2014ey", "abc\r\nX-Evil: 1"):
+            a = Adapter("https://llm.meshpool.ai/v1", bad, "m", max_retries=0)
+            with mock.patch.object(socket, "socket", side_effect=AssertionError("socket opened")):
+                with self.assertRaises(LLMError) as cm:
+                    a.request({"messages": []})
+            self.assertIn("Authorization", str(cm.exception))
+            self.assertNotIn(bad, str(cm.exception))
+            self.assertNotIn("Evil", str(cm.exception))
+
+    def test_urllib_transport_rejects_bad_header(self):
+        with mock.patch.object(socket, "socket", side_effect=AssertionError("socket opened")):
+            with self.assertRaises(LLMError) as cm:
+                adp.urllib_transport("https://llm.meshpool.ai/v1/x", {}, {"X-Test": "a\r\nb"})
+        self.assertIn("X-Test", str(cm.exception))
+
 
 if __name__ == "__main__":
     unittest.main()

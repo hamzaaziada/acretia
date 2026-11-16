@@ -54,6 +54,8 @@ def urllib_transport(url: str, body: dict, headers: dict, *, timeout: float = 60
                      has_key: bool = False, stream: bool = False):
     """POST JSON. Returns the parsed reply, or (stream=True) an iterator of decoded SSE lines. A redirect to another
     host is refused while a key is attached. HTTP/network errors become TransportError (status set for HTTP)."""
+    for hk, hv in headers.items():
+        _llm.check_header_value(hk, hv)
     req = urllib.request.Request(url, data=json.dumps(body).encode(), headers=headers, method="POST")
     opener = urllib.request.build_opener(_llm._SameHostRedirect(bound_host or (urlparse(url).hostname or ""), has_key))
     try:
@@ -164,6 +166,7 @@ class Adapter:
         if stream:
             headers["Accept"] = "text/event-stream"
         if self.api_key:
+            _llm.check_header_value("Authorization", f"Bearer {self.api_key}", "api key")
             headers["Authorization"] = f"Bearer {self.api_key}"
         attempts = (self.max_retries if retries is None else retries) + 1
         for n in range(attempts):

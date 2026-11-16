@@ -230,10 +230,20 @@ class TestOcr(unittest.TestCase):
         self.assertGreater(p.words[0].bbox_norm[0], 72 / 612 - 0.01)
 
     def test_ocr_unavailable_warns(self):
-        with mock.patch.object(pdfdoc.shutil, "which", lambda n: None if n in ("tesseract", "pdftoppm") else shutil.which(n)):
+        real_which = shutil.which           # captured before patching: the lambda must not call the patched function
+        with mock.patch.object(pdfdoc.shutil, "which", lambda n: None if n in ("tesseract", "pdftoppm") else real_which(n)):
             doc = load(self.pdf())
         self.assertFalse(doc.pages[0].ocr)
         self.assertEqual(doc.pages[0].words, [])
+        self.assertTrue(doc.warnings)
+
+    def test_ocr_unavailable_warns_with_poppler_backend(self):
+        # pdfplumber hidden: the poppler path looks up pdftotext too, which must not recurse
+        real_which = shutil.which
+        with mock.patch.dict(os.environ, {"ACRETIA_PDF_BACKEND": "poppler"}), \
+                mock.patch.object(pdfdoc.shutil, "which", lambda n: None if n in ("tesseract", "pdftoppm") else real_which(n)):
+            doc = load(self.pdf())
+        self.assertFalse(doc.pages[0].ocr)
         self.assertTrue(doc.warnings)
 
     def test_ocr_disabled(self):
