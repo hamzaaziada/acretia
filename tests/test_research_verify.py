@@ -12,7 +12,7 @@ PAGE = ("Consolidated Statements of Operations (in millions)\nTotal net sales  3
 THOUSANDS = "Statement (in thousands)\nRevenue 1,234 ; Cost 900\n"
 
 
-def fig(label="Revenue", value=391035.0, units="USD m", period="FY2024", as_of="2024-11-01", **cit):
+def fig(label="Revenue", value=391035.0, units="USD m", period="FY2024", as_of="2025-02-01", **cit):
     c = {"doc_id": "AAPL", "sha256_span_hash": H, "as_of": as_of}
     c.update(cit)
     if not (c.get("url") or c.get("source_url")) and c.get("page") is None and "page" not in cit:
@@ -160,10 +160,30 @@ class Gates(unittest.TestCase):
         self.assertFalse(v.ok)
         self.assertIn("future", v.reason)
 
-    def test_period_mismatch(self):
-        v = verify_figure(fig(xbrl_concept="us-gaap:Revenues", period="FY2019"), resolver())
+    def test_as_of_before_period_end(self):
+        v = verify_figure(fig(xbrl_concept="us-gaap:Revenues", period="FY2024", as_of="2024-06-30"), resolver())
         self.assertFalse(v.ok)
         self.assertIn("period mismatch", v.reason)
+
+    def test_restated_comparative_in_later_filing_passes(self):
+        r = resolver()
+        r.add_xbrl("AAPL", "us-gaap:Revenues", "FY2023", 383285e6)
+        f = fig(value=383285.0, period="FY2023", as_of="2025-02-01", xbrl_concept="us-gaap:Revenues")
+        self.assertTrue(verify_figure(f, r).ok)
+        early = fig(value=383285.0, period="FY2023", as_of="2023-06-30", xbrl_concept="us-gaap:Revenues")
+        self.assertFalse(verify_figure(early, r).ok)
+
+    def test_iso_and_quarter_period_end(self):
+        f = fig(xbrl_concept="us-gaap:Revenues", period="2024-09-28", as_of="2024-09-27")
+        self.assertFalse(verify_figure(f, resolver()).ok)
+        q = fig(xbrl_concept="us-gaap:Revenues", period="Q3 2024", as_of="2024-10-30")
+        self.assertNotIn("period", verify_figure(q, resolver()).reason)
+        multi = fig(xbrl_concept="us-gaap:Revenues", period="Q1 Q2 2024")
+        self.assertFalse(verify_figure(multi, resolver()).ok)
+
+    def test_multiple_periods_rejected(self):
+        v = verify_figure(fig(xbrl_concept="us-gaap:Revenues", period="2023-2024"), resolver())
+        self.assertFalse(v.ok)
 
     def test_unparseable_period(self):
         v = verify_figure(fig(xbrl_concept="us-gaap:Revenues", period="LTM"), resolver())

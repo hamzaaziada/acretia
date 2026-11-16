@@ -259,15 +259,33 @@ def _today() -> date:
 _YEAR_RE = re.compile(r"(?<!\d)((?:19|20)\d{2})(?!\d)")
 
 
-def _period_year(period: str):
-    ys = {int(y) for y in _YEAR_RE.findall(period or "")}
+def _period_end(period: str):
+    """-> (date, error). ISO date -> itself; ``Q1..Q4 <year>`` -> calendar quarter end; otherwise (FY/plain year) Dec 31
+    of that year (fiscal year-end unknown). Must resolve to exactly one period (D-S6-03)."""
+    p = period or ""
+    iso = re.findall(r"(?<!\d)(\d{4}-\d{2}-\d{2})(?!\d)", p)
+    if len(iso) == 1:
+        try:
+            return datetime.strptime(iso[0], "%Y-%m-%d").date(), None
+        except ValueError:
+            return None, f"period {period!r}: not a real date"
+    if len(iso) > 1:
+        return None, "period spans several dates"
+    ys = {int(y) for y in _YEAR_RE.findall(p)}
     if not ys:
-        m = re.search(r"FY\s?'?(\d{2})(?!\d)", period or "", re.I)
+        m = re.search(r"FY\s?'?(\d{2})(?!\d)", p, re.I)
         if m:
             ys = {2000 + int(m.group(1))}
     if len(ys) != 1:
         return None, ("period spans several years" if ys else "period has no parseable year")
-    return next(iter(ys)), None
+    y = next(iter(ys))
+    q = {m.group(1) for m in re.finditer(r"(?<![A-Za-z0-9])Q([1-4])(?![0-9])", p, re.I)}
+    if len(q) > 1:
+        return None, "period spans several quarters"
+    if q:
+        mm = int(next(iter(q))) * 3
+        return date(y, mm, {3: 31, 6: 30, 9: 30, 12: 31}[mm]), None
+    return date(y, 12, 31), None
 
 
 def _common(fig: SourcedFigure):
@@ -282,12 +300,12 @@ def _common(fig: SourcedFigure):
         return f"as_of {c.as_of} is in the future"
     if isinstance(fig.value, bool) or not isinstance(fig.value, (int, float)) or not math.isfinite(fig.value):
         return "value is not a finite number"
-    py, err = _period_year(fig.period)
+    pend, err = _period_end(fig.period)
     if err:
         return f"period {fig.period!r}: {err}"
-    if asof.year not in (py, py + 1):
-        return (f"period mismatch: period {fig.period!r} (year {py}) vs citation as_of {c.as_of}; "
-                f"as_of year must be {py} or {py + 1}")
+    if asof < pend:
+        return (f"period mismatch: citation as_of {c.as_of} is before the end of period {fig.period!r} "
+                f"({pend.isoformat()})")
     kind, scale, uerr = _parse_units(fig.units)
     if uerr:
         return uerr

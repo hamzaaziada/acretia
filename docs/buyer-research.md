@@ -72,13 +72,13 @@ What they reject: a deck whose titles do not tell the story, slides with several
 
 ### 2a. Storyline and titles
 
-1. **Every content slide has an action title:** a full sentence stating the conclusion, at most 15 words, at most 2 lines at the title size, containing a verb, and containing a number wherever the slide has quantitative data. The 15-word, 2-line and number rules are [HOUSE RULE] (sources say "full sentence, conclusion" only) [23][48][50]. Check (D): word count, rendered line count, verb heuristic (POS tag or verb lexicon), digit present when the slide has a chart or table.
+1. **Every content slide has an action title:** a full sentence stating the conclusion, at most 15 words, at most 2 lines at the title size, containing a verb, and containing a number wherever the slide has quantitative data. The 15-word, 2-line and number rules are [HOUSE RULE] (sources say "full sentence, conclusion" only) [23][48][50]. Check (D): word count at most 15; rendered line count at most 2 at the title size; **verb check method: lexicon plus morphology, as implemented in `om/contracts.py::action_title_lint`** (at least 4 words and at least one auxiliary or lexicon verb, an inflected form of one, or a word ending -ed/-ing/-ize/-ise/-ify, after the first word; bare noun phrases such as "Revenue by segment" rejected); threshold 100% of content titles; a digit is present when the slide has a chart or table.
 2. **The titles-only read tells the whole story.** Check (G): see the grader spec below. [48]
 3. **One message per slide:** at most one primary exhibit (one chart or one table) per slide. Check (D) plus (G). [23][48]
 4. **Vertical logic:** each title raises a "why" answered by the body; numbers in the title appear in the exhibit. Check (G). [23][48]
 5. **Horizontal logic:** sibling slides follow a stated ordering (deductive, chronological, structural, importance) and are MECE. Check (G). [23][25]
-6. **Pyramid and SCQA:** the answer first (executive summary), SCQA opening. Check (G). [25][50]
-7. **Ghost deck first:** final titles diff against the approved storyboard; unexplained changes flagged. Check (D). [25]
+6. **Pyramid and SCQA executive summary.** The answer comes first. Slide 2 (or the first content slide) is an executive summary with four labelled parts: Situation, Complication, Question, Answer. Check (D): exactly one executive-summary slide in the first 3 slides containing the four labels (or four consistently marked blocks) and an Answer that restates the final recommendation title; (G) rates the logic. [25][50]
+7. **Ghost deck first and ghost-deck diff.** A ghost deck of titles is approved before building. The rendered titles must equal the approved ghost titles, slide by slide; any difference must appear in a logged diff with a reason, or the check fails. Check (D): title-for-title string comparison; unlogged differences = 0. [25]
 8. **Tracker / agenda** marks position on section slides. Check (D). [49] Partly [UNSOURCED].
 9. **Source and date line on every exhibit, bottom-left; page number in footer.** Check (D). [48][49]
 10. **Every number traceable:** slide-to-source register (slide, claim, source file, page, retrieval date, data cut-off); cross-slide numbers match. Check (D). [48][49]
@@ -93,16 +93,16 @@ What they reject: a deck whose titles do not tell the story, slides with several
 
 ### 2b. Geometry and typography (numeric)
 
-13. **Geometry floors** [HOUSE RULE; no firm style guide found]: **0 px overlap** between non-decorative shapes (tolerance 0 EMU); all content inside safe margins of at least **0.25 in** on every side (strict; MBB decks typically use 0.4-0.5 in); a **12-column grid** with a gutter of at least 0.15 in, and every shape's left and right edges snap to a column edge within 0.02 in; minimum font size 10 pt for body, 8 pt for footnotes and sources; minimum shape gap 0.1 in. Check (D): `om.spacing` and validate_pptx. [49]
+13. **Geometry floors** [HOUSE RULE; no firm style guide found]: **overlap tolerance 0 EMU** between non-decorative shapes; all content inside margins of at least **0.4 in** on the left, right and bottom (and 0.4 in on top below the title zone start), strict versus the typical 0.4-0.5 in; a **12-column grid** with a gutter of at least 0.15 in, every shape's left and right edges snapping to a column edge within 0.02 in; minimum font size 10 pt for body and **8 pt for footnotes and sources** (same floor as IB pages); minimum shape gap 0.1 in. **Whitespace floor:** at least 15% of each slide's area is unoccupied (area not covered by any shape's bounding box, union computed, background excluded). Check (D): `om.spacing` and validate_pptx. [49]
 14. **MBB typography:** at most 2 font families per deck; at most 4 distinct font sizes per deck; a strict size hierarchy (title > subtitle > body > footnote, each step at least 2 pt); line length at most 90 characters per text line; no text below the floor sizes in item 13. [HOUSE RULE] [49][45]
 
 ### 2c. Visual range and no rubber stamp
 
-15. **Visual range:** no more than 40% of slides may share one layout archetype (title+chart, title+table, title+bullets, etc. classified by shape structure); at least 4 distinct archetypes in any 10 consecutive content slides (at least 3 for decks under 10 slides); no two consecutive slides with the same archetype and the same primary-exhibit type more than twice in a row; generated visuals (images or SVG) must differ pairwise (perceptual hash distance at least 12 of 64 bits, and distinct palette dominant-hue spread), so one look is never stamped across slides. Check (D): archetype histogram and pHash. [HOUSE RULE] ("rubber-stamp fails" is PLAN.md section 6; thresholds are strict choices). Basis: generic AI decks read the same [36][45].
+15. **Visual range (the palette stays theme-locked, see 16; range comes from layout, archetype and generated imagery, not from colour).** No more than 40% of slides may share one layout archetype (title+chart, title+table, title+bullets, split, full-bleed visual, etc., classified by shape structure); at least 4 distinct archetypes in any 10 consecutive content slides (at least 3 for decks under 10 slides); no archetype on more than 2 consecutive slides; layout variety: at least 3 distinct layout placeholders or grid-span patterns per 10 slides; **generated visuals (images or SVG) must differ pairwise: perceptual-hash Hamming distance of at least 10 of 64 bits**. There is no hue-based test. Check (D): archetype histogram, run-length check, layout count, pHash matrix. [HOUSE RULE] ("rubber-stamp fails" is PLAN.md section 6; thresholds are strict choices). Basis: generic AI decks read the same [36][45].
 
 ### 2d. Anti-slop deterministic checks
 
-16. **Banned content and style.** Fail on any of: gradients (non-solid fills), shadows, glows, 3D or bevel effects; colours outside the theme palette (theme colours only: one accent plus greys, with the accent used on at most 15% of non-white area); em dashes (U+2014); emojis; exclamation marks; and banned phrases (case-insensitive substrings): "unlock", "leverage" (as verb), "synergies", "holistic", "game-changer", "cutting-edge", "revolutionary", "seamless", "robust", "best-in-class", "delve", "in today's fast-paced", "it's important to note", "paradigm", "state-of-the-art", "world-class", "empower", "journey". The list is a [HOUSE RULE] extensible set; the "generic language" complaint is sourced [24][36][45]. Check (D): XML scan of fills/effects, theme-colour resolution, regex.
+16. **Banned content and style.** Fail on any of: gradients (non-solid fills), shadows, glows, 3D or bevel effects; colours outside the theme palette (theme colours only: **one accent plus greys**); **accent coverage at most 15% of the slide's non-background area, where background is the theme bg colour, evaluated on both the light and the dark theme**; em dashes (U+2014); emojis; exclamation marks. Banned phrases use **whole-word, case-insensitive regex matching** with these exact patterns: (a) body and titles: `\b(unlock|unlocks|unlocked|unlocking|holistic|game-changer|game-changing|cutting-edge|revolutionary|seamless|seamlessly|best-in-class|delve|delves|paradigm|state-of-the-art|world-class|empower|empowers|empowered|empowering)\b`, `\bin today's fast-paced\b`, `\bit's important to note\b`; (b) verb use of leverage, body and titles: `\bleverag(e|es|ed|ing) (our|the|its|their|this|these|existing|new)\b` (the noun "leverage" in financial text, e.g. "net leverage 4.5x", is not matched); (c) **titles and headlines only** (not body finance text): `\b(journey|robust|synergies)\b`. List and exemptions are a [HOUSE RULE]; the "generic language" complaint is sourced [24][36][45]. Check (D): XML scan of fills/effects, theme-colour resolution, area calculation, regex.
 
 ### 2e. Chart-message mapping
 
@@ -119,28 +119,39 @@ What they reject: a deck whose titles do not tell the story, slides with several
 
 Universal: bar and column value axes start at 0; no 3D charts; no dual axes without labels; every axis titled with units; data labels on bars; the highlighted element equals the one in the title. Check (D) plus (G) for title-exhibit match. [23][48]
 
+
+### 2f. Editability, image hygiene and grader calibration
+
+18. **Native, editable charts required.** Every chart is a native chart object with an embedded workbook; chart images are not allowed. Check (D): zero picture shapes that render a chart (picture on an exhibit slide not tagged generated-visual) and every chart part has an embedded workbook. [HOUSE RULE] [15][44]
+19. **No text baked into generated images.** Every generated image is OCR-scanned; at most 5 characters may be detected. Titles, labels and numbers are native text. Check (D): OCR character count per image at most 5. [HOUSE RULE]
+20. **Storyline grader calibration.** Before the grader scores a deck, it must score the four anchor sequences below correctly: both good sequences at least 8.5 and both bad sequences at most 4.0, with every topic title in the bad sequences listed. If the grader misses either band, its deck score is discarded and rerun. The full grader prompt and anchors are given inline in 2a (above); no external file is needed. Check (G) with (D) on the calibration result. [HOUSE RULE]
+
 ---
 
 ## 3. PE principal / investment committee (IC memo and diligence)
 
-What they reject: an unsourced claim, a memo that hides the downside, returns that rely on multiple expansion, add-backs they cannot verify, and diligence with unflagged gaps.
+What they reject: an unsourced claim, a memo that hides the downside, returns that rely on multiple expansion, add-backs they cannot verify, a model that does not tie to the memo, and diligence with unflagged gaps.
 
-1. **Memo skeleton present:** one-page executive summary (recommendation, size and price, 2-3 sentence thesis); thesis; company; market; competitive position; financials; risks; terms and structure; value-creation plan; diligence status; appendix with citations. Check (D): headings. [27][28][29]
-2. **Every key figure has a clickable citation** resolving to a document, page and highlight. Check (D). [27]
-3. **Highlight format:** each citation stores `{doc_id, page, bbox_norm: [x0, y0, x1, y1] (0-1, page-relative), text_span}`; the highlight renders on the source page and the text span matches the extracted text inside the bbox. **Derived figures** (e.g. EBITDA margin, net debt) must list all their input figures, each with its own highlight; a derived figure with a missing input fails. Check (D). [27][HOUSE RULE]
-4. **Appendix links to underlying documents.** Check (D): all cited ids resolve. [27]
-5. **Case thresholds.** Base, upside, downside with distinct assumptions. **Downside EBITDA is at least 20% below base EBITDA** (in the trough year or cumulative, declared) [HOUSE RULE; the 20% is a strict reading of [27][30] "a downside that barely dips signals untested assumptions"]. **Sponsor case vs management case haircut table:** for revenue, EBITDA and capex, show management, sponsor and the haircut percentage, with a rationale per line; sponsor EBITDA at most the management EBITDA in every year. Check (D). [27][30]
-6. **Returns sensitivity grids** (entry x exit multiple, growth x exit multiple, leverage x exit multiple) with IRR and MOIC; centre cell = base case. Check (D). [30][31]
-7. **Returns do not depend on multiple expansion:** a no-expansion case, a stress with exit 1-2 turns below entry, the hurdle-failing entry price, and a bridge that sums to total return (growth, multiple, deleveraging). Check (D). [30][31]
-8. **Leverage, covenant headroom and debt capacity.** Show total and senior leverage (x EBITDA), interest cover and fixed-charge cover per year. **Covenant headroom (EBITDA cushion before breach) must be at least 20% in the base case**, and is reported (any value, flagged if below 20% or negative) in the downside; debt capacity shown as the maximum debt at which base-case headroom stays at 20%. Headroom 20% is a [HOUSE RULE]; the sensitivity of leverage to EBITDA misstatement is illustrated in [55]. Check (D): headroom = 1 - (covenant-tested EBITDA at breach / forecast EBITDA), recomputed. [HOUSE RULE]
-9. **QoE adjustments documented.** Each add-back has a source id, a category and a recurrence test, and the bridge from reported to adjusted EBITDA sums. **Adjustments totalling more than 20% of reported EBITDA are flagged for review**, citing the source: buy-side providers commonly disallow 10-30% of proposed add-backs and seller-reported add-backs run roughly 26-29% of adjusted EBITDA [55][56]. The 20% flag threshold is a [HOUSE RULE]. A claimed regulator-set 25-30% cap could not be verified and is [UNSOURCED]; not used. Check (D). [32][33][34]
-10. **Revenue quality, concentration, NWC peg and tax exposure addressed.** Check (G). [33][34]
-11. **Risk table** per risk: description, probability, impact, mitigant or trigger, owner. **Risk taxonomy (required categories, each present or explicitly marked not applicable with a reason):** customer concentration (any single customer above 10% of revenue is flagged), key person, regulatory, FX, refinancing and maturity wall (any maturity within 24 months of close flagged), supplier, technology and cyber, litigation, ESG. Taxonomy and 10%/24-month thresholds are [HOUSE RULE]. Check (D). [27][29]
-12. **Hockey sticks flagged.** Any year-on-year growth or margin inflection above 1.5x the historical average is tagged for verification [HOUSE RULE]. Check (G). [30]
-13. **Diligence status:** completed vs outstanding with owners and dates; conditions on approval. Check (D). [27]
-14. **VDR request-list matching.** The source list is the standard buyer due-diligence request list (financial, tax, legal, commercial, HR, IT, environmental sections). Match each request to indexed documents by section and keyword (case-insensitive, stem-normalised, with a confidence score), with a manual override that is logged. Status per request: fulfilled / partial / unaddressed. **Superseded versions** are flagged by date (a later modified/document date for the same normalised filename stem) or version suffix (`v2`, `final`, `rev`, `_FINAL_v3`), keeping the latest as current; **unreadable files** (corrupt, password-protected, scanned with no text and failed OCR) are listed separately and count as unaddressed. Unaddressed count surfaces on page one. Check (D). [41][42]
-15. **Audit before submission:** `om.formula`, `om.modelcheck` pass; scenario outputs reconcile. Check (D). [27]
-16. **Concise:** 12-25 pages, one-page exec summary (typical, not a rule). Check (D). [28]
+1. **Memo sections are enumerated and all present:** (1) executive summary and recommendation (one page: recommendation, size and price, 2-3 sentence thesis), (2) investment thesis, (3) business, (4) market, (5) management, (6) financials and QoE, (7) entry valuation and price, (8) sources and uses, (9) returns (base, upside, downside), (10) value-creation plan, (11) risks and mitigants (9-category taxonomy, item 14), (12) tax, (13) diligence findings and open items, (14) appendix with citations. Sources differ on ordering; all agree on presence. Check (D): all 14 headings present, in a declared order. [27][28][29]
+2. **Fund IC template conformance.** When the fund supplies its own IC template, the tool takes a section map `{fund_section -> memo_section(s)}`; every fund section must map to at least one memo section, unmapped fund sections are flagged, and the output page order follows the fund's template. When no template is supplied, item 1 is the default. Check (D): map completeness 100%; order matches. [HOUSE RULE] [27]
+3. **Every numeric claim has a citation: 100% of numeric claims, everywhere** (text, tables, charts, footnotes, appendix). One schema for all deliverables: `{doc_id, page, bbox_norm[x0,y0,x1,y1], text_span, quote, value, units, period, as_of, retrieved_at, url?}`. Check (D): coverage 100%; each citation resolves to a document, page and highlighted region. [27][HOUSE RULE]
+4. **Highlight and derived figures.** The highlight renders on the source page at `bbox_norm` and `text_span` equals the text extracted inside the box. A **derived figure** (margin, net debt, growth, multiple) lists every input figure, each with its own citation; a missing input fails. Check (D). [27][HOUSE RULE]
+5. **Memo-to-model tie-out.** Every number in the memo equals a model cell identified by a manifest id (`{manifest_id, sheet, cell, value, format}`); after rounding to the displayed precision, the memo value equals the recalculated cell value. Orphan memo numbers = 0; changed model cells without a memo update = 0. Check (D). [HOUSE RULE] [24][27]
+6. **Appendix links to underlying documents** (models, filings, transcripts, CIM, expert-call notes, third-party reports). Check (D): all cited doc ids resolve. [27]
+7. **Cases and haircuts.** Base, upside and downside with distinct assumptions. **Downside EBITDA is at least 20% below base EBITDA** in the declared trough year [HOUSE RULE; strict reading of "a downside that barely dips signals untested assumptions" [27][30]]. **Sponsor vs management table:** revenue, EBITDA and capex per year, management, sponsor and haircut %, with a rationale; sponsor EBITDA at most management EBITDA every year. Check (D). [27][30]
+8. **Returns conventions** [HOUSE RULE]: default hold 5 years; hurdle **20% gross IRR and 2.5x MoM** (both must be met to pass; shown with net returns where fees are declared); annual end-of-period cash flows, with the IRR cross-checked against an XIRR recomputation on dated flows (difference at most 0.1 percentage point); entry multiple x exit multiple grid in **0.5x steps across +/- 1.0x** (5 x 5); leverage grid at base +/- 0.5x; growth x exit multiple grid; IRR and MoM in every grid; centre cell equals the base output. Check (D). [30][31]
+9. **Returns do not depend on multiple expansion:** a no-expansion case (exit = entry), a stress case with exit 1-2 turns below entry, the entry price at which the hurdle fails, and a returns bridge (EBITDA growth, multiple, deleveraging) that sums to total return. Check (D). [30][31] The "2.0-2.5x on paydown and growth alone" figure is one author's rule of thumb, not a standard.
+10. **Leverage, covenant headroom and debt capacity.** Per year: total and senior leverage (x EBITDA), interest cover, fixed-charge cover. **Covenant headroom = 1 - (EBITDA at which the covenant breaches / forecast EBITDA); at least 20% in the base case in every year; reported in the downside** and flagged if below 20% or negative. **Debt capacity** = maximum debt at which base-case headroom stays at or above 20% and the downside does not breach. The 20% headroom is a [HOUSE RULE]; the sensitivity of leverage to an EBITDA misstatement is illustrated in [55]. Check (D): recomputed.
+11. **QoE add-backs.** Each add-back has a source id, a category and a recurrence test, and the bridge from reported to adjusted EBITDA sums. **Flag for review when total add-backs exceed 20% of adjusted EBITDA** (basis declared: adjusted EBITDA = reported EBITDA + add-backs; ratio = add-backs / adjusted EBITDA). Sources aligned to that basis: [56] reports seller add-backs at roughly 26-29% of adjusted EBITDA across sale processes and 10-30% of proposed add-backs disallowed by buy-side providers, so a 20% flag sits below the reported average; [55] shows how a lower sustainable EBITDA raises effective leverage. A claimed regulator-set 25-30% cap is unverified and [UNSOURCED]; not used. The 20% threshold is a [HOUSE RULE]. Check (D). [32][33][34]
+12. **NWC peg test.** Peg = trailing-12-month average NWC computed from 12 monthly balances; seasonality noted (peak and trough month, range as % of the average); delivered NWC at close compared with the peg. Fail if the peg is built from fewer than 12 monthly points or from a single year-end balance. Check (D). [HOUSE RULE] [33][34]
+13. **Revenue-quality checks.** Recurring revenue % (definition declared), top-10 customer share, net and gross revenue retention, churn and cohort retention where data exist; where data do not exist, the item is marked [UNKNOWN] rather than omitted. Check (D) for presence, (G) for interpretation. [33][34]
+14. **Risk table and taxonomy.** Per risk: description, probability, impact, mitigant or trigger, owner. **Required categories, each present or marked not applicable with a reason:** customer concentration (single customer above 10% of revenue flagged), key person, regulatory, FX, refinancing and maturity wall (maturity within 24 months of close flagged), supplier, technology and cyber, litigation, ESG. Taxonomy and thresholds are a [HOUSE RULE]. Check (D). [27][29]
+15. **Hockey sticks flagged (tag D).** A forecast is tagged "hockey stick" when its revenue or EBITDA forecast CAGR exceeds 1.5x the trailing 3-year CAGR, or its annual margin expansion exceeds 1.5x the trailing 3-year average annual margin change; each tag has a verification note. Check (D): recompute CAGRs and tag. [HOUSE RULE] [30]
+16. **Diligence status:** completed vs outstanding with owners and dates; conditions on approval. Check (D). [27]
+17. **VDR request-list matching.** The request list is the versioned **Acretia buyer request list v1** (Appendix A, 75 items across corporate, financial, tax, legal, commercial, HR, IT, environmental). Matching rule: a data-room document matches a request when it is in the **same section and the keyword Jaccard similarity is at least 0.3** (keywords = lowercased, stop-word-removed, stem-normalised tokens of the request text and of the document title plus first 200 words), or by a **logged manual override** (who, when, why). Status per request: fulfilled / partial / unaddressed. **Every unaddressed request gets an owner** (and a due date). **Superseded versions** are flagged by date (a later document date for the same normalised filename stem) or version suffix (`v2`, `rev`, `final`, `_FINAL_v3`), the latest being current; **unreadable files** (corrupt, password-protected, no text after failed OCR) are listed separately and count as unaddressed. The unaddressed count appears on page one. Check (D). [41][42]
+18. **Data security and confidentiality** [HOUSE RULE; no public standard for this product class found]: organisation-level access control (SSO/RBAC, deal-level permissions); **no training on client data** (contractual statement plus a technical control: client content excluded from any training or evaluation pipeline); **configurable data residency** (region selectable per organisation); **audit log** (immutable, who/what/when for every view, export and model call, exportable); **deletion on request** (data, derived indexes and caches deleted within 30 days, with confirmation). Ingested documents are treated as data, never instructions. Check (D) for configuration and log evidence, (G) for the written policy.
+19. **Audit before submission:** `om.formula` and `om.modelcheck` pass; scenario outputs reconcile. Check (D). [27]
+20. **Length.** The IC memo body is 10-25 pages with a one-page executive summary (typical, not a rule). Reviewed by (G) only; not a (D) check. [28]
 
 ---
 
@@ -148,7 +159,7 @@ What they reject: an unsourced claim, a memo that hides the downside, returns th
 
 Evidence: BankerToolBench [24] (Handshake AI and McGill, bankers from several bulge-bracket and elite boutiques, 100 tasks, 500 reviewers, April 2026): no deliverable client-ready; best model 58.1/100; Opus-class models produced polished Excel with hardcoded values so changing purchase price did not update; a deck showed $189.5bn then $201.0bn for the same period; off-brand accent colour; GPT-5.4 failure modes 41% code/formula bugs, 27% business-logic errors (e.g. cost synergies added to revenue), 13% invented missing numbers presented as sourced.
 
-1. **Zero hardcoded outputs in models.** Check (D): see 1a-16. [24]
+1. **Zero hardcoded outputs in models.** Check (D): see 1a-3 and 1a-16. [24]
 2. **No invented numbers.** Numeric-claim to source-record coverage is 100%. Check (D). [24][26]
 3. **Cross-slide consistency.** Check (D): 1c-26. [24]
 4. **Business-logic sanity.** No synergies in revenue; EV bridge and diluted share logic correct (1b-21). Check (D). [24]
@@ -160,62 +171,62 @@ Evidence: BankerToolBench [24] (Handshake AI and McGill, bankers from several bu
 10. **Generic ChatGPT/Copilot decks:** plain templates, bullet overflow, export formatting breakage, generic language, factual mistakes. Check (D): overflow, template conformance; (G): specificity. [44][45]
 11. **Overpromising rollouts erode trust.** Be conservative in claims and show failure flags. [35]
 12. **Price anchors.** Rogo is estimated around $3,300 per seat per year (third-party estimate); AlphaSense estimates range roughly $10,000-$20,000 per seat per year (third-party). No vendor publishes rate cards. [46][47]
-13. **Reference deliverable for the $10K question.** No public benchmark deliverable priced at $10K per seat was found: that price-to-deliverable link is [UNSOURCED]. The working reference is a **10-page IC memo plus the linked 3-statement/DCF model plus a VDR coverage grid**, every figure click-through to a highlighted source region, delivered in one pass that an IC member would approve without a second verification pass [HOUSE RULE]. The last clause (analyst-day saved per week with no re-checking) is [UNSOURCED] reasoning.
+13. **Reference deliverable and price link (non-scored commentary).** No public benchmark deliverable priced at $10K per seat was found: the price-to-deliverable link is [UNSOURCED] and carries **no scoring weight** in Section 5. The working reference deliverable is a **12-page IC memo** (inside the 10-25 page range of 3-20), plus the linked 3-statement/DCF model, plus a VDR coverage grid, with every figure click-through to a highlighted source region. Personas may comment on willingness to pay; the comment is recorded but not scored. [HOUSE RULE]
 
 ---
 
 ## 5. Persona rubric (canonical; refines and supersedes the summary bullets in PLAN.md section 6)
 
-Scoring: each persona returns per-criterion scores 0 to the weight, a total out of 10, blocking issues with locators (sheet!cell, slide number, memo section) and "would pay $10K+/seat? yes/no + why". Below 8.5 = blocked. Any **HARD** row scoring 0 caps the total at 6.0. For the IB persona, a failed **binary gate** (G1 error value, G2 unbalanced BS, G3 untied cash; see section 1) caps the total at **5.0**, whatever the sum.
+Scoring: each persona returns per-criterion scores 0 to the weight, a total out of 10, blocking issues with locators (sheet!cell, slide number, memo section), and a **non-scored** comment "would pay $10K+/seat? yes/no + why" (recorded, never scored, see 4-13). Below 8.5 = blocked. Any **HARD** row scoring 0 caps the total at 6.0. For the IB persona, a failed **binary gate** (G1 error values or indicators, G2 unbalanced BS, G3 untied cash; see section 1) caps the total at **5.0**, whatever the sum.
 
 ### 5.1 IB analyst (Goldman / Morgan Stanley style)
 
 | # | Criterion | Wt | Pass descriptor (full marks) | Check |
 |---|---|---|---|---|
-| 1 | **HARD** Integrity gates G1-G3: zero error values, BS balances, cash ties, checks tab green, IFERROR not masking #REF! (1a-9, 11, 12) | 2.0 | No error cells; balance and cash diffs under 0.5 in all periods; master check = 0; masking test passes | D: LibreOffice recalc, `om.modelcheck` |
-| 2 | **HARD** Live model: allowlist-only literals, forecasts all formulas, input flex changes outputs (1a-2, 3, 16) | 1.75 | Zero non-allowlist literals; every input has dependents; flex passes | D |
-| 3 | Colour code incl. green cross-sheet and distinct external links, legend (1a-1) | 1.0 | 100% conformance | D |
+| 1 | **HARD** Integrity gates G1-G3: zero error values and indicators, BS balances and cash ties within 0.001, checks tab green, IFERROR/IFNA only around lookups (1a-9, 11, 12) | 2.0 | No error cells or indicators; diffs at most 0.001 in all periods; master check = 0; masking test passes | D: LibreOffice recalc, `om.modelcheck` |
+| 2 | **HARD** Live model: allowlist-only literals, forecasts all formulas, input flex changes outputs, no volatile functions, external links = 0 (1a-2, 3, 16; 1d-35, 36) | 1.75 | Zero non-allowlist literals; every input has dependents; flex passes; no volatile or external links | D |
+| 3 | Colour code incl. green cross-sheet, distinct external colour, legend (1a-1) | 0.75 | 100% conformance | D |
 | 4 | Row consistency, sign convention, units and headers (1a-4, 6, 7) | 0.75 | R1C1 inconsistencies = 0; header cells present | D |
 | 5 | Circularity switch and scenario toggle (1a-10, 17) | 0.75 | Both work and balance in every state | D |
-| 6 | Navigability: freeze panes, print area, fit to 1 page wide, 0 hidden sheets, at most 25 named ranges (1a-13, 14) | 0.75 | All present on all model tabs | D |
-| 7 | Valuation mechanics: DCF mid-year, TV cross-check, TV share flag, EV bridge with TSM, IQR rule, declared DCF sub-range, calendarisation, LTM/NTM, comps criteria (1b) | 1.25 | All items pass | D + G |
-| 8 | Pitchbook hygiene: cross-page agreement, source-record schema and date rule, typography numerics, font histogram, footers (1c) | 1.0 | Zero mismatches; schema 100%; typography within limits | D |
-| 9 | Speed to usable: native editable objects (1c-34) | 0.25 | Native charts/tables | D |
-| 10 | Would pay $10K+/seat | 0.5 | Yes if the analyst would send to the MD without re-checking | G |
+| 6 | Navigability: freeze panes, print area, fit to 1 page wide, 0 hidden sheets, at most 25 named ranges (1a-13, 14) | 0.5 | All present on all model tabs | D |
+| 7 | Valuation mechanics: valuation date and stub, DCF mid-year column, TV cross-check and share flag, EV bridge with tranche TSM, IQR rule, declared DCF range, calendarisation, LTM/NTM, comps criteria (1b; 1d-38) | 1.0 | All items pass | D + G |
+| 8 | Transaction mechanics: LBO (S&U, debt schedule, sweep, IRR vs XIRR) and accretion/dilution where included (1d-39, 40) | 1.0 | All items pass; N/A rows are declared | D |
+| 9 | Pitchbook hygiene: cross-page agreement, one citation schema and date rule, typography numerics, font histogram, draft/confidentiality legend, footers (1c-26 to 33; 1d-37) | 1.0 | Zero mismatches; schema 100%; typography within limits; legend on 100% of pages | D |
+| 10 | Editable deliverable: native charts and tables with embedded data (1c-34) | 0.5 | Zero chart images; embedded workbooks open | D |
 
-Weights: 2.0 + 1.75 + 1.0 + 0.75 + 0.75 + 0.75 + 1.25 + 1.0 + 0.25 + 0.5 = **10.0**.
+Weights: 2.0 + 1.75 + 0.75 + 0.75 + 0.75 + 0.5 + 1.0 + 1.0 + 1.0 + 0.5 = **10.0**.
 
 ### 5.2 MBB engagement manager
 
 | # | Criterion | Wt | Pass descriptor | Check |
 |---|---|---|---|---|
-| 1 | **HARD** Storyline: grader prompt and anchors (2a); titles-only read reconstructs the recommendation; answer first | 1.75 | Grader passes (0 topic titles, 0 gaps, 0 overlaps, score at least 8.5) | G |
-| 2 | **HARD** Action titles (at most 15 words, at most 2 lines, verb, number where data exists) and one message per slide (2a-1, 3) | 1.5 | 100% of content slides comply | D + G |
-| 3 | Horizontal and vertical logic (2a-4, 5) | 0.75 | Ordering principle identified; no overlaps or gaps | G |
-| 4 | Chart fit: chart-message mapping table, axis baselines, sort, labels, no 3D (2e) | 1.0 | Every chart passes mapping and title-exhibit match | D + G |
-| 5 | Sources and traceability: source/date line, register, reconciling numbers (2a-9, 10) | 1.0 | Zero orphan numbers | D |
-| 6 | Geometry: 0 px overlap, margins at least 0.25 in, 12-column grid, size floors (2b-13) | 1.0 | `om.spacing`/validate_pptx zero violations | D |
-| 7 | Visual range, no rubber stamp: at most 40% one archetype, at least 4 archetypes per 10 slides, visuals differ (2c-15) | 1.0 | All thresholds met | D + G |
-| 8 | Anti-slop, typography and house rules: banned list, no gradients/shadows/3D, theme-only colours, no em dashes/emojis/exclamations, at most 2 families and 4 sizes, line length at most 90, no eyebrows, footer and page number (2a-11, 2b-14, 2d-16) | 1.25 | Zero violations | D |
-| 9 | Would pay $10K+/seat | 0.75 | Yes if the EM would edit rather than rebuild | G |
+| 1 | **HARD** Storyline: SCQA executive summary, ghost-deck diff equal or logged, grader passes calibration anchors then reconstructs the recommendation from titles alone (2a-2, 6, 7; 2f-20) | 1.75 | Calibration passed; grader: 0 topic titles, 0 gaps, 0 overlaps, score at least 8.5; unlogged ghost diffs = 0 | G + D |
+| 2 | **HARD** Action titles (at most 15 words, at most 2 lines, verb by lexicon + morphology, number where data exists) and one message per slide (2a-1, 3) | 1.5 | 100% of content slides comply | D + G |
+| 3 | Horizontal and vertical logic (2a-4, 5) | 0.5 | Ordering principle identified; no overlaps or gaps | G |
+| 4 | Chart fit: chart-message mapping, axis baselines, sort order, labels, no 3D (2e-17) | 1.0 | Every chart passes mapping and title-exhibit match | D + G |
+| 5 | Sources and traceability: source/date line, register, reconciling numbers (2a-9, 10) | 0.75 | Zero orphan numbers | D |
+| 6 | Geometry: 0 EMU overlap, margins at least 0.4 in, 12-column grid, size floors, whitespace at least 15% per slide (2b-13) | 1.0 | `om.spacing`/validate_pptx zero violations | D |
+| 7 | Visual range: at most 40% one archetype, at least 4 archetypes per 10, no archetype over 2 consecutive, pHash distance at least 10 of 64 (2c-15) | 1.0 | All thresholds met | D + G |
+| 8 | Anti-slop, typography and house rules: banned patterns, no gradients/shadows/3D, one accent at most 15% coverage, no em dashes/emojis/exclamations, at most 2 families and 4 sizes, line length at most 90, no eyebrows, footer and page number (2a-11; 2b-14; 2d-16) | 1.5 | Zero violations | D |
+| 9 | Editability and image hygiene: native charts, no text baked into images, OCR at most 5 characters (2f-18, 19) | 1.0 | Zero chart images; OCR at most 5 per image | D |
 
-Weights: 1.75 + 1.5 + 0.75 + 1.0 + 1.0 + 1.0 + 1.0 + 1.25 + 0.75 = **10.0**.
+Weights: 1.75 + 1.5 + 0.5 + 1.0 + 0.75 + 1.0 + 1.0 + 1.5 + 1.0 = **10.0**.
 
 ### 5.3 PE principal / IC member
 
 | # | Criterion | Wt | Pass descriptor | Check |
 |---|---|---|---|---|
-| 1 | **HARD** Traceability: every figure has a clickable citation with page + bbox_norm + text span; derived figures trace to all inputs (3-2, 3-3) | 2.0 | 100% of numeric claims linked and resolving | D |
-| 2 | IC-memo structure complete (3-1, 3-4, 3-16) | 1.0 | All required sections; exec summary on one page | D |
-| 3 | Returns and case thresholds: downside at least 20% below base, sponsor vs management haircut table, IRR/MOIC grids, no-expansion case, bridge (3-5, 6, 7) | 1.5 | All thresholds met; grids centred on base | D + G |
-| 4 | QoE and revenue quality: add-backs sourced, over-20% flag, concentration, NWC (3-9, 10) | 1.0 | Every adjustment sourced and categorised | D + G |
-| 5 | Leverage, covenant headroom and debt capacity (3-8) | 1.0 | Headroom at least 20% in base; downside reported | D |
-| 6 | VDR matching: request list vs index, superseded and unreadable flagged, gaps on page one (3-14) | 1.0 | Counts shown; unaddressed listed with owners | D |
-| 7 | Risk taxonomy coverage, hockey sticks flagged, diligence status (3-11, 12, 13) | 1.0 | All 9 categories present or marked n/a; table complete | D + G |
-| 8 | Model integrity behind the memo (3-15) | 0.5 | `om.formula` and `om.modelcheck` green | D |
-| 9 | Would pay $10K+/seat for the reference deliverable of 4-13 | 1.0 | Yes if the IC could approve without a second verification pass | G |
+| 1 | **HARD** Traceability: 100% of numeric claims cited with the single schema; page + bbox_norm + text span; derived figures trace to all inputs; memo-to-model tie-out by manifest id (3-3, 4, 5) | 2.0 | 100% of numeric claims linked and resolving; orphan memo numbers = 0 | D |
+| 2 | Memo structure: 14 enumerated sections, fund-template conformance, appendix links (3-1, 2, 6) | 1.25 | All sections present; template map complete | D |
+| 3 | Returns and case thresholds: downside at least 20% below base, haircut table, conventions (5y, 20% IRR / 2.5x, XIRR check, grid steps), no-expansion case, bridge (3-7, 8, 9) | 1.5 | All thresholds met; grids centred on base | D + G |
+| 4 | QoE, NWC peg and revenue quality: add-backs sourced and flagged above 20% of adjusted EBITDA, 12-month peg, recurring %, concentration (3-11, 12, 13) | 1.0 | Every adjustment sourced; peg from 12 months | D + G |
+| 5 | Leverage, covenant headroom and debt capacity (3-10) | 0.75 | Headroom at least 20% in base; downside reported | D |
+| 6 | VDR matching against Acretia buyer request list v1: Jaccard 0.3 rule, overrides logged, superseded and unreadable flagged, owners on unaddressed (3-17; Appendix A) | 1.0 | Counts shown; every unaddressed item has an owner | D |
+| 7 | Risk taxonomy (9 categories), hockey sticks tagged, diligence status (3-14, 15, 16) | 0.75 | All categories present or n/a with reason | D + G |
+| 8 | Model integrity behind the memo (3-19) | 0.75 | `om.formula` and `om.modelcheck` green | D |
+| 9 | Data security and confidentiality: access control, no training on client data, residency, audit log, deletion (3-18) | 1.0 | All five controls evidenced | D + G |
 
-Weights: 2.0 + 1.0 + 1.5 + 1.0 + 1.0 + 1.0 + 1.0 + 0.5 + 1.0 = **10.0**.
+Weights: 2.0 + 1.25 + 1.5 + 1.0 + 0.75 + 1.0 + 0.75 + 0.75 + 1.0 = **10.0**.
 
 ---
 
@@ -225,6 +236,91 @@ Weights: 2.0 + 1.0 + 1.5 + 1.0 + 1.0 + 1.0 + 1.0 + 0.5 + 1.0 = **10.0**.
 - No bank or MBB firm style guide was found; every numeric threshold labelled [HOUSE RULE] must be recorded in DECISIONS.md and may be loosened only by the Boss.
 - Vendor and blog sources carry commercial bias; the strongest empirical sources are [24] and [26].
 - Covenant headroom and TV-share bands come from training-site rules of thumb [53][54][55], not a standard.
+- The $10K price-to-deliverable link is [UNSOURCED] and unscored (4-13). Appendix A is an original house list, not a published standard.
+
+---
+
+## Appendix A. Acretia buyer request list v1
+
+Version 1.0 (75 items, eight sections: corporate, financial, tax, legal, commercial, HR, IT, environmental). Compiled as a generic buyer-side diligence list from the structure described in [41][42]; wording is original and the list is a [HOUSE RULE] default that a fund list may replace (then it is versioned as a new list id). Matching rule (3-17): same section and keyword Jaccard at least 0.3 between the request text and the candidate document, or a logged manual override. Every unaddressed item gets an owner.
+
+| ID | Section | Request |
+|---|---|---|
+| A-001 | Corporate | Certificate of incorporation, bylaws and all amendments |
+| A-002 | Corporate | Organisation chart showing all legal entities and ownership percentages |
+| A-003 | Corporate | Capitalisation table with all classes, options, warrants and convertibles |
+| A-004 | Corporate | Board and committee minutes for the last three years |
+| A-005 | Corporate | Shareholder and voting agreements |
+| A-006 | Corporate | List of subsidiaries, joint ventures and minority investments |
+| A-007 | Corporate | Prior acquisitions and divestitures with agreements |
+| A-008 | Corporate | Management biographies and organisation structure |
+| A-009 | Financial | Audited financial statements for the last three fiscal years |
+| A-010 | Financial | Monthly management accounts for the last 36 months |
+| A-011 | Financial | Trailing twelve month income statement balance sheet and cash flow |
+| A-012 | Financial | Quality of earnings report or EBITDA adjustment schedule |
+| A-013 | Financial | Monthly net working capital balances for the last 24 months |
+| A-014 | Financial | Revenue by customer product and geography for three years |
+| A-015 | Financial | Gross margin by product line and cost of goods sold detail |
+| A-016 | Financial | Budget and forecast for the current year and five-year plan |
+| A-017 | Financial | Capital expenditure history split maintenance and growth |
+| A-018 | Financial | Debt schedule with maturities rates and covenants |
+| A-019 | Financial | Credit agreements and compliance certificates |
+| A-020 | Financial | Accounts receivable and payable ageing reports |
+| A-021 | Financial | Off-balance-sheet liabilities leases and guarantees |
+| A-022 | Financial | Auditor management letters and internal control findings |
+| A-023 | Tax | Federal state and foreign income tax returns for three years |
+| A-024 | Tax | Tax audits examinations and correspondence with authorities |
+| A-025 | Tax | Sales use and VAT filings and exposure analysis |
+| A-026 | Tax | Transfer pricing documentation and intercompany agreements |
+| A-027 | Tax | Deferred tax asset and liability schedule and net operating losses |
+| A-028 | Tax | Tax structure chart and any tax rulings or holidays |
+| A-029 | Tax | Payroll tax filings and worker classification review |
+| A-030 | Tax | Uncertain tax positions and tax reserves |
+| A-031 | Legal | Material customer contracts and change of control provisions |
+| A-032 | Legal | Material supplier and distribution contracts |
+| A-033 | Legal | Pending threatened or settled litigation and claims |
+| A-034 | Legal | Regulatory licences permits and compliance correspondence |
+| A-035 | Legal | Intellectual property register patents trademarks and licences |
+| A-036 | Legal | Real property leases and ownership documents |
+| A-037 | Legal | Insurance policies and claims history |
+| A-038 | Legal | Data privacy policies breach notices and regulator inquiries |
+| A-039 | Legal | Related party transactions and agreements |
+| A-040 | Legal | Non-compete exclusivity and most-favoured-nation clauses |
+| A-041 | Commercial | Market study or third-party industry report |
+| A-042 | Commercial | Customer list with revenue concentration and tenure |
+| A-043 | Commercial | Customer churn retention and cohort analysis |
+| A-044 | Commercial | Pricing history discounts and rebate programmes |
+| A-045 | Commercial | Sales pipeline backlog and bookings by quarter |
+| A-046 | Commercial | Competitor analysis and market share data |
+| A-047 | Commercial | Customer references and satisfaction surveys or NPS |
+| A-048 | Commercial | Product roadmap and development pipeline |
+| A-049 | Commercial | Sales and marketing organisation and channel strategy |
+| A-050 | Commercial | Top supplier list with spend concentration |
+| A-051 | Commercial | Warranty returns and product liability history |
+| A-052 | Commercial | Recurring revenue definition and contract renewal schedule |
+| A-053 | HR | Employee census with role tenure location and compensation |
+| A-054 | HR | Employment agreements for senior management and key employees |
+| A-055 | HR | Equity incentive plans and outstanding awards |
+| A-056 | HR | Benefit plans pension obligations and retiree liabilities |
+| A-057 | HR | Union and collective bargaining agreements |
+| A-058 | HR | Employee turnover and hiring data for three years |
+| A-059 | HR | Employment claims disputes and investigations |
+| A-060 | HR | Key person dependency and succession plans |
+| A-061 | IT | Systems architecture and application inventory |
+| A-062 | IT | Cybersecurity policies penetration tests and incident log |
+| A-063 | IT | Software licences and open source usage report |
+| A-064 | IT | Disaster recovery and business continuity plans |
+| A-065 | IT | Major IT vendor contracts and cloud hosting agreements |
+| A-066 | IT | Technology roadmap and technical debt assessment |
+| A-067 | IT | Data protection certifications SOC 2 and ISO 27001 reports |
+| A-068 | IT | Capitalised software development costs and headcount |
+| A-069 | IT | Customer data inventory and retention policy |
+| A-070 | Environmental | Environmental permits and compliance audits |
+| A-071 | Environmental | Phase I and Phase II environmental site assessments |
+| A-072 | Environmental | Hazardous materials waste and remediation liabilities |
+| A-073 | Environmental | Health and safety incident records and citations |
+| A-074 | Environmental | ESG policies emissions data and sustainability reporting |
+| A-075 | Environmental | Climate and physical risk assessment of key sites |
 
 ---
 
