@@ -43,6 +43,14 @@ urls:
   hrsd: &hrsd "https://www.hrsd.gov.sa/en/knowledge-centre/articles/317-0"
   taxguru_indas: &taxguruindas "https://taxguru.in/company-law/applicability-indian-accounting-standard-ind.html"
   kpmg_indas116: &kpmgindas116 "https://alumni.in.kpmg.com/downloads/Publications/Accounting_Publications/firstnotes-leases-standard-ind-as-116-notified-mca.pdf"
+  kuwaittimes: &kuwaittimes "https://kuwaittimes.com/article/11794/business/egypt-pound-loses-over-third-of-value-as-bank-signals-float"
+  thenational: &thenational "https://thenationalnews.com/business/economy/2024/03/06/egypt-imf-currency-egyptian-pound-record-low"
+  arabnews_ifrs: &arabnewsifrs "https://www.arabnews.com/corporate-and-sponsored-content/kpmg-to-make-private-sector-ready-for-upcoming-ifrs-1137586"
+  cma_saudi: &cmasaudi "https://cma.gov.sa/en/MediaCenter/PR/Pages/Standards.aspx"
+  ifrs_uae: &ifrsuae "https://www.ifrs.org/use-around-the-world/use-of-ifrs-standards-by-jurisdiction/view-jurisdiction.html/united-arab-emirates/"
+  regtomorrow: &regtomorrow "https://www.regulationtomorrow.com/2026/01/uae-sca-renamed-cma-and-other-landmark-legislations/"
+  ifrs3: &ifrs3 "https://www.ifrs.org/issued-standards/list-of-standards/ifrs-3-business-combinations/"
+  ias37: &ias37 "https://www.ifrs.org/issued-standards/list-of-standards/ias-37-provisions-contingent-liabilities-and-contingent-assets/"
   cbe: &cbe "https://www.cbe.org.eg/en/economic-research/statistics/exchange-rates"
 
 differences:
@@ -86,7 +94,8 @@ differences:
     frameworks: [EAS, IFRS]
     summary: >-
       EAS 49 (lease contracts, issued in 2019 as part of the update that added standards based on IFRS 9, 15 and 16) mirrors IFRS 16
-      for lessees. Before it, Egyptian companies used the older leasing rules where operating lease rentals were an
+      for lessees: the lessee recognises a right-of-use asset and a lease liability at commencement, then depreciates the asset and accrues
+      interest on the liability, as under IFRS 16. Before it, Egyptian companies used the older leasing rules where operating lease rentals were an
       expense and only finance leases appeared on the balance sheet. Expect a transition-year step in EBITDA, lease
       liabilities and retained earnings in the first EAS 49 year. The effective date and transition options were
       adjusted by later decisions and are not confirmed here.
@@ -109,14 +118,14 @@ differences:
     topic: revenue
     frameworks: [IFRS, USGAAP, EAS, IndAS, SOCPA-IFRS, UAE-IFRS]
     summary: >-
-      IFRS 15 and ASC 606 share the five-step model, so most revenue is recognised alike. Remaining gaps: the collectability
-      test wording, treatment of some licences, impairment reversal on contract costs, and interim disclosure. EAS 48 and
-      Ind AS 115 follow IFRS 15. Under older Egyptian and UK-style rules, revenue recognition followed risk-and-reward and
+      IFRS 15 and ASC 606 share the five-step model for revenue from contracts with customers (identify the contract, the performance obligations, the transaction price, allocate it, recognise as control passes), so most revenue is recognised alike. Remaining gaps: the collectability
+      test wording, treatment of some licences, impairment reversal on contract costs, and interim disclosure. EAS 48 (Revenue from Contracts with Customers, which replaced the older Egyptian revenue standard) and
+      Ind AS 115 follow IFRS 15 and apply the same five-step model to contracts with customers. Under older Egyptian and UK-style rules, revenue recognition followed risk-and-reward and
       percentage-of-completion methods.
     analyst_impact: >-
       Revenue growth across the transition year can step; check the transition method and whether comparatives were restated. For gross versus net, rely on the principal-agent note.
     adjustment: revenue_principal_agent_net
-    keywords: [revenue recognition, ifrs 15, asc 606, eas 48, performance obligation, contract liability, gross vs net, principal agent]
+    keywords: [revenue recognition, contracts with customers, five-step model, ifrs 15, asc 606, eas 48, performance obligation, contract liability, gross vs net, principal agent]
     citations:
       - {standard: "IFRS 15", ref: "paras 9, 31, B34-B38", url: *ifrs15}
       - {standard: "ASC 606", ref: "Topic 606-10-25, 606-10-55-36 to 55-40", url: *asc}
@@ -297,22 +306,28 @@ differences:
       When a currency is devalued, monetary items in foreign currency (debt, payables, cash) are retranslated at the new
       closing rate and the full difference hits profit or loss under IAS 21. Importers with USD debt show big losses,
       exporters with USD cash show gains. Egypt had devaluations in 2016 and 2022 (recognised in the IFRS Foundation
-      jurisdiction profile) and further steps in 2023 and March 2024 (not confirmed here). Revenue in local currency
-      also steps up as prices are reset, so a single year mixes a one-off translation loss with a changed operating base.
+      jurisdiction profile). On 6 March 2024 the central bank moved to a flexible, market-determined exchange rate and raised rates by 600 basis points:
+      the official rate, held near 30.9 per USD for more than a year, jumped to about 50 (an intraday record of about 50.6) within a day. Revenue in local currency
+      also steps up as prices are reset, so a single year mixes a one-off translation loss with a changed operating base. In reporting, USD monetary
+      items carried at about 30.9 at the 2023 year end are retranslated at the new rate in the first 2024 quarter, so the loss lands in Q1 2024 results (EAS 13, replaced by
+      PM Decree 636 of 2024, takes it to profit or loss), unless an entity still applies a deferral allowed by the earlier special treatment.
     analyst_impact: >-
       Strip devaluation FX losses out of recurring EBITDA and earnings. Take the FX gain or loss line (and any FX embedded in finance
       costs or cost of sales) out of operating profit, tax-effect it, and show adjusted net income beside reported. Where an
       entity capitalised or deferred FX loss under EAS 13 special treatment, add the deferred charge back so the period carries its
-      economic cost. Then check the unhedged USD debt still outstanding, since the next devaluation repeats the effect.
+      economic cost. Treat the March 2024 retranslation as a one-off in the first quarter of 2024 and do not extrapolate it or the later EGP-denominated revenue step; compare 2023 and 2024 on a USD or constant-rate basis. Then check the unhedged USD debt still outstanding, since the next devaluation repeats the effect.
     adjustment: devaluation_fx_loss_normalise
-    keywords: [devaluation, float, egyptian pound, egp, fx loss, usd debt, 2016, 2022, 2023, 2024, exchange loss, recurring ebitda, normalised earnings]
+    keywords: [devaluation, float, flexible exchange rate, 6 march 2024, 30.9, 50, market-determined, egyptian pound, egp, fx loss, usd debt, 2016, 2022, 2023, 2024, exchange loss, recurring ebitda, normalised earnings]
     verified_facts:
       - {fact: "Egypt applied special translation treatment after the 2016 and 2022 devaluations", url: *ifrsegypt}
-    unverified_facts: ["Devaluation steps in 2023 and March 2024"]
+      - {fact: "6 March 2024: CBE moved to market-determined rate; official rate about 30.9 per USD for over a year before, record low about 50.6", url: *kuwaittimes}
+      - {fact: "6 March 2024: policy rates raised 600 basis points; pound about 52 at its weakest official level that afternoon", url: *thenational}
+    unverified_facts: ["The January 2023 devaluation step", "Post-float rate path after 6 March 2024 (about 47 to 50 range in later trading)", "How the 2024 EAS 13 treats FX differences in detail"]
     citations:
       - {standard: "IAS 21", ref: "paras 23, 28", url: *ias21}
       - {standard: "IFRS jurisdiction profile: Egypt", ref: "Foreign currency translation differences", url: *ifrsegypt}
       - {standard: "Central Bank of Egypt", ref: "Official exchange rate history", url: *cbe}
+      - {standard: "Kuwait Times (Reuters report)", ref: "6 March 2024 float", url: *kuwaittimes}
     authored: acretia
     confidence: unverified
 
@@ -464,7 +479,7 @@ differences:
     topic: eas_ifrs_mapping
     frameworks: [EAS, IFRS]
     summary: >-
-      The newer Egyptian standards copy IFRS: EAS 47 corresponds to IFRS 9 financial instruments, EAS 48 to IFRS 15 revenue, EAS 49 to IFRS 16 leases.
+      The newer Egyptian standards copy IFRS: EAS 47 corresponds to IFRS 9 financial instruments, EAS 48 (revenue from contracts with customers, five-step model) to IFRS 15, and EAS 49 (lessee right-of-use asset and lease liability) to IFRS 16 leases.
       All three were issued in 2019 (the FRA lists them under its 2019 decisions); an appendix to EAS 47 was added in 2023 (Prime Ministerial Decision 4575
       of 2023). Differences come from effective dates, transition options and special treatments granted by Egyptian regulation.
       Early and late adopters make years non-comparable inside the same market.
@@ -681,3 +696,95 @@ differences:
       - {standard: "IAS 27", ref: "para 10 (cost, IFRS 9 or equity method)", url: "https://www.ifrs.org/issued-standards/list-of-standards/ias-27-separate-financial-statements/"}
     authored: acretia
     confidence: unverified
+
+  - id: diff-socpa-ifrs-adoption
+    topic: framework_adoption
+    frameworks: [SOCPA-IFRS, IFRS]
+    summary: >-
+      Saudi Arabia moved to IFRS as endorsed by SOCPA in stages. Listed entities applied it from 1 January 2017, the date
+      set by the SOCPA decision and followed by the capital market regulator, which asked listed companies to report their transition
+      progress. Other establishments follow for periods after 1 January 2018, with early application possible from 2017; non-publicly-accountable
+      entities use the SMEs framework rather than full IFRS. Banks and insurers already reported under IFRS earlier. During the first
+      years the cost model was kept for PPE and intangibles, so Saudi figures before and after transition are not on the same footing.
+    analyst_impact: >-
+      Do not compare Saudi statements across the 2016 to 2017 boundary without the transition reconciliation (retained earnings
+      and equity restated); check which framework an unlisted Saudi counterparty used.
+    adjustment: eas_to_ifrs_map
+    keywords: [socpa, saudi ifrs adoption, 1 january 2017, 2018, transition, listed companies, cma, tadawul, ifrs for smes]
+    verified_facts:
+      - {fact: "Listed companies applied IFRS from 1 January 2017; other establishments for periods after 1 January 2018 (early application from 2017)", url: *arabnewsifrs}
+      - {fact: "Capital market regulator required listed companies to disclose IFRS transition progress; adoption from early 2017 per the SOCPA decision", url: *cmasaudi}
+      - {fact: "IFRS required for publicly accountable entities; cost model until fiscal years starting 2022", url: *ifrssaudi}
+    unverified_facts: ["Which framework applies to each class of non-listed entity from 2018 (IFRS for SMEs reported by secondary sources)"]
+    citations:
+      - {standard: "SOCPA IFRS endorsement", ref: "Adoption timeline for listed and other entities", url: *arabnewsifrs}
+      - {standard: "Saudi Capital Market Authority", ref: "Listed company IFRS transition disclosures", url: *cmasaudi}
+      - {standard: "IFRS jurisdiction profile: Saudi Arabia", ref: "Adoption and revaluation timing", url: *ifrssaudi}
+    authored: acretia
+    confidence: unverified
+
+  - id: diff-uae-ifrs-requirement
+    topic: framework_adoption
+    frameworks: [UAE-IFRS, IFRS]
+    summary: >-
+      The UAE has never had a local GAAP: its commercial companies legislation requires international accounting standards, which in
+      practice means IFRS as issued by the IASB (Federal Decree-Law 32 of 2021 replaced the 2015 companies law, which carried the same requirement).
+      Listed companies trade on the Dubai Financial Market or the Abu Dhabi Securities Exchange; ADX listing rules require IFRS and DFM permits it with most issuers using it.
+      The securities regulator, formerly the Securities and Commodities Authority (SCA), was reconstituted as the Capital Market Authority (CMA)
+      under Federal Decree-Laws 32 and 33 of 2025, effective 1 January 2026. New IFRS standards apply from their own effective dates because there is no endorsement step.
+    analyst_impact: >-
+      UAE listed statements are full IFRS with no carve-outs, so use IFRS recipes unchanged; some financial institutions may use AAOIFI, so check the basis
+      of preparation note. Refer to the regulator by its current name when sourcing disclosures after 2025.
+    adjustment: eas_to_ifrs_map
+    keywords: [uae ifrs, commercial companies law, federal decree-law 32 of 2021, sca, cma, capital market authority, dfm, adx, listed companies, no local gaap]
+    verified_facts:
+      - {fact: "Companies law requires international standards (IFRS in practice); ADX listing rules require IFRS; DFM permits IFRS and most issuers use it", url: *ifrsuae}
+      - {fact: "Federal Decree-Laws 32 and 33 of 2025 establish the Capital Market Authority, effective 1 January 2026", url: *regtomorrow}
+    unverified_facts: ["Article of Federal Decree-Law 32 of 2021 that sets the IFRS requirement", "That the CMA directly supervises DFM and ADX disclosures (only commentary read)"]
+    citations:
+      - {standard: "IFRS jurisdiction profile: UAE", ref: "Companies law, DFM, ADX, DFSA", url: *ifrsuae}
+      - {standard: "Federal Decree-Laws 32 and 33 of 2025", ref: "Capital Market Authority (formerly SCA)", url: *regtomorrow}
+    authored: acretia
+    confidence: unverified
+
+  - id: diff-business-combinations
+    topic: business_combinations
+    frameworks: [IFRS, USGAAP, IndAS, FRS102, EAS]
+    summary: >-
+      IFRS 3 and ASC 805 both require the acquisition method for business combinations: identify the acquirer, measure assets and liabilities at fair
+      value, recognise goodwill, expense deal costs; pooling of interests is not allowed for acquisitions. Transactions under common control are outside the
+      scope of IFRS 3, so practice varies (book value or predecessor accounting, sometimes with restatement of comparatives); US GAAP uses carrying
+      amounts for common-control transfers. Ind AS 103 Appendix C prescribes pooling of interests at carrying values for common-control
+      combinations, so no goodwill arises. FRS 102 uses acquisition accounting for acquisitions but still allows merger accounting for qualifying group reconstructions.
+    analyst_impact: >-
+      After a group reorganisation, expect no fair value step-up or goodwill under pooling or merger accounting and restated comparatives; for acquisitions
+      compare on the acquisition method and add back purchase-price amortisation. Use pro forma figures to compare organic growth.
+    adjustment: associates_share_strip
+    keywords: [business combination, acquisition method, pooling of interests, common control, predecessor accounting, merger accounting, ifrs 3, asc 805, ind as 103, group reconstruction, goodwill]
+    citations:
+      - {standard: "IFRS 3", ref: "paras 2(c) (common control scope exclusion), 4-5, 32", url: *ifrs3}
+      - {standard: "ASC 805", ref: "805-10, 805-50 (common control)", url: *asc}
+      - {standard: "Ind AS 103", ref: "Appendix C (common control, pooling of interests)", url: *indas}
+      - {standard: "FRS 102", ref: "Section 19 (acquisitions and group reconstructions)", url: *frs102}
+    authored: acretia
+    confidence: verified
+
+  - id: diff-provisions-ias37-asc450
+    topic: provisions
+    frameworks: [IFRS, USGAAP, EAS, IndAS, FRS102]
+    summary: >-
+      Under IAS 37 a provision needs a present obligation, legal or constructive, arising from a past event, a probable outflow of
+      economic benefits (more likely than not), and a reliable estimate; it is measured at the best estimate and discounted when the effect is material.
+      Possible obligations or ones that cannot be measured are contingent liabilities, disclosed but not booked. US GAAP (ASC 450) accrues a loss
+      contingency when a loss is probable (a higher likelihood bar than IFRS) and reasonably estimable, uses the low end of a range when no point is better, and
+      generally does not discount. Egyptian, Indian and UK standards follow the IAS 37 approach.
+    analyst_impact: >-
+      IFRS reporters book some litigation and restructuring liabilities earlier and at a higher point in a range than US reporters; treat
+      litigation, decommissioning and warranty provisions with expected cash outflows as debt-like and read the contingent liability note for unbooked exposure.
+    adjustment: eosb_as_debt_like
+    keywords: [provision, present obligation, constructive obligation, past event, probable, reliable estimate, contingent liability, ias 37, asc 450, loss contingency]
+    citations:
+      - {standard: "IAS 37", ref: "paras 14, 36, 45, 86", url: *ias37}
+      - {standard: "ASC 450", ref: "450-20-25 (loss contingencies)", url: *asc}
+    authored: acretia
+    confidence: verified

@@ -6,7 +6,7 @@
 **Jurisdictions:** Egypt
 
 ## Summary
-A national set modelled on IFRS with a time lag. The 2015 reissue brought most standards close to older IAS text; newer standards for financial instruments (EAS 47), revenue (EAS 48) and leases (EAS 49) track IFRS 9, 15 and 16. Listed Egyptian groups report under EAS in local currency (EGP), usually by function with a current/non-current balance sheet. Special accounting treatments for foreign exchange (EAS 13 annexes) have been issued after the major devaluations and can defer or capitalise FX differences.
+A national set modelled on IFRS with a time lag. The 2015 reissue brought most standards close to older IAS text; newer standards for financial instruments (EAS 47), revenue from contracts with customers (EAS 48, five-step model) and leases (EAS 49, lessee right-of-use asset and lease liability) track IFRS 9, 15 and 16. Listed Egyptian groups report under EAS in local currency (EGP), usually by function with a current/non-current balance sheet. Special accounting treatments for foreign exchange (EAS 13 annexes) have been issued after the major devaluations and can defer or capitalise FX differences.
 
 ## Relationship to full IFRS
 Not full IFRS. Lag in standards, some choices removed or added, and temporary special treatments that have no IFRS counterpart (FX relief annexes).
@@ -103,6 +103,8 @@ Not full IFRS. Lag in standards, some choices removed or added, and temporary sp
 - `diff-egypt-income-tax` (zakat_tax): recipe `zakat_as_tax`
 - `diff-ecl-ifrs9-eas47-cecl` (credit_losses): recipe `eas_to_ifrs_map`
 - `diff-eas17-separate-fs` (associates_jvs): recipe `associates_share_strip`
+- `diff-business-combinations` (business_combinations): recipe `associates_share_strip`
+- `diff-provisions-ias37-asc450` (provisions): recipe `eosb_as_debt_like`
 
 **Verified facts**
 - EAS issued 2015, amended 2019 and 2023; EAS not full IFRS; revaluation barred until January 2023: <https://www.ifrs.org/use-around-the-world/use-of-ifrs-standards-by-jurisdiction/view-jurisdiction/egypt/>

@@ -133,11 +133,11 @@ standards:
     summary: >-
       Acquisitions use the acquisition method: identifiable assets and liabilities at fair value, goodwill as the
       residual, acquisition costs expensed, contingent consideration at fair value with later changes in profit or loss.
-      Non-controlling interest may be measured at fair value (full goodwill) or at its share of net assets.
+      Non-controlling interest may be measured at fair value (full goodwill) or at its share of net assets. Pooling of interests is not allowed for acquisitions, and combinations under common control are outside the scope (practice varies, commonly book value or predecessor accounting; Ind AS 103 mandates pooling for them).
     disclosures: [Consideration, fair value of acquired assets, goodwill drivers, pro forma revenue and profit]
     analyst_impact: >-
       Acquired intangibles amortisation is non-cash and often excluded from adjusted earnings; check goodwill share of equity.
-    keywords: [acquisition, goodwill, purchase price allocation, ppa, contingent consideration, business combination, bargain purchase]
+    keywords: [acquisition, acquisition method, pooling of interests, common control, goodwill, purchase price allocation, ppa, contingent consideration, business combination, bargain purchase]
     citations:
       - {standard: "IFRS 3", ref: "paras 4-5, 18-19, 32, 53", url: *ifrs3}
     authored: acretia
@@ -434,7 +434,7 @@ standards:
     title: Provisions, contingent liabilities and contingent assets
     summary: >-
       A provision is recognised when there is a present legal or constructive obligation from a past event, an outflow of
-      resources is probable (more likely than not) and a reliable estimate can be made, measured at the best estimate and
+      resources is probable (more likely than not) and a reliable estimate can be made (all three together; a present obligation means legal or constructive from a past event), measured at the best estimate and
       discounted when material. Contingent liabilities, meaning possible obligations or probable ones that cannot be
       measured reliably, are only disclosed and not booked. Contingent assets are not recognised until virtually certain.
       Restructuring and onerous contract rules limit when charges can be taken.
@@ -442,7 +442,7 @@ standards:
     analyst_impact: >-
       Big provision movements affect earnings quality; treat litigation and decommissioning provisions as debt-like if cash will go out.
     adjustment: eosb_as_debt_like
-    keywords: [provision, contingent liability, onerous contract, restructuring, litigation, decommissioning, warranty]
+    keywords: [provision, present obligation, constructive obligation, past event, reliable estimate, contingent liability, onerous contract, restructuring, litigation, decommissioning, warranty]
     citations:
       - {standard: "IAS 37", ref: "paras 14, 36, 45, 72, 86", url: *ias37}
     authored: acretia

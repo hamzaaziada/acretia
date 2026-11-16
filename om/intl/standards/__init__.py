@@ -57,6 +57,9 @@ CONCEPTS = [
     ("c_related", r"related part|key management|ias 24"),
     ("c_separate", r"separate financial|ias 27|eas 17|standalone accounts"),
     ("c_applicability", r"applicab|net worth|crore|roadmap"),
+    ("c_provision", r"provision|contingent liabilit|ias 37|asc 450|constructive obligation|present obligation"),
+    ("c_bizcomb", r"business combination|acquisition method|pooling|common control|merger accounting|ifrs 3\b|asc 805|ind as 103|predecessor accounting|group reconstruction"),
+    ("c_adoption", r"adopt|endorse|\bcma\b|\bsca\b|capital market authority|securities and commodities|no local gaap|\bdfm\b|\badx\b|tadawul"),
     ("c_mapping", r"eas \d+|map|equivalent|correspond"),
 ]
 _CONCEPTS = [(c, re.compile(p)) for c, p in CONCEPTS]

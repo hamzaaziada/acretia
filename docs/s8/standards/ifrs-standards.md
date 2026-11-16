@@ -58,7 +58,7 @@ Financial assets are classified by the business model and the contractual cash f
 - IFRS 9, paras 4.1.1-4.1.5, 5.5.1-5.5.20: <https://www.ifrs.org/issued-standards/list-of-standards/ifrs-9-financial-instruments/>
 
 ## IFRS 3: Business combinations
-Acquisitions use the acquisition method: identifiable assets and liabilities at fair value, goodwill as the residual, acquisition costs expensed, contingent consideration at fair value with later changes in profit or loss. Non-controlling interest may be measured at fair value (full goodwill) or at its share of net assets.
+Acquisitions use the acquisition method: identifiable assets and liabilities at fair value, goodwill as the residual, acquisition costs expensed, contingent consideration at fair value with later changes in profit or loss. Non-controlling interest may be measured at fair value (full goodwill) or at its share of net assets. Pooling of interests is not allowed for acquisitions, and combinations under common control are outside the scope (practice varies, commonly book value or predecessor accounting; Ind AS 103 mandates pooling for them).
 
 **Disclosures:** Consideration; fair value of acquired assets; goodwill drivers; pro forma revenue and profit
 
@@ -235,7 +235,7 @@ An asset is impaired when its carrying amount exceeds its recoverable amount, wh
 - IAS 36, paras 6, 59, 117-123, 124: <https://www.ifrs.org/issued-standards/list-of-standards/ias-36-impairment-of-assets/>
 
 ## IAS 37: Provisions, contingent liabilities and contingent assets
-A provision is recognised when there is a present legal or constructive obligation from a past event, an outflow of resources is probable (more likely than not) and a reliable estimate can be made, measured at the best estimate and discounted when material. Contingent liabilities, meaning possible obligations or probable ones that cannot be measured reliably, are only disclosed and not booked. Contingent assets are not recognised until virtually certain. Restructuring and onerous contract rules limit when charges can be taken.
+A provision is recognised when there is a present legal or constructive obligation from a past event, an outflow of resources is probable (more likely than not) and a reliable estimate can be made (all three together; a present obligation means legal or constructive from a past event), measured at the best estimate and discounted when material. Contingent liabilities, meaning possible obligations or probable ones that cannot be measured reliably, are only disclosed and not booked. Contingent assets are not recognised until virtually certain. Restructuring and onerous contract rules limit when charges can be taken.
 
 **Disclosures:** Movement by class; timing and uncertainty; contingent liabilities with estimates
 

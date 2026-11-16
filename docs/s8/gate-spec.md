@@ -135,7 +135,7 @@ English and Arabic (`٣٠ يونيو ٢٠٢٤`).
 2. MENA (`evals/intl/mena/results.jsonl`): ≥ 10 EGX and ≥ 5 Tadawul non-bank companies, ≥ 5 reports scanned or Arabic
    only, ≥ 300 hand-verified figures; accuracy of released figures ≥ 98%; coverage ≥ 70%; tie-out pass rate and Arabic
    numeral OCR character accuracy reported; verifier ≠ extractor recorded per record.
-3. Standards QA (`evals/intl/standards_qa/`): 50 questions; every answer cites a KB entry and a standard reference;
+3. Standards QA (`evals/intl/standards_qa/`): 50 coverage questions plus a 25-question held-out set (`heldout.jsonl`, D-S8-06); the ≥ 90% bar applies to each set; every answer cites a KB entry and a standard reference;
    score ≥ 90% on the deterministic key-point rubric.
 4. `scorecard.csv` has S8 rows matching the recomputed numbers (±0.001); any model-dependent row says `not run live`.
 

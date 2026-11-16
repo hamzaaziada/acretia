@@ -12,6 +12,7 @@ IFRS as endorsed by SOCPA for publicly accountable entities, with SOCPA's own re
 Full IFRS except the zakat and tax carve-out; IFRS for SMEs for small entities.
 
 ## Effective dates and caveats
+- IFRS as endorsed by SOCPA: listed entities from 1 January 2017; other establishments for periods after 1 January 2018, early application possible from 2017 (Arab News, CMA)
 - SOCPA amended its zakat accounting standard to align with IFRS, applying to fiscal years beginning on or after 1 January 2017 (EY tax alert)
 - Cost model required for listed companies' PPE and investment property until fiscal years starting 2022; fair value or revaluation allowed after (IFRS profile)
 - UNVERIFIED: whether and from when zakat moved from retained earnings to profit or loss
@@ -91,8 +92,10 @@ Full IFRS except the zakat and tax carve-out; IFRS for SMEs for small entities.
 - `diff-zakat-vs-income-tax` (zakat_tax): recipe `zakat_as_tax`
 - `diff-eosb-ksa` (end_of_service): recipe `eosb_as_debt_like`
 - `diff-government-grants` (government_grants): recipe `gov_grant_gross_up`
+- `diff-socpa-ifrs-adoption` (framework_adoption): recipe `eas_to_ifrs_map`
 
 **Verified facts**
+- Listed companies on IFRS from 1 January 2017; others for periods after 1 January 2018: <https://www.arabnews.com/corporate-and-sponsored-content/kpmg-to-make-private-sector-ready-for-upcoming-ifrs-1137586>
 - Zakat outside IAS 12; Saudi/GCC portion zakat, non-Saudi portion IAS 12 income tax: <https://www.ifrs.org/content/dam/ifrs/meetings/2026/march/asaf/ap10-socpa-presentation-zakat.pdf>
 - Revaluation and fair value models allowed from fiscal years starting 2022: <https://www.ifrs.org/use-around-the-world/use-of-ifrs-standards-by-jurisdiction/view-jurisdiction.html/saudi-arabia/>
 

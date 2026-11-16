@@ -95,6 +95,8 @@ Substantially converged with carve-outs (investment property, common-control com
 - `diff-ind-as-carveouts` (presentation): recipe `by_nature_ebit`
 - `diff-leases-indas116` (leases): recipe `ifrs16_to_pre16_ebitda`
 - `diff-indas-applicability` (presentation): recipe `eas_to_ifrs_map`
+- `diff-business-combinations` (business_combinations): recipe `associates_share_strip`
+- `diff-provisions-ias37-asc450` (provisions): recipe `eosb_as_debt_like`
 
 ## Sources
 - Ind AS, Ind AS 1, 40, 103 (Appendix C), 116: <https://www.mca.gov.in/content/mca/global/en/acts-rules/ebooks/accounting-standards.html>

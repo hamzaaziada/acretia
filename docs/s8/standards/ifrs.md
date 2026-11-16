@@ -118,6 +118,10 @@ This is the reference framework; every other entry in the base is described by i
 - `diff-leases-indas116` (leases): recipe `ifrs16_to_pre16_ebitda`
 - `diff-indas-applicability` (presentation): recipe `eas_to_ifrs_map`
 - `diff-eas17-separate-fs` (associates_jvs): recipe `associates_share_strip`
+- `diff-socpa-ifrs-adoption` (framework_adoption): recipe `eas_to_ifrs_map`
+- `diff-uae-ifrs-requirement` (framework_adoption): recipe `eas_to_ifrs_map`
+- `diff-business-combinations` (business_combinations): recipe `associates_share_strip`
+- `diff-provisions-ias37-asc450` (provisions): recipe `eosb_as_debt_like`
 
 ## Sources
 - IAS 1, paras 54, 82 (minimum line items): <https://www.ifrs.org/issued-standards/list-of-standards/ias-1-presentation-of-financial-statements/>

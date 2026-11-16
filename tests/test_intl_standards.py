@@ -185,6 +185,38 @@ class StandardsKB(unittest.TestCase):
         self.assertEqual(a.entries[0]["id"], "std-ias2")
         self.assertIn("diff-inventory-lifo", [e["id"] for e in a.entries])
 
+    def test_f3_substance(self):
+        def ans(q):
+            return self.kb.answer(q)
+        a = ans("What is needed to recognise a provision under IAS 37?")
+        self.assertEqual(a.entries[0]["id"], "std-ias37")
+        for w in ("present", "past event", "probable", "reliable estimate", "constructive"):
+            self.assertIn(w, a.text)
+        a = ans("How does EAS 49 account for leases?")
+        for w in ("right-of-use asset", "lease liability"):
+            self.assertIn(w, a.text)
+        self.assertTrue(any(e["id"] == "diff-leases-eas49" for e in a.entries))
+        a = ans("What is EAS 48 and how does it relate to IFRS 15?")
+        self.assertIn("contracts with customers", a.text)
+        self.assertIn("five-step", a.text)
+        a = ans("What happened to the Egyptian pound on 6 March 2024 and how should analysts normalise it?")
+        self.assertIn("diff-fx-devaluation-ias21", [e["id"] for e in a.entries])
+        for w in ("flexible", "30.9", "50", "Q1 2024", "one-off"):
+            self.assertIn(w, a.text)
+        a = ans("When did Saudi listed companies adopt IFRS endorsed by SOCPA?")
+        self.assertEqual(a.entries[0]["id"], "diff-socpa-ifrs-adoption")
+        self.assertIn("1 January 2017", a.text)
+        self.assertIn("1 January 2018", a.text)
+        a = ans("Which IFRS regulator and exchanges apply to UAE listed companies? SCA or CMA")
+        self.assertEqual(a.entries[0]["id"], "diff-uae-ifrs-requirement")
+        for w in ("Capital Market Authority", "Dubai Financial Market", "Abu Dhabi Securities Exchange", "32 of 2021"):
+            self.assertIn(w, a.text)
+        a = ans("Is pooling of interests allowed for business combinations and common control under IFRS 3?")
+        ids = [e["id"] for e in a.entries]
+        self.assertIn("diff-business-combinations", ids)
+        for w in ("acquisition method", "common control", "Ind AS 103", "merger accounting", "ASC 805"):
+            self.assertIn(w, a.text)
+
     def test_find(self):
         self.assertTrue(self.kb.find(topic="leases"))
         self.assertTrue(all("EAS" in d["frameworks"] for d in self.kb.find(framework="EAS")))
