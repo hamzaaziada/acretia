@@ -229,3 +229,22 @@ Exits 0 only if all of these pass; prints one PASS/FAIL line per check:
 - `eval/tsb/run.py`: for each of the 14 tasks × n briefs (n ≥ 10; briefs in `eval/tsb/briefs.yaml`, US + IFRS + MENA), runs the job through `om.api.jobs` in-process, records `T_a = wall + review_fix`, and writes `eval/tsb/report.md` + `eval/tsb/results.csv`: per task median, IQR, n, `1 − T_a/T_h` (low/mid/high), and the status column `estimate | human-validated`. Persona edit lists come from replayed persona outputs in CI.
 - `eval/reliability/run.py`: every journey's agent across ≥ 100 varied companies/briefs (`eval/reliability/corpus.yaml`): success rate (target ≥ 97%), silent-wrong-number count (target 0: every number in every deliverable is either tied to a citation/xbrl concept or carries a flag; checked by walking the manifest/citations), determinism (two runs, byte-identical numbers), resume-after-failure rate (inject a failure mid-job, resume, compare with a clean run), p95 latency, cost per deliverable → `eval/reliability/report.md`.
 - `scripts/verify_product.py` check 18: both harnesses run in replay mode on a reduced set (14 tasks × 2 briefs; 20 reliability briefs) and produce reports with the required columns; silent wrong numbers = 0 and determinism = 100% on that set.
+
+## 12. Test hooks (`data-testid`) — shared by implementers and the e2e gate writer
+
+Stable kebab-case ids; e2e tests select only by these, by role or by accessible name. Every list item adds `data-id="<resource id>"`.
+
+- Shell: `app-shell`, `sidebar`, `nav-home`, `nav-deals`, `nav-library`, `nav-agents`, `nav-notifications`, `nav-settings`, `org-switcher`, `user-menu`, `locale-toggle`, `theme-toggle`, `notif-bell`, `notif-count`, `notif-drawer`, `notif-item`, `shortcut-sheet`, `toast`.
+- Login: `login-email`, `login-password`, `login-submit`, `login-error`.
+- Agent home: `ask-input`, `ask-submit`, `source-toggle-<deal|filings|firm|web>`, `deal-chip`, `starter-task` (with `data-task=<task_id>`), `skill-picker`, `skill-chip`, `recent-runs`, `run-row`.
+- Command palette: `cmdk`, `cmdk-input`, `cmdk-item`.
+- Run view: `run-view`, `run-status` (text = status), `run-cancel`, `run-resume`, `run-step` (with `data-status`), `run-cost`, `run-tokens`, `run-elapsed`, `run-time-saved`, `approval-card` (with `data-kind`), `approval-approve`, `ghost-title-input`, `source-chip` (with `data-token`), `citation-popover`, `download-sources`, `deliverable-link` (with `data-kind`), `feedback-up`, `feedback-down`.
+- Deals: `deals-table`, `deal-row`, `new-deal`, `new-deal-name`, `new-deal-submit`, `deal-tab-<overview|documents|grid|models|decks|library|activity>`, `breadcrumbs`.
+- Documents: `upload-dropzone`, `upload-input`, `upload-progress`, `doc-row` (with `data-status`), `doc-open`.
+- Library: `library-table`, `deliverable-row`, `versions-drawer`, `version-row`, `version-download`, `version-diff`, `diff-view`, `undo-button`, `restore-button`.
+- Agents: `agents-search`, `agent-card` (with `data-agent=<task_id or id>`), `agent-run`, `agent-pin`, `agent-enabled-toggle`, `new-agent`, `agent-name`, `agent-prompts`, `agent-shared`, `agent-save`.
+- Settings: `members-table`, `invite-button`, `invite-email`, `invite-role`, `invite-submit`, `invite-link`, `role-select`, `audit-table`, `audit-verify`, `audit-export`, `definitions-form`, `definition-<key>`, `template-upload`, `connector-add`, `mailbox-form`, `mailbox-send-enabled`.
+- PDF inspector: `pdf-viewer`, `pdf-page` (with `data-page`), `bbox-highlight`, `inspector-panel`, `inspector-page`, `inspector-asof`, `inspector-source-link`, `inspector-quote`.
+- Grid: `grid`, `grid-cell` (with `data-row`, `data-col`, `data-state`), `grid-add-column`, `column-prompt`, `column-submit`, `grid-estimate`, `grid-wizard`, `column-manager`, `workflow-view`, `grid-export`, `grid-chat-input`, `risks-panel`.
+- Model view: `model-view`, `sheet-tab`, `model-cell` (with `data-ref="Sheet!A1"`, `data-class=input|calc|link`), `assumption-input` (with `data-ref`), `recompute-status`, `audit-overlay-toggle`, `check-badge` (with `data-status`), `model-download`, `model-save`.
+- Deck view: `deck-view`, `slide-thumb`, `slide-canvas`, `validator-badge` (with `data-status`), `slide-source-line`, `comment-pin`, `comment-input`, `comment-submit`, `apply-comments`, `version-compare`, `deck-download`.
