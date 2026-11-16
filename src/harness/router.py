@@ -18,6 +18,7 @@ import time
 from dataclasses import dataclass, field
 from pathlib import Path
 
+from om import pii
 from om.llm import validate
 
 TASK_TYPES = ("extraction", "modeling", "reasoning", "vision_critic", "persona")
@@ -193,6 +194,16 @@ def _classify(request: str, files, classifier, job_id: str) -> tuple[str, list, 
     return d["task_type"], [e for e in d["engines"] if e in ENGINES] or ["general"], float(d.get("confidence", 0.7))
 
 
+LOG_MAX = 500
+
+
+def csv_safe(value, limit: int = LOG_MAX) -> str:
+    """One CSV cell: PII-masked (om.pii), truncated to `limit` chars, and defused against spreadsheet formula
+    injection (a leading = + - @ tab or CR gets a ' prefix)."""
+    t = pii.Masker().mask(str(value))[0][:limit]
+    return "'" + t if t[:1] in ("=", "+", "-", "@", "\t", "\r") else t
+
+
 def _log(path, request, files, r: Route, job_id: str) -> None:
     p = Path(path)
     new = not p.exists()
@@ -202,9 +213,9 @@ def _log(path, request, files, r: Route, job_id: str) -> None:
         if new:
             w.writerow(["timestamp", "job_id", "request", "files", "task_type", "engines", "profile", "confidence",
                         "used_model_call", "reason"])
-        w.writerow([time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()), job_id, request[:200],
-                    ";".join(Path(x).name for x in files), r.task_type, "+".join(r.engines), r.profile,
-                    r.confidence, r.used_model_call, r.reason[:200]])
+        w.writerow([time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()), csv_safe(job_id, 100), csv_safe(request),
+                    csv_safe(";".join(Path(x).name for x in files)), r.task_type, "+".join(r.engines), r.profile,
+                    r.confidence, r.used_model_call, csv_safe(r.reason)])
 
 
 def route(request: str, *, files=(), task_type: str | None = None, profile: str | None = None, classifier=None,

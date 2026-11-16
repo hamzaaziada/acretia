@@ -22,8 +22,31 @@
     "style": "long context ok; put instructions after the data"
   },
   "price_per_mtok": {
-    "input": 1.25,
-    "output": 10.0
+    "input": 4.0,
+    "output": 18.0
   },
-  "notes": "price_per_mtok is list price in USD per million tokens, approximate; update before relying on cost reports."
+  "notes": "price_per_mtok is the highest-priced listed model, USD per million tokens (conservative). Pro models use the >200k-prompt-token tier (conservative); text/image input rate. gemini-2.5-pro and -flash are deprecated and re-route to Gemini 3.x from 2026-12-01.",
+  "prices_per_mtok_by_model": {
+    "gemini-2.5-pro": {
+      "input": 2.5,
+      "output": 15.0
+    },
+    "gemini-2.5-flash": {
+      "input": 0.3,
+      "output": 2.5
+    },
+    "gemini-2.5-flash-lite": {
+      "input": 0.1,
+      "output": 0.4
+    },
+    "gemini-3.1-pro-preview": {
+      "input": 4.0,
+      "output": 18.0
+    }
+  },
+  "price_verified": true,
+  "price_date": "2026-11-16",
+  "price_source": [
+    "https://aistudio.google.com/docs/pricing"
+  ]
 }

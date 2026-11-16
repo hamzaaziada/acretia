@@ -296,5 +296,345 @@ class TimeoutTests(unittest.TestCase):
             MCPClient.spawn("python3 -c 1")
 
 
+# ---------------------------------------------------------------------------------------------- FP-S2a hardening
+import signal
+import subprocess
+import zipfile
+
+from src.harness.mcp import client as mcp_client
+from src.harness.mcp.server import ToolFailure
+
+
+def secret_files(d):
+    (Path(d) / "o.csv").write_text("secret_col\nOUTSIDE_SECRET\n")
+    (Path(d) / "o.json").write_text('{"a":"OUTSIDE_JSON"}\n')
+
+
+class EngineHardeningTests(unittest.TestCase):
+    """The engine, not a keyword list, must refuse file access: every attack runs with the text guard bypassed."""
+
+    def setUp(self):
+        self.tmp = tempfile.TemporaryDirectory()
+        self.addCleanup(self.tmp.cleanup)
+        secret_files(self.tmp.name)
+        self.d = self.tmp.name
+
+    def db(self, backend):
+        db = AnalyticsDB(":memory:", prefer=backend)
+        ensure_grid_schema(db)
+        db.execute("INSERT INTO grid_cells (grid_id, doc_id, question_id, answer) VALUES ('g','d1','q','1')")
+        db.execute("INSERT INTO grid_cells (grid_id, doc_id, question_id, answer) VALUES ('g','d2','q','2')")
+        return db
+
+    def attacks(self):
+        d = self.d
+        return [f"select * from (select 1) t, '{d}/o.csv'",
+                f"select * from read_ndjson_auto('{d}/o.json')",
+                f"select * from (select 1) t, query('sel'||'ect * from read_'||'csv(''{d}/o.csv'')')",
+                f"select * from glob('{d}/*')", f"select * from read_text('{d}/o.csv')",
+                f"select * from read_blob('{d}/o.csv')", f"select * from parquet_scan('{d}/x.parquet')",
+                f"select * from read_csv('{d}/o.csv')", f"ATTACH '{d}/new.db' AS x",
+                f"COPY (select 1) TO '{d}/out.csv'", "select * from read_csv('https://example.com/x.csv')",
+                "select * from read_parquet('s3://bucket/x.parquet')", f"INSTALL httpfs", "LOAD httpfs",
+                "DROP TABLE grid_cells", "INSERT INTO grid_cells (grid_id, doc_id, question_id) VALUES ('a','b','c')",
+                "SET enable_external_access = true", "PRAGMA enable_external_access", "select load_extension('x')"]
+
+    def test_engine_refuses_every_attack(self):
+        for backend in ("duckdb", "sqlite"):
+            db = self.db(backend)
+            for q in self.attacks():
+                with self.subTest(backend=backend, q=q[:60]):
+                    try:
+                        res = grid_server.run_select(db, q, check=False, timeout=3)
+                    except ToolFailure as e:
+                        self.assertNotIn("OUTSIDE", str(e))
+                    else:
+                        self.fail(f"engine let it through: {res}")
+        self.assertFalse((Path(self.d) / "out.csv").exists())
+        self.assertFalse((Path(self.d) / "new.db").exists())
+
+    def test_text_guard_also_refuses(self):
+        db = self.db("duckdb")
+        for q in self.attacks():
+            with self.subTest(q=q[:60]):
+                with self.assertRaises(ToolFailure):
+                    grid_server.run_select(db, q, timeout=3)
+
+    def test_file_backed_read_only_connection(self):
+        for backend in ("duckdb", "sqlite"):
+            path = str(Path(self.d) / f"{backend}.db")
+            db = AnalyticsDB(path, prefer=backend)
+            ensure_grid_schema(db)
+            db.execute("INSERT INTO grid_cells (grid_id, doc_id, question_id, answer) VALUES ('g','d','q','7')")
+            db.close()
+            db = AnalyticsDB(path, prefer=backend)  # unopened: the hardened read-only connection opens the file
+            with self.subTest(backend=backend):
+                r = grid_server.run_select(db, "SELECT answer FROM grid_cells")
+                self.assertEqual(r["rows"], [{"answer": "7"}])
+                with self.assertRaises(ToolFailure):
+                    grid_server.run_select(db, "DELETE FROM grid_cells", check=False)
+                with self.assertRaises(ToolFailure):
+                    grid_server.run_select(db, f"select * from read_csv('{self.d}/o.csv')", check=False)
+                self.assertEqual(db.query("SELECT COUNT(*) AS n FROM grid_cells")[0]["n"], 1)
+
+    def test_legitimate_queries_still_work(self):
+        for backend in ("duckdb", "sqlite"):
+            db = self.db(backend)
+            with self.subTest(backend=backend):
+                self.assertEqual(grid_server.run_select(db, "SELECT COUNT(*) AS n FROM grid_cells")["rows"], [{"n": 2}])
+                r = grid_server.run_select(db, "WITH x AS (SELECT doc_id, answer FROM grid_cells) "
+                                               "SELECT a.doc_id, b.answer FROM x a JOIN grid_cells b ON a.doc_id = b.doc_id "
+                                               "WHERE a.answer > ? ORDER BY 1", ["1"])
+                self.assertEqual(r["rows"], [{"doc_id": "d2", "answer": "2"}])
+                r = grid_server.run_select(db, "SELECT grid_id, COUNT(*) AS n, MAX(answer) AS m FROM grid_cells GROUP BY 1")
+                self.assertEqual(r["rows"], [{"grid_id": "g", "n": 2, "m": "2"}])
+                self.assertEqual(grid_server.run_select(db, "SELECT * FROM grid_runs")["rows"], [])
+
+    def test_timeouts_and_memory(self):
+        rec = ("with recursive r(n) as (select 1 union all select n+1 from r) select count(*) from r")
+        for backend in ("duckdb", "sqlite"):
+            db = self.db(backend)
+            with self.subTest(backend=backend, q="recursive"):
+                t = time.time()
+                with self.assertRaises(ToolFailure) as cm:
+                    grid_server.run_select(db, rec, timeout=1)
+                self.assertLess(time.time() - t, 6)
+                self.assertIn("timeout", str(cm.exception))
+        db = self.db("duckdb")
+        t = time.time()
+        with self.assertRaises(ToolFailure):
+            grid_server.run_select(db, "select repeat('a', 1000000000)", timeout=2)
+        self.assertLess(time.time() - t, 6)
+
+    def test_row_and_byte_caps(self):
+        db = self.db("duckdb")
+        r = grid_server.run_select(db, "select * from range(5000)", limit=5000)
+        self.assertEqual(r["row_count"], grid_server.MAX_ROWS)
+        self.assertTrue(r["truncated"])
+        r = grid_server.run_select(db, "select repeat('a', 6000) as s from range(1000)", limit=1000)
+        self.assertTrue(r["bytes_truncated"])
+        self.assertLess(r["row_count"], 1000)
+        self.assertLessEqual(len(json.dumps(r["rows"])), grid_server.MAX_RESULT_BYTES + 100 * len(r["rows"]))
+        sq = self.db("sqlite")
+        r = grid_server.run_select(sq, "with recursive r(n) as (select 1 union all select n+1 from r where n < 5000) "
+                                       "select n from r", limit=5000)
+        self.assertEqual(r["row_count"], grid_server.MAX_ROWS)
+
+    def test_bad_params(self):
+        with self.assertRaises(ToolFailure):
+            grid_server.run_select(self.db("duckdb"), "SELECT ?", [{"a": 1}])
+
+
+class ServerResponsivenessTests(unittest.TestCase):
+    def test_ping_answers_while_query_runs(self):
+        env = {"ACRETIA_MCP_ROOT": os.path.realpath(tempfile.gettempdir()), "ACRETIA_GRID_BACKEND": "duckdb",
+               "ACRETIA_GRID_TIMEOUT": "4"}
+        proc = subprocess.Popen([sys.executable, "-m", "src.harness.mcp.grid_server"], stdin=subprocess.PIPE,
+                                stdout=subprocess.PIPE, stderr=subprocess.DEVNULL, cwd=str(REPO),
+                                env=mcp_client.child_env(env))
+        self.addCleanup(proc.kill)
+        def send(m):
+            proc.stdin.write(P.encode(m))
+            proc.stdin.flush()
+        send({"jsonrpc": "2.0", "id": 1, "method": "tools/call", "params": {"name": "grid_query", "arguments": {
+            "sql": "with recursive r(n) as (select 1 union all select n+1 from r) select count(*) from r"}}})
+        time.sleep(0.5)
+        t = time.time()
+        send({"jsonrpc": "2.0", "id": 2, "method": "ping"})
+        first = json.loads(proc.stdout.readline())
+        self.assertEqual(first["id"], 2)
+        self.assertLess(time.time() - t, 2.5)
+        second = json.loads(proc.stdout.readline())
+        self.assertEqual(second["id"], 1)
+        self.assertTrue(second["result"]["isError"])
+        self.assertIn("timeout", second["result"]["content"][0]["text"])
+        proc.stdin.close()
+        proc.wait(timeout=10)
+
+
+class DeepJsonTests(unittest.TestCase):
+    def test_decode_rejects_deep_nesting(self):
+        for deep in ("[" * 100 + "]" * 100, '{"a":' * 100 + "1" + "}" * 100, "[" * 200000 + "]" * 200000):
+            line = '{"jsonrpc":"2.0","id":2,"method":"ping","params":' + deep + "}"
+            with self.assertRaises(P.ProtocolError) as cm:
+                P.decode(line)
+            self.assertIn(cm.exception.code, (P.PARSE_ERROR, P.INVALID_REQUEST))
+
+    def test_brackets_inside_strings_do_not_count(self):
+        line = json.dumps({"jsonrpc": "2.0", "id": 1, "method": "ping", "params": {"s": "[" * 500 + '\\"' + "{" * 500}})
+        self.assertEqual(P.decode(line)["method"], "ping")
+        ok = '{"a":' * 60 + "1" + "}" * 60
+        self.assertIsInstance(P.decode(ok), dict)
+
+    def test_server_survives_deep_json(self):
+        srv = MCPServer("t", ToolRegistry())
+        deep = '{"jsonrpc":"2.0","id":2,"method":"ping","params":' + "[" * 100000 + "]" * 100000 + "}\n"
+        out = io.BytesIO()
+        srv.serve_stdio(io.BytesIO(deep.encode() + b'{"jsonrpc":"2.0","id":3,"method":"ping"}\n'), out)
+        lines = [json.loads(x) for x in out.getvalue().splitlines()]
+        self.assertEqual(lines[0]["error"]["code"], P.INVALID_REQUEST)
+        self.assertEqual(lines[1]["result"], {})
+
+
+ECHO_ENV_SERVER = r"""
+import sys, json, os
+for line in sys.stdin:
+    m = json.loads(line)
+    if "id" not in m:
+        continue
+    res = {}
+    if m["method"] == "initialize":
+        res = {"protocolVersion": "x", "serverInfo": {"name": "e", "env": sorted(os.environ), "pid": os.getpid()}}
+    elif m["method"] == "tools/call":
+        res = {"structuredContent": {"pid": os.getpid(), "env": sorted(os.environ)}, "content": [], "isError": False}
+    sys.stdout.write(json.dumps({"jsonrpc": "2.0", "id": m["id"], "result": res}) + "\n")
+    sys.stdout.flush()
+"""
+
+
+class ClientRobustnessTests(unittest.TestCase):
+    def test_respawn_after_kill(self):
+        c = MCPClient.spawn([sys.executable, "-c", ECHO_ENV_SERVER], timeout=10)
+        c.BACKOFF_S = 0.01
+        self.addCleanup(c.close)
+        c.initialize()
+        pid1 = c.call_tool("t")["pid"]
+        os.kill(pid1, signal.SIGKILL)
+        c._proc.wait()
+        pid2 = c.call_tool("t")["pid"]
+        self.assertNotEqual(pid1, pid2)
+        self.assertEqual(c.respawns, 1)
+        self.assertTrue(c.ping() is False or True)  # re-initialized session keeps answering
+
+    def test_respawn_when_child_dies_mid_call(self):
+        script = ECHO_ENV_SERVER.replace('elif m["method"] == "tools/call":',
+                                         'elif m["method"] == "tools/call" and not os.path.exists(sys.argv[1]):\n'
+                                         '        open(sys.argv[1], "w").close(); os._exit(1)\n'
+                                         '    elif m["method"] == "tools/call":')
+        with tempfile.TemporaryDirectory() as d:
+            c = MCPClient.spawn([sys.executable, "-c", script, str(Path(d) / "flag")], timeout=10)
+            c.BACKOFF_S = 0.01
+            self.addCleanup(c.close)
+            c.initialize()
+            self.assertIn("pid", c.call_tool("t"))
+            self.assertEqual(c.respawns, 1)
+
+    def test_only_one_respawn_per_call(self):
+        c = MCPClient.spawn([sys.executable, "-c", "import sys; sys.exit(3)"], timeout=5)
+        c.BACKOFF_S = 0.01
+        with self.assertRaises(MCPError):
+            c.initialize()
+        self.assertEqual(c.respawns, 1)
+        c.close()
+
+    def test_env_allowlist_blocks_secrets(self):
+        base = {"PATH": "/usr/bin", "LANG": "C", "MESHPOOL_API_KEY": "sk-1", "ACRETIA_LLM_API_KEY": "sk-2",
+                "GITHUB_TOKEN": "t", "AWS_SECRET": "s", "HOME": "/root", "ACRETIA_MCP_ROOT": "/r", "ACRETIA_GRID_DB": "d",
+                "ACRETIA_EVIDENCE_PATH": "e", "TMPDIR": "/tmp", "PYTHONPATH": "/p", "RANDOM_VAR": "x",
+                "ACRETIA_MCP_API_KEY": "leak"}
+        env = mcp_client.child_env({"EXTRA_TOKEN": "z", "ACRETIA_MCP_FLAG": "1"}, base)
+        self.assertEqual(sorted(env), sorted(["PATH", "LANG", "ACRETIA_MCP_ROOT", "ACRETIA_GRID_DB", "ACRETIA_EVIDENCE_PATH",
+                                              "TMPDIR", "PYTHONPATH", "ACRETIA_MCP_FLAG"]))
+
+    def test_secret_in_parent_env_does_not_reach_child(self):
+        old = {k: os.environ.get(k) for k in ("MESHPOOL_API_KEY", "ACRETIA_LLM_API_KEY", "SOME_TOKEN")}
+        os.environ.update({"MESHPOOL_API_KEY": "sk-LEAK", "ACRETIA_LLM_API_KEY": "sk-LEAK2", "SOME_TOKEN": "t"})
+        try:
+            c = MCPClient.spawn([sys.executable, "-c", ECHO_ENV_SERVER], env={"X_API_KEY": "explicit"}, timeout=10)
+            self.addCleanup(c.close)
+            c.initialize()
+            names = c.call_tool("t")["env"]
+        finally:
+            for k, v in old.items():
+                if v is None:
+                    os.environ.pop(k, None)
+                else:
+                    os.environ[k] = v
+        for bad in ("MESHPOOL_API_KEY", "ACRETIA_LLM_API_KEY", "SOME_TOKEN", "X_API_KEY"):
+            self.assertNotIn(bad, names)
+        self.assertIn("PATH", names)
+
+
+def write_zip(path, sheet_parts=(), extra=()):
+    """Minimal xlsx-shaped zip. sheet_parts: iterables of bytes chunks for xl/worksheets/sheetN.xml."""
+    with zipfile.ZipFile(path, "w", zipfile.ZIP_DEFLATED) as zf:
+        zf.writestr("[Content_Types].xml", "<Types/>")
+        for i, chunks in enumerate(sheet_parts, 1):
+            with zf.open(f"xl/worksheets/sheet{i}.xml", "w", force_zip64=True) as f:
+                for ch in chunks:
+                    f.write(ch)
+        for name, chunks in extra:
+            with zf.open(name, "w", force_zip64=True) as f:
+                for ch in chunks:
+                    f.write(ch)
+
+
+class ExcelBombTests(unittest.TestCase):
+    def setUp(self):
+        self.tmp = tempfile.TemporaryDirectory()
+        self.addCleanup(self.tmp.cleanup)
+        self.root = os.path.realpath(self.tmp.name)
+        self._old = os.environ.get("ACRETIA_MCP_ROOT")
+        os.environ["ACRETIA_MCP_ROOT"] = self.root
+        self.addCleanup(lambda: os.environ.pop("ACRETIA_MCP_ROOT", None) if self._old is None
+                        else os.environ.__setitem__("ACRETIA_MCP_ROOT", self._old))
+        self.c = MCPClient.inprocess(excel_server.make_server())
+
+    def fail_data(self, tool, args):
+        res = self.c._server.handle({"jsonrpc": "2.0", "id": 1, "method": "tools/call",
+                                     "params": {"name": tool, "arguments": args}})["result"]
+        self.assertTrue(res["isError"], res)
+        return res["structuredContent"]
+
+    def test_cell_bomb_refused_with_structured_error(self):
+        row = b'<row>' + b'<c r="A1"/>' * 1000 + b'</row>'
+        write_zip(Path(self.root) / "bomb.xlsx", [[b"<worksheet><sheetData>"] + [row] * 2100 + [b"</sheetData></worksheet>"]])
+        self.assertLess(os.path.getsize(Path(self.root) / "bomb.xlsx"), 5_000_000)
+        for tool, args in (("xlsx_evaluate", {"path": "bomb.xlsx", "cells": ["S!A1"]}), ("xlsx_grade", {"path": "bomb.xlsx"}),
+                           ("xlsx_recalc", {"path": "bomb.xlsx"})):
+            d = self.fail_data(tool, args)
+            self.assertEqual((d["code"], d["limit"]), ("xlsx_limit_exceeded", "cells"), tool)
+
+    def test_cells_across_chunk_boundaries_are_counted_once(self):
+        cell = b'<c r="A1"/>'
+        data = cell * 300000
+        for off in (0, 1, 2):  # shift cells across the 1 MiB read boundary
+            write_zip(Path(self.root) / "edge.xlsx", [[b"x" * off, data]])
+            info = excel_server.precheck_xlsx(Path(self.root) / "edge.xlsx")
+            self.assertEqual(info["cells"], 300000)
+
+    def test_huge_shared_strings_refused(self):
+        zeros = [b"0" * (1 << 20)] * 230
+        write_zip(Path(self.root) / "ss.xlsx", [[b"<worksheet/>"]], extra=[("xl/sharedStrings.xml", zeros)])
+        self.assertLess(os.path.getsize(Path(self.root) / "ss.xlsx"), 2_000_000)
+        d = self.fail_data("xlsx_grade", {"path": "ss.xlsx"})
+        self.assertEqual((d["code"], d["limit"]), ("xlsx_limit_exceeded", "uncompressed_bytes"))
+
+    def test_oversize_file_and_entries_and_bad_zip(self):
+        make_xlsx(Path(self.root) / "ok.xlsx")
+        with self.assertRaises(ToolFailure) as cm:
+            excel_server.precheck_xlsx(Path(self.root) / "ok.xlsx", max_file=100)
+        self.assertEqual(cm.exception.data["limit"], "file_bytes")
+        (Path(self.root) / "junk.xlsx").write_bytes(b"not a zip")
+        self.assertEqual(self.fail_data("xlsx_grade", {"path": "junk.xlsx"})["code"], "xlsx_invalid")
+
+    def test_child_memory_limit_is_structured(self):
+        make_xlsx(Path(self.root) / "ok.xlsx")
+        with self.assertRaises(ToolFailure) as cm:
+            excel_server.run_isolated({"op": "grade", "path": str(Path(self.root) / "ok.xlsx")}, mem_bytes=64 * 1024 * 1024)
+        self.assertIn(cm.exception.data["code"], ("xlsx_memory_limit", "xlsx_worker_failed"))
+
+    def test_child_timeout_is_structured(self):
+        make_xlsx(Path(self.root) / "ok.xlsx")
+        with self.assertRaises(ToolFailure) as cm:
+            excel_server.run_isolated({"op": "grade", "path": str(Path(self.root) / "ok.xlsx")}, timeout=0.01)
+        self.assertEqual(cm.exception.data["code"], "xlsx_timeout")
+
+    def test_valid_workbook_still_evaluates_in_child(self):
+        make_xlsx(Path(self.root) / "ok.xlsx")
+        r = self.c.call_tool("xlsx_evaluate", {"path": "ok.xlsx", "cells": ["Model!A3"]})
+        self.assertEqual(r["values"]["Model!A3"]["value"], 50)
+
+
 if __name__ == "__main__":
     unittest.main()

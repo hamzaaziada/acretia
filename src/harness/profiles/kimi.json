@@ -23,8 +23,17 @@
     "json_mode": "json_object; validate output locally"
   },
   "price_per_mtok": {
-    "input": 0.6,
-    "output": 2.5
+    "input": 1.2,
+    "output": 5.0
   },
-  "notes": "price_per_mtok is list price in USD per million tokens, approximate; update before relying on cost reports."
+  "notes": "price_per_mtok is the highest-priced listed model, USD per million tokens (conservative). Not verified this pass; conservative. Unverified: price_verified is false.",
+  "prices_per_mtok_by_model": {
+    "kimi-k2": {
+      "input": 1.2,
+      "output": 5.0
+    }
+  },
+  "price_verified": false,
+  "price_date": "2026-11-16",
+  "price_source": []
 }

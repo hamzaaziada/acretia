@@ -28,8 +28,21 @@
     "style": "explicit numbered steps; vision tasks must go to another family"
   },
   "price_per_mtok": {
-    "input": 0.28,
-    "output": 0.42
+    "input": 0.6,
+    "output": 2.2
   },
-  "notes": "price_per_mtok is list price in USD per million tokens, approximate; update before relying on cost reports."
+  "notes": "price_per_mtok is the highest-priced listed model, USD per million tokens (conservative). Not verified this pass; conservative (above the last known list price). Unverified: price_verified is false.",
+  "prices_per_mtok_by_model": {
+    "deepseek-chat": {
+      "input": 0.6,
+      "output": 2.2
+    },
+    "deepseek-reasoner": {
+      "input": 0.6,
+      "output": 2.2
+    }
+  },
+  "price_verified": false,
+  "price_date": "2026-11-16",
+  "price_source": []
 }

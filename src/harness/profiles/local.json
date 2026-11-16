@@ -29,5 +29,14 @@
     "input": 0.0,
     "output": 0.0
   },
-  "notes": "price_per_mtok is list price in USD per million tokens, approximate; update before relying on cost reports."
+  "notes": "Self-hosted (Ollama/vLLM): no per-token price, USD 0. The ledger prices bare open-weight ids such as 'qwen2.5:7b' at conservative hosted rates unless the model id is prefixed 'ollama:' or 'local:'.",
+  "prices_per_mtok_by_model": {
+    "qwen2.5:7b": {
+      "input": 0.0,
+      "output": 0.0
+    }
+  },
+  "price_verified": true,
+  "price_date": "2026-11-16",
+  "price_source": []
 }

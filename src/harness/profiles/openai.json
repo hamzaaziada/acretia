@@ -24,8 +24,39 @@
     "style": "short imperative system prompts"
   },
   "price_per_mtok": {
-    "input": 2.0,
-    "output": 8.0
+    "input": 15.0,
+    "output": 120.0
   },
-  "notes": "price_per_mtok is list price in USD per million tokens, approximate; update before relying on cost reports."
+  "notes": "price_per_mtok is the highest-priced listed model, USD per million tokens (conservative). Standard tier.",
+  "prices_per_mtok_by_model": {
+    "gpt-4.1": {
+      "input": 2.0,
+      "output": 8.0
+    },
+    "gpt-4.1-mini": {
+      "input": 0.4,
+      "output": 1.6
+    },
+    "gpt-5": {
+      "input": 1.25,
+      "output": 10.0
+    },
+    "gpt-5-mini": {
+      "input": 0.25,
+      "output": 2.0
+    },
+    "gpt-5-pro": {
+      "input": 15.0,
+      "output": 120.0
+    },
+    "gpt-4o": {
+      "input": 2.5,
+      "output": 10.0
+    }
+  },
+  "price_verified": true,
+  "price_date": "2026-11-16",
+  "price_source": [
+    "https://developers.openai.com/api/docs/pricing"
+  ]
 }

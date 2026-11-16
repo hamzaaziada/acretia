@@ -38,8 +38,27 @@
     "style": "numbered method, minimal examples"
   },
   "price_per_mtok": {
-    "input": 3.0,
-    "output": 15.0
+    "input": 4.0,
+    "output": 20.0
   },
-  "notes": "price_per_mtok is list price in USD per million tokens, approximate; update before relying on cost reports."
+  "notes": "price_per_mtok is the highest-priced listed model, USD per million tokens (conservative). Haiku 5.5 lists two price rows; the higher one is used.",
+  "prices_per_mtok_by_model": {
+    "claude-sonnet-5-5": {
+      "input": 2.0,
+      "output": 10.0
+    },
+    "claude-haiku-5-5": {
+      "input": 0.5,
+      "output": 2.5
+    },
+    "claude-opus-5-5": {
+      "input": 4.0,
+      "output": 20.0
+    }
+  },
+  "price_verified": true,
+  "price_date": "2026-11-16",
+  "price_source": [
+    "https://platform.claude.com/docs/en/about-claude/pricing"
+  ]
 }
