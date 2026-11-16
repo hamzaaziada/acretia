@@ -429,7 +429,7 @@ def _v_derived(fig, expr, resolver, tol, kind, scale, pool, stack):
         name = f"v{len(names)}"
         names[name] = (m.group(1).strip(), (m.group(2) or "").strip())
         return name
-    py_expr = _REF.sub(sub, expr)
+    py_expr = _REF.sub(sub, expr).strip()
     for name, (lab, per) in names.items():
         cands = [p for p in pool if p.label.strip().casefold() == lab.casefold() and p is not fig
                  and id(p) not in stack]
