@@ -87,3 +87,5 @@ Newest last. Each entry gives the choice and why. Agents add entries here instea
   - MBB: 0 overlap, ≥0.25 in margins and a 12-column grid; ≤2 font families and ≤4 sizes; no archetype on more than 40% of slides; eyebrows banned and checked geometrically.
   - PE: downside ≥20% below base EBITDA; covenant headroom ≥20%; add-backs above 20% of EBITDA flagged; a 9-category risk taxonomy.
   Other sessions' deterministic validators should adopt these values or log why not.
+- **D-S6-03 (2026-11-17) Figure period gate.** A cited figure's `as_of` (the date of the source's information) must be on or after the figure's period end and not in the future. Comparatives restated in a later filing are valid. A period string must resolve to exactly one fiscal period.
+- **D-S6-04 (2026-11-17) Slide number check exemptions.** Every number in a research SlideSpec must match a verified figure, except ISO dates, years 1900–2100, slide/section ordinals and unitless integers 0–20 used as counts. Anything with a unit, currency, % or multiple is always checked.
