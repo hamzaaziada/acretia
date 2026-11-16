@@ -1,0 +1,2758 @@
+# English line-item label variants (S8.2). One label per line; `neg` = the label denotes the negative
+# (loss / outflow / decrease) of the key (sign_hint -1). Labels are normalised on load (om.intl.labels).
+version: 1
+lang: en
+labels:
+  revenue:
+    pos: |
+      Revenue
+      Revenues
+      Total revenue
+      Total revenues
+      Net revenue
+      Net revenues
+      Revenue, net
+      Sales
+      Net sales
+      Sales, net
+      Total sales
+      Turnover
+      Operating revenue
+      Operating revenues
+      Revenue from contracts with customers
+      Revenue from operations
+      Revenue from sale of goods
+      Revenue from sale of goods and services
+      Sale of goods and rendering of services
+      Revenue from rendering of services
+      Sales and services revenue
+      Contract revenue
+      Total operating revenue
+      Income from operations
+      Gross revenue
+      Gross sales
+      Net operating revenue
+      Revenue from sales
+      Revenue from continuing operations
+      Sales revenue
+      Total income from sales
+      Revenue and other operating income
+      Revenue from goods and services
+      Net turnover
+      Revenue (net)
+      Revenue - net
+      Services revenue
+      Product sales
+  cogs:
+    pos: |
+      Cost of revenue
+      Cost of revenues
+      Cost of sales
+      Cost of goods sold
+      Cost of goods and services sold
+      Cost of sales and services
+      Cost of services
+      Cost of services rendered
+      Direct costs
+      Direct cost
+      Cost of operations
+      Cost of operating revenue
+      Cost of products sold
+      Cost of contracts
+      Cost of revenue from contracts with customers
+      Cost of materials and services
+      Cost of sales (excluding depreciation)
+      Costs of sales
+      Cost of goods sold (COGS)
+      Direct operating costs
+      Cost of sales, net
+      Operating costs
+      Cost of revenue, excluding depreciation
+      Total cost of sales
+      Total cost of revenue
+      Costs of revenue
+      Cost of production and services
+  gross_profit:
+    pos: |
+      Gross profit
+      Gross profit/(loss)
+      Gross profit (loss)
+      Gross income
+      Gross margin
+      Gross result
+      Total gross profit
+      Gross operating profit
+      Profit from sales
+      Gross profit for the year
+      Trading profit
+      Profit before operating expenses
+    neg: |
+      Gross loss
+  rd:
+    pos: |
+      Research and development
+      Research and development expenses
+      Research and development costs
+      Research & development
+      R&D expenses
+      Research expenses
+      Research and development expense
+      Product development expenses
+      Technology and development
+  sga:
+    pos: |
+      Selling, general and administrative expenses
+      Selling, general and administrative
+      Selling general and administrative expenses
+      SG&A
+      SG&A expenses
+      Selling and administrative expenses
+      Selling and administration expenses
+      Selling, distribution and administrative expenses
+      Selling, marketing and administrative expenses
+      General, selling and administrative expenses
+      Selling, general and administration expenses
+      Selling and distribution and general and administrative expenses
+      Operating expenses
+      Total operating expenses
+      Administrative and selling expenses
+      Sales, general and administrative expenses
+      Commercial and administrative expenses
+      General and selling expenses
+      Selling and general expenses
+      Distribution and administrative expenses
+      Total selling, general and administrative expenses
+  ebit:
+    pos: |
+      Operating profit
+      Operating income
+      Operating profit/(loss)
+      Operating income/(loss)
+      Profit from operations
+      Profit from operating activities
+      Income from operating activities
+      Operating profit for the year
+      Results from operating activities
+      Profit from operations before finance costs
+      Operating result
+      Operating earnings
+      EBIT
+      Earnings before interest and tax
+      Earnings before interest and taxes
+      Profit before finance costs and tax
+      Profit before interest and tax
+      Profit before interest and taxes
+      Profit before finance costs
+      Income from operations before finance costs
+      Net operating profit
+      Net operating income
+      Operating profit before finance costs
+      Profit from main operations
+      Main operations profit
+      Operating profit (EBIT)
+      Profit from core operations
+      Profit from operations (EBIT)
+      Total operating profit
+      Operating (loss)/profit
+      Operating profit/(loss) for the year
+      Results of operating activities
+      Profit from operating activities before finance costs
+    neg: |
+      Operating loss
+      Loss from operations
+      Loss from operating activities
+      Operating loss for the year
+      Net operating loss
+      Loss before finance costs and tax
+      Loss before interest and tax
+  interest_expense:
+    pos: |
+      Interest expense
+      Interest expenses
+      Finance costs
+      Finance cost
+      Finance charges
+      Financial charges
+      Financial expenses
+      Finance expenses
+      Interest and finance charges
+      Interest on borrowings
+      Interest on loans and borrowings
+      Interest and similar expenses
+      Borrowing costs
+      Interest paid on borrowings
+      Interest expense on borrowings
+      Financing costs
+      Financing expenses
+      Bank charges and interest
+      Interest and commission expense
+      Profit expense on borrowings
+      Finance costs on borrowings
+      Interest and other finance costs
+      Cost of finance
+      Return paid on Islamic financing
+      Murabaha finance costs
+  interest_income:
+    pos: |
+      Interest income
+      Finance income
+      Finance income, net
+      Financial income
+      Interest and other income
+      Interest on deposits
+      Income from bank deposits
+      Interest income on deposits
+      Investment income
+      Interest and investment income
+      Income from short-term deposits
+      Profit on deposits
+      Murabaha deposit income
+      Income from murabaha deposits
+      Return on deposits
+      Interest and similar income
+      Income on bank balances
+      Finance revenue
+      Interest earned
+      Income from Islamic deposits
+  pretax:
+    pos: |
+      Profit before tax
+      Profit before income tax
+      Profit before taxation
+      Profit before income taxes
+      Profit before taxes
+      Profit before zakat and income tax
+      Profit before zakat and tax
+      Profit before zakat and income taxes
+      Profit before zakat, income tax
+      Profit before zakat and taxation
+      Profit before zakat
+      Income before tax
+      Income before income taxes
+      Income before taxes
+      Earnings before tax
+      Earnings before income tax
+      Net profit before tax
+      Net profit before income tax
+      Net profit before taxes
+      Net profit before zakat and income tax
+      Profit for the year before tax
+      Profit for the year before zakat and tax
+      Profit for the year before income tax
+      Profit from continuing operations before tax
+      Profit before tax from continuing operations
+      Profit before income tax from continuing operations
+      Profit/(loss) before tax
+      Profit (loss) before tax
+      Profit/(loss) before income tax
+      Profit before tax and zakat
+      Profit before provision for income tax
+      Profit before taxation and zakat
+      Income before zakat and income tax
+      Income before provision for taxes
+      Net income before tax
+      PBT
+      Profit before tax (PBT)
+      Pre-tax profit
+      Pre-tax income
+      Pretax income
+      Pretax profit
+      Profit before taxes on income
+      Net profit before deducting tax
+    neg: |
+      Loss before tax
+      Loss before income tax
+      Loss before taxation
+      Loss before zakat and income tax
+      Loss before zakat and tax
+      Loss before income taxes
+      Net loss before tax
+      Net loss before zakat and income tax
+      Loss for the year before tax
+      Pre-tax loss
+      Pretax loss
+  tax:
+    pos: |
+      Income tax
+      Income tax expense
+      Income taxes
+      Income tax expenses
+      Taxation
+      Tax expense
+      Tax
+      Taxes
+      Provision for income tax
+      Provision for income taxes
+      Provision for taxation
+      Provision for tax
+      Current income tax
+      Income tax expense for the year
+      Tax charge
+      Income tax charge
+      Taxation charge
+      Income tax provision
+      Zakat and income tax
+      Zakat and tax
+      Zakat and income tax expense
+      Zakat and taxation
+      Provision for zakat and income tax
+      Zakat and income taxes
+      Corporate income tax
+      Corporate tax
+      Corporate tax expense
+      Income tax expense (benefit)
+      Income tax expense/(credit)
+      Income tax (expense)/credit
+      Income taxes on continuing operations
+      Tax on profit
+      Tax on profit for the year
+      Income tax expense continuing operations
+      Taxes on income
+      Current and deferred tax
+      Current and deferred income tax
+      Income tax - current and deferred
+      Total tax expense
+      Total income tax expense
+      Deferred income tax
+      Deferred tax
+      Current tax
+      Current tax expense
+      Tax expenses
+      Tax expense for the year
+    neg: |
+      Income tax benefit
+      Income tax credit
+      Tax credit
+      Tax benefit
+      Taxation credit
+  net_income:
+    pos: |
+      Net income
+      Net profit
+      Net earnings
+      Profit for the year
+      Profit for the period
+      Net profit for the year
+      Net profit for the period
+      Net income for the year
+      Net income for the period
+      Net income attributable to owners of the parent
+      Profit attributable to owners of the parent
+      Profit attributable to the owners of the parent
+      Profit attributable to equity holders of the parent
+      Profit attributable to equity holders
+      Profit attributable to shareholders
+      Profit attributable to the shareholders of the company
+      Profit attributable to owners of the company
+      Profit attributable to equity holders of the company
+      Net profit attributable to shareholders
+      Net profit attributable to shareholders of the parent company
+      Net profit attributable to equity holders of the parent
+      Net profit attributable to owners of the parent
+      Net profit attributable to the owners of the company
+      Net income attributable to shareholders
+      Net income attributable to common shareholders
+      Net income attributable to the company
+      Net profit attributable to the company
+      Net profit after tax
+      Net profit after zakat and income tax
+      Net profit after zakat and tax
+      Net profit after income tax
+      Net profit after taxation
+      Net income after tax
+      Profit after tax
+      Profit after taxation
+      Profit after income tax
+      Profit after zakat and income tax
+      Profit after zakat and tax
+      Profit after zakat
+      Profit for the year after tax
+      Profit for the year from continuing operations
+      Profit from continuing operations
+      Net profit from continuing operations
+      Net profit for the year attributable to owners of the parent
+      Net profit/(loss)
+      Net profit (loss)
+      Net profit/(loss) for the year
+      Profit/(loss) for the year
+      Profit (loss) for the year
+      Profit/(loss) for the period
+      Net income/(loss)
+      Net income (loss)
+      Net income/(loss) for the year
+      Income for the year
+      Earnings for the year
+      Net result for the year
+      Net results
+      Net profit of the year
+      Total profit for the year
+      Net profit for the year after tax
+      Net profit after tax and zakat
+      Net income after zakat and income tax
+      Net income after zakat and tax
+      Profit attributable to ordinary shareholders
+      Profit attributable to ordinary equity holders of the parent
+      Net profit attributable to ordinary shareholders
+      Profit for the year attributable to equity holders of the bank
+      Net profit attributable to equity holders of the bank
+      Profit attributable to owners of the Bank
+      Profit for the year attributable to shareholders of the company
+      Profit for the year attributable to the owners
+    neg: |
+      Net loss
+      Net loss for the year
+      Net loss for the period
+      Loss for the year
+      Loss for the period
+      Loss after tax
+      Loss after zakat and income tax
+      Net loss after tax
+      Net loss attributable to owners of the parent
+      Loss attributable to owners of the parent
+      Net loss attributable to shareholders
+      Loss attributable to equity holders of the parent
+      Loss attributable to shareholders
+      Net loss after zakat and income tax
+      Net loss after zakat and tax
+      Net loss for the year attributable to owners of the parent
+  diluted_shares:
+    pos: |
+      Diluted weighted average number of shares
+      Weighted average number of diluted shares
+      Weighted average number of ordinary shares - diluted
+      Weighted average diluted shares
+      Weighted average number of shares outstanding - diluted
+      Diluted shares outstanding
+      Weighted average number of ordinary shares for diluted earnings per share
+      Weighted average shares for diluted EPS
+      Diluted weighted average shares outstanding
+      Number of diluted shares
+      Weighted average number of shares (diluted)
+  eps_diluted:
+    pos: |
+      Diluted earnings per share
+      Earnings per share - diluted
+      Diluted EPS
+      Diluted earnings/(loss) per share
+      Diluted (loss)/earnings per share
+      Diluted earnings per share (in EGP)
+      Diluted earnings per share (SAR)
+      Diluted earnings per ordinary share
+      Earnings per share (diluted)
+      Diluted earnings per share attributable to owners of the parent
+      Diluted earnings per share from continuing operations
+      Diluted profit per share
+      Diluted earnings per share (AED)
+  cash:
+    pos: |
+      Cash and cash equivalents
+      Cash and equivalents
+      Cash and bank balances
+      Cash and balances with banks
+      Cash and short-term deposits
+      Cash at banks and on hand
+      Cash on hand and at banks
+      Cash in hand and at banks
+      Cash at bank and in hand
+      Cash and cash balances
+      Cash
+      Cash and bank
+      Cash and cash equivalent
+      Cash and deposits
+      Bank balances and cash
+      Cash and short term deposits
+      Cash on hand and bank balances
+      Cash and balances at central bank
+      Cash and cash equivalents at end of year
+      Cash with banks
+      Cash and banks
+      Cash and cash in hand
+      Cash in hand and at bank
+      Balances with banks and cash
+      Cash balances
+      Cash and term deposits
+      Bank balances
+      Cash and cash equivalents (note)
+  sti:
+    pos: |
+      Short-term investments
+      Short term investments
+      Current investments
+      Marketable securities
+      Investments at fair value through profit or loss
+      Financial assets at fair value through profit or loss
+      Short-term deposits
+      Term deposits
+      Murabaha deposits
+      Short-term murabaha deposits
+      Time deposits
+      Investments held for trading
+      Other current financial assets
+      Investments in securities - current
+      Financial investments - current
+      Deposits with original maturity of more than three months
+      Fixed deposits
+      Short term deposits
+      Treasury bills
+      Current financial investments
+      Investment in treasury bills
+      Held to maturity investments - current
+      Financial assets at fair value through other comprehensive income - current
+      Current portion of investments
+  ar:
+    pos: |
+      Accounts receivable
+      Trade receivables
+      Trade and other receivables
+      Accounts receivable, net
+      Trade receivables, net
+      Trade and other receivables, net
+      Receivables
+      Receivables, net
+      Trade accounts receivable
+      Customers receivables
+      Receivables from customers
+      Trade debtors
+      Debtors
+      Accounts and other receivables
+      Notes and accounts receivable
+      Trade and notes receivable
+      Accounts receivable and prepayments
+      Trade receivables and other debit balances
+      Trade and other debit balances
+      Customers and notes receivable
+      Customers, notes receivable and other debit balances
+      Debtors and other debit balances
+      Trade receivables and other current assets
+      Receivables and prepayments
+      Due from customers
+      Accounts receivable - net
+      Current trade receivables
+      Contract receivables
+      Trade and other current receivables
+      Accounts receivable and other receivables
+      Net trade receivables
+  inventory:
+    pos: |
+      Inventory
+      Inventories
+      Inventories, net
+      Inventory, net
+      Net inventories
+      Merchandise inventory
+      Stock
+      Stocks
+      Stock in trade
+      Inventories and spare parts
+      Inventory and spare parts
+      Finished goods
+      Raw materials and consumables
+      Inventories (net)
+      Total inventories
+      Stores and spares
+      Inventory (net of provision)
+      Inventory - net
+      Materials and supplies
+      Goods for resale
+      Merchandise stock
+      Current inventories
+      Inventories at lower of cost and net realisable value
+  current_assets:
+    pos: |
+      Total current assets
+      Current assets
+      Total current assets (A)
+      Current assets total
+      Sum of current assets
+      Total of current assets
+      Total current assets, net
+      Current assets, total
+      Net current assets before current liabilities
+      Total short-term assets
+      Total short term assets
+      Total circulating assets
+      Total liquid assets
+      Total of current assets (I)
+  ppe:
+    pos: |
+      Property, plant and equipment
+      Property, plant and equipment, net
+      Property plant and equipment
+      Property and equipment
+      Property and equipment, net
+      Plant and equipment
+      Fixed assets
+      Fixed assets, net
+      Net fixed assets
+      Tangible fixed assets
+      Property, plant, and equipment
+      PP&E
+      PP&E, net
+      Property, plant and equipment (net)
+      Property, plants and equipment
+      Land, buildings and equipment
+      Premises and equipment
+      Property, machinery and equipment
+      Capital assets
+      Net property, plant and equipment
+      Total property, plant and equipment
+      Fixed assets (net)
+      Property plant & equipment
+      Property and equipment, net of depreciation
+      Tangible assets
+      Buildings and equipment
+      Land and buildings
+      Net book value of property, plant and equipment
+  goodwill:
+    pos: |
+      Goodwill
+      Goodwill, net
+      Goodwill on acquisition
+      Goodwill and other intangible assets
+      Goodwill arising on business combination
+      Goodwill (net)
+      Goodwill on consolidation
+      Positive goodwill
+      Acquisition goodwill
+  intangibles:
+    pos: |
+      Intangible assets
+      Intangible assets, net
+      Intangible assets other than goodwill
+      Other intangible assets
+      Intangibles
+      Intangible assets (net)
+      Net intangible assets
+      Intangible assets and goodwill
+      Computer software
+      Software
+      Licences and intangible assets
+      Licenses and intangible assets
+      Franchise rights and other intangibles
+      Brands and other intangible assets
+      Other intangibles
+      Intangible assets, excluding goodwill
+      Intangible assets - net
+      Customer relationships and other intangible assets
+      Software and licences
+  assets:
+    pos: |
+      Total assets
+      Assets, total
+      Total of assets
+      Total assets (A+B)
+      Sum of assets
+      Total assets (reported)
+      TOTAL ASSETS
+      Assets total
+      Total assets (I+II)
+      Total group assets
+      Total asset
+      Aggregate assets
+      Grand total assets
+      Total of all assets
+  ap:
+    pos: |
+      Accounts payable
+      Trade payables
+      Trade and other payables
+      Trade and other payables, net
+      Accounts payable and accruals
+      Accounts payable and accrued expenses
+      Payables
+      Trade creditors
+      Trade creditors and other payables
+      Creditors and accruals
+      Accounts payable, net
+      Suppliers and other payables
+      Suppliers and notes payable
+      Suppliers
+      Suppliers and other credit balances
+      Trade payables and accruals
+      Trade payables and other liabilities
+      Trade and other current payables
+      Accounts payable and other payables
+      Accounts and notes payable
+      Payables and accruals
+      Accounts payable and other liabilities
+      Trade and notes payable
+      Trade payables, net
+      Accounts payable - trade
+      Creditors
+      Due to suppliers
+      Trade payable
+      Payables and other credit balances
+      Accrued expenses and other payables
+      Trade payables and other current liabilities
+      Accrued expenses and other liabilities
+      Accounts payable and accrued liabilities
+  debt_current:
+    pos: |
+      Short-term debt
+      Short term debt
+      Short-term borrowings
+      Short term borrowings
+      Current borrowings
+      Current portion of long-term debt
+      Current portion of long term debt
+      Current portion of loans and borrowings
+      Current portion of borrowings
+      Current portion of term loans
+      Current maturities of long-term debt
+      Bank overdraft and short-term loans
+      Bank overdrafts
+      Bank overdraft
+      Short-term loans
+      Short term loans
+      Short-term bank borrowings
+      Bank borrowings - current
+      Loans and borrowings - current
+      Current portion of loans
+      Current portion of long-term loans
+      Current portion of bank loans
+      Current portion of interest-bearing loans and borrowings
+      Interest-bearing loans and borrowings - current
+      Short-term murabaha financing
+      Murabaha payable - current
+      Current portion of Islamic financing
+      Current portion of term loan
+      Banks - credit balances
+      Facilities from banks - current portion
+      Notes payable and bank overdraft
+      Current portion of long-term borrowings
+      Short-term bank loans and overdrafts
+      Credit facilities - current
+      Borrowings - current
+      Current borrowings and bank overdrafts
+      Short-term financing
+      Bank facilities - current
+      Due to banks
+      Short-term bank facilities
+  current_liabilities:
+    pos: |
+      Total current liabilities
+      Current liabilities
+      Total current liabilities (B)
+      Sum of current liabilities
+      Total short-term liabilities
+      Total short term liabilities
+      Current liabilities, total
+      Total of current liabilities
+      Total current liability
+      Total of current liabilities (II)
+      Total circulating liabilities
+  debt_noncurrent:
+    pos: |
+      Long-term debt
+      Long term debt
+      Long-term borrowings
+      Long term borrowings
+      Non-current borrowings
+      Noncurrent borrowings
+      Long-term loans
+      Long term loans
+      Loans and borrowings - non-current
+      Loans and borrowings, non-current portion
+      Borrowings - non-current
+      Long-term bank loans
+      Term loans
+      Term loans - non-current
+      Bank loans - non-current portion
+      Long-term murabaha financing
+      Murabaha payable - non-current
+      Long-term Islamic financing
+      Long-term financing
+      Non-current portion of long-term debt
+      Non-current portion of loans and borrowings
+      Non-current portion of term loans
+      Debt, non-current
+      Bonds and notes payable
+      Bonds payable
+      Sukuk
+      Sukuk payable
+      Long-term sukuk
+      Interest-bearing loans and borrowings - non-current
+      Long-term loans and borrowings
+      Non-current loans
+      Loans and facilities - non-current
+      Credit facilities - non-current
+      Loans from banks - long term
+      Long-term debt, net of current portion
+      Long term borrowings, net of current portion
+      Facilities from banks - non-current
+      Debt securities issued
+  liabilities:
+    pos: |
+      Total liabilities
+      Liabilities, total
+      Total of liabilities
+      Total liabilities (reported)
+      Sum of liabilities
+      TOTAL LIABILITIES
+      Total liabilities (I+II)
+      Total group liabilities
+      Total liability
+      Total of all liabilities
+      Aggregate liabilities
+  equity_parent:
+    pos: |
+      Equity attributable to owners of the parent
+      Equity attributable to the owners of the parent
+      Equity attributable to shareholders of the parent
+      Equity attributable to equity holders of the parent
+      Equity attributable to owners of the company
+      Equity attributable to shareholders of the company
+      Equity attributable to equity holders of the company
+      Equity attributable to the shareholders of the company
+      Total equity attributable to owners of the parent
+      Total equity attributable to shareholders of the parent
+      Total equity attributable to equity holders of the parent
+      Total equity attributable to equity holders of the Company
+      Total equity attributable to shareholders of the Company
+      Total shareholders' equity
+      Total shareholders equity
+      Shareholders' equity
+      Shareholders equity
+      Total equity attributable to owners of the Company
+      Equity attributable to parent company shareholders
+      Equity attributable to the company's shareholders
+      Equity attributable to the Bank's shareholders
+      Total equity attributable to the shareholders of the Bank
+      Total equity attributable to the owners
+      Equity attributable to owners
+      Total stockholders' equity
+      Total stockholders equity
+      Equity of the parent company
+      Equity attributable to the parent
+      Total equity attributable to the company's shareholders
+      Equity attributable to parent
+      Total equity of the owners of the company
+      Equity attributable to shareholders
+      Total equity before non-controlling interests
+      Total equity before non controlling interest
+      Equity before non-controlling interests
+      Total shareholders' equity before non-controlling interests
+      Total owners' equity
+      Owners' equity
+  liabilities_equity:
+    pos: |
+      Total liabilities and equity
+      Total liabilities and shareholders' equity
+      Total equity and liabilities
+      Total liabilities and stockholders' equity
+      Total liabilities & equity
+      Total equity & liabilities
+      Total liabilities and owners' equity
+      Total liabilities and shareholders equity
+      Equity and liabilities, total
+      Total of liabilities and equity
+      Total shareholders' equity and liabilities
+      Total of equity and liabilities
+      Total liabilities, equity
+      Total equity and liability
+      TOTAL EQUITY AND LIABILITIES
+      Total liabilities and total equity
+      Total capital and liabilities
+      Total liabilities, non-controlling interests and equity
+      Total liabilities and capital
+  equity_total:
+    pos: |
+      Total equity
+      Total equity including non-controlling interests
+      Total equity including non controlling interests
+      Total equity, including non-controlling interests
+      Equity, total
+      Total of equity
+      Total shareholders' equity including non-controlling interests
+      Total equity and non-controlling interests
+      Total equity (including non-controlling interests)
+      Net assets
+      Total net assets
+      Net equity
+      Total owners' equity including NCI
+      Total equity incl. non-controlling interests
+      Total stockholders' equity including noncontrolling interest
+      Total equity of the group
+      Group equity
+      TOTAL EQUITY
+      Equity
+      Total capital and reserves
+      Capital and reserves
+      Total equity and reserves
+      Shareholders' funds
+      Total shareholders' funds
+      Total equity (A)
+  cf_net_income:
+    pos: |
+      Net profit before adjustments
+      Profit for the year before adjustments
+      Net profit for the year before adjustments
+      Net income including non-controlling interests
+      Profit for the year including non-controlling interests
+      Profit for the year (including non-controlling interests)
+      Profit for the year before non-controlling interests
+      Net profit before non-controlling interests
+      Net income before non-controlling interests
+      Net income (including noncontrolling interest)
+      Consolidated net income
+      Consolidated profit for the year
+      Consolidated net profit
+      Net profit for the year including non-controlling interests
+      Profit for the year, including non-controlling interests
+      Net profit for the year (including non-controlling interests)
+      Net income for the year including non-controlling interests
+      Total profit for the year including non-controlling interests
+      Operating activities: profit for the year
+      Cash flows from operating activities: net profit
+      Profit for the year before adjustments for
+      Net income from operations before adjustments
+      Net profit for the year after tax before adjustments
+      Total profit and comprehensive income for the year
+      Profit for the year before working capital changes
+      Net profit before working capital changes
+      Profit before changes in working capital
+      Profit/(loss) for the year before adjustments
+      Total comprehensive profit including non-controlling interests
+      Net profit as per statement of profit or loss
+  da:
+    pos: |
+      Depreciation and amortisation
+      Depreciation and amortization
+      Depreciation & amortisation
+      Depreciation & amortization
+      D&A
+      Depreciation, amortisation and impairment
+      Depreciation, amortization and impairment
+      Depreciation and amortisation expense
+      Depreciation and amortization expense
+      Depreciation and amortisation of property, plant and equipment and intangible assets
+      Depreciation of property, plant and equipment and amortisation of intangible assets
+      Depreciation, amortisation
+      Depreciation and amortisation charge
+      Amortisation and depreciation
+      Amortization and depreciation
+      Depreciation, depletion and amortisation
+      Depreciation, depletion and amortization
+      Depreciation and amortisation for the year
+      Depreciation and amortization for the year
+      Total depreciation and amortisation
+      Total depreciation and amortization
+      Depreciation, amortisation and impairment losses
+      Depreciation and amortisation of fixed and intangible assets
+      Depreciation, amortisation and depletion
+      Depreciation and amortisation (incl. right-of-use assets)
+      Depreciation and amortization of PP&E and intangibles
+      Charge for depreciation and amortisation
+      Depreciation charge for the year
+      Depreciation for the year
+      Depreciation of fixed assets
+      Depreciation of property, plant and equipment
+      Depreciation of property and equipment
+      Depreciation of PP&E
+      Amortisation of intangible assets
+      Amortization of intangible assets
+      Amortisation
+      Amortization
+      Depreciation
+  sbc:
+    pos: |
+      Share-based payments
+      Share based payments
+      Share-based compensation
+      Share based compensation
+      Stock-based compensation
+      Stock based compensation
+      Stock-based compensation expense
+      Share-based payment expense
+      Share-based payment transactions
+      Employee share-based payments
+      Employee share option scheme expense
+      Equity-settled share-based payments
+      Employee stock ownership plan expense
+      Employee share-based payment expense
+      Employee incentive scheme expense
+      Share option expense
+      Long-term incentive plan expense
+      Equity-settled share based payment
+      Share-based payment charge
+  cfo:
+    pos: |
+      Net cash from operating activities
+      Net cash provided by operating activities
+      Net cash generated from operating activities
+      Net cash flows from operating activities
+      Net cash flow from operating activities
+      Net cash flows generated from operating activities
+      Net cash inflow from operating activities
+      Net cash from/(used in) operating activities
+      Net cash (used in)/from operating activities
+      Net cash provided by/(used in) operating activities
+      Net cash generated from/(used in) operating activities
+      Net cash flows from/(used in) operating activities
+      Cash flows from operating activities
+      Cash generated from operating activities
+      Cash generated from operations
+      Cash flows from operations
+      Cash from operating activities
+      Cash provided by operating activities
+      Cash provided by operations
+      Net cash from operations
+      Net cash generated from operations
+      Total cash from operating activities
+      Net cash flows from operations
+      Net cash flow provided by operating activities
+      Net cash flows provided by operating activities
+      Net operating cash flow
+      Net operating cash flows
+      Operating cash flow
+      Operating cash flows
+      Net cash flows from operating activities after tax
+      Net cash from operating activities after zakat and tax
+      Net cash generated from operating activities after zakat and income tax
+      Net cash provided by operating activities (A)
+      Net cash flows from operating activities (A)
+      Net cash flows generated from/(used in) operating activities
+      Net cash flows from (used in) operating activities
+      Net cash provided by (used in) operating activities
+      Net cash inflows from operating activities
+      Net cash flows arising from operating activities
+      Cash flows generated from operating activities
+      Net cash inflow/(outflow) from operating activities
+      Net cash from operating activities, total
+      Cash from operations, net
+      Cash flows from operating activities, net
+      Net cash flows provided by operating activities, total
+    neg: |
+      Net cash used in operating activities
+      Net cash flows used in operating activities
+      Net cash outflow from operating activities
+      Net cash used in operations
+      Net cash flow used in operating activities
+      Cash used in operating activities
+      Cash used in operations
+      Net cash outflows from operating activities
+  capex:
+    pos: |
+      Purchase of property, plant and equipment
+      Purchases of property, plant and equipment
+      Purchase of property and equipment
+      Purchases of property and equipment
+      Additions to property, plant and equipment
+      Additions to property and equipment
+      Acquisition of property, plant and equipment
+      Acquisition of property and equipment
+      Capital expenditure
+      Capital expenditures
+      Capex
+      Payments for property, plant and equipment
+      Payments to acquire property, plant and equipment
+      Payments for purchase of property, plant and equipment
+      Payment for purchase of property and equipment
+      Purchase of fixed assets
+      Purchases of fixed assets
+      Acquisition of fixed assets
+      Additions to fixed assets
+      Additions to property, plant and equipment and intangible assets
+      Purchase of property, plant and equipment and intangible assets
+      Purchase of PP&E
+      Purchase of plant and equipment
+      Capital expenditure on property, plant and equipment
+      Expenditure on property, plant and equipment
+      Payments for capital expenditure
+      Payments to acquire fixed assets
+      Cash paid for purchase of property, plant and equipment
+      Purchase of tangible fixed assets
+      Payments for acquisition of property, plant and equipment
+      Purchase of property, plant and equipment and investment properties
+      Additions to capital work in progress
+      Capital work in progress additions
+      Payments for projects under construction
+      Purchase of premises and equipment
+      Acquisition of tangible assets
+  acquisitions:
+    pos: |
+      Acquisition of subsidiaries, net of cash acquired
+      Acquisition of subsidiary, net of cash acquired
+      Acquisition of business, net of cash acquired
+      Acquisitions, net of cash acquired
+      Acquisitions of businesses, net of cash acquired
+      Business combinations, net of cash acquired
+      Payment for acquisition of subsidiaries
+      Payments for acquisition of subsidiaries
+      Cash paid for acquisition of subsidiary
+      Acquisition of a subsidiary, net of cash
+      Purchase of subsidiary, net of cash acquired
+      Acquisition of businesses
+      Acquisition of subsidiaries
+      Net cash paid for business combination
+      Net cash outflow on acquisition of subsidiary
+      Purchase of subsidiaries
+      Cash paid on acquisition of businesses
+      Acquisition of subsidiary
+      Acquisition of subsidiaries net of cash
+      Cash outflow on business combination
+  cfi:
+    pos: |
+      Net cash from investing activities
+      Net cash provided by investing activities
+      Net cash flows from investing activities
+      Net cash flow from investing activities
+      Net cash from/(used in) investing activities
+      Net cash (used in)/from investing activities
+      Net cash provided by/(used in) investing activities
+      Net cash flows from/(used in) investing activities
+      Cash flows from investing activities
+      Cash from investing activities
+      Net cash generated from investing activities
+      Net cash inflow from investing activities
+      Net investing cash flow
+      Net investing cash flows
+      Investing cash flow
+      Net cash flows generated from investing activities
+      Net cash provided by (used in) investing activities
+      Net cash flows from (used in) investing activities
+      Net cash flows (used in)/from investing activities
+      Net cash inflow/(outflow) from investing activities
+      Net cash provided by investing activities (B)
+      Net cash flows from investing activities (B)
+      Net cash flows arising from investing activities
+      Total cash from investing activities
+      Net cash from investing activities, total
+    neg: |
+      Net cash used in investing activities
+      Net cash flows used in investing activities
+      Net cash outflow from investing activities
+      Net cash flow used in investing activities
+      Cash used in investing activities
+      Net cash used in investing activities (B)
+      Net cash outflows from investing activities
+      Net cash flows used in investing activities (B)
+  dividends:
+    pos: |
+      Dividends paid
+      Dividend paid
+      Dividends paid to shareholders
+      Dividends paid to owners of the parent
+      Dividends paid to equity holders of the parent
+      Dividends paid to the company's shareholders
+      Dividends paid to shareholders of the parent
+      Payment of dividends
+      Payments of dividends
+      Cash dividends paid
+      Cash dividends
+      Dividends paid to ordinary shareholders
+      Dividends distributed
+      Dividends distributed to shareholders
+      Dividend payments
+      Dividends paid on ordinary shares
+      Dividends paid to owners of the Company
+      Dividends paid to equity holders
+      Dividends paid, net
+      Dividends paid to the owners
+      Dividends paid (note)
+      Dividend distribution
+      Distributions to shareholders
+      Distributions paid to shareholders
+      Dividends paid to non-controlling interests and shareholders
+      Dividends paid to the parent company shareholders
+  buybacks:
+    pos: |
+      Purchase of treasury shares
+      Purchases of treasury shares
+      Repurchase of shares
+      Repurchase of common stock
+      Repurchase of ordinary shares
+      Share repurchases
+      Share buyback
+      Share buy-back
+      Shares repurchased
+      Acquisition of treasury shares
+      Payment for treasury shares
+      Payments for repurchase of shares
+      Purchase of own shares
+      Treasury shares purchased
+      Purchase of shares for employee share scheme
+      Purchase of treasury shares for employee incentive plan
+      Share buyback programme
+      Repurchases of common stock
+      Buyback of shares
+      Purchase of own shares for share-based payment
+  cff:
+    pos: |
+      Net cash from financing activities
+      Net cash provided by financing activities
+      Net cash flows from financing activities
+      Net cash flow from financing activities
+      Net cash from/(used in) financing activities
+      Net cash (used in)/from financing activities
+      Net cash provided by/(used in) financing activities
+      Net cash flows from/(used in) financing activities
+      Cash flows from financing activities
+      Cash from financing activities
+      Net cash generated from financing activities
+      Net cash inflow from financing activities
+      Net financing cash flow
+      Net financing cash flows
+      Financing cash flow
+      Net cash flows generated from financing activities
+      Net cash provided by (used in) financing activities
+      Net cash flows from (used in) financing activities
+      Net cash flows (used in)/from financing activities
+      Net cash inflow/(outflow) from financing activities
+      Net cash provided by financing activities (C)
+      Net cash flows from financing activities (C)
+      Net cash flows arising from financing activities
+      Total cash from financing activities
+      Net cash from financing activities, total
+    neg: |
+      Net cash used in financing activities
+      Net cash flows used in financing activities
+      Net cash outflow from financing activities
+      Net cash flow used in financing activities
+      Cash used in financing activities
+      Net cash used in financing activities (C)
+      Net cash outflows from financing activities
+      Net cash flows used in financing activities (C)
+  net_change_cash:
+    pos: |
+      Net increase in cash and cash equivalents
+      Net increase/(decrease) in cash and cash equivalents
+      Net (decrease)/increase in cash and cash equivalents
+      Net change in cash and cash equivalents
+      Net movement in cash and cash equivalents
+      Net increase (decrease) in cash and cash equivalents
+      Net (decrease) increase in cash and cash equivalents
+      Increase/(decrease) in cash and cash equivalents
+      (Decrease)/increase in cash and cash equivalents
+      Increase in cash and cash equivalents
+      Net change in cash
+      Net increase in cash
+      Net increase in cash and bank balances
+      Net increase/(decrease) in cash and bank balances
+      Change in cash and cash equivalents
+      Change in cash and cash equivalents during the year
+      Net increase in cash and cash equivalents during the year
+      Net increase/(decrease) in cash and cash equivalents during the year
+      Net change in cash and cash equivalents during the year
+      Net movement in cash
+      Net cash flow for the year
+      Net cash flows for the year
+      Net increase in cash and cash equivalents (A+B+C)
+      Net increase/(decrease) in cash and cash equivalents (A+B+C)
+      Net (decrease)/increase in cash and cash equivalents (A+B+C)
+      Net change in cash and cash equivalents before effect of exchange rates
+      Net increase/(decrease) in cash and cash equivalents before FX effect
+      Net change in cash and cash equivalents excluding FX effects
+      Net increase in cash and cash equivalents before exchange rate effects
+      Net cash flow
+      Net cash flows
+      Change in cash
+    neg: |
+      Net decrease in cash and cash equivalents
+      Net decrease in cash
+      Decrease in cash and cash equivalents
+      Net decrease in cash and bank balances
+      Net decrease in cash and cash equivalents during the year
+      Net cash outflow for the year
+  x.zakat:
+    pos: |
+      Zakat
+      Zakat expense
+      Zakat for the year
+      Zakat charge
+      Zakat charge for the year
+      Provision for zakat
+      Zakat provision
+      Zakat and tax provision
+      Zakat expense for the year
+      Zakat payable
+      Zakat current
+      Zakat (note)
+      Zakat provision for the year
+      Zakat expense (current)
+      Charge for zakat
+      Zakat for the period
+  x.rou_assets:
+    pos: |
+      Right-of-use assets
+      Right of use assets
+      Right-of-use asset
+      Right of use asset
+      Right-of-use assets, net
+      Right-of-use assets (net)
+      Right-of-use assets - net
+      Net right-of-use assets
+      Right of use assets, net
+      ROU assets
+      Leased assets
+      Leased right-of-use assets
+      Lease right-of-use assets
+      Right-of-use assets and leasehold land
+      Right-of-use asset, net
+      Right-of-use assets under leases
+      Assets under right-of-use
+      Right of use assets (note)
+      Operating lease right-of-use assets
+      Right-of-use assets, net of depreciation
+  x.lease_liabilities_current:
+    pos: |
+      Current portion of lease liabilities
+      Lease liabilities - current
+      Lease liabilities, current
+      Lease liabilities (current)
+      Current lease liabilities
+      Current portion of lease liability
+      Lease liabilities - current portion
+      Lease liabilities, current portion
+      Lease obligations - current
+      Current portion of lease obligations
+      Short-term lease liabilities
+      Lease liability - current
+      Lease liabilities due within one year
+      Lease liabilities current portion
+      Current maturity of lease liabilities
+      Current portion of lease liabilities (note)
+      Current portion of finance lease obligations
+      Finance lease obligations - current
+      Current portion of obligations under leases
+      Lease payable - current
+      Lease liabilities payable within one year
+      Current portion of operating lease liabilities
+      Current liability of lease
+  x.lease_liabilities_noncurrent:
+    pos: |
+      Non-current portion of lease liabilities
+      Lease liabilities - non-current
+      Lease liabilities, non-current
+      Lease liabilities (non-current)
+      Non-current lease liabilities
+      Noncurrent lease liabilities
+      Non-current portion of lease liability
+      Lease liabilities - non-current portion
+      Lease liabilities, non-current portion
+      Lease obligations - non-current
+      Non-current portion of lease obligations
+      Long-term lease liabilities
+      Lease liability - non-current
+      Lease liabilities due after one year
+      Lease liabilities non-current portion
+      Non-current maturity of lease liabilities
+      Lease liabilities, net of current portion
+      Non-current portion of finance lease obligations
+      Finance lease obligations - non-current
+      Lease payable - non-current
+      Long term lease liabilities
+      Non-current portion of operating lease liabilities
+      Lease liabilities payable after one year
+      Lease liabilities
+      Lease liability
+      Total lease liabilities
+      Lease obligations
+      Obligations under leases
+      Operating lease liabilities
+  x.lease_interest:
+    pos: |
+      Interest on lease liabilities
+      Interest expense on lease liabilities
+      Finance cost on lease liabilities
+      Finance costs on lease liabilities
+      Interest on lease obligations
+      Lease interest
+      Lease interest expense
+      Finance charges on lease liabilities
+      Unwinding of discount on lease liabilities
+      Interest charge on lease liabilities
+      Finance cost of lease liabilities
+      Interest on leases
+      Finance cost - leases
+      Interest on right-of-use liabilities
+      Interest expense on leases
+      Finance lease interest
+      Interest portion of lease payments
+      Financial cost of lease liabilities
+  x.rou_depreciation:
+    pos: |
+      Depreciation of right-of-use assets
+      Depreciation on right-of-use assets
+      Depreciation of right of use assets
+      Depreciation of ROU assets
+      Depreciation charge on right-of-use assets
+      Right-of-use asset depreciation
+      Depreciation of leased assets
+      Depreciation of lease right-of-use assets
+      Amortisation of right-of-use assets
+      Amortization of right-of-use assets
+      Depreciation of right-of-use asset
+      Depreciation expense on right-of-use assets
+      Depreciation on leased assets
+      Depreciation right-of-use assets
+      Depreciation of right-of-use assets (note)
+  x.eosb:
+    pos: |
+      End of service benefits
+      End-of-service benefits
+      End of service indemnity
+      End of service benefits provision
+      Provision for end of service benefits
+      Provision for end-of-service benefits
+      Provision for employees' end of service benefits
+      Employees' end of service benefits
+      Employee end of service benefits
+      Employee benefits obligations
+      Employee benefit obligations
+      Employees' terminal benefits
+      Employee termination benefits
+      Provision for employee termination benefits
+      Defined benefit obligations
+      Defined benefit obligation
+      Employee defined benefit liabilities
+      Provision for staff terminal benefits
+      Staff terminal benefits
+      Provision for staff end of service benefits
+      Provision for employees end of service indemnity
+      End of service indemnity provision
+      Provision for gratuity
+      Gratuity provision
+      Employees' benefits
+      Retirement benefit obligations
+      Post-employment benefit obligations
+      Post employment benefits
+      Provision for employees' benefits
+      Employees' end-of-service benefit liability
+      End of service benefit obligation
+      Employee benefits
+      Employees' service end benefits
+      Provision for employee benefits
+      Staff end of service benefits
+  x.employee_costs:
+    pos: |
+      Employee benefits expense
+      Employee benefit expense
+      Employee costs
+      Employee cost
+      Staff costs
+      Staff cost
+      Personnel expenses
+      Personnel costs
+      Personnel expense
+      Payroll costs
+      Payroll expenses
+      Salaries and wages
+      Salaries and employee benefits
+      Wages and salaries
+      Salaries, wages and benefits
+      Salaries and related costs
+      Employee salaries and benefits
+      Employees' costs
+      Staff expenses
+      Wages, salaries and employee benefits
+      Employee compensation
+      Compensation and benefits
+      Salaries, wages and employee benefits
+      Staff salaries and benefits
+      Manpower costs
+      Employee benefits and other costs
+      Salaries and staff costs
+      Employees' salaries and benefits
+      Human resources costs
+      Labour costs
+      Labor costs
+      Salaries
+      Wages
+      Staff salaries and related expenses
+      Employee related expenses
+      Total employee benefits expense
+  x.raw_materials:
+    pos: |
+      Raw materials and consumables used
+      Raw materials used
+      Raw materials and consumables
+      Cost of raw materials and consumables used
+      Raw materials and consumables consumed
+      Raw material and consumables used
+      Raw materials consumed
+      Consumables used
+      Materials consumed
+      Materials and consumables used
+      Cost of materials consumed
+      Cost of materials used
+      Raw materials, consumables and packing materials used
+      Raw material costs
+      Materials and supplies used
+      Consumption of raw materials
+      Raw materials and packing materials consumed
+      Purchases of raw materials
+      Goods and materials used
+      Materials, consumables and services
+      Cost of raw materials
+      Raw materials and goods for resale consumed
+      Cost of goods purchased
+      Purchases of goods for resale
+  x.depreciation:
+    pos: |
+      Depreciation expense
+      Depreciation of property, plant and equipment, net
+      Depreciation of PPE
+      Depreciation charge
+      Depreciation expenses
+      Depreciation on property, plant and equipment
+      Depreciation on property and equipment
+      Depreciation of tangible assets
+      Depreciation of buildings
+      Depreciation and impairment of property, plant and equipment
+      Depreciation of investment properties
+      Depreciation of investment property
+      Depreciation on fixed assets
+      Depreciation (note)
+      Depreciation of property, plant and equipment (note)
+      Depreciation for the year (note)
+      Depreciation of machinery and equipment
+  x.amortisation:
+    pos: |
+      Amortisation expense
+      Amortization expense
+      Amortisation of intangibles
+      Amortization of intangibles
+      Amortisation charge
+      Amortization charge
+      Amortisation of software
+      Amortization of software
+      Amortisation of intangible assets (note)
+      Amortisation on intangible assets
+      Amortization on intangible assets
+      Amortisation of licences
+      Amortization of licenses
+      Amortisation of capitalised development costs
+      Amortisation for the year
+      Amortization for the year
+      Amortisation of other intangible assets
+      Amortisation expenses
+      Amortization expenses
+  x.other_opex:
+    pos: |
+      Other operating expenses
+      Other expenses
+      Other operating expense
+      Other expense
+      Other operating costs
+      Other costs
+      Miscellaneous expenses
+      Other charges
+      Other operating expenses, net
+      Sundry expenses
+      Other general expenses
+      Other expenses, net
+      Other operating charges
+      Other administrative expenses
+      Other overheads
+      Operating expenses - other
+      Other direct expenses
+      Other operating expenses (note)
+      Other expenses (note)
+      Other expense, net
+  x.other_income:
+    pos: |
+      Other income
+      Other operating income
+      Other income, net
+      Other operating income, net
+      Other revenues
+      Other revenue
+      Sundry income
+      Miscellaneous income
+      Other gains
+      Other gains and losses
+      Other (expenses)/income, net
+      Other income/(expenses), net
+      Other income / (expense)
+      Other (loss)/income
+      Other income and gains
+      Other income (note)
+      Other operating revenues
+      Other net income
+      Other gains, net
+      Other income and expenses, net
+      Other income, net of other expenses
+      Gain on disposal of property, plant and equipment
+      Other non-operating income
+      Non-operating income
+      Other operating income/(expenses)
+      Income from other sources
+      Other (losses)/gains, net
+  x.fx_gain_loss:
+    pos: |
+      Foreign exchange gain
+      Foreign exchange gains
+      Foreign exchange gain/(loss)
+      Foreign exchange gains and losses
+      Foreign exchange gains/(losses), net
+      Foreign currency exchange gain
+      Foreign currency exchange gain/(loss)
+      Foreign currency translation gain
+      Foreign currency exchange differences
+      Exchange differences
+      Exchange differences, net
+      Foreign exchange differences
+      Foreign exchange differences, net
+      Net foreign exchange gain
+      Net foreign exchange gains/(losses)
+      Net foreign exchange gain/(loss)
+      Net foreign currency exchange gain/(loss)
+      Gain/(loss) on foreign exchange
+      Gains and losses on foreign exchange
+      Gain on foreign exchange
+      Exchange gains
+      Exchange gain/(loss)
+      Foreign exchange (loss)/gain
+      Foreign currency exchange (loss)/gain
+      Net exchange differences
+      Gain from foreign currency translation
+      Currency exchange gains and losses
+      Forex gain
+      Forex gain/(loss)
+      Foreign exchange result
+      Translation differences
+      Foreign currency translation
+      Net gain/(loss) on foreign currency exchange
+      Exchange gain/(loss), net
+    neg: |
+      Foreign exchange loss
+      Foreign exchange losses
+      Foreign currency exchange loss
+      Foreign currency translation loss
+      Exchange loss
+      Exchange losses
+      Net foreign exchange loss
+      Foreign exchange loss, net
+      Loss on foreign exchange
+      Forex loss
+  x.share_of_associates:
+    pos: |
+      Share of profit of associates
+      Share of profit of associates and joint ventures
+      Share of profit/(loss) of associates
+      Share of results of associates
+      Share of results of associates and joint ventures
+      Share of profit of equity-accounted investees
+      Share of profit of equity accounted investees
+      Share of profit of equity-accounted investees, net of tax
+      Share of profit in associates
+      Share of profit from associates
+      Share of profit of joint ventures
+      Share of profit of a joint venture
+      Share of profit of an associate
+      Share of profit/(loss) of associates and joint ventures
+      Share of net results of associates and joint ventures
+      Share of net profit of associates
+      Share of net profit of associates and joint ventures
+      Share of net income of associates
+      Share of earnings of associates
+      Share in profit of associates
+      Group's share of profit of associates
+      Group's share in results of associates and joint ventures
+      Share of profit of associates and joint ventures accounted for using the equity method
+      Share of profit or loss of associates accounted for using the equity method
+      Equity-accounted investees share of profit
+      Income from associates
+      Income from investments in associates
+      Income from associates and joint ventures
+      Results of associates
+      Equity in earnings of affiliates
+      Equity in net income of associates
+      Group share of profit of associates and joint ventures
+      Share in results of associates
+      Share of profit of associated companies
+      Share of profits of associates
+      Share of results of equity-accounted investees
+      Share of results of joint ventures
+    neg: |
+      Share of loss of associates
+      Share of loss of associates and joint ventures
+      Share of loss of joint ventures
+      Share of losses of associates
+      Share of loss in associates
+  x.nci_profit:
+    pos: |
+      Profit attributable to non-controlling interests
+      Profit attributable to non-controlling interest
+      Profit attributable to non controlling interests
+      Net profit attributable to non-controlling interests
+      Net income attributable to non-controlling interests
+      Net income attributable to noncontrolling interest
+      Profit for the year attributable to non-controlling interests
+      Non-controlling interests
+      Non-controlling interest in profit
+      Profit attributable to minority interests
+      Profit attributable to minority interest
+      Net profit attributable to minority interests
+      Share of non-controlling interests in profit
+      Share of profit attributable to non-controlling interests
+      Non-controlling interests' share of profit
+      Profit attributable to NCI
+      Profit attributable to non-controlling shareholders
+      Net profit attributable to non-controlling interest
+      Profit attributable to non controlling interest
+      Profit for the year attributable to non-controlling interest
+      Profit attributable to non-controlling interests, net
+      Net profit for the year attributable to non-controlling interests
+      Minority interests
+      Minority interest
+      Minority interest in profit
+      Net income attributable to minority interest
+      Attributable to non-controlling interests
+      Attributable to non-controlling interest
+      Attributable to: non-controlling interests
+      Non-controlling interests share in profit
+      Income attributable to non-controlling interests
+    neg: |
+      Loss attributable to non-controlling interests
+      Net loss attributable to non-controlling interests
+      Loss attributable to non-controlling interest
+      Loss attributable to minority interests
+  x.oci_total:
+    pos: |
+      Other comprehensive income
+      Other comprehensive income for the year
+      Other comprehensive income for the period
+      Other comprehensive income/(loss)
+      Other comprehensive (loss)/income
+      Other comprehensive income, net of tax
+      Other comprehensive income for the year, net of tax
+      Other comprehensive income/(loss) for the year
+      Total other comprehensive income
+      Total other comprehensive income for the year
+      Total other comprehensive income/(loss)
+      Total other comprehensive income, net of tax
+      Other comprehensive income net of income tax
+      Other comprehensive income net of tax
+      Other comprehensive income for the year, net of income tax
+      Other comprehensive income (OCI)
+      OCI for the year
+      Net other comprehensive income
+      Net other comprehensive income for the year
+      Total other comprehensive income/(loss) for the year
+      Total other comprehensive income (loss)
+      Other comprehensive (loss)/income for the year, net of tax
+      Other comprehensive income for the year, net of zakat and tax
+      Other comprehensive income after tax
+      Other comprehensive income, after tax
+      Total other comprehensive income after tax
+      Other comprehensive income items
+      Other comprehensive income (loss)
+      Other comprehensive income/(expense)
+      Total other comprehensive expense
+    neg: |
+      Other comprehensive loss
+      Other comprehensive loss for the year
+      Other comprehensive loss, net of tax
+      Total other comprehensive loss
+      Net other comprehensive loss
+  x.total_comprehensive_income:
+    pos: |
+      Total comprehensive income
+      Total comprehensive income for the year
+      Total comprehensive income for the period
+      Comprehensive income
+      Comprehensive income for the year
+      Comprehensive income for the period
+      Total comprehensive income/(loss)
+      Total comprehensive income/(loss) for the year
+      Total comprehensive (loss)/income for the year
+      Total comprehensive income, net of tax
+      Total comprehensive income for the year, net of tax
+      Total comprehensive income for the year net of income tax
+      Total comprehensive income attributable to owners of the parent
+      Total comprehensive income attributable to shareholders
+      Comprehensive income attributable to owners of the parent
+      Total comprehensive income attributable to equity holders of the parent
+      Total comprehensive income attributable to owners of the Company
+      Total comprehensive income attributable to the shareholders of the parent company
+      Total comprehensive income attributable to non-controlling interests
+      Comprehensive income attributable to non-controlling interests
+      Total comprehensive income for the year attributable to owners of the parent
+      Total comprehensive income for the year attributable to equity holders
+      Total comprehensive income (loss)
+      Total comprehensive income after tax
+      Net comprehensive income
+      Net comprehensive income for the year
+      Total comprehensive profit for the year
+      Total profit and other comprehensive income for the year
+      Profit and total comprehensive income for the year
+      Total comprehensive earnings
+      Total income and expense for the year
+      Total recognised income and expense
+      Comprehensive income for the year, net of tax
+      Total comprehensive income for the year (Note)
+    neg: |
+      Total comprehensive loss
+      Total comprehensive loss for the year
+      Comprehensive loss for the year
+      Net comprehensive loss
+  x.investment_property:
+    pos: |
+      Investment property
+      Investment properties
+      Investment property, net
+      Investment properties, net
+      Investment property at fair value
+      Investment properties at fair value
+      Investment real estate
+      Investments in real estate
+      Real estate investments
+      Investment property (note)
+      Investment properties (net)
+      Investment properties under development
+      Investment property under construction
+      Investment properties held for sale
+      Real estate held for investment
+      Property investments
+      Investments in properties
+      Investment in real estate
+      Investment property - net
+      Investment properties - net
+  x.cash_beginning:
+    pos: |
+      Cash and cash equivalents at beginning of year
+      Cash and cash equivalents at the beginning of the year
+      Cash and cash equivalents at beginning of the year
+      Cash and cash equivalents at beginning of period
+      Cash and cash equivalents at the beginning of the period
+      Cash and cash equivalents at 1 January
+      Cash and cash equivalents at 1 July
+      Cash and cash equivalents at 1 April
+      Cash and cash equivalents, beginning of year
+      Cash and cash equivalents, beginning of the year
+      Cash and cash equivalents - beginning of year
+      Cash and cash equivalents - opening balance
+      Cash and cash equivalents, opening balance
+      Opening cash and cash equivalents
+      Opening cash balance
+      Cash at beginning of year
+      Cash at the beginning of the year
+      Cash and cash equivalents at start of year
+      Cash and cash equivalents at the start of the year
+      Cash balance at beginning of year
+      Cash and bank balances at beginning of year
+      Cash at bank and in hand at beginning of year
+      Cash and cash equivalents brought forward
+      Cash and cash equivalent at beginning of year
+      Cash and cash equivalents, beginning of period
+      Balance of cash and cash equivalents at beginning of year
+      Cash and cash equivalents at the start of period
+      Cash and cash equivalents at beginning of the financial year
+  x.cash_end:
+    pos: |
+      Cash and cash equivalents at end of year
+      Cash and cash equivalents at the end of the year
+      Cash and cash equivalents at end of the year
+      Cash and cash equivalents at end of period
+      Cash and cash equivalents at the end of the period
+      Cash and cash equivalents at 31 December
+      Cash and cash equivalents at 30 June
+      Cash and cash equivalents at 31 March
+      Cash and cash equivalents, end of year
+      Cash and cash equivalents, end of the year
+      Cash and cash equivalents - end of year
+      Cash and cash equivalents - closing balance
+      Cash and cash equivalents, closing balance
+      Closing cash and cash equivalents
+      Closing cash balance
+      Cash at end of year
+      Cash at the end of the year
+      Cash and cash equivalents at close of year
+      Cash and cash equivalents at the close of the year
+      Cash balance at end of year
+      Cash and bank balances at end of year
+      Cash at bank and in hand at end of year
+      Cash and cash equivalents carried forward
+      Cash and cash equivalent at end of year
+      Cash and cash equivalents, end of period
+      Balance of cash and cash equivalents at end of year
+      Cash and cash equivalents at the close of period
+      Cash and cash equivalents at end of the financial year
+      Cash and cash equivalents at year end
+      Cash and cash equivalents at the year end
+  x.fx_effect_cash:
+    pos: |
+      Effect of exchange rate changes on cash and cash equivalents
+      Effect of foreign exchange rate changes on cash and cash equivalents
+      Effect of exchange rate fluctuations on cash and cash equivalents
+      Effect of movements in exchange rates on cash and cash equivalents
+      Effects of exchange rate changes on cash and cash equivalents
+      Effect of exchange rate changes on cash held
+      Effect of foreign exchange on cash and cash equivalents
+      Foreign currency translation differences on cash and cash equivalents
+      Net foreign exchange difference on cash and cash equivalents
+      Foreign exchange differences on cash and cash equivalents
+      Exchange differences on cash and cash equivalents
+      Net foreign exchange differences on cash and cash equivalents
+      Exchange rate effect on cash and cash equivalents
+      Exchange differences on translation of cash and cash equivalents
+      Effect of currency translation on cash and cash equivalents
+      Effect of exchange rate changes on cash and bank balances
+      Effect of exchange rate on cash balances
+      Effect of foreign currency translation on cash
+      Foreign exchange effect on cash and cash equivalents
+      Currency translation effect on cash
+      Effect of exchange rate movements on cash and cash equivalents
+      Effect of changes in foreign exchange rates on cash and cash equivalents
+      Translation differences on cash and cash equivalents
+      Exchange rate differences on cash and cash equivalents
+      Effect of foreign currency exchange rate changes on cash and cash equivalents
+      Net effect of exchange rate changes on cash
+  x.selling_expenses:
+    pos: |
+      Selling expenses
+      Selling and distribution expenses
+      Selling and marketing expenses
+      Selling, marketing and distribution expenses
+      Distribution costs
+      Distribution expenses
+      Distribution and selling expenses
+      Selling and distribution costs
+      Sales and marketing expenses
+      Sales and distribution expenses
+      Marketing and selling expenses
+      Marketing expenses
+      Selling costs
+      Sales expenses
+      Selling, distribution and marketing expenses
+      Selling and marketing costs
+      Commercial expenses
+      Distribution and marketing expenses
+      Selling & distribution expenses
+      Selling and distribution expenses (note)
+      Selling and promotion expenses
+      Sales commissions and marketing
+      Selling and marketing
+      Distribution
+      Marketing and distribution expenses
+      Advertising and marketing expenses
+      Selling, general and distribution expenses
+      Distribution and logistics expenses
+  x.admin_expenses:
+    pos: |
+      General and administrative expenses
+      Administrative expenses
+      General and administration expenses
+      Administrative and general expenses
+      General & administrative expenses
+      G&A expenses
+      Administration expenses
+      General and administrative
+      Administrative expense
+      General and administrative costs
+      Administrative costs
+      Administration costs
+      Corporate expenses
+      Head office expenses
+      General and admin expenses
+      General and administrative expenses (note)
+      General, administrative and other expenses
+      Administrative and other expenses
+      Overheads
+      General expenses
+      Operating and administrative expenses
+      Administrative overheads
+      Management and administrative expenses
+      Administrative and operating expenses
+      General administrative expenses
+      Admin expenses
+  x.gov_grants:
+    pos: |
+      Government grants
+      Deferred government grants
+      Deferred income - government grants
+      Government grant income
+      Government grants and deferred income
+      Deferred grants
+      Grants
+      Deferred government grant
+      Government grants (deferred income)
+      Grants and subsidies
+      Capital grants
+      Government subsidies
+      Deferred revenue - government grants
+      Deferred capital grants
+      Government grants and subsidies
+      Grant income
+      Deferred income and grants
+      Government assistance
+      Deferred income from government grants
+      Unamortised government grants
+  x.capitalised_dev:
+    pos: |
+      Capitalised development costs
+      Capitalized development costs
+      Development costs
+      Development costs capitalised
+      Capitalised development expenditure
+      Intangible assets under development
+      Development expenditure
+      Internally generated intangible assets
+      Capitalised software development costs
+      Development costs, net
+      Capitalized development expenditure
+      Capitalised research and development
+      Product development costs capitalised
+      Internally developed intangible assets
+      Deferred development costs
+      Development assets
+      Capitalised development
+      Capitalized software development costs
+  x.provisions:
+    pos: |
+      Provisions
+      Provision
+      Provisions for liabilities and charges
+      Other provisions
+      Long-term provisions
+      Short-term provisions
+      Current provisions
+      Non-current provisions
+      Provisions - current
+      Provisions - non-current
+      Provisions and other liabilities
+      Provisions for claims
+      Provision for claims
+      Provisions, current
+      Provisions, non-current
+      Provision for warranties
+      Provisions and contingencies
+      Provisions for risks and charges
+      Provision for legal claims
+      Provision for contingencies
+      Provision for decommissioning
+      Total provisions
+      Claims provision
+      Restructuring provision
+      Provision for litigation
+      Other provisions and accruals
+  x.retained_earnings:
+    pos: |
+      Retained earnings
+      Retained earnings/(accumulated losses)
+      Retained earnings (accumulated losses)
+      Retained earnings and other reserves
+      Accumulated profits
+      Retained profits
+      Retained profit
+      Retained income
+      Unappropriated retained earnings
+      Retained earnings - unappropriated
+      Profit and loss account
+      Retained earnings/accumulated deficit
+      Retained earnings (note)
+      Retained earnings, unappropriated
+      Retained earnings carried forward
+      Accumulated gains
+      Profit retained
+      Undistributed profits
+      Retained profits/(accumulated losses)
+      Reserves and retained earnings
+      Revenue reserves
+      Earnings retained
+      Retained surplus
+      Retained earnings brought forward
+      Unappropriated profit
+    neg: |
+      Accumulated losses
+      Accumulated deficit
+      Accumulated losses brought forward
+      Retained losses
+      Accumulated deficits
+      Losses carried forward
+      Accumulated loss
+  x.share_capital:
+    pos: |
+      Share capital
+      Issued capital
+      Issued share capital
+      Paid-up capital
+      Paid up capital
+      Paid-in capital
+      Authorised and issued share capital
+      Issued and paid-up capital
+      Issued and paid up capital
+      Issued and fully paid share capital
+      Called-up share capital
+      Capital
+      Ordinary share capital
+      Common stock
+      Common shares
+      Share capital (note)
+      Authorised, issued and fully paid capital
+      Registered capital
+      Paid-up share capital
+      Issued and paid-in capital
+      Capital stock
+      Ordinary shares
+      Subscribed capital
+      Equity share capital
+      Share capital and premium
+      Share capital issued
+      Capital - issued and paid up
+      Authorised issued and paid up capital
+      Issued and paid in capital
+      Fully paid-up share capital
+  x.nci_equity:
+    pos: |
+      Non-controlling interests
+      Non-controlling interest
+      Non controlling interests
+      Noncontrolling interests
+      Noncontrolling interest
+      Non-controlling interests (equity)
+      Non-controlling interests in equity
+      Minority interests (equity)
+      Minority interest in equity
+      Minority shareholders' interest
+      Non-controlling interests (note)
+      Equity attributable to non-controlling interests
+      Total non-controlling interests
+      Non-controlling interests, net
+      Non-controlling shareholders' interests
+      Equity attributable to NCI
+      Equity attributable to minority interests
+      NCI
+      Interests of non-controlling shareholders
+      Non-controlling interests' equity
+      Total equity attributable to non-controlling interests
+      Non controlling interest in equity
+      Minority interests in equity
+  x.noncurrent_assets:
+    pos: |
+      Total non-current assets
+      Non-current assets
+      Noncurrent assets
+      Total noncurrent assets
+      Total non current assets
+      Non current assets
+      Non-current assets, total
+      Total non-current assets (A)
+      Total non-current assets (B)
+      Total long-term assets
+      Total long term assets
+      Long-term assets
+      Total fixed assets and other non-current assets
+      Total of non-current assets
+      Sum of non-current assets
+      Total non-current assets (I)
+      Non-current assets total
+      Total non-circulating assets
+      Total non-current assets, net
+      Total noncurrent assets (net)
+      Total of non-current assets (II)
+  x.noncurrent_liabilities:
+    pos: |
+      Total non-current liabilities
+      Non-current liabilities
+      Noncurrent liabilities
+      Total noncurrent liabilities
+      Total non current liabilities
+      Non current liabilities
+      Non-current liabilities, total
+      Total non-current liabilities (A)
+      Total non-current liabilities (C)
+      Total long-term liabilities
+      Total long term liabilities
+      Long-term liabilities
+      Long term liabilities
+      Total of non-current liabilities
+      Sum of non-current liabilities
+      Total non-current liabilities (I)
+      Non-current liabilities total
+      Total non-circulating liabilities
+      Total non-current liabilities, net
+      Total of non-current liabilities (III)
+  x.eps_basic:
+    pos: |
+      Basic earnings per share
+      Earnings per share - basic
+      Basic EPS
+      Basic earnings/(loss) per share
+      Basic (loss)/earnings per share
+      Basic earnings per share (in EGP)
+      Basic earnings per share (SAR)
+      Basic earnings per ordinary share
+      Earnings per share (basic)
+      Basic earnings per share attributable to owners of the parent
+      Basic earnings per share from continuing operations
+      Basic profit per share
+      Basic earnings per share (AED)
+      Earnings per share
+      Earnings per share (EPS)
+      Earnings per ordinary share
+      Earnings per share (in SAR)
+      Earnings per share (in EGP)
+      Earnings per share (in AED)
+      Basic and diluted earnings per share
+      Basic and diluted EPS
+      Earnings per share - basic and diluted
+      Earnings/(loss) per share
+      Net earnings per share
+      Net profit per share
+      Profit per share
+      Basic earnings per share (in fils)
+      Basic earnings per share (in piasters)
+  x.changes_in_inventories:
+    pos: |
+      Changes in inventories of finished goods and work in progress
+      Changes in inventories of finished goods and work-in-progress
+      Change in inventories of finished goods and work in progress
+      Changes in inventories
+      Change in inventories
+      Movement in inventories of finished goods
+      Increase/(decrease) in inventories of finished goods
+      (Increase)/decrease in inventories of finished goods and work in progress
+      Changes in inventories of finished goods, work in progress and goods for resale
+      Change in inventory of finished goods and WIP
+      Inventory movement
+      Net change in inventories
+      Movement in finished goods and work in progress
+      Changes in stocks of finished goods
+      Opening and closing stock movement
+      Variation in inventories
+      Changes in finished goods and work in progress
+  x.finance_costs_net:
+    pos: |
+      Finance costs, net
+      Finance cost, net
+      Net finance costs
+      Net finance cost
+      Net finance expense
+      Net finance expenses
+      Finance expense, net
+      Finance expenses, net
+      Net financing costs
+      Net financing cost
+      Financing costs, net
+      Finance income/(costs), net
+      Finance (costs)/income, net
+      Net finance income/(costs)
+      Net finance (costs)/income
+      Net financial expense
+      Net financial expenses
+      Net financial result
+      Financial result
+      Financial result, net
+      Net interest expense
+      Net interest expenses
+      Net interest income/(expense)
+      Net finance charges
+      Finance charges, net
+      Financial charges, net
+      Net financial charges
+      Net finance (cost)/income
+      Net financing expense
+      Net financing income/(expense)
+      Net finance income
+      Net interest cost
+      Net borrowing costs
+      Net finance items
+    neg: |
+      Net finance loss
+  x.other_current_assets:
+    pos: |
+      Other current assets
+      Prepayments and other current assets
+      Prepaid expenses and other current assets
+      Prepayments and other receivables
+      Prepaid expenses and other receivables
+      Prepayments, deposits and other receivables
+      Prepayments and other assets
+      Prepaid expenses
+      Prepayments
+      Advances and prepayments
+      Advances to suppliers
+      Other receivables
+      Other receivables and prepayments
+      Other current assets (note)
+      Other debit balances
+      Other debit balances and prepayments
+      Prepaid expenses and other debit balances
+      Deposits and other receivables
+      Other assets - current
+      Other current receivables
+      Due from related parties
+      Amounts due from related parties
+      Due from related parties - current
+      Related party receivables
+      Contract assets
+      Contract assets - current
+      Advances, deposits and other receivables
+      Advance payments and other receivables
+      Prepayments and other debtors
+      Other debtors
+      Assets held for sale
+      Non-current assets held for sale
+      Taxes recoverable
+      Income tax recoverable
+      Current tax assets
+      VAT receivable
+      Accrued income and other receivables
+      Other financial assets - current
+      Derivative financial instruments - current assets
+  x.other_noncurrent_assets:
+    pos: |
+      Other non-current assets
+      Other noncurrent assets
+      Other long-term assets
+      Other long term assets
+      Other assets
+      Other assets - non-current
+      Other non current assets
+      Long-term prepayments
+      Long-term prepayments and other assets
+      Long term receivables
+      Long-term receivables
+      Non-current receivables
+      Non-current trade and other receivables
+      Other non-current receivables
+      Other non-current financial assets
+      Investments in equity instruments
+      Equity investments
+      Financial investments - non-current
+      Financial assets at fair value through other comprehensive income
+      Investments at fair value through other comprehensive income
+      Investments at amortised cost
+      Investments at amortized cost
+      Long-term investments
+      Long term investments
+      Non-current investments
+      Investments - non-current
+      Financial investments
+      Investment securities
+      Advances for property, plant and equipment
+      Capital advances
+      Projects in progress
+      Capital work in progress
+      Capital work-in-progress
+      Deposits
+      Long-term deposits
+      Non-current deposits
+      Loans to related parties
+      Due from related parties - non-current
+      Contract assets - non-current
+      Retention receivables
+      Derivative financial instruments - non-current assets
+      Biological assets
+      Other non-current assets (note)
+  x.other_current_liabilities:
+    pos: |
+      Other current liabilities
+      Other liabilities
+      Other payables
+      Other payables and accruals
+      Accrued expenses
+      Accruals
+      Accrued liabilities
+      Accrued expenses and other current liabilities
+      Accrued expenses and other liabilities
+      Other creditors and accruals
+      Other credit balances
+      Other credit balances and accrued expenses
+      Accrued expenses and other credit balances
+      Deferred revenue
+      Deferred income
+      Unearned revenue
+      Unearned income
+      Advances from customers
+      Customer deposits
+      Customers' advances
+      Customer advances
+      Due to related parties
+      Amounts due to related parties
+      Due to related parties - current
+      Related party payables
+      Dividends payable
+      Dividend payable
+      Income tax payable
+      Taxes payable
+      Current tax liabilities
+      Current income tax liabilities
+      Zakat and income tax payable
+      Zakat payable and income tax
+      Zakat and tax payable
+      Income tax payable and zakat
+      Zakat and tax liabilities
+      VAT payable
+      Value added tax payable
+      Payroll payable
+      Accrued salaries
+      Other financial liabilities - current
+      Derivative financial instruments - current liabilities
+      Liabilities directly associated with assets held for sale
+      Other current liabilities (note)
+      Provision for taxes
+      Current portion of provisions
+      Accrued and other liabilities
+      Other payables and other credit balances
+      Other current payables
+      Advance payments from customers
+  x.other_noncurrent_liabilities:
+    pos: |
+      Other non-current liabilities
+      Other noncurrent liabilities
+      Other long-term liabilities
+      Other long term liabilities
+      Other liabilities - non-current
+      Other non current liabilities
+      Non-current payables
+      Long-term payables
+      Long term payables
+      Other non-current payables
+      Non-current trade and other payables
+      Retention payables
+      Retentions payable
+      Non-current provisions and other liabilities
+      Due to related parties - non-current
+      Long-term due to related parties
+      Deferred revenue - non-current
+      Deferred income - non-current
+      Long-term deferred income
+      Non-current contract liabilities
+      Other non-current financial liabilities
+      Derivative financial instruments - non-current liabilities
+      Other non-current liabilities (note)
+      Accrued expenses - non-current
+      Long-term accruals
+  x.deferred_tax_assets:
+    pos: |
+      Deferred tax assets
+      Deferred tax asset
+      Deferred income tax assets
+      Deferred tax assets, net
+      Deferred tax assets (note)
+      Deferred taxation assets
+      Net deferred tax assets
+      Deferred income tax asset
+      Deferred tax asset, net
+      Deferred zakat and tax assets
+      Deferred taxes asset
+      Deferred tax assets - net
+  x.deferred_tax_liabilities:
+    pos: |
+      Deferred tax liabilities
+      Deferred tax liability
+      Deferred income tax liabilities
+      Deferred tax liabilities, net
+      Deferred tax liabilities (note)
+      Deferred taxation liabilities
+      Net deferred tax liabilities
+      Deferred income tax liability
+      Deferred tax liability, net
+      Deferred zakat and tax liabilities
+      Deferred taxes liability
+      Deferred tax liabilities - net
+  x.investments_associates:
+    pos: |
+      Investments in associates
+      Investment in associates
+      Investments in associates and joint ventures
+      Investment in associates and joint ventures
+      Investments in associate companies
+      Investment in an associate
+      Investments in joint ventures
+      Investment in joint ventures
+      Investment in a joint venture
+      Equity-accounted investees
+      Equity accounted investees
+      Equity-accounted investments
+      Investments accounted for using the equity method
+      Investments in associates (equity method)
+      Investments in associated companies
+      Investments in affiliates
+      Investment in affiliates
+      Investments in associates and affiliates
+      Associates and joint ventures
+      Investments in subsidiaries
+      Investment in subsidiaries
+      Investments in equity-accounted investees
+      Interest in associates
+      Interests in associates and joint ventures
+      Investments in associates and joint ventures accounted for using the equity method
+  x.statutory_reserve:
+    pos: |
+      Statutory reserve
+      Legal reserve
+      Statutory reserves
+      Legal reserves
+      Statutory and legal reserve
+      Statutory reserve (note)
+      Legal reserve (note)
+      Reserve - statutory
+      Reserve - legal
+      Statutory (legal) reserve
+      Mandatory reserve
+      Compulsory reserve
+      General reserve
+      Regulatory reserve
+      Capital reserve
+      Legal and statutory reserve
+      Statutory/legal reserve
+      Legal reserve (statutory)
+  x.other_reserves:
+    pos: |
+      Other reserves
+      Reserves
+      Total reserves
+      Other reserve
+      Other reserves (note)
+      Fair value reserve
+      Revaluation reserve
+      Hedging reserve
+      Cash flow hedge reserve
+      Share premium
+      Share premium account
+      Additional paid-in capital
+      Additional paid in capital
+      Capital reserves
+      Other components of equity
+      Other equity reserves
+      Reserve for share-based payments
+      Share-based payment reserve
+      Share-based payments reserve
+      Merger reserve
+      Special reserve
+      Voluntary reserve
+      Consolidation reserve
+      Reserve for employee share scheme
+      Remeasurement reserve
+      Actuarial reserve
+      Cumulative changes in fair value
+      Cumulative changes in fair value of investments
+      Investments revaluation reserve
+      Other comprehensive income reserve
+      Accumulated other comprehensive income
+      Accumulated other comprehensive loss
+      Other reserves and accumulated OCI
+  x.treasury_shares:
+    pos: |
+      Treasury shares
+      Treasury stock
+      Treasury shares (note)
+      Own shares
+      Own shares held
+      Shares held in treasury
+      Treasury shares, at cost
+      Shares held by employee trust
+      Employee share scheme shares
+      Employees' share ownership plan
+      Shares held under employee share plan
+      Treasury shares held
+      Company's own shares
+      Treasury shares purchased
+      Shares held for employee incentive programme
+      Treasury shares - at cost
+  x.contract_liabilities:
+    pos: |
+      Contract liabilities
+      Contract liabilities - current
+      Contract liability
+      Contract liabilities (note)
+      Contract liabilities and deferred revenue
+      Billings in excess of costs
+      Billings in excess of costs and estimated earnings
+      Progress billings in excess of work done
+      Advance billings
+      Advance billings and contract liabilities
+      Customer contract liabilities
+      Unearned revenue from contracts
+      Deferred contract revenue
+      Contract liabilities, current
+      Amounts due to customers for contract work
+      Gross amount due to customers for contract work
+  x.fx_translation_oci:
+    pos: |
+      Foreign currency translation differences
+      Foreign currency translation reserve
+      Exchange differences on translation of foreign operations
+      Exchange differences on translating foreign operations
+      Foreign currency translation adjustment
+      Foreign currency translation adjustments
+      Currency translation differences
+      Currency translation adjustment
+      Translation of foreign operations
+      Foreign operations - foreign currency translation differences
+      Foreign exchange translation differences
+      Exchange differences on translation of foreign subsidiaries
+      Exchange differences arising on translation of foreign operations
+      Foreign currency translation differences for foreign operations
+      Foreign currency translation differences on foreign operations
+      Translation differences on foreign operations
+      Cumulative translation adjustment
+      Exchange difference on translation of financial statements of foreign operations
+      Exchange translation reserve
+      Foreign currency translation reserve (note)
+      Net exchange differences on translation of foreign operations
+      Currency translation reserve
+      Translation reserve
+  x.lease_payments:
+    pos: |
+      Payment of lease liabilities
+      Payments of lease liabilities
+      Payments for lease liabilities
+      Repayment of lease liabilities
+      Repayments of lease liabilities
+      Principal payments of lease liabilities
+      Principal elements of lease payments
+      Principal portion of lease payments
+      Payment of principal portion of lease liabilities
+      Payment of lease obligations
+      Payments of lease obligations
+      Lease payments
+      Lease liabilities paid
+      Lease rentals paid
+      Payment of lease rentals
+      Repayment of principal portion of lease liabilities
+      Repayment of lease obligations
+      Payments of principal portion of lease liabilities
+      Lease principal payments
+      Payments for leases
+      Payment of finance lease obligations
+      Payment of obligations under leases
+      Cash payments for the principal portion of lease liabilities
+      Payment of lease liability
+      Repayment of lease liability
+  x.interest_paid:
+    pos: |
+      Interest paid
+      Finance costs paid
+      Finance cost paid
+      Interest paid on borrowings
+      Interest and finance charges paid
+      Finance charges paid
+      Payment of finance costs
+      Payments of finance costs
+      Interest paid on loans and borrowings
+      Interest and commission paid
+      Finance costs paid on borrowings
+      Profit paid on borrowings
+      Interest paid, net
+      Finance costs paid (note)
+      Payment of interest
+      Interest payments
+      Interest and other finance costs paid
+      Bank interest paid
+      Financing costs paid
+      Interest paid on lease liabilities
+  x.tax_paid:
+    pos: |
+      Income tax paid
+      Income taxes paid
+      Taxes paid
+      Tax paid
+      Zakat and income tax paid
+      Zakat and tax paid
+      Zakat paid
+      Zakat and income taxes paid
+      Income tax paid, net
+      Income taxes paid, net
+      Taxation paid
+      Corporate tax paid
+      Payment of income tax
+      Payments of income taxes
+      Payment of zakat and income tax
+      Payment of zakat and tax
+      Zakat and income tax paid (note)
+      Net income taxes paid
+      Tax paid, net of refunds
+      Income tax paid, net of refunds
+      Income taxes refunded/(paid)
+      Payment of zakat
+      Zakat and income tax payments
+  x.borrowings_proceeds:
+    pos: |
+      Proceeds from borrowings
+      Proceeds from loans and borrowings
+      Proceeds from long-term borrowings
+      Proceeds from long term borrowings
+      Proceeds from bank loans
+      Proceeds from term loans
+      Proceeds from short-term borrowings
+      Proceeds from loans
+      Proceeds from issue of debt
+      Proceeds from issuance of debt
+      Proceeds from issuance of sukuk
+      Proceeds from sukuk
+      Proceeds from murabaha financing
+      Proceeds from Islamic financing
+      Proceeds from bank facilities
+      Proceeds from interest-bearing loans and borrowings
+      Drawdown of borrowings
+      Drawdown of loans
+      Loans obtained
+      Borrowings received
+      Borrowings obtained
+      New borrowings
+      Proceeds from bonds
+      Proceeds from issuance of bonds
+      Proceeds from credit facilities
+      Proceeds from borrowings, net
+      Proceeds from long-term debt
+      Increase in borrowings
+      Proceeds from loans and facilities
+  x.borrowings_repaid:
+    pos: |
+      Repayment of borrowings
+      Repayments of borrowings
+      Repayment of loans and borrowings
+      Repayments of loans and borrowings
+      Repayment of long-term borrowings
+      Repayment of long term borrowings
+      Repayment of bank loans
+      Repayment of term loans
+      Repayment of short-term borrowings
+      Repayment of loans
+      Repayment of debt
+      Repayments of debt
+      Repayment of sukuk
+      Repayment of murabaha financing
+      Repayment of Islamic financing
+      Repayment of bank facilities
+      Repayment of interest-bearing loans and borrowings
+      Payments of borrowings
+      Payment of borrowings
+      Repayments of long-term debt
+      Loans repaid
+      Borrowings repaid
+      Repayment of bonds
+      Repayment of credit facilities
+      Repayment of borrowings, net
+      Repayment of long-term debt
+      Decrease in borrowings
+      Repayment of loans and facilities
+      Settlement of borrowings
+  x.impairment:
+    pos: |
+      Impairment loss
+      Impairment losses
+      Impairment charge
+      Impairment of assets
+      Impairment of goodwill
+      Impairment of property, plant and equipment
+      Impairment losses on financial assets
+      Impairment loss on trade receivables
+      Impairment of trade receivables
+      Impairment losses on trade receivables
+      Expected credit loss
+      Expected credit losses
+      Expected credit loss expense
+      Allowance for expected credit losses
+      Provision for expected credit losses
+      Provision for impairment of receivables
+      Provision for doubtful debts
+      Impairment of financial assets
+      Net impairment loss on financial assets
+      Net impairment losses on financial and contract assets
+      Impairment of non-financial assets
+      Impairment of investments
+      Impairment of inventories
+      Provision for impairment of inventories
+      Impairment and write-offs
+      Impairment charges
+      Reversal of impairment
+      Impairment losses, net
+      Impairment of intangible assets
+      Impairment of investment properties
