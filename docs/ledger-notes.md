@@ -54,3 +54,18 @@ Companion to `license-and-repo-ledger.csv`. Commits were pinned with `git ls-rem
 | crawl4ai | Apache-2.0 + attribution clause | Add the required line to NOTICE if ever adopted |
 | dexter, SlideCoder, FinanceBench repo | no LICENSE file | Ideas only |
 | swak/pptx-mcp, mckinsey-pptx | not found | `skip` |
+
+## Import-name → ledger row map
+
+Every third-party (non-stdlib) module imported under `om/`, `src/`, `scripts/` and `open_multiples.py` (top-level, function-level, try/except and constant `importlib.import_module`), found by AST walk against `sys.stdlib_module_names`, maps to a ledger row `owner/repo` below. FP-R2 added `psycopg` and `pypdf`.
+
+| import_name | ledger repo | decision |
+|---|---|---|
+| `psycopg` | `psycopg/psycopg` | adopt (LGPL-3.0, optional, dynamic import, unmodified) |
+| `pypdf` | `py-pdf/pypdf` | adopt (BSD-3-Clause, optional) |
+| `pdfplumber` | `jsvine/pdfplumber` | see ledger |
+| `duckdb` | `duckdb/duckdb` | see ledger |
+| `edgar` | `dgunning/edgartools` | see ledger |
+| `crawl4ai` | `unclecode/crawl4ai` | see ledger (attribution clause) |
+
+Names that differ from the repo, kept for future imports (rows already in the ledger): `bidi → MeirKriheli/python-bidi`, `PIL → python-pillow/Pillow`, `pptx → scanny/python-pptx`, `fitz → pymupdf/PyMuPDF`, `yaml → yaml/pyyaml` (add a row if first imported), `redis → redis/redis`.

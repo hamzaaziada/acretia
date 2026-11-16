@@ -175,6 +175,7 @@ class AnthropicProvider:
             key = api_key or _env("ANTHROPIC_API_KEY") or _env("ANTHROPIC_AUTH_TOKEN")
             if not key:
                 raise LLMError("Claude needs ANTHROPIC_API_KEY (Settings)")
+            check_header_value("Authorization", key, "ANTHROPIC_API_KEY" if not api_key else None)
             self._compat = OpenAICompatProvider("anthropic", model, ANTHROPIC_BASE_URL, key, "json_object", transport,
                                                 key_host=KEY_BOUND_HOSTS["anthropic"])
 
@@ -281,6 +282,19 @@ def _env(k: str) -> str | None:
     return v.strip() if v and v.strip() else None
 
 
+def check_header_value(name: str, value, source: str | None = None) -> None:
+    """Raise LLMError (naming the header / env var, never the value) when `value` cannot go on the wire as an HTTP
+    header: non-Latin-1 text, or CR/LF/NUL (header injection)."""
+    v = value if isinstance(value, str) else str(value)
+    where = f"{name} header" + (f" (from {source})" if source else "")
+    if any(c in v for c in "\r\n\x00"):
+        raise LLMError(f"{where} contains a CR/LF/NUL control character; refusing to send it")
+    try:
+        v.encode("latin-1")
+    except UnicodeEncodeError:
+        raise LLMError(f"{where} contains a non-Latin-1 character and cannot be sent as an HTTP header") from None
+
+
 def key_host_guard(base_url: str, bound: str | None = None) -> None:
     """A key is only sent to the host it was entered for. `bound` is the exact host (e.g. MeshPool's); without it the
     custom-endpoint binding from OM_PROVIDER_CUSTOM_KEY_HOST applies (see settings.save). Exact hostname match only:
@@ -328,6 +342,8 @@ def make_provider(spec: str, transport=None, anthropic_client=None):
     key = _env(preset["key_env"]) if preset.get("key_env") else None
     if preset.get("key_env") and not key:
         raise LLMError(f"{name} needs {preset['key_env']} (Settings)")
+    if key:
+        check_header_value("Authorization", key, preset.get("key_env"))
     if name == "custom" and key:
         key_host_guard(preset["base_url"])
     if name in KEY_BOUND_HOSTS and key:
@@ -518,18 +534,23 @@ class Router:
     def providers(self, stage: str, task: str | None = None) -> list:
         """Primary provider followed by the fallback chain (config: chains=, OM_FALLBACK_<NAME>, OM_FALLBACK_DEFAULT)."""
         name = self._name(stage, task)
-        entries = self.chains.get(name) or self.chains.get(stage)
+        ckey = next((k for k in (name, stage) if k in self.chains), None)
+        entries = self.chains[ckey] if ckey is not None else None
+        okey = next((k for k in (name, stage) if k in self.overrides), None)
         if entries is None:
             raw = _env(f"OM_FALLBACK_{name.upper()}") or _env(f"OM_FALLBACK_{stage.upper()}") or _env("OM_FALLBACK_DEFAULT") or ""
             entries = [x.strip() for x in raw.split(",") if x.strip()]
         out = []
-        try:
-            primary = self.provider(stage, task)
-        except LLMError as e:
-            if not entries:
-                raise
-            primary = None
-            self._event("misconfigured", name, None, e)
+        primary = None
+        if okey is not None:
+            primary = self.overrides[okey]
+        elif ckey is None:                  # an explicit chain is exact and exclusive: no env-driven primary is added
+            try:
+                primary = self.provider(stage, task)
+            except LLMError as e:
+                if not entries:
+                    raise
+                self._event("misconfigured", name, None, e)
         if primary is not None:
             out.append(primary)
         for ent in entries:
