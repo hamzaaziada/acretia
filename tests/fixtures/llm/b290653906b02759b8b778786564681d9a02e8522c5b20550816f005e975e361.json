@@ -1,0 +1,13 @@
+{
+  "data": {
+    "answer": "Contact [EMAIL_1] on [PHONE_1]; FY2024 revenue $12.3bn.",
+    "n": 1
+  },
+  "key": "b290653906b02759b8b778786564681d9a02e8522c5b20550816f005e975e361",
+  "model": "fake:m",
+  "task": "extraction",
+  "usage": {
+    "input_tokens": 1000,
+    "output_tokens": 100
+  }
+}

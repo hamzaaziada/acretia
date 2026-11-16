@@ -1,0 +1,13 @@
+{
+  "data": {
+    "answer": "Margins widened on mix.",
+    "n": 2
+  },
+  "key": "30fbf86ce9d8de4958f1ab2bb2a0fd7ac6325b20e460ffbc59bf87e64322e762",
+  "model": "fake:m",
+  "task": "ask",
+  "usage": {
+    "input_tokens": 1000,
+    "output_tokens": 100
+  }
+}

@@ -4,8 +4,9 @@ One row per active claim. Claim a packet before you touch its files, commit the 
 
 | Packet | Agent / session | Branch | Claimed (UTC) | Files |
 |---|---|---|---|---|
-| M1 P1.1–P1.4 | Boss session_01Pf4xaPdC2V1r93ja2cebXD | claude/dreamy-ramanujan-k8p2xt → main | 2026-11-16 | om/contracts.py, om/storage.py, om/llm.py, om/pii.py, om/replay.py, om/deals.py, tests/test_{contracts,storage,llm_router,deal_memory}.py |
+| M2 P2.1–P2.6 | Boss session_01Pf4xaPdC2V1r93ja2cebXD | claude/dreamy-ramanujan-k8p2xt → main | 2026-11-16 | om/pdfdoc.py, om/pdftables.py, om/pdfcharts.py, om/rooms.py, om/extract.py, om/grid.py, om/vdr.py, tests |
 
 ## Log
 - 2026-11-16: created; no active claims.
 - 2026-11-16: M1 claimed by cloud Boss session.
+- 2026-11-16: M1 gate passed; lock released. M2 claimed.

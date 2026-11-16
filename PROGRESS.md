@@ -5,7 +5,7 @@ Status: ✅ verified (gate passed) · 🟡 partial · ⬜ not started. Update th
 | Milestone | Status | Evidence |
 |---|---|---|
 | Baseline (pre-plan) | ✅ | 144 tests pass (`python3 -m unittest discover -s tests -q`). The Excel engine bench is green: six companies at 100/100, 6,958/6,958 cells agree with LibreOffice, and the audit catches 10/10 planted errors (`data/out/bench/2026-11-16/report.md`, not committed) |
-| M1 Contracts, storage, LLM router, DealMemory | 🟡 | The router, keystore and host-bound keys exist. Contracts, PII masking, replay, storage adapters and DealMemory are still to build |
+| M1 Contracts, storage, LLM router, DealMemory | ✅ | `scripts/verify_m1.py` 19/19: 13 contracts round-trip with field-path errors and fuzz; SigV4 matches both AWS vectors; SQLite queue exactly-once across 16 threads; PII never reaches the provider or fixtures; replay works with sockets disabled; MeshPool key refused on 8 lookalike hosts; DealMemory 2-cell xlsx diff, pptx diff, byte-exact undo, org isolation. Suite 222/222 |
 | M2 PDF / VDR ingestion and grid | 🟡 | Text extraction, rooms, connectors, Matrix and the consistency checker exist. Still to build: bbox citations, a table parser, charts, a DuckDB grid and the VDR risk detector |
 | M3 Excel engine | 🟡 | P3.4 is partial (5-year annual history; no quarters, NOLs, TSM or segments). Done (✅ verified, see the baseline row): 3-statement + DCF, the writer/reader, the evaluator, the QA grader and the bench. Still to build: WorkbookGraph, edits, roll-forward, LBO, merger, comps, the manifest and the delivery gate |
 | M4 Deck engine | 🟡 | Deck Studio, layout components, spacing rules, the icon library and partner/MD graders exist. Still to build: the style cloner, client masters, manifest sync, 36 archetypes and the WCAG/vision QA loop |
@@ -16,3 +16,4 @@ Status: ✅ verified (gate passed) · 🟡 partial · ⬜ not started. Update th
 ## Log
 
 - 2026-11-16: Repository initialised. The plan, decisions and lock files were written. Next: M1 P1.1 contracts.
+- 2026-11-16: M1 gate passed (19/19), suite 222 green. Next: M2.
