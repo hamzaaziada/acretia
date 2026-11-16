@@ -153,9 +153,11 @@ def _():
     return f"{len(declared_dists())} declared deps"
 
 
-def py_files(*dirs):
+def py_files(*dirs, root=None):
     for d in dirs:
-        base = os.path.join(ROOT, d)
+        base = os.path.join(root or ROOT, d)
+        if not os.path.isdir(base):
+            continue
         for dp, dn, fns in os.walk(base):
             dn[:] = [x for x in dn if x not in ("__pycache__", "node_modules")]
             for fn in fns:
@@ -163,10 +165,11 @@ def py_files(*dirs):
                     yield os.path.join(dp, fn)
 
 
-@check("isolation: no GPL/AGPL module imported in om/ or src/")
-def _():
+def copyleft_hits(root=None):
+    """Scan om/ and src/ under root for in-process imports of GPL/AGPL modules (any scope, any import form)."""
+    root = root or ROOT
     hits, n = [], 0
-    for path in py_files("om", "src"):
+    for path in py_files("om", "src", root=root):
         n += 1
         tree = ast.parse(open(path, encoding="utf-8").read(), path)
         for node in ast.walk(tree):
@@ -180,7 +183,13 @@ def _():
                 names = [str(node.args[0].value)]
             for nm in names:
                 if nm.split(".")[0].lower() in COPYLEFT_IMPORTS:
-                    hits.append(f"{os.path.relpath(path, ROOT)}:{node.lineno} {nm}")
+                    hits.append(f"{os.path.relpath(path, root)}:{node.lineno} {nm}")
+    return hits, n
+
+
+@check("isolation: no GPL/AGPL module imported in om/ or src/")
+def _():
+    hits, n = copyleft_hits()
     assert not hits, hits
     return f"{n} files scanned"
 
@@ -264,35 +273,57 @@ def _():
 
 # ---------------------------------------------------------------- import ledger coverage
 FIRST_PARTY = {"om", "src", "tests", "scripts"}
-# (relative path, import name) pairs allowed to import a skip/isolated_service module. Starts empty on purpose.
-ISOLATED_ALLOW: set[tuple[str, str]] = set()
+# (relative path, import name) pairs allowed to import a skip/isolated_service module. Kept minimal on purpose.
+# D-S1-02: om/recalc.py may import LibreOffice's MPL-2.0 pyuno client bridge (uno, com.sun.star), but only lazily:
+# every such import must sit inside a function body or a try/except, never at module top level.
+ISOLATED_ALLOW: set[tuple[str, str]] = {("om/recalc.py", "uno"), ("om/recalc.py", "com")}
 # Well-known import-name != project-name pairs, used before the substring fallback.
 IMPORT_ALIASES = {"pil": "pillow", "bidi": "python-bidi", "pptx": "python-pptx", "yaml": "pyyaml",
                   "pdfminer": "pdfminer", "fontTools".lower(): "fonttools", "bs4": "beautifulsoup"}
 
 
-def first_party_names():
+def first_party_names(root=None):
+    root = root or ROOT
     names = set(FIRST_PARTY)
-    for fn in os.listdir(ROOT):
+    for fn in os.listdir(root):
         if fn.endswith(".py"):
             names.add(fn[:-3])
-        elif os.path.isdir(os.path.join(ROOT, fn)) and os.path.exists(os.path.join(ROOT, fn, "__init__.py")):
+        elif os.path.isdir(os.path.join(root, fn)) and os.path.exists(os.path.join(root, fn, "__init__.py")):
             names.add(fn)
     return names
 
 
-def third_party_imports():
-    """{top-level name: [file:line, ...]} from every import form, including nested, try/except and import_module."""
-    fp = first_party_names()
-    found: dict[str, list[str]] = {}
-    files = list(py_files("om", "src", "scripts"))
-    top = os.path.join(ROOT, "open_multiples.py")
+def _guarded_lines(tree):
+    """Line numbers of nodes that sit inside a function body or a try/except (i.e. not module top level)."""
+    guarded = set()
+
+    def visit(node, inside):
+        for child in ast.iter_child_nodes(node):
+            g = inside or isinstance(child, (ast.FunctionDef, ast.AsyncFunctionDef, ast.Lambda, ast.Try))
+            if hasattr(child, "lineno") and g:
+                guarded.add((child.lineno, child.col_offset))
+            visit(child, g)
+
+    visit(tree, False)
+    return guarded
+
+
+def third_party_imports(root=None, with_scope=False):
+    """{top-level name: [file:line, ...]} from every import form, including nested, try/except and import_module.
+
+    With with_scope=True each entry is (file:line, guarded) where guarded means inside a function or try/except."""
+    root = root or ROOT
+    fp = first_party_names(root)
+    found: dict[str, list] = {}
+    files = list(py_files("om", "src", "scripts", root=root))
+    top = os.path.join(root, "open_multiples.py")
     if os.path.exists(top):
         files.append(top)
     for path in files:
         src = open(path, encoding="utf-8").read()
         tree = ast.parse(src, path)
-        rel = os.path.relpath(path, ROOT)
+        guarded = _guarded_lines(tree)
+        rel = os.path.relpath(path, root)
         for node in ast.walk(tree):
             names = []
             if isinstance(node, ast.Import):
@@ -309,7 +340,9 @@ def third_party_imports():
             for nm in names:
                 t = nm.split(".")[0]
                 if t and t not in sys.stdlib_module_names and t not in fp:
-                    found.setdefault(t, []).append(f"{rel}:{node.lineno}")
+                    loc = f"{rel}:{node.lineno}"
+                    entry = (loc, (node.lineno, node.col_offset) in guarded) if with_scope else loc
+                    found.setdefault(t, []).append(entry)
     return found
 
 
@@ -338,11 +371,9 @@ def import_map_table():
     return out
 
 
-@check("imports: every third-party import (AST, incl. nested/try/import_module) maps to a ledger row")
-def _():
-    found = third_party_imports()
-    rows = [tuple(x.strip() for x in r) for r in ledger_rows()]
-    table = import_map_table()
+def isolated_violations(found, rows, table):
+    """Return (unmapped, bad_dec). found is third_party_imports(with_scope=True). An allow-listed pair is
+    permitted only when every such import in that file is inside a function body or try/except."""
     unmapped, bad_dec, n_mapped = [], [], 0
     for name in sorted(found):
         key = name.lower()
@@ -354,17 +385,68 @@ def _():
             needle = IMPORT_ALIASES.get(key, key)
             matched = [r for r in rows if needle in r[0].lower()]
         if not matched:
-            unmapped.append(f"{name} ({', '.join(found[name][:3])})")
+            unmapped.append(f"{name} ({', '.join(loc for loc, _ in found[name][:3])})")
             continue
         n_mapped += 1
         for r in matched:
             if r[3] in ("skip", "isolated_service"):
-                for loc in found[name]:
-                    if (loc.rsplit(":", 1)[0], name) not in ISOLATED_ALLOW:
+                for loc, guarded in found[name]:
+                    path = loc.rsplit(":", 1)[0].replace(os.sep, "/")
+                    if (path, name) not in ISOLATED_ALLOW:
                         bad_dec.append(f"{name} -> {r[0]} is {r[3]} ({loc})")
+                    elif not guarded:
+                        bad_dec.append(f"{name} -> {r[0]} imported at module level ({loc}); "
+                                       "allow-listed imports must be inside a function or try/except")
+    return unmapped, bad_dec, n_mapped
+
+
+@check("imports: every third-party import (AST, incl. nested/try/import_module) maps to a ledger row")
+def _():
+    found = third_party_imports(with_scope=True)
+    rows = [tuple(x.strip() for x in r) for r in ledger_rows()]
+    table = import_map_table()
+    unmapped, bad_dec, n_mapped = isolated_violations(found, rows, table)
     assert not unmapped, "no ledger row for: " + "; ".join(unmapped)
     assert not bad_dec, "skip/isolated_service module imported: " + "; ".join(bad_dec[:8])
     return f"{len(found)} third-party names, {n_mapped} mapped, table entries {len(table)}"
+
+
+@check("self-test: scanners flag module-level fitz and unguarded uno, accept lazy uno")
+def _():
+    import tempfile
+    rows = [tuple(x.strip() for x in r) for r in ledger_rows()]
+    table = import_map_table()
+
+    def tree(files):
+        d = tempfile.mkdtemp(prefix="s1selftest_")
+        for rel, body in files.items():
+            p = os.path.join(d, rel)
+            os.makedirs(os.path.dirname(p), exist_ok=True)
+            open(p, "w", encoding="utf-8").write(body)
+        return d
+
+    # (a) module-level import fitz under a fake om/ copy is flagged by the copyleft scanner.
+    d = tree({"om/__init__.py": "", "om/pdfbad.py": "import fitz\n"})
+    hits, _n = copyleft_hits(d)
+    assert any("fitz" in h for h in hits), f"copyleft scanner missed module-level fitz: {hits}"
+    # fitz is also an unallowed ledger-backed import.
+    _u, bad, _m = isolated_violations(third_party_imports(d, True), rows, table)
+    assert any("fitz" in b or "pymupdf" in b.lower() for b in bad), f"fitz not flagged by import check: {bad}"
+    # (b) module-level import uno in om/recalc.py still fails.
+    d = tree({"om/__init__.py": "", "om/recalc.py": "import uno\n"})
+    _u, bad, _m = isolated_violations(third_party_imports(d, True), rows, table)
+    assert any("module level" in b for b in bad), f"module-level uno not flagged: {bad}"
+    # (c) function-level and try/except imports in om/recalc.py pass.
+    d = tree({"om/__init__.py": "", "om/recalc.py":
+              "def f():\n    import uno\n    from com.sun.star.beans import PropertyValue\n"
+              "try:\n    import uno as u2\nexcept ImportError:\n    u2 = None\n"})
+    _u, bad, _m = isolated_violations(third_party_imports(d, True), rows, table)
+    assert not bad, f"lazy uno wrongly flagged: {bad}"
+    # (d) the same lazy import in any other file still fails.
+    d = tree({"om/__init__.py": "", "om/other.py": "def f():\n    import uno\n"})
+    _u, bad, _m = isolated_violations(third_party_imports(d, True), rows, table)
+    assert any("uno" in b for b in bad), f"uno in non-allowed file not flagged: {bad}"
+    return "4 scenarios"
 
 
 def main() -> int:

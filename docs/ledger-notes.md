@@ -76,3 +76,5 @@ Every third-party (non-stdlib) module imported under `om/`, `src/`, `scripts/` a
 | `com` | `LibreOffice/core` | isolated_service (`com.sun.star.*` UNO bindings, om/recalc.py) |
 
 Names that differ from the repo, kept for future imports (rows already in the ledger): `bidi → MeirKriheli/python-bidi`, `PIL → python-pillow/Pillow`, `pptx → scanny/python-pptx`, `fitz → pymupdf/PyMuPDF`, `redis → redis/redis`.
+
+LibreOffice note (D-S1-02): `soffice` runs as a separate headless process. The pyuno client bridge (MPL-2.0: `uno`, `com.sun.star`) is imported lazily, only in `om/recalc.py`, inside a function body or try/except, never at module top level. The S1 gate allow-lists exactly `(om/recalc.py, uno)` and `(om/recalc.py, com)` and fails any other in-process import of an `isolated_service` row.
