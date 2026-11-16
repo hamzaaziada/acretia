@@ -42,9 +42,10 @@ One row per active claim. Claim a packet before you touch its files, commit the 
 | S4.6a OM-Bench 10 + planted audit | worker (session C) | claude/busy-knuth-i3ewp5 | 2026-11-16 | om/bench.py, om/validate_xlsx.py, tests/test_bench.py, tests/test_validate_xlsx.py |
 | S4.6b SpreadsheetBench | worker (session C) | claude/busy-knuth-i3ewp5 | 2026-11-16 | om/sbench.py, tests/test_sbench.py |
 | S4.6c reliability-100 + timing | worker (session C) | claude/busy-knuth-i3ewp5 | 2026-11-16 | om/reliability.py, tests/test_reliability.py |
-| S4.fix1 deterministic xlsx bytes | worker (session C) | claude/busy-knuth-i3ewp5 | 2026-11-16 | om/xlsx.py, tests/test_xlsx_determinism.py |
+| S4.fix1 deterministic xlsx bytes | worker (session C) | claude/busy-knuth-i3ewp5 | 2026-11-16 | om/xlsx.py, tests/test_xlsx_determinism.py, requirements-extras.txt (S4 lines only) |
 | S4 gate script | gate worker (session C) | claude/busy-knuth-i3ewp5 | 2026-11-16 | scripts/verify_s4.py |
 | S4.8 model API for product app | worker (session C) | claude/busy-knuth-i3ewp5 | 2026-11-16 | om/modelapi.py, tests/test_modelapi.py, docs/interfaces.md (Models section only) |
+| S4.9 reference-structure generation + firm templates | worker (session C) | claude/busy-knuth-i3ewp5 | 2026-11-17 | om/templatefit.py, tests/test_templatefit.py |
 
 ## Log
 - 2026-11-16: created; no active claims.
