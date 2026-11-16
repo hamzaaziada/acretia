@@ -4,7 +4,6 @@ One row per active claim. Claim a packet before you touch its files, commit the 
 
 | Packet | Agent / session | Branch | Claimed (UTC) | Files |
 |---|---|---|---|---|
-| S1.3 excel/grid/research teardowns | worker | claude/dreamy-ramanujan-k8p2xt | 2026-11-16 | docs/teardowns/excel-*.md, docs/teardowns/grid-*.md, docs/teardowns/research-*.md |
 | S5.4a 10-K corpus (session D) | worker | main | 2026-11-16 | evals/tenk/*, scripts/build_tenk_corpus.py, tests/test_s5_evals.py |
 | S5.fix1 docparse clean-machine (session D) | worker | main | 2026-11-17 | om/docparse.py, tests/test_docparse.py, requirements.txt (pdf lines only) |
 | S5.5a grid parity engine (session D) | worker | main | 2026-11-17 | om/grid.py, tests/test_grid.py, tests/test_grid_parity.py, tests/fixtures/grid/* |
@@ -32,8 +31,6 @@ One row per active claim. Claim a packet before you touch its files, commit the 
 | SF.2 frontend app (session F) | session F workers | main | 2026-11-16 | frontend/** |
 | SF.3 e2e journeys + product gate (session F) | session F gate worker | main | 2026-11-16 | e2e/**, scripts/verify_product.py |
 | SF.4 TSB + reliability harness (session F, D-032) | session F workers | main | 2026-11-16 | eval/tsb/**, eval/reliability/** |
-| FP-R4 ledger rows for new imports | worker (session A) | claude/dreamy-ramanujan-k8p2xt | 2026-11-16 | license-and-repo-ledger.csv, docs/ledger-notes.md |
-| S2-gate-conn connector gate section | gate-writer (session A) | claude/dreamy-ramanujan-k8p2xt | 2026-11-16 | scripts/verify_s2.py |
 | S6.1b research tools | worker (session A) | claude/dreamy-ramanujan-k8p2xt | 2026-11-16 | src/harness/research/tools.py, tests/test_research_tools.py, tests/fixtures/research/tools/* |
 | S6.2 figure verifier | worker (session A) | claude/dreamy-ramanujan-k8p2xt | 2026-11-16 | src/harness/research/verify.py, tests/test_research_verify.py |
 | S6.3 research evals | worker (session A) | claude/dreamy-ramanujan-k8p2xt | 2026-11-16 | eval/research/**, tests/test_research_evals.py |
@@ -46,6 +43,7 @@ One row per active claim. Claim a packet before you touch its files, commit the 
 | S4.8 model API for product app | worker (session C) | claude/busy-knuth-i3ewp5 | 2026-11-16 | om/modelapi.py, tests/test_modelapi.py, docs/interfaces.md (Models section only) |
 | S4.9 reference-structure generation + firm templates | worker (session C) | claude/busy-knuth-i3ewp5 | 2026-11-17 | om/templatefit.py, tests/test_templatefit.py |
 | S7.5a CI workflow + secret scan | worker (session A) | claude/dreamy-ramanujan-k8p2xt | 2026-11-16 | .github/workflows/ci.yml, scripts/secret_scan.py, tests/test_secret_scan.py |
+| S1-fin S1 gate allow-list + ledger reason | gate-writer + worker (session A) | claude/dreamy-ramanujan-k8p2xt | 2026-11-16 | scripts/verify_s1.py, license-and-repo-ledger.csv, docs/ledger-notes.md |
 
 ## Log
 - 2026-11-16: created; no active claims.
@@ -73,3 +71,4 @@ One row per active claim. Claim a packet before you touch its files, commit the 
 - 2026-11-16: session A: S6.1a released (agent loop belongs to harness lab S9, D-033); S7.5a CI claimed early (reviewer: main red on clean machine).
 - 2026-11-16: session E: S8.4, S8.6a, S8.1 landed; S8.7c and the S8 gate writer dispatched.
 - 2026-11-17: S5.1, S5.2, S5.3 verified on main and released. Claimed S5.fix1, S5.5a; S5.4a resumed; S5 gate writer dispatched (session D).
+- 2026-11-16: session A: S1.3, FP-R4, S2 connector gate done; S1-fin claimed.
