@@ -22,7 +22,9 @@ v1 of this plan (M1–M7) is superseded. Its packets are mapped to v2 stages bel
 2. **One model adapter.** Every LLM and VLM call goes through `src/harness/adapter.py`: OpenAI-compatible chat plus vision, configured with `base_url`, `api_key` and `model_name`, and working with Claude, GPT, Gemini, vLLM, Ollama and the MeshPool gateway (`llm.meshpool.ai`).
    - No provider SDK may be called anywhere else; CI greps for this.
    - The existing `om/llm.py` Router becomes a thin caller of the adapter.
-3. **Deterministic code owns layout, font metrics, formulas and validators.** Models only fill structured YAML/JSON specs: archetype ids, action titles, blocks, sources and as-of dates. They never produce coordinates, fonts, colours, formulas or historical numbers.
+3. **Generative creativity, deterministic polish.** Models choose the story, the visual concept and the art direction, and they generate the artwork. This is deliberately non-deterministic, so quality can be measured and improved run over run (see S3.11).
+   - Deterministic code owns everything a buyer checks: layout geometry and the grid, font metrics, contrast, overflow, formulas, numbers and charts.
+   - Models never produce coordinates, fonts, colours, formulas or historical numbers. Data charts are always native and bound to the model, never images.
 4. **Evidence bundle.** Every router and tool call appends to an immutable, hash-chained JSONL evidence bundle per job: tool, args hash, source URL or doc id, page, bbox, timestamp and output hash.
 5. **Teardown notes** live in `docs/teardowns/<repo>.md`. Each candidate is tested on real sample inputs, and every finding is labelled `[OBSERVATION]`, `[INFERENCE]` or `[UNKNOWN]`.
 6. **Deterministic gates before LLM or VLM gates**, always.
@@ -82,6 +84,7 @@ v1 M1 is done (see §1): extend `om/contracts.py`, `om/pii.py`, `om/replay.py`, 
 | S3.7 | **`validate_pptx.py`** (deterministic): measured overflow, overlaps, out of bounds, grid alignment, WCAG 4.5:1 contrast, font floors, type-size count, banned phrases, punctuation rules, XML validity, the user's house rules (title rule, footer rule with page numbers, no eyebrows). Returns shape ids |
 | S3.8 | **Vision critic loop:** LibreOffice → PNG → VLM critic through the adapter, naming shape ids → SlideRepairPatch, max 3 loops. Runs only after the validator passes |
 | S3.9 | **Firm template cloner and model-to-deck sync:** `.potx`/`.pptx` masters plus 2–3 sample decks → house profile; build into the client's layouts; charts, KPIs and tables bound to ModelManifest ids; re-sync with no LLM |
+| S3.11 | **Creative visual layer: varied, generated, never rubber-stamped.**<br>• **Art direction per deck:** chosen from a growing library of visual languages: editorial illustration, isometric systems, line-art schematics, data-art, duotone photo-style heroes, annotated maps, iconographic systems, bold typographic slides.<br>• **Several candidates per non-data visual (default 3), generated non-deterministically.** Use the image model when its endpoint answers; probe at startup and on every run, and use it whenever it works. Otherwise use the SVG designer (`om/images.py` SvgImages) through the adapter. The VLM critic and the validators score the candidates and the best one is kept.<br>• **Variety rules, enforced deterministically:**<br>  – no two consecutive slides share an archetype and visual type;<br>  – at least 5 distinct visual types per 10 slides;<br>  – a layout-signature similarity detector flags any deck that looks templated.<br>• **Learning loop:** log the critic, persona and validator scores for each style and prompt; prefer winners and retire losers, so the visual library improves with every run. Visuals must still pass `validate_pptx.py` and the persona gates: ultra-polished, not decorative noise |
 | S3.10 | **Deck eval:** 20 real finance briefs, 3 of them in Arabic, × 2 frontier models + 1 open-weight model through the adapter; benchmark against Presenton, PPTAgent (PPTEval rubric) and SlidesBench. Results go to `scorecard.csv` |
 | Gate | `scripts/verify_s3.py` (all 20 decks: 0 critical validator defects; sync mutation test; Arabic RTL checks), then **persona gate** (EM + PE + Analyst ≥ 8.5) |
 
@@ -94,6 +97,7 @@ v1 M1 is done (see §1): extend `om/contracts.py`, `om/pii.py`, `om/replay.py`, 
 | S4.3 | **Recipes:** comps, DCF, LBO, 3-statement, merger, following `anthropics/financial-services` (Apache-2.0, verify) structure where it adds; data from edgartools + FinanceToolkit + `om.statements`. Existing `om/model3.py` stays the 3-statement core; new: `om/lbo.py`, `om/merger.py`, `om/comps.py` (TSM, calendarisation, NTM where estimates exist) |
 | S4.4 | **WorkbookGraph, Ask mode, targeted edits, earnings roll-forward** (v1 P3.1–P3.3) |
 | S4.5 | **ModelManifest export and the hard delivery gate** (v1 P3.8–P3.9) |
+| S4.7 | **Excel visual polish at banker grade:**<br>• a cover/dashboard sheet with native Excel charts (bridge, football field, revenue/EBITDA trend) bound to model cells;<br>• consistent named cell styles;<br>• print setup (fit to width, repeat titles, headers and footers with source);<br>• column grouping for historicals and projections;<br>• zero visual noise (no merged cells in calculation areas, gridlines off, aligned decimals).<br>The IB persona grades polish as a blocking criterion |
 | S4.6 | **SpreadsheetBench eval** (public subset, licence permitting) + the existing OM-Bench (10 public companies, planted-error audit) |
 | Gate | `scripts/verify_s4.py` (10/10 models tie, 0 hardcoded calc cells, three-engine agreement, audit ≥ 10/10), then **persona gate** |
 
@@ -127,6 +131,23 @@ v1 M1 is done (see §1): extend `om/contracts.py`, `om/pii.py`, `om/replay.py`, 
 | S7.5 | **Docker and CI** (v1 M7): Dockerfile (non-root, LibreOffice, poppler, tesseract), compose (app, Caddy, optional postgres/redis/minio, isolated GPL services), GitHub Actions (offline suite, all verify scripts, ledger check, secret scan), `DEPLOY.md`, README |
 | Gate | `scripts/verify_s7.py` + `scripts/verify_security.py`, then the final **persona gate** on an end-to-end deal run (CIM + VDR → Matrix → model → deck → memo) |
 
+## 2b. Parallel sessions (who builds what)
+
+Several Claude Code cloud sessions build at once, one stage each. Every session follows `CLAUDE.md`.
+
+| Session | Owns | Starts |
+|---|---|---|
+| A: "Acretia: autonomous build" (Boss) | S1 → S2 → S6 → S7 | now |
+| B: "Acretia: deck engine" | S3 (incl. S3.11 creative layer) | now: deterministic parts first; the VLM critic and image generation use `om/llm.py` until S2.1's adapter lands, then switch |
+| C: "Acretia: Excel engine" | S4 | now |
+| D: "Acretia: document grid" | S5 | now (builds on `om/pdfdoc.py` from S5.1-pre) |
+
+How the sessions share the repo:
+- Lock rows and the stage's PROGRESS row go to `main` immediately, as small rebased commits.
+- Decisions use per-session ids: `D-S3-01`, and so on.
+- Shared files (`requirements-extras.txt`, `pyproject.toml`, `om/llm.py`) get minimal, rebased edits.
+- Each session runs the full suite before every push to `main`.
+
 ## 3. Acceptance audit (before concluding)
 
 Mark every acceptance criterion in §2 as `MET`, `PARTLY MET` or `NOT MET` in `ACCEPTANCE.md`. Include the evidence (command and result), `scorecard.csv`, and a list of open questions.
@@ -156,6 +177,7 @@ Refine from `docs/buyer-research.md` in S1.4. Each persona returns per-criterion
   - model navigability and speed (named ranges, layout, freeze panes, print setup)
   - zero-error tolerance (any #REF!, an unbalanced BS or untied cash = fail)
 - **McKinsey / Bain engagement manager:**
+  - visual range and "wow": varied, purposeful visuals that look made for this deck, not a template; a rubber-stamp look fails
   - storyline logic of the action titles (pyramid, horizontal flow)
   - one message per slide
   - grid discipline and whitespace
