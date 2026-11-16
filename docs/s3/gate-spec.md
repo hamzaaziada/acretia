@@ -115,3 +115,16 @@ need LibreOffice/poppler when they are absent, and the reason is printed.
   with p90), and every BuildReport carries per-step timings, tokens and cost_usd (0 offline) in its Job.
 - K5 Every persona run writes an "edits needed" list per slide with shape ids to
   `evals/decks/edits/<deck_id>.json` (checked for presence and shape-id validity against the deck).
+
+## L. Parity spec items (docs/parity-spec.md, D-033)
+- L1 (#34) A branded 10-slide deck (client template/profile) builds offline in < 180 s wall clock.
+- L2 (#35, #38) Revising one slide (spec change or an annotation on it) re-renders only that slide:
+  every other slide part, its rels, media and chart parts are byte-identical before/after.
+- L3 (#36, #37) Comment anchors: an annotation `{slide, shape_id, comment}` list applies as one bulk
+  revision in place (deterministic ops, or adapter-proposed ops in live mode); each round is saved as a
+  new version with its annotations.
+- L4 (#39) Version compare lists changed slides/shapes; rollback restores the exact bytes of version N.
+- L5 (#40) Model/Matrix data update → `sync.resync` refreshes bound template slides with no LLM (G3).
+- L6 (#41) Every table in the 20 decks is a native `a:tbl` graphicFrame (no pictures of tables).
+- L7 (#19) Data slides carry inline citation markers ([1], [2]) in text/cells tied to sources listed in
+  the slide's source line in the footer zone; every marker resolves to a listed source.
