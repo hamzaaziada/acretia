@@ -9,7 +9,7 @@ One row per active claim. Claim a packet before you touch its files, commit the 
 | S5.fix1 docparse clean-machine (session D) | worker | main | 2026-11-17 | om/docparse.py, tests/test_docparse.py, requirements.txt (pdf lines only) |
 | S5.5a grid parity engine (session D) | worker | main | 2026-11-17 | om/grid.py, tests/test_grid.py, tests/test_grid_parity.py, tests/fixtures/grid/* |
 | S5 gate (session D) | gate-writer worker | main | 2026-11-17 | scripts/verify_s5.py |
-| S5 gate (session D) | Boss | main | 2026-11-16 | scripts/verify_s5.py, docs/s5/* |
+| S5 docs (session D) | Boss | main | 2026-11-16 | docs/s5/* |
 | S1 gate | Boss | claude/dreamy-ramanujan-k8p2xt | 2026-11-16 | scripts/verify_s1.py |
 | S3.3a archetypes: text/structure + registry examples | session B worker | claude/upbeat-mccarthy-viqjuo | 2026-11-16 | om/deck/archetypes/__init__.py, om/deck/archetypes/core.py, om/deck/archetypes/text.py, tests/test_deck_arch_text.py |
 | S3.3b archetypes: charts + renderer chart polish | session B worker | claude/upbeat-mccarthy-viqjuo | 2026-11-16 | om/deck/archetypes/charts.py, om/deck/render.py, tests/test_deck_arch_charts.py, tests/test_deck_render.py |
