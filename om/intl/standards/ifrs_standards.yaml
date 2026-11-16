@@ -1,0 +1,447 @@
+# IFRS depth: analyst-relevant standards. Paraphrased; references point to the public standard pages.
+urls:
+  ias1: &ias1 "https://www.ifrs.org/issued-standards/list-of-standards/ias-1-presentation-of-financial-statements/"
+  ifrs18: &ifrs18 "https://www.ifrs.org/issued-standards/list-of-standards/ifrs-18-presentation-and-disclosure-in-financial-statements/"
+  ifrs15: &ifrs15 "https://www.ifrs.org/issued-standards/list-of-standards/ifrs-15-revenue-from-contracts-with-customers/"
+  ifrs16: &ifrs16 "https://www.ifrs.org/issued-standards/list-of-standards/ifrs-16-leases/"
+  ifrs9: &ifrs9 "https://www.ifrs.org/issued-standards/list-of-standards/ifrs-9-financial-instruments/"
+  ifrs3: &ifrs3 "https://www.ifrs.org/issued-standards/list-of-standards/ifrs-3-business-combinations/"
+  ifrs10: &ifrs10 "https://www.ifrs.org/issued-standards/list-of-standards/ifrs-10-consolidated-financial-statements/"
+  ifrs11: &ifrs11 "https://www.ifrs.org/issued-standards/list-of-standards/ifrs-11-joint-arrangements/"
+  ifrs12: &ifrs12 "https://www.ifrs.org/issued-standards/list-of-standards/ifrs-12-disclosure-of-interests-in-other-entities/"
+  ifrs8: &ifrs8 "https://www.ifrs.org/issued-standards/list-of-standards/ifrs-8-operating-segments/"
+  ias2: &ias2 "https://www.ifrs.org/issued-standards/list-of-standards/ias-2-inventories/"
+  ias7: &ias7 "https://www.ifrs.org/issued-standards/list-of-standards/ias-7-statement-of-cash-flows/"
+  ias12: &ias12 "https://www.ifrs.org/issued-standards/list-of-standards/ias-12-income-taxes/"
+  ias16: &ias16 "https://www.ifrs.org/issued-standards/list-of-standards/ias-16-property-plant-and-equipment/"
+  ias19: &ias19 "https://www.ifrs.org/issued-standards/list-of-standards/ias-19-employee-benefits/"
+  ias20: &ias20 "https://www.ifrs.org/issued-standards/list-of-standards/ias-20-accounting-for-government-grants-and-disclosure-of-government-assistance/"
+  ias21: &ias21 "https://www.ifrs.org/issued-standards/list-of-standards/ias-21-the-effects-of-changes-in-foreign-exchange-rates/"
+  ias23: &ias23 "https://www.ifrs.org/issued-standards/list-of-standards/ias-23-borrowing-costs/"
+  ias24: &ias24 "https://www.ifrs.org/issued-standards/list-of-standards/ias-24-related-party-disclosures/"
+  ias28: &ias28 "https://www.ifrs.org/issued-standards/list-of-standards/ias-28-investments-in-associates-and-joint-ventures/"
+  ias29: &ias29 "https://www.ifrs.org/issued-standards/list-of-standards/ias-29-financial-reporting-in-hyperinflationary-economies/"
+  ias33: &ias33 "https://www.ifrs.org/issued-standards/list-of-standards/ias-33-earnings-per-share/"
+  ias36: &ias36 "https://www.ifrs.org/issued-standards/list-of-standards/ias-36-impairment-of-assets/"
+  ias37: &ias37 "https://www.ifrs.org/issued-standards/list-of-standards/ias-37-provisions-contingent-liabilities-and-contingent-assets/"
+  ias38: &ias38 "https://www.ifrs.org/issued-standards/list-of-standards/ias-38-intangible-assets/"
+  ias40: &ias40 "https://www.ifrs.org/issued-standards/list-of-standards/ias-40-investment-property/"
+
+standards:
+  - id: std-ias1
+    standard: IAS 1
+    title: Presentation of financial statements
+    summary: >-
+      Sets the complete set of statements (financial position, profit or loss and OCI, changes in equity, cash flows,
+      notes), going-concern and accrual basis, current versus non-current classification, and the minimum face line
+      items. Expenses may be analysed by nature or by function; function reporters must also disclose depreciation
+      and staff costs by nature. Until IFRS 18 applies (annual periods from 1 January 2027) no operating profit
+      subtotal is defined, so each company builds its own and the figure is not comparable.
+    disclosures: [Accounting policies, judgements and estimation uncertainty, capital management, depreciation and employee cost by nature when by function]
+    analyst_impact: Computed operating profit must be rebuilt consistently; check which items sit above and below the subtotal the company shows.
+    adjustment: by_nature_ebit
+    keywords: [presentation, by nature, by function, operating profit, ebit, current, non-current, line items, statement layout]
+    citations:
+      - {standard: "IAS 1", ref: "paras 54-55 (balance sheet), 82 (profit or loss), 99-105 (expense analysis)", url: *ias1}
+    authored: acretia
+    confidence: verified
+
+  - id: std-ifrs18
+    standard: IFRS 18
+    title: Presentation and disclosure in financial statements
+    summary: >-
+      Replaces IAS 1 presentation rules for annual periods beginning on or after 1 January 2027. It splits the income
+      statement into operating, investing and financing categories, forces subtotals for operating profit and profit
+      before financing and income taxes, and requires disclosure of management-defined performance measures with a
+      reconciliation. Comparatives are restated, so the first IFRS 18 year gives a clean operating profit definition
+      for IFRS reporters. Items such as foreign exchange differences are classified by the line they relate to.
+    disclosures: [Management-defined performance measures with reconciliation, expenses by nature note for function reporters]
+    analyst_impact: Expect restated operating profit and EBIT definitions from 2027; keep both bases during the transition.
+    adjustment: by_nature_ebit
+    keywords: [ifrs 18, operating category, mpm, transition, 2027, subtotals, management performance measures]
+    citations:
+      - {standard: "IFRS 18", ref: "Categories, subtotals and MPM disclosure", url: *ifrs18}
+    authored: acretia
+    confidence: verified
+
+  - id: std-ifrs15
+    standard: IFRS 15
+    title: Revenue from contracts with customers
+    summary: >-
+      A five-step model: identify the contract, identify distinct promises, set the transaction price, allocate it by
+      relative stand-alone price, and recognise revenue as each promise is satisfied (over time or at a point in time).
+      Principal versus agent decides gross versus net revenue. Contract assets and liabilities appear on the balance
+      sheet; costs to obtain contracts may be capitalised.
+    disclosures: [Disaggregation of revenue, contract balances, remaining performance obligations, significant judgements on timing and variable consideration]
+    analyst_impact: Check principal-agent judgement, percentage-of-completion revenue and contract liabilities for developers; backlog comes from the remaining performance obligation note.
+    adjustment: revenue_principal_agent_net
+    keywords: [revenue, performance obligation, contract liability, over time, point in time, percentage of completion, principal agent, backlog]
+    citations:
+      - {standard: "IFRS 15", ref: "paras 9, 31-38, B34-B38, 110-129", url: *ifrs15}
+    authored: acretia
+    confidence: verified
+
+  - id: std-ifrs16
+    standard: IFRS 16
+    title: Leases
+    summary: >-
+      Lessees record a right-of-use asset and a lease liability for almost all leases, then charge depreciation and
+      interest instead of rent. EBITDA rises and operating cash flow rises while financing outflows include principal.
+      Short-term and low-value leases may stay off balance sheet as expense. Lessors keep finance versus operating
+      classification.
+    disclosures: [Right-of-use asset movement, maturity analysis of lease liabilities, total cash outflow, expense for short-term and variable leases]
+    analyst_impact: Compare EBITDA with pre-16 or US GAAP peers; include lease liabilities in net debt only when EBITDA is also on the post-16 basis.
+    adjustment: ifrs16_to_pre16_ebitda
+    keywords: [lease, right-of-use, rou, lease liability, ebitda, operating lease, net debt, rent]
+    citations:
+      - {standard: "IFRS 16", ref: "paras 22-38 (lessee), 47-60 (presentation and disclosure)", url: *ifrs16}
+    authored: acretia
+    confidence: verified
+
+  - id: std-ifrs9
+    standard: IFRS 9
+    title: Financial instruments
+    summary: >-
+      Classification follows the business model and cash flow test into amortised cost, fair value through OCI or fair
+      value through profit or loss. Impairment uses expected credit losses in three stages, so provisions are booked
+      earlier than under the old incurred-loss model. Hedge accounting aligns with risk management.
+    disclosures: [Loss allowance reconciliation by stage, credit risk exposure, fair value hierarchy, hedge effects]
+    analyst_impact: Bad-debt charges may be lumpier and earlier; for Egypt the equivalent is EAS 47 once adopted.
+    adjustment: eas_to_ifrs_map
+    keywords: [ecl, expected credit loss, financial instruments, hedge, fvoci, amortised cost, eas 47, provision for receivables]
+    citations:
+      - {standard: "IFRS 9", ref: "paras 4.1.1-4.1.5, 5.5.1-5.5.20", url: *ifrs9}
+    authored: acretia
+    confidence: verified
+
+  - id: std-ifrs3
+    standard: IFRS 3
+    title: Business combinations
+    summary: >-
+      Acquisitions use the acquisition method: identifiable assets and liabilities at fair value, goodwill as the
+      residual, acquisition costs expensed, contingent consideration at fair value with later changes in profit or loss.
+      Non-controlling interest may be measured at fair value (full goodwill) or at its share of net assets.
+    disclosures: [Consideration, fair value of acquired assets, goodwill drivers, pro forma revenue and profit]
+    analyst_impact: Acquired intangibles amortisation is non-cash and often excluded from adjusted earnings; check goodwill share of equity.
+    keywords: [acquisition, goodwill, purchase price allocation, ppa, contingent consideration, business combination, bargain purchase]
+    citations:
+      - {standard: "IFRS 3", ref: "paras 4-5, 18-19, 32, 53", url: *ifrs3}
+    authored: acretia
+    confidence: verified
+
+  - id: std-ifrs10
+    standard: IFRS 10
+    title: Consolidated financial statements
+    summary: >-
+      Control, not ownership percentage, decides consolidation: power over relevant activities, exposure to variable
+      returns and the link between them. Subsidiaries are consolidated line by line with non-controlling interests
+      shown within equity. Investment entities are an exception.
+    disclosures: [Significant judgements on control, non-controlling interests with material share, restrictions on group assets]
+    analyst_impact: Use profit attributable to owners for per-share work; remember EBITDA covers 100 percent of consolidated subsidiaries.
+    keywords: [consolidation, control, subsidiary, nci, non-controlling interest, special purpose entity]
+    citations:
+      - {standard: "IFRS 10", ref: "paras 5-18, B2-B85", url: *ifrs10}
+    authored: acretia
+    confidence: verified
+
+  - id: std-ifrs11
+    standard: IFRS 11
+    title: Joint arrangements
+    summary: >-
+      A joint venture (rights to net assets) is equity accounted. A joint operation (rights to assets and obligations
+      for liabilities) is accounted line by line for the investor's share. Proportionate consolidation of joint
+      ventures is not allowed.
+    disclosures: [Nature and extent of interests, summarised financial information of material joint ventures]
+    analyst_impact: Equity-accounted joint venture debt is off balance sheet; look in IFRS 12 notes for proportionate leverage.
+    keywords: [joint venture, joint operation, equity method, proportionate consolidation, jv]
+    citations:
+      - {standard: "IFRS 11", ref: "paras 14-18, 20-24", url: *ifrs11}
+    authored: acretia
+    confidence: verified
+
+  - id: std-ifrs12
+    standard: IFRS 12
+    title: Disclosure of interests in other entities
+    summary: >-
+      Requires a single note on subsidiaries with material non-controlling interests, associates and joint ventures
+      (with summarised financials) and unconsolidated structured entities. This is the place to find the numbers that
+      the equity method hides.
+    disclosures: [Summarised financial information for material associates and joint ventures, dividends received, risks of structured entities]
+    analyst_impact: Build proportionate net debt and EBITDA for material equity-accounted investees from this note.
+    adjustment: associates_share_strip
+    keywords: [associates, joint venture, disclosure, structured entities, summarised financial information, nci]
+    citations:
+      - {standard: "IFRS 12", ref: "paras 10-24, B10-B16", url: *ifrs12}
+    authored: acretia
+    confidence: verified
+
+  - id: std-ias2
+    standard: IAS 2
+    title: Inventories
+    summary: >-
+      Inventory is carried at the lower of cost and net realisable value. Cost formulas are first-in first-out or
+      weighted average only, so last-in first-out is prohibited. Write-downs are reversed when the cause disappears,
+      limited to the original write-down.
+    disclosures: [Carrying amount by class, write-downs and reversals, cost of inventories recognised as expense]
+    analyst_impact: No LIFO reserve exists for IFRS reporters; for US peers use the LIFO reserve to restate to FIFO.
+    adjustment: lifo_to_fifo
+    keywords: [inventory, lifo, fifo, weighted average, nrv, write-down, cost of sales]
+    citations:
+      - {standard: "IAS 2", ref: "paras 9, 25, 33-34", url: *ias2}
+    authored: acretia
+    confidence: verified
+
+  - id: std-ias7
+    standard: IAS 7
+    title: Statement of cash flows
+    summary: >-
+      Cash flows are classed as operating, investing and financing. Operating activities may be shown directly or by
+      the indirect reconciliation from profit. Interest and dividends paid or received may be placed in operating,
+      investing or financing as a consistent policy, which breaks comparability with US GAAP.
+    disclosures: [Components of cash and equivalents, non-cash transactions, changes in liabilities from financing activities, restricted cash]
+    analyst_impact: Normalise interest paid and dividends before comparing operating cash flow; under IFRS 16 the principal part of rent moves to financing.
+    adjustment: ifrs16_to_pre16_ebitda
+    keywords: [cash flow, cfo, operating cash flow, interest paid, dividends paid, direct method, indirect method, financing]
+    citations:
+      - {standard: "IAS 7", ref: "paras 18-20, 31-34, 44A", url: *ias7}
+    authored: acretia
+    confidence: verified
+
+  - id: std-ias12
+    standard: IAS 12
+    title: Income taxes
+    summary: >-
+      Current tax is what is due for the period. Deferred tax arises from temporary differences between carrying amounts
+      and tax bases, with assets recognised only when future taxable profit is probable. Taxes on income only are in
+      scope; zakat in Saudi Arabia is carved out by SOCPA endorsement. A tax rate reconciliation must be disclosed.
+    disclosures: [Tax rate reconciliation, deferred tax by source, unrecognised deferred tax, tax losses]
+    analyst_impact: Use the reconciliation to separate recurring from one-off rates; zakat requires a separate treatment.
+    adjustment: zakat_as_tax
+    keywords: [tax, deferred tax, effective rate, zakat, income tax, temporary difference, tax loss]
+    citations:
+      - {standard: "IAS 12", ref: "paras 5, 12, 15, 24, 79-88", url: *ias12}
+    authored: acretia
+    confidence: verified
+
+  - id: std-ias16
+    standard: IAS 16
+    title: Property, plant and equipment
+    summary: >-
+      Items are recognised at cost and depreciated over useful life by component. A company may instead choose the
+      revaluation model for a whole class: fair value is updated regularly, gains go to OCI and a revaluation surplus,
+      and losses reduce the surplus first. Depreciation then rises on the revalued amount.
+    disclosures: [Reconciliation of carrying amounts, depreciation methods and lives, revaluation date and surplus, commitments]
+    analyst_impact: Revaluation inflates assets and equity without cash; reverse the surplus to compare return on assets.
+    adjustment: revaluation_reverse
+    keywords: [ppe, property plant equipment, revaluation, depreciation, useful life, component, surplus]
+    citations:
+      - {standard: "IAS 16", ref: "paras 30-31, 39-40, 73", url: *ias16}
+    authored: acretia
+    confidence: verified
+
+  - id: std-ias19
+    standard: IAS 19
+    title: Employee benefits
+    summary: >-
+      Short-term benefits are expensed as service is rendered. Post-employment defined contribution plans expense the
+      payment; defined benefit plans, including most statutory end-of-service or gratuity schemes, require an actuarial
+      valuation with a discount rate, salary growth and attrition. Service cost goes to profit or loss; remeasurements go
+      to OCI and never recycle.
+    disclosures: [Actuarial assumptions and sensitivity, obligation movement, expected cash flow timing]
+    analyst_impact: Treat the end-of-service obligation as debt-like when material; check for cash payout versus accrual in the cash flow.
+    adjustment: eosb_as_debt_like
+    keywords: [employee benefits, end of service, gratuity, defined benefit, eosb, actuarial, pension, termination]
+    citations:
+      - {standard: "IAS 19", ref: "paras 57, 67-69, 120, 135-144", url: *ias19}
+    authored: acretia
+    confidence: verified
+
+  - id: std-ias20
+    standard: IAS 20
+    title: Government grants and government assistance
+    summary: >-
+      Grants are recognised when there is reasonable assurance of compliance and receipt. Income grants are matched to
+      the cost they compensate, either as other income or as a reduction of that cost. Asset grants are shown as
+      deferred income or deducted from the asset's carrying amount. Below-market government loans carry a grant element.
+    disclosures: [Accounting policy, nature and extent of grants, unfulfilled conditions]
+    analyst_impact: Separate grant income from operating performance; gross up when cost deduction hides true capex or margin.
+    adjustment: gov_grant_gross_up
+    keywords: [grant, subsidy, government assistance, deferred income, concessional loan, incentive]
+    citations:
+      - {standard: "IAS 20", ref: "paras 7, 12, 24, 10A", url: *ias20}
+    authored: acretia
+    confidence: verified
+
+  - id: std-ias21
+    standard: IAS 21
+    title: Effects of changes in foreign exchange rates
+    summary: >-
+      Each entity picks a functional currency. Foreign currency transactions are recorded at the transaction date rate;
+      monetary items are retranslated at the closing rate with differences in profit or loss. Non-monetary items at
+      historical cost stay at the original rate. Translating a foreign operation into a presentation currency uses the
+      closing rate for assets and liabilities, transaction or average rates for income and expenses, with differences in OCI.
+    disclosures: [Net exchange differences in profit or loss, functional currency changes, translation reserve movement]
+    analyst_impact: After a devaluation, foreign currency debt generates large losses; strip these to compare operating performance.
+    adjustment: devaluation_fx_loss_normalise
+    keywords: [fx, exchange rate, functional currency, translation, devaluation, closing rate, average rate, cta, egp]
+    citations:
+      - {standard: "IAS 21", ref: "paras 21-23, 28, 39, 52", url: *ias21}
+    authored: acretia
+    confidence: verified
+
+  - id: std-ias23
+    standard: IAS 23
+    title: Borrowing costs
+    summary: >-
+      Interest and related costs directly attributable to acquiring or building a qualifying asset must be added to its
+      cost until the asset is ready. The old option to expense is gone. Income earned from temporarily investing specific
+      borrowings is deducted from capitalised cost.
+    disclosures: [Amount capitalised, capitalisation rate]
+    analyst_impact: Interest expense is understated and capex overstated versus an expense-all view; matters most for developers and utilities.
+    adjustment: capitalised_interest_expense
+    keywords: [borrowing costs, capitalised interest, qualifying asset, construction, development, interest expense]
+    citations:
+      - {standard: "IAS 23", ref: "paras 8-14, 26", url: *ias23}
+    authored: acretia
+    confidence: verified
+
+  - id: std-ias24
+    standard: IAS 24
+    title: Related party disclosures
+    summary: >-
+      Discloses relationships, transactions, balances and commitments with related parties, including key management
+      compensation by category. Government-related entities get a partial exemption but must still describe significant
+      transactions.
+    disclosures: [Parent and ultimate controlling party, key management compensation, balances and terms, guarantees]
+    analyst_impact: Large related-party revenue or loans with controlling shareholders raise governance risk; common for family groups in the GCC and Egypt.
+    keywords: [related party, key management, shareholder loan, government related entity, governance, transactions with affiliates]
+    citations:
+      - {standard: "IAS 24", ref: "paras 9-18, 25-26", url: *ias24}
+    authored: acretia
+    confidence: verified
+
+  - id: std-ias28
+    standard: IAS 28
+    title: Investments in associates and joint ventures
+    summary: >-
+      Significant influence (usually 20 percent or more of votes) triggers the equity method: the investment starts at
+      cost and is moved by the investor's share of profit, OCI and dividends. The share of results sits in one line,
+      often below operating profit. Impairment testing follows IAS 36 and gains from transactions are eliminated.
+    disclosures: [Summarised financials, dividends, unrecognised losses (through IFRS 12)]
+    analyst_impact: Associate profit has no cash effect until dividends; exclude it from EBITDA and add investment value to enterprise value bridge.
+    adjustment: associates_share_strip
+    keywords: [associate, equity method, significant influence, joint venture, share of profit, equity accounted]
+    citations:
+      - {standard: "IAS 28", ref: "paras 3, 10, 22, 40-43", url: *ias28}
+    authored: acretia
+    confidence: verified
+
+  - id: std-ias29
+    standard: IAS 29
+    title: Financial reporting in hyperinflationary economies
+    summary: >-
+      When the functional currency is hyperinflationary (a cumulative three-year rate near or above 100 percent
+      together with qualitative signs) statements are restated into the measuring unit at the reporting date using a
+      general price index. Non-monetary items are indexed, monetary items are left, and the net monetary gain or loss
+      goes to profit or loss. Comparatives are restated.
+    disclosures: [Fact of restatement, price index and level, net monetary position gain or loss]
+    analyst_impact: Reported EBIT and equity are inflated or deflated by indexing; restate peers on the same basis before comparing.
+    adjustment: ias29_restate
+    keywords: [hyperinflation, inflation accounting, price index, monetary gain, restatement, argentina, turkey, lebanon]
+    citations:
+      - {standard: "IAS 29", ref: "paras 3, 8, 11-28, 34", url: *ias29}
+    authored: acretia
+    confidence: verified
+
+  - id: std-ias33
+    standard: IAS 33
+    title: Earnings per share
+    summary: >-
+      Basic EPS divides profit attributable to ordinary holders by the weighted average ordinary shares. Diluted EPS adds
+      the effect of options, convertibles and contingent shares. Bonus issues and share splits restate prior periods.
+    disclosures: [Numerators and denominators, anti-dilutive instruments excluded]
+    analyst_impact: Use diluted weighted average shares in market-cap work; watch treasury shares and employee plans.
+    keywords: [eps, earnings per share, dilution, weighted average shares, treasury shares, options]
+    citations:
+      - {standard: "IAS 33", ref: "paras 10, 19-26, 31, 64", url: *ias33}
+    authored: acretia
+    confidence: verified
+
+  - id: std-ias36
+    standard: IAS 36
+    title: Impairment of assets
+    summary: >-
+      Assets are written down when carrying amount exceeds the higher of fair value less costs of disposal and value in
+      use. Goodwill and indefinite-life intangibles are tested every year. Impairment (other than goodwill) is reversed
+      if the estimates improve, up to the amount that would have been recognised without impairment.
+    disclosures: [Discount rate, growth rate, headroom, sensitivity of key assumptions, impairment by segment]
+    analyst_impact: Reversals create profit with no cash; strip them from recurring earnings. Thin headroom is an early warning for goodwill.
+    adjustment: impairment_reversal_strip
+    keywords: [impairment, goodwill, value in use, cgu, reversal, recoverable amount, headroom]
+    citations:
+      - {standard: "IAS 36", ref: "paras 6, 59, 117-123, 124", url: *ias36}
+    authored: acretia
+    confidence: verified
+
+  - id: std-ias37
+    standard: IAS 37
+    title: Provisions, contingent liabilities and contingent assets
+    summary: >-
+      A provision is booked for a present obligation from a past event where an outflow is probable and the amount can be
+      estimated, at the best estimate (discounted if material). Possible obligations are only disclosed. Restructuring and
+      onerous contract rules limit when the charge can be taken.
+    disclosures: [Movement by class, timing and uncertainty, contingent liabilities with estimates]
+    analyst_impact: Big provision movements affect earnings quality; treat litigation and decommissioning provisions as debt-like if cash will go out.
+    adjustment: eosb_as_debt_like
+    keywords: [provision, contingent liability, onerous contract, restructuring, litigation, decommissioning, warranty]
+    citations:
+      - {standard: "IAS 37", ref: "paras 14, 36, 45, 72, 86", url: *ias37}
+    authored: acretia
+    confidence: verified
+
+  - id: std-ias38
+    standard: IAS 38
+    title: Intangible assets
+    summary: >-
+      Research cost is expensed. Development cost is capitalised once technical feasibility, intent, ability to use or sell,
+      probable future benefit, resources and reliable measurement are shown. Internally generated brands and customer
+      lists are not capitalised. Finite-life intangibles are amortised; the revaluation model needs an active market.
+    disclosures: [Amortisation, impairment, total research and development expensed, capitalised development movement]
+    analyst_impact: Capitalising lifts operating profit and cash flow from operations, and depresses investing cash flow; compare to expensing peers.
+    adjustment: dev_cost_expense
+    keywords: [intangible, development cost, capitalisation, research and development, r&d, amortisation, software, brand]
+    citations:
+      - {standard: "IAS 38", ref: "paras 54, 57, 74-75, 107", url: *ias38}
+    authored: acretia
+    confidence: verified
+
+  - id: std-ias40
+    standard: IAS 40
+    title: Investment property
+    summary: >-
+      Property held to earn rent or for capital growth is separate from owner-occupied property. The entity chooses cost
+      or fair value for all investment property. Under fair value, changes go to profit or loss each period and no
+      depreciation is taken. Indian Ind AS allows cost only.
+    disclosures: [Valuation method and inputs, valuer independence, rental income and direct costs, reconciliation of carrying amount]
+    analyst_impact: Fair value gains are unrealised; strip them from earnings when comparing real estate groups.
+    adjustment: revaluation_reverse
+    keywords: [investment property, fair value, real estate, rental income, valuation, yield]
+    citations:
+      - {standard: "IAS 40", ref: "paras 30-33, 75-79", url: *ias40}
+    authored: acretia
+    confidence: verified
+
+  - id: std-ifrs8
+    standard: IFRS 8
+    title: Operating segments
+    summary: >-
+      Listed entities report segments on the same basis management uses internally, with the chief operating decision
+      maker's profit measure, plus a reconciliation to group totals. Entity-wide disclosures cover products, geography and
+      major customers.
+    disclosures: [Segment revenue, profit measure, assets and liabilities if reported to the decision maker, reconciliations, geographic revenue, major customer share]
+    analyst_impact: Segment profit measures can differ from group EBIT; tie segment totals to the income statement and note unallocated items.
+    keywords: [segment, operating segment, codm, geographic, reconciliation, major customer, concentration]
+    citations:
+      - {standard: "IFRS 8", ref: "paras 5, 11-13, 23, 28, 32-34", url: *ifrs8}
+    authored: acretia
+    confidence: verified
