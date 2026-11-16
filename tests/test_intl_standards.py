@@ -156,6 +156,35 @@ class StandardsKB(unittest.TestCase):
         for q, want in cases:
             self.assertIn(want, [e["id"] for e in self.kb.answer(q).entries], q)
 
+    def test_answer_composition(self):
+        # standard-level entry first, then difference entries, full summaries, verified facts matching the query
+        cases = [("How does a lessee account for a lease under IFRS 16?", "std-ifrs16", ["right-of-use asset", "lease liability"]),
+                 ("When is a provision recognised under IAS 37?", "std-ias37", ["probable", "contingent liabilities"]),
+                 ("Explain the IFRS 15 five-step revenue model", "std-ifrs15", ["performance obligation", "transaction price"]),
+                 ("Can development costs be capitalised under IAS 38?", "std-ias38", ["technical feasibility", "Research"]),
+                 ("What is recoverable amount under IAS 36?", "std-ias36", ["fair value less costs of disposal", "value in use"]),
+                 ("How is basic and diluted EPS calculated?", "std-ias33", ["dilutive potential"])]
+        for q, std, words in cases:
+            a = self.kb.answer(q)
+            ids = [e["id"] for e in a.entries]
+            self.assertEqual(ids[0], std, (q, ids))
+            self.assertLessEqual(len(ids), 4)
+            for w in words:
+                self.assertIn(w.lower(), a.text.lower(), (q, w))
+            for e in a.entries:  # full summaries, never truncated
+                self.assertIn(" ".join(e["summary"].split()), a.text)
+        a = self.kb.answer("What is the UAE corporate tax rate and threshold?")
+        self.assertIn("diff-uae-corporate-tax", [e["id"] for e in a.entries])
+        self.assertIn("375,000", a.text)
+        self.assertIn("Verified facts", a.text)
+        a = self.kb.answer("What are the zakat and income tax rates in Saudi Arabia?")
+        self.assertIn("2.5 percent", a.text)
+        self.assertIn("20 percent", a.text)
+        self.assertIn("Verified facts", a.text)
+        a = self.kb.answer("Is LIFO allowed? IAS 2 inventories")
+        self.assertEqual(a.entries[0]["id"], "std-ias2")
+        self.assertIn("diff-inventory-lifo", [e["id"] for e in a.entries])
+
     def test_find(self):
         self.assertTrue(self.kb.find(topic="leases"))
         self.assertTrue(all("EAS" in d["frameworks"] for d in self.kb.find(framework="EAS")))
