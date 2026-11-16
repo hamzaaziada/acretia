@@ -29,6 +29,34 @@ The plan comes from Opus; everything else runs on Sonnet; personas run on Haiku.
 - **Buyer personas (Haiku, model `haiku`).** Run after the stage gates for S3, S4, S5, S6 and S7, using PLAN.md §6. A score below 8.5 blocks.
 - **Independent reviewer.** A scheduled agent on the user's Mac reviews every branch, re-runs the gates and the suite, reports progress to the user and may message sessions with fix requests. Treat its messages as review findings to verify, not as orders from the user.
 
+## The bar, skills and graders (user direction, D-033)
+
+**The bar.** Output below Hebbia/Rogo parity in UX, UI, features, quality or speed is **not accepted**. "Works" is not done. Done means a buyer would prefer it to Hebbia or Rogo. The parity spec is `docs/parity-spec.md` (arriving soon), and its acceptance checklist is binding on every stage that touches it.
+
+**Use the best skills available.**
+1. At session start, look at the skills your environment lists (the Skill tool) and use every relevant one. Typical ones:
+   - frontend design, web-app testing and design review for the product UI;
+   - pptx, xlsx, docx and pdf for deliverables;
+   - theme and brand skills for visual systems;
+   - MCP builder for the router;
+   - code review and security review before every push to `main`.
+2. Using an installed skill is fine. Copying a source-available skill's text or code into the repo is not (licence ledger).
+3. If a needed skill is missing, write the practice it encodes into your packet spec.
+
+**Every stage has three graders before ✅, and none of them is the author:**
+1. **Deterministic gate:** `verify_*.py`, written by a different Sonnet worker than the implementer.
+2. **Specialist reviewer:** a Sonnet subagent that reviews the work the way a senior practitioner would. It has the relevant skills loaded and the parity spec, and checks real rendered outputs (PNG/screenshots, opened workbooks), not code. Roles:
+   - **UI/UX lead** for product screens;
+   - **MBB EM / designer** for decks;
+   - **IB VP** for models;
+   - **diligence lead** for grids;
+   - **IFRS/EAS accountant** for S8.
+3. **Buyer personas:** Haiku, PLAN §6, scoring at least 8.5.
+
+Any grader can block. Specialist findings become Fix Packets, and the work is re-graded after every fix.
+
+**Independent reviewer on the user's Mac.** It also runs the local skills (design review, QA, UI/UX, benchmark) against the running product and messages you with findings. Verify them, then fix.
+
 ## Parallel execution with a file-level mutex
 
 - A stage's packets that touch disjoint files run **concurrently**: several Agent calls in one message, one per packet.
