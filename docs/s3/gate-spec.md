@@ -103,3 +103,15 @@ need LibreOffice/poppler when they are absent, and the reason is printed.
   (validator criticals, majors, variety, build seconds) are filled.
 - J3 Full unit suite is not re-run by the gate (the Boss runs it), but the gate imports every
   `om.deck` module without error.
+
+## K. North-star metrics (D-032)
+- K1 Reliability run: `evals/decks/reliability/` generates ≥ 100 varied specs (US GAAP, IFRS, MENA
+  companies; pitchbook section, IC deck, earnings recap, market entry, carve-out; ≥ 3 Arabic) and builds
+  them all offline. ≥ 97 % build with 0 critical validator findings; the success rate is printed.
+- K2 Zero `unsourced_number` findings across the 20 corpus decks and the reliability run.
+- K3 Determinism: building each of 5 sampled specs twice with different seeds gives identical
+  `numbers_digest` and different kept-visual hashes.
+- K4 Speed: p50 wall-clock for the 10-slide decks in the reliability run is < 300 s (offline; printed
+  with p90), and every BuildReport carries per-step timings, tokens and cost_usd (0 offline) in its Job.
+- K5 Every persona run writes an "edits needed" list per slide with shape ids to
+  `evals/decks/edits/<deck_id>.json` (checked for presence and shape-id validity against the deck).
