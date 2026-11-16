@@ -51,7 +51,8 @@ def ratios(st) -> dict:
     ni, pretax, tax = g("net_income"), g("pretax"), g("tax")
     ie, cash, sti = g("interest_expense"), g("cash"), g("sti")
     debt_c, debt_n = g("debt_current"), g("debt_noncurrent")
-    eq, assets = g("equity_total"), g("assets")
+    eq = [a if a is not None else b for a, b in zip(g("equity_total"), g("equity_parent"))]
+    assets = g("assets")
     ca, cl, gp, eps = g("current_assets"), g("current_liabilities"), g("gross_profit"), g("eps_diluted")
     gp = [x if x is not None else (None if r is None or c is None else r - c) for x, r, c in zip(gp, rev, cogs)]
     ebitda = [None if e is None else e + (x or 0) if x is not None else None for e, x in zip(ebit, da)]

@@ -69,8 +69,10 @@ class SecAdapter:
     def company_facts(self, ticker: str) -> dict:
         cik = self.cik(ticker)
         if self.backend == "edgartools":
-            from edgar.httprequests import download_json  # same throttled, identity-aware client
-            return download_json(FACTS_URL.format(cik=cik))
+            dl = getattr(self._edgar, "download_json", None)
+            if dl is None:
+                from edgar.httprequests import download_json as dl  # edgartools' throttled, identity-aware client
+            return dl(FACTS_URL.format(cik=cik))
         return self._om_client().companyfacts(cik)
 
     def filings(self, ticker: str, form: str = "10-K", n: int = 5) -> list[dict]:
@@ -153,8 +155,10 @@ class SecConnector(Connector):
         if not f or not f.get("url", "").startswith("https://www.sec.gov/"):
             raise ConnectorError(f"unknown filing {item_id!r} (call list() first)")
         if self.adapter.backend == "edgartools":
-            from edgar.httprequests import download_text
-            body = download_text(f["url"]).encode("utf-8")
+            dt = getattr(self._edgar, "download_text", None)
+            if dt is None:
+                from edgar.httprequests import download_text as dt
+            body = dt(f["url"]).encode("utf-8")
         else:
             body = self.adapter._om_client().get_text(f["url"], f"harness/{item_id}").encode("utf-8")
         return body, {"name": f"{item_id}.htm", "source": "sec", **f}

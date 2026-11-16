@@ -19,6 +19,7 @@ import os
 import re
 import stat
 import struct
+import zlib
 import zipfile
 from dataclasses import dataclass, field
 from pathlib import Path, PurePosixPath
@@ -206,7 +207,7 @@ def _zip(run: _Run, data: bytes, base: list[str], depth: int, origin: str, rel: 
             mode = (zi.external_attr >> 16) & 0xFFFF
             if stat.S_ISLNK(mode):
                 raise UnsafePathError(f"{origin}: symlink entry {zi.filename!r}")
-            if mode and not (stat.S_ISREG(mode) or stat.S_ISDIR(mode)):
+            if stat.S_IFMT(mode) and not (stat.S_ISREG(mode) or stat.S_ISDIR(mode)):
                 raise UnsafePathError(f"{origin}: special file entry {zi.filename!r}")
             if zi.flag_bits & 0x1:
                 raise EncryptedArchiveError(f"{origin}: encrypted entry {zi.filename!r}; encrypted archives are not supported")
@@ -226,13 +227,20 @@ def _zip(run: _Run, data: bytes, base: list[str], depth: int, origin: str, rel: 
         # pass 2: stream with enforced caps (headers may understate)
         for zi, parts in plan:
             buf = bytearray()
-            with zf.open(zi) as fh:
-                while chunk := fh.read(1 << 20):
-                    buf += chunk
-                    if len(buf) > lim.max_file_bytes:
-                        raise ArchiveBombError(f"{origin}: {zi.filename!r} exceeds {lim.max_file_bytes} bytes while reading")
-                    if len(buf) >= lim.ratio_floor_bytes and len(buf) / max(zi.compress_size, 1) > lim.max_ratio:
-                        raise ArchiveBombError(f"{origin}: {zi.filename!r} compression ratio exceeds {lim.max_ratio:.0f}:1")
+            try:
+                fh = zf.open(zi)
+            except (RuntimeError, NotImplementedError, zipfile.BadZipFile) as e:   # encrypted / unsupported method
+                raise UnpackError(f"{origin}: cannot open {zi.filename!r}: {e}")
+            try:
+                with fh:
+                    while chunk := fh.read(1 << 20):
+                        buf += chunk
+                        if len(buf) > lim.max_file_bytes:
+                            raise ArchiveBombError(f"{origin}: {zi.filename!r} exceeds {lim.max_file_bytes} bytes while reading")
+                        if len(buf) >= lim.ratio_floor_bytes and len(buf) / max(zi.compress_size, 1) > lim.max_ratio:
+                            raise ArchiveBombError(f"{origin}: {zi.filename!r} compression ratio exceeds {lim.max_ratio:.0f}:1")
+            except (zipfile.BadZipFile, zlib.error, EOFError) as e:      # corrupt data / header sizes that lie
+                raise UnpackError(f"{origin}: corrupt entry {zi.filename!r}: {e}")
             _handle(run, bytes(buf), base + parts, depth + 1, f"{origin}!{zi.filename}")
 
 
