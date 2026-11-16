@@ -429,9 +429,9 @@ def _():
     d = tree({"om/__init__.py": "", "om/pdfbad.py": "import fitz\n"})
     hits, _n = copyleft_hits(d)
     assert any("fitz" in h for h in hits), f"copyleft scanner missed module-level fitz: {hits}"
-    # fitz is also an unallowed ledger-backed import.
-    _u, bad, _m = isolated_violations(third_party_imports(d, True), rows, table)
-    assert any("fitz" in b or "pymupdf" in b.lower() for b in bad), f"fitz not flagged by import check: {bad}"
+    # fitz is also rejected by the ledger import check (unmapped, or mapped to a skip/isolated row).
+    unm, bad, _m = isolated_violations(third_party_imports(d, True), rows, table)
+    assert any("fitz" in x or "pymupdf" in x.lower() for x in unm + bad), f"fitz not flagged by import check: {unm} {bad}"
     # (b) module-level import uno in om/recalc.py still fails.
     d = tree({"om/__init__.py": "", "om/recalc.py": "import uno\n"})
     _u, bad, _m = isolated_violations(third_party_imports(d, True), rows, table)

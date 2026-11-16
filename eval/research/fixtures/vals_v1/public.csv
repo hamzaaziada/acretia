@@ -1,0 +1,4 @@
+Question,Answer,Question Type,Expert time (mins),Rubric
+What was Examplecorp's (NASDAQ: EXMP) FY2023 revenue in USD millions?,"$1,200.5 million",Simple retrieval - Quantitative,10,"[{""operator"": ""correctness"", ""criteria"": ""1200.5""}]"
+How many reportable segments did Examplecorp (NYSE: EXMP) disclose for FY2023?,4,Simple retrieval - Quantitative,5,"[{""operator"": ""correctness"", ""criteria"": ""4""}]"
+"Did Widget Inc (NYSE: WDGT) beat or miss Q2 margin guidance, in bps?",60bps beat,Beat or Miss,20,"[{""operator"": ""correctness"", ""criteria"": ""60bps beat""}]"

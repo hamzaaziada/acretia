@@ -1,0 +1,8 @@
+{
+ "url": "https://example.com/news/q4",
+ "title": "Testco reports Q4",
+ "published": "2025-02-01",
+ "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+ "snippet": "Testco reported revenue of $1.2 billion in the fourth quarter, up 12% from a year ago, with 3,400 employees.",
+ "fetched_at": "2025-02-03T10:00:00Z"
+}
