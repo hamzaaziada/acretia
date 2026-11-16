@@ -128,7 +128,7 @@ def build_message(to, subject: str, text: str, html: str, *, sender: str, attach
     m.add_alternative(html, subtype="html")
     for name, data, ctype in attachments or []:
         mt, _, st = ctype.partition("/")
-        m.add_attachment(data, maintype=mt, subtype=st or "octet-stream", filename=_unpack.sanitize_component(name))
+        m.add_attachment(data, maintype=mt, subtype=st or "octet-stream", filename=_unpack.sanitize_component(Path(name.replace("\\", "/")).name))
     return m
 
 

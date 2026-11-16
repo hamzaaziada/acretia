@@ -1,11 +1,14 @@
 """Evidence bundle: hash chain, tamper detection, concurrency, resume, payload store."""
 import json
+import os
+import stat
 import tempfile
 import threading
 import unittest
 from pathlib import Path
 
 from om.contracts import ContractError, sha256_hex
+from src.harness import evidence as _ev
 from src.harness.evidence import (GENESIS_HASH, EvidenceBundle, _canon_str, _record_hash, export, head_hash,
                                   traced, verify)
 
@@ -234,3 +237,174 @@ class EvidenceTest(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+KEY = b"unit-test-evidence-key"
+
+
+class AnchorTest(unittest.TestCase):
+    def setUp(self):
+        self.tmp = tempfile.TemporaryDirectory()
+        self.addCleanup(self.tmp.cleanup)
+        self.dir = Path(self.tmp.name)
+        self.path = self.dir / "jobA.jsonl"
+        self.b = EvidenceBundle(self.path)
+        self.addCleanup(self.b.close)
+        for i in range(6):
+            self.b.append("t", {"i": i}, source=f"s{i}", output={"o": i})
+
+    def recs(self):
+        return [json.loads(x) for x in self.path.read_text().splitlines()]
+
+    def test_seal_and_verify_auto(self):
+        a = self.b.seal(key=KEY)
+        self.assertEqual((a.job_id, a.n_records, a.head_hash), ("jobA", 6, self.b.head_hash()))
+        self.assertTrue(verify(self.path, "auto", key=KEY))
+        self.assertTrue(verify(self.path, a, key=KEY))
+        self.assertTrue(verify(self.path, a.as_dict(), key=KEY))
+        self.assertNotIn("unit-test", (self.dir / "anchors.jsonl").read_text())
+        self.assertNotIn("unit-test", self.path.read_text())
+
+    def test_appends_after_seal_still_verify(self):
+        self.b.seal(key=KEY)
+        self.b.append("t", {}, source="x", output=1)
+        self.assertTrue(verify(self.path, "auto", key=KEY))
+        self.b.seal(key=KEY)
+        self.assertTrue(verify(self.path, "auto", key=KEY))
+
+    def test_truncation_caught(self):
+        a = self.b.seal(key=KEY)
+        lines = self.path.read_text().splitlines(keepends=True)
+        self.path.write_text("".join(lines[:3]))
+        self.assertTrue(verify(self.path))  # chain alone cannot tell
+        r = verify(self.path, a, key=KEY)
+        self.assertFalse(r.ok)
+        self.assertIn("truncated", r.reason)
+        self.assertFalse(verify(self.path, "auto", key=KEY).ok)
+
+    def test_rechained_forgery_caught(self):
+        a = self.b.seal(key=KEY)
+        recs = self.recs()
+        recs[2]["source"] = "forged"
+        _rewrite(self.path, _rechain(recs))
+        self.assertTrue(verify(self.path))
+        r = verify(self.path, a, key=KEY)
+        self.assertFalse(r.ok)
+        self.assertIn("head differs", r.reason)
+
+    def test_forged_early_history_with_longer_chain(self):
+        a = self.b.seal(key=KEY)
+        recs = self.recs()
+        recs[1]["source"] = "forged"
+        _rewrite(self.path, _rechain(recs + [dict(recs[-1])]))
+        self.assertFalse(verify(self.path, a, key=KEY).ok)
+
+    def test_signature_mismatch(self):
+        a = self.b.seal(key=KEY).as_dict()
+        a["n_records"] = 3
+        self.assertIn("signature", verify(self.path, a, key=KEY).reason)
+        good = self.b.seal(key=KEY).as_dict()
+        self.assertIn("signature", verify(self.path, good, key=b"other-key").reason)
+
+    def test_forged_anchor_log_entry(self):
+        self.b.seal(key=KEY)
+        log = self.dir / "anchors.jsonl"
+        e = json.loads(log.read_text())
+        e["anchor"]["n_records"] = 2
+        log.write_text(json.dumps(e) + "\n")
+        r = verify(self.path, "auto", key=KEY)
+        self.assertFalse(r.ok)
+        self.assertIn("anchor", r.reason)
+
+    def test_missing_anchor(self):
+        r = verify(self.path, "auto", key=KEY)
+        self.assertFalse(r.ok)
+        self.assertIn("missing anchor", r.reason)
+        other = EvidenceBundle(self.dir / "jobB.jsonl")
+        self.addCleanup(other.close)
+        other.append("t", {}, source="s", output=1)
+        other.seal(key=KEY)
+        self.assertIn("missing anchor", verify(self.path, "auto", key=KEY).reason)
+        self.assertTrue(verify(self.dir / "jobB.jsonl", "auto", key=KEY))
+
+    def test_anchor_for_other_job_rejected(self):
+        a = self.b.seal(key=KEY)
+        other = self.dir / "jobC.jsonl"
+        other.write_bytes(self.path.read_bytes())
+        self.assertFalse(verify(other, a, key=KEY).ok)
+
+    def test_anchor_log_is_hash_chained(self):
+        self.b.seal(key=KEY)
+        self.b.seal(key=KEY)
+        log = self.dir / "anchors.jsonl"
+        lines = log.read_text().splitlines()
+        self.assertEqual(len(lines), 2)
+        self.assertEqual(json.loads(lines[1])["prev_hash"], json.loads(lines[0])["entry_hash"])
+        log.write_text(lines[1] + "\n")  # drop the first entry
+        self.assertIn("anchor", verify(self.path, "auto", key=KEY).reason)
+
+    def test_key_from_env_and_file(self):
+        old = {k: os.environ.get(k) for k in ("ACRETIA_EVIDENCE_KEY", "ACRETIA_EVIDENCE_KEY_FILE")}
+        self.addCleanup(lambda: [os.environ.pop(k, None) if v is None else os.environ.__setitem__(k, v)
+                                 for k, v in old.items()])
+        os.environ["ACRETIA_EVIDENCE_KEY"] = "env-secret"
+        a = self.b.seal()
+        self.assertTrue(verify(self.path, a))
+        self.assertFalse(verify(self.path, a, key=b"zzz").ok)
+        del os.environ["ACRETIA_EVIDENCE_KEY"]
+        kf = self.dir / "keys" / "evidence.key"
+        os.environ["ACRETIA_EVIDENCE_KEY_FILE"] = str(kf)
+        self.assertFalse(verify(self.path, a).ok)  # no key, none created by verify
+        self.assertFalse(kf.exists())
+        a2 = self.b.seal()
+        self.assertEqual(stat.S_IMODE(kf.stat().st_mode), 0o600)
+        self.assertTrue(verify(self.path, a2))
+        self.assertEqual(_ev._key_bytes(), kf.read_bytes().strip())
+
+
+class RepairTest(unittest.TestCase):
+    def setUp(self):
+        self.tmp = tempfile.TemporaryDirectory()
+        self.addCleanup(self.tmp.cleanup)
+        self.path = Path(self.tmp.name) / "jobR.jsonl"
+        b = EvidenceBundle(self.path)
+        for i in range(4):
+            b.append("t", {"i": i}, source="s", output=i)
+        b.close()
+
+    def test_default_still_raises(self):
+        with open(self.path, "ab") as f:
+            f.write(b'{"job_id":"jobR","seq":4,"to')
+        b = EvidenceBundle(self.path)
+        self.addCleanup(b.close)
+        with self.assertRaises(ContractError):
+            b.append("t", {}, source="s", output=1)
+
+    def test_simulated_crash_then_repair(self):
+        with open(self.path, "ab") as f:
+            f.write(b'{"job_id":"jobR","seq":4,"to')
+        self.assertFalse(verify(self.path).ok)
+        b = EvidenceBundle(self.path, repair=True)
+        self.addCleanup(b.close)
+        torn = list(Path(self.tmp.name).glob("jobR.jsonl.torn-*"))
+        self.assertEqual(len(torn), 1)
+        self.assertEqual(torn[0].read_bytes(), b'{"job_id":"jobR","seq":4,"to')
+        recs = export(self.path)
+        self.assertEqual([r["seq"] for r in recs], [0, 1, 2, 3, 4])
+        self.assertEqual(recs[4]["tool"], "recovery")
+        self.assertEqual(recs[4]["prev_hash"], recs[3]["record_hash"])
+        b.append("t", {}, source="s", output=9)
+        self.assertEqual(verify(self.path).n_records, 6)
+
+    def test_repair_noop_on_clean_file(self):
+        b = EvidenceBundle(self.path, repair=True)
+        self.addCleanup(b.close)
+        self.assertEqual(verify(self.path).n_records, 4)
+        self.assertEqual(list(Path(self.tmp.name).glob("*.torn-*")), [])
+
+    def test_repair_when_only_partial_line(self):
+        p = Path(self.tmp.name) / "jobZ.jsonl"
+        p.write_bytes(b'{"par')
+        b = EvidenceBundle(p, repair=True)
+        self.addCleanup(b.close)
+        self.assertEqual([r["tool"] for r in export(p)], ["recovery"])

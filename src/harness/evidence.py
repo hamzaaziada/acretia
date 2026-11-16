@@ -9,11 +9,14 @@ opened with ``store_payloads=True``, which writes them to a sibling content-addr
 from __future__ import annotations
 
 import functools
+import hashlib
+import hmac
 import json
 import math
 import os
+import secrets
 import threading
-from dataclasses import dataclass
+from dataclasses import asdict, dataclass
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -82,18 +85,30 @@ def _read_lines(path) -> list[bytes]:
     return lines[:-1] + ([lines[-1]] if lines[-1] else [])
 
 
-def verify(path) -> VerifyResult:
-    """Check the whole chain. ``first_bad_seq`` is the zero-based position of the first offending line."""
+def verify(path, anchor=None, *, key=None, anchor_dir=None) -> VerifyResult:
+    """Check the whole chain. ``first_bad_seq`` is the zero-based position of the first offending line.
+
+    ``anchor`` (F4) pins the chain to a signed external head: ``None`` checks the chain only; ``"auto"`` requires
+    and checks every anchor sealed for this job in ``<anchor_dir or path.parent>/anchors.jsonl``; an ``Anchor``
+    or its dict is checked directly. Catches truncation, re-chained forgery, a bad signature, a missing anchor."""
+    res, hashes = _verify_chain(path)
+    if not res.ok or anchor is None:
+        return res
+    return _check_anchors(Path(path), res, hashes, anchor, key, anchor_dir)
+
+
+def _verify_chain(path) -> tuple[VerifyResult, list[str]]:
     path = Path(path)
     if not path.exists():
-        return VerifyResult(False, 0, 0, "file does not exist")
+        return VerifyResult(False, 0, 0, "file does not exist"), []
     data = path.read_bytes()
     lines = _read_lines(path)
     job_id = path.stem
     prev_hash, prev_ts, n = GENESIS_HASH, "", 0
+    hashes: list[str] = []
     for i, raw in enumerate(lines):
         def bad(reason, i=i, n=n):
-            return VerifyResult(False, n, i, reason)
+            return VerifyResult(False, n, i, reason), []
         last = i == len(lines) - 1
         if last and not data.endswith(b"\n"):
             return bad("truncated last line")
@@ -122,7 +137,157 @@ def verify(path) -> VerifyResult:
         if err:
             return bad(err)
         prev_hash, prev_ts, n = rec["record_hash"], ts, n + 1
-    return VerifyResult(True, n, None, "")
+        hashes.append(prev_hash)
+    return VerifyResult(True, n, None, ""), hashes
+
+
+# --------------------------------------------------------------------------- anchoring (F4)
+
+_ANCHOR_FIELDS = ("job_id", "n_records", "head_hash", "sealed_at")
+
+
+@dataclass(frozen=True)
+class Anchor:
+    """A signed claim "job ``job_id`` had ``n_records`` records ending in ``head_hash`` at ``sealed_at``"."""
+    job_id: str
+    n_records: int
+    head_hash: str
+    sealed_at: str
+    signature: str
+
+    def as_dict(self) -> dict:
+        return asdict(self)
+
+    @classmethod
+    def from_dict(cls, d) -> "Anchor":
+        if isinstance(d, Anchor):
+            return d
+        if not isinstance(d, dict) or set(d) != set(_ANCHOR_FIELDS) | {"signature"}:
+            raise ContractError("anchor: missing or unexpected fields")
+        return cls(d["job_id"], d["n_records"], d["head_hash"], d["sealed_at"], d["signature"])
+
+
+def _key_bytes(key=None, *, create: bool = True) -> bytes | None:
+    """Per-deployment HMAC key: explicit ``key`` > ``ACRETIA_EVIDENCE_KEY`` > ``storage/keys/evidence.key``
+    (created 0600 on first use when ``create``). The key is never logged or written into a bundle."""
+    if key is not None:
+        return key if isinstance(key, bytes) else str(key).encode("utf-8")
+    env = os.environ.get("ACRETIA_EVIDENCE_KEY")
+    if env:
+        return env.encode("utf-8")
+    kp = Path(os.environ.get("ACRETIA_EVIDENCE_KEY_FILE") or "storage/keys/evidence.key")
+    if kp.exists():
+        data = kp.read_bytes().strip()
+        return data or None
+    if not create:
+        return None
+    kp.parent.mkdir(parents=True, exist_ok=True)
+    try:
+        fd = os.open(kp, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600)
+    except FileExistsError:  # lost a creation race: read the winner's key
+        for _ in range(50):
+            data = kp.read_bytes().strip()
+            if data:
+                return data
+            threading.Event().wait(0.02)
+        return None
+    with os.fdopen(fd, "wb") as fh:
+        fh.write(secrets.token_hex(32).encode("ascii"))
+    return kp.read_bytes().strip()
+
+
+def _sign(key: bytes, job_id, n_records, head, sealed_at) -> str:
+    msg = _canon_str({"job_id": job_id, "n_records": n_records, "head_hash": head, "sealed_at": sealed_at})
+    return hmac.new(key, msg.encode("utf-8"), hashlib.sha256).hexdigest()
+
+
+def anchor_log_path(directory) -> Path:
+    return Path(directory) / "anchors.jsonl"
+
+
+def _entry_hash(entry: dict) -> str:
+    return sha256_hex(_canon_str({k: v for k, v in entry.items() if k != "entry_hash"}))
+
+
+def _read_anchor_log(directory) -> tuple[list[Anchor], str | None]:
+    """All anchors in log order; second item is an error string if the log chain is broken."""
+    p = anchor_log_path(directory)
+    if not p.exists():
+        return [], None
+    prev, out = GENESIS_HASH, []
+    for i, raw in enumerate(p.read_bytes().split(b"\n")):
+        if not raw:
+            continue
+        try:
+            e = json.loads(raw.decode("utf-8"))
+            a = Anchor.from_dict(e["anchor"])
+            ok = e["prev_hash"] == prev and e["entry_hash"] == _entry_hash(e) and set(e) == {"anchor", "prev_hash", "entry_hash"}
+        except (ValueError, KeyError, TypeError, ContractError, UnicodeDecodeError):
+            return out, f"anchor log line {i} is corrupt"
+        if not ok:
+            return out, f"anchor log line {i} breaks the anchor chain"
+        prev = e["entry_hash"]
+        out.append(a)
+    return out, None
+
+
+def _append_anchor(directory, anchor: Anchor) -> None:
+    p = anchor_log_path(directory)
+    p.parent.mkdir(parents=True, exist_ok=True)
+    with open(p, "ab+") as fh:
+        if fcntl:
+            fcntl.flock(fh.fileno(), fcntl.LOCK_EX)
+        try:
+            _, err = _read_anchor_log(directory)
+            if err:
+                raise ContractError(f"{p}: {err}; refusing to append")
+            fh.seek(0)
+            lines = [ln for ln in fh.read().split(b"\n") if ln]
+            prev = json.loads(lines[-1])["entry_hash"] if lines else GENESIS_HASH
+            e = {"anchor": anchor.as_dict(), "prev_hash": prev}
+            e["entry_hash"] = _entry_hash(e)
+            fh.seek(0, os.SEEK_END)
+            fh.write((_canon_str(e) + "\n").encode("utf-8"))
+            fh.flush()
+            os.fsync(fh.fileno())
+        finally:
+            if fcntl:
+                fcntl.flock(fh.fileno(), fcntl.LOCK_UN)
+
+
+def _check_anchors(path: Path, res: VerifyResult, hashes: list[str], anchor, key, anchor_dir) -> VerifyResult:
+    def fail(reason):
+        return VerifyResult(False, res.n_records, None, reason)
+    job_id = path.stem
+    if anchor == "auto":
+        anchors, err = _read_anchor_log(anchor_dir or path.parent)
+        if err:
+            return fail(err)
+        anchors = [a for a in anchors if a.job_id == job_id]
+        if not anchors:
+            return fail(f"missing anchor: no sealed anchor for job {job_id!r}")
+    else:
+        try:
+            anchors = [Anchor.from_dict(anchor)]
+        except ContractError as e:
+            return fail(str(e))
+    k = _key_bytes(key, create=False)
+    if k is None:
+        return fail("cannot check anchor signature: no evidence key available")
+    for a in anchors:
+        if not isinstance(a.n_records, int) or isinstance(a.n_records, bool) or a.n_records < 0:
+            return fail("anchor n_records is invalid")
+        if not isinstance(a.signature, str) or not hmac.compare_digest(
+                a.signature, _sign(k, a.job_id, a.n_records, a.head_hash, a.sealed_at)):
+            return fail("anchor signature mismatch")
+        if a.job_id != job_id:
+            return fail(f"anchor is for job {a.job_id!r}, not {job_id!r}")
+        if res.n_records < a.n_records:
+            return fail(f"truncated: bundle has {res.n_records} records but {a.n_records} were anchored")
+        expect = GENESIS_HASH if a.n_records == 0 else hashes[a.n_records - 1]
+        if expect != a.head_hash:
+            return fail(f"head differs from anchor at record {a.n_records} (re-chained or rewritten history)")
+    return res
 
 
 def head_hash(path) -> str:
@@ -142,7 +307,7 @@ def export(path) -> list[dict]:
 class EvidenceBundle:
     """Append-only evidence log for one job. ``job_id`` is the file stem."""
 
-    def __init__(self, path, *, store_payloads: bool = False):
+    def __init__(self, path, *, store_payloads: bool = False, repair: bool = False):
         self.path = Path(path)
         self.job_id = self.path.stem
         self.store_payloads = store_payloads
@@ -152,6 +317,32 @@ class EvidenceBundle:
         self._fh = open(self.path, "ab+")
         if store_payloads:
             self.payload_dir.mkdir(parents=True, exist_ok=True)
+        if repair:
+            self._repair_torn_tail()
+
+    def _repair_torn_tail(self) -> None:
+        """If the last line is truncated (crash mid-write), move it to ``<path>.torn-<ts>``, resume the chain from
+        the last valid record and log a ``recovery`` record."""
+        with self._lock:
+            if fcntl:
+                fcntl.flock(self._fh.fileno(), fcntl.LOCK_EX)
+            try:
+                self._fh.seek(0)
+                data = self._fh.read()
+                if not data or data.endswith(b"\n"):
+                    return
+                cut = data.rfind(b"\n") + 1
+                torn = data[cut:]
+                torn_path = self.path.with_name(f"{self.path.name}.torn-{datetime.now(timezone.utc).strftime('%Y%m%dT%H%M%S%fZ')}")
+                torn_path.write_bytes(torn)
+                os.ftruncate(self._fh.fileno(), cut)
+                self._fh.flush()
+                os.fsync(self._fh.fileno())
+                info = {"discarded_bytes": len(torn), "torn_file": torn_path.name, "kept_bytes": cut}
+            finally:
+                if fcntl:
+                    fcntl.flock(self._fh.fileno(), fcntl.LOCK_UN)
+        self.append("recovery", info, source="evidence.repair", output=info)
 
     # -- lifecycle -------------------------------------------------------------------------------------------
     def close(self) -> None:
@@ -245,8 +436,20 @@ class EvidenceBundle:
     def head_hash(self) -> str:
         return head_hash(self.path)
 
-    def verify(self) -> VerifyResult:
-        return verify(self.path)
+    def verify(self, anchor=None, *, key=None, anchor_dir=None) -> VerifyResult:
+        return verify(self.path, anchor, key=key, anchor_dir=anchor_dir)
+
+    def seal(self, anchor_dir=None, *, key=None) -> Anchor:
+        """Sign ``(job_id, n_records, head_hash, sealed_at)`` with the deployment key and append it to the
+        hash-chained ``anchors.jsonl`` in ``anchor_dir`` (default: the bundle's directory). Refuses a bad chain."""
+        res = verify(self.path)
+        if not res.ok:
+            raise ContractError(f"{self.path}: cannot seal a chain that does not verify: {res.reason}")
+        k = _key_bytes(key)
+        head, ts = head_hash(self.path), _now()
+        a = Anchor(self.job_id, res.n_records, head, ts, _sign(k, self.job_id, res.n_records, head, ts))
+        _append_anchor(anchor_dir or self.path.parent, a)
+        return a
 
     def export(self) -> list[dict]:
         return export(self.path)

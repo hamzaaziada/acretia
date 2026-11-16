@@ -18,6 +18,7 @@ import tempfile
 import threading
 import time
 import urllib.error
+import uuid
 import urllib.parse
 import urllib.request
 import xml.etree.ElementTree as ET
@@ -279,7 +280,10 @@ class S3BlobStore(BlobStore):
 
 # --------------------------------------------------------------------------- KV + queue
 
-Lease = namedtuple("Lease", "id payload attempts queue", defaults=(None,))
+Lease = namedtuple("Lease", "id payload attempts queue token", defaults=(None, None))
+
+DEFAULT_MAX_ATTEMPTS = 5
+DLQ_SUFFIX = ".dlq"
 
 
 def _b(v) -> bytes:
@@ -303,6 +307,14 @@ class SQLiteKV:
             "CREATE TABLE IF NOT EXISTS queue(id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL,"
             " payload BLOB NOT NULL, visible_at REAL NOT NULL, attempts INTEGER NOT NULL DEFAULT 0);"
             "CREATE INDEX IF NOT EXISTS queue_ready ON queue(name, visible_at, id);")
+        cols = {r[1] for r in self._db.execute("PRAGMA table_info(queue)")}
+        for col, ddl in (("lease_token", "TEXT"), ("max_attempts", f"INTEGER NOT NULL DEFAULT {DEFAULT_MAX_ATTEMPTS}"),
+                         ("last_error", "TEXT")):
+            if col not in cols:
+                try:
+                    self._db.execute(f"ALTER TABLE queue ADD COLUMN {col} {ddl}")
+                except sqlite3.OperationalError:  # another process added it first
+                    pass
 
     def close(self):
         with self._lock:
@@ -341,46 +353,123 @@ class SQLiteKV:
         return self._tx(f)
 
     # queue
-    def enqueue(self, name, payload, delay: float = 0.0) -> int:
+    def enqueue(self, name, payload, delay: float = 0.0, max_attempts: int = DEFAULT_MAX_ATTEMPTS) -> int:
+        if isinstance(max_attempts, bool) or not isinstance(max_attempts, int) or max_attempts < 1:
+            raise StorageError("max_attempts must be an int >= 1")
         return self._tx(lambda d: d.execute(
-            "INSERT INTO queue(name,payload,visible_at) VALUES(?,?,?)",
-            (name, _b(payload), self._clock() + delay)).lastrowid)
+            "INSERT INTO queue(name,payload,visible_at,max_attempts) VALUES(?,?,?,?)",
+            (name, _b(payload), self._clock() + delay, max_attempts)).lastrowid)
+
+    @staticmethod
+    def _to_dlq(d, row_id, name, error, now):
+        d.execute("UPDATE queue SET name=?, lease_token=NULL, visible_at=?, last_error=? WHERE id=?",
+                  (name + DLQ_SUFFIX, now, error, row_id))
 
     def dequeue(self, name, lease: float = 30.0):
-        """Return the oldest visible item as a Lease and hide it for `lease` seconds, or None."""
+        """Return the oldest visible item as a Lease (with a unique ``token``) and hide it for `lease` seconds,
+        or None. An item whose attempts are exhausted moves to ``<name>.dlq`` instead of being delivered."""
         def f(d):
             now = self._clock()
-            row = d.execute("SELECT id,payload,attempts FROM queue WHERE name=? AND visible_at<=? "
-                            "ORDER BY id LIMIT 1", (name, now)).fetchone()
-            if row is None:
-                return None
-            d.execute("UPDATE queue SET visible_at=?, attempts=attempts+1 WHERE id=?", (now + lease, row[0]))
-            return Lease(row[0], bytes(row[1]), row[2] + 1)
+            while True:
+                row = d.execute("SELECT id,payload,attempts,max_attempts,last_error FROM queue WHERE name=? "
+                                "AND visible_at<=? ORDER BY id LIMIT 1", (name, now)).fetchone()
+                if row is None:
+                    return None
+                if row[2] >= row[3]:
+                    self._to_dlq(d, row[0], name, row[4] or "lease expired without ack (max attempts reached)", now)
+                    continue
+                token = uuid.uuid4().hex
+                d.execute("UPDATE queue SET visible_at=?, attempts=attempts+1, lease_token=? WHERE id=?",
+                          (now + lease, token, row[0]))
+                return Lease(row[0], bytes(row[1]), row[2] + 1, name, token)
         return self._tx(f)
 
-    def ack(self, item_id) -> bool:
-        item_id = getattr(item_id, "id", item_id)
-        return self._tx(lambda d: d.execute("DELETE FROM queue WHERE id=?", (item_id,)).rowcount > 0)
+    @staticmethod
+    def _fence(item):
+        """(id, token); token None (a bare id) means an unfenced legacy ack."""
+        return getattr(item, "id", item), getattr(item, "token", None)
 
-    def nack(self, item_id, delay: float = 0.0) -> bool:
-        item_id = getattr(item_id, "id", item_id)
-        return self._tx(lambda d: d.execute("UPDATE queue SET visible_at=? WHERE id=?",
-                                            (self._clock() + delay, item_id)).rowcount > 0)
+    def ack(self, item_id) -> bool:
+        """Delete the item iff ``(id, lease_token)`` still matches the live lease; a stale worker gets False."""
+        i, tok = self._fence(item_id)
+        if tok is None:
+            return self._tx(lambda d: d.execute("DELETE FROM queue WHERE id=?", (i,)).rowcount > 0)
+        return self._tx(lambda d: d.execute("DELETE FROM queue WHERE id=? AND lease_token=?", (i, tok)).rowcount > 0)
+
+    def nack(self, item_id, delay: float = 0.0, error: str | None = None) -> bool:
+        """Release the lease (token-fenced). Records ``error``; an exhausted item moves to the dead-letter queue."""
+        i, tok = self._fence(item_id)
+
+        def f(d):
+            row = d.execute("SELECT name,attempts,max_attempts,lease_token FROM queue WHERE id=?", (i,)).fetchone()
+            if row is None or (tok is not None and row[3] != tok):
+                return False
+            now = self._clock()
+            if error is not None:
+                d.execute("UPDATE queue SET last_error=? WHERE id=?", (error, i))
+            if tok is not None and row[1] >= row[2]:
+                self._to_dlq(d, i, row[0], error or "max attempts reached", now)
+            else:
+                d.execute("UPDATE queue SET visible_at=?, lease_token=NULL WHERE id=?", (now + delay, i))
+            return True
+        return self._tx(f)
 
     def qsize(self, name) -> int:
         with self._lock:
             return self._db.execute("SELECT COUNT(*) FROM queue WHERE name=?", (name,)).fetchone()[0]
+
+    def dlq_list(self, name) -> list:
+        with self._lock:
+            rows = self._db.execute("SELECT id,payload,attempts,last_error FROM queue WHERE name=? ORDER BY id",
+                                    (name + DLQ_SUFFIX,)).fetchall()
+        return [{"id": r[0], "payload": bytes(r[1]), "attempts": r[2], "last_error": r[3]} for r in rows]
+
+    def dlq_requeue(self, name, item_id=None) -> int:
+        """Move dead-lettered items (one, or all) back to ``name`` with a fresh attempt budget. Returns the count."""
+        def f(d):
+            q, args = "UPDATE queue SET name=?, attempts=0, visible_at=?, lease_token=NULL WHERE name=?", \
+                [name, self._clock(), name + DLQ_SUFFIX]
+            if item_id is not None:
+                q += " AND id=?"
+                args.append(getattr(item_id, "id", item_id) if not isinstance(item_id, dict) else item_id["id"])
+            return d.execute(q, args).rowcount
+        return self._tx(f)
 
 
 class RedisKV:
     """Minimal RESP2 client with the same API as SQLiteKV. Queue = sorted set scored by visibility time,
     claimed atomically with a Lua script. Needs a reachable Redis server; no third-party package."""
 
-    _DEQ = ("local m=redis.call('ZRANGEBYSCORE',KEYS[1],'-inf',ARGV[1],'LIMIT',0,1)[1] "
+    # Fields per item in hash KEYS[2]: <id> payload, <id>:n attempts, <id>:t lease token, <id>:max, <id>:err.
+    # KEYS[3] is the dead-letter zset. ARGV: now, lease, token, default max_attempts.
+    _DEQ = ("while true do "
+            "local m=redis.call('ZRANGEBYSCORE',KEYS[1],'-inf',ARGV[1],'LIMIT',0,1)[1] "
             "if not m then return false end "
+            "local n=tonumber(redis.call('HGET',KEYS[2],m..':n') or 0) "
+            "local mx=tonumber(redis.call('HGET',KEYS[2],m..':max') or ARGV[4]) "
+            "if n>=mx then "
+            "redis.call('ZREM',KEYS[1],m) redis.call('ZADD',KEYS[3],ARGV[1],m) "
+            "redis.call('HDEL',KEYS[2],m..':t') "
+            "if not redis.call('HGET',KEYS[2],m..':err') then "
+            "redis.call('HSET',KEYS[2],m..':err','lease expired without ack (max attempts reached)') end "
+            "else "
             "redis.call('ZADD',KEYS[1],tonumber(ARGV[1])+tonumber(ARGV[2]),m) "
             "local a=redis.call('HINCRBY',KEYS[2],m..':n',1) "
-            "return {m,redis.call('HGET',KEYS[2],m),a}")
+            "redis.call('HSET',KEYS[2],m..':t',ARGV[3]) "
+            "return {m,redis.call('HGET',KEYS[2],m),a} "
+            "end end")
+    # ack: only if the live lease token matches. ARGV: id, token
+    _ACK = ("if redis.call('HGET',KEYS[2],ARGV[1]..':t')~=ARGV[2] then return 0 end "
+            "redis.call('HDEL',KEYS[2],ARGV[1],ARGV[1]..':n',ARGV[1]..':t',ARGV[1]..':max',ARGV[1]..':err') "
+            "return redis.call('ZREM',KEYS[1],ARGV[1])")
+    # nack: token-fenced; ARGV: id, token, visible_at, error ('' for none). Exhausted items go to the DLQ.
+    _NACK = ("if redis.call('HGET',KEYS[2],ARGV[1]..':t')~=ARGV[2] then return 0 end "
+             "if ARGV[4]~='' then redis.call('HSET',KEYS[2],ARGV[1]..':err',ARGV[4]) end "
+             "redis.call('HDEL',KEYS[2],ARGV[1]..':t') "
+             "local n=tonumber(redis.call('HGET',KEYS[2],ARGV[1]..':n') or 0) "
+             "local mx=tonumber(redis.call('HGET',KEYS[2],ARGV[1]..':max') or ARGV[5]) "
+             "if n>=mx then redis.call('ZREM',KEYS[1],ARGV[1]) redis.call('ZADD',KEYS[3],ARGV[3],ARGV[1]) return 1 end "
+             "return redis.call('ZADD',KEYS[1],'XX','CH',ARGV[3],ARGV[1])+1")
 
     def __init__(self, url: str = "redis://localhost:6379/0", clock=time.time, timeout: float = 5.0):
         u = urllib.parse.urlsplit(url)
@@ -482,34 +571,62 @@ class RedisKV:
     def incr(self, key, amount: int = 1) -> int:
         return self._cmd("INCRBY", "kv:" + key, amount)
 
-    def enqueue(self, name, payload, delay: float = 0.0) -> int:
+    def enqueue(self, name, payload, delay: float = 0.0, max_attempts: int = DEFAULT_MAX_ATTEMPTS) -> int:
+        if isinstance(max_attempts, bool) or not isinstance(max_attempts, int) or max_attempts < 1:
+            raise StorageError("max_attempts must be an int >= 1")
         i = self._cmd("INCR", f"q:{name}:seq")
-        self._cmd("HSET", f"q:{name}:data", str(i), _b(payload))
+        self._cmd("HSET", f"q:{name}:data", str(i), _b(payload), f"{i}:max", str(max_attempts))
         self._cmd("ZADD", f"q:{name}", repr(self._clock() + delay), str(i))
         return i
 
+    def _deq_args(self, name, lease, token):
+        return ("EVAL", self._DEQ, 3, f"q:{name}", f"q:{name}:data", f"q:{name}:dlq", repr(self._clock()),
+                repr(lease), token, DEFAULT_MAX_ATTEMPTS)
+
     def dequeue(self, name, lease: float = 30.0):
-        r = self._cmd("EVAL", self._DEQ, 2, f"q:{name}", f"q:{name}:data", repr(self._clock()), repr(lease))
+        token = uuid.uuid4().hex
+        r = self._cmd(*self._deq_args(name, lease, token))
         if not r:
             return None
-        return Lease(int(r[0]), r[1], int(r[2]), name)
+        return Lease(int(r[0]), r[1], int(r[2]), name, token)
 
     def _lease(self, lease):
-        if getattr(lease, "queue", None) is None:
+        if getattr(lease, "queue", None) is None or getattr(lease, "token", None) is None:
             raise StorageError("RedisKV ack/nack need the Lease returned by dequeue")
-        return lease.queue, str(lease.id)
+        return lease.queue, str(lease.id), lease.token
 
     def ack(self, lease) -> bool:
-        name, i = self._lease(lease)
-        self._cmd("HDEL", f"q:{name}:data", i, i + ":n")
-        return self._cmd("ZREM", f"q:{name}", i) > 0
+        name, i, tok = self._lease(lease)
+        return self._cmd("EVAL", self._ACK, 2, f"q:{name}", f"q:{name}:data", i, tok) > 0
 
-    def nack(self, lease, delay: float = 0.0) -> bool:
-        name, i = self._lease(lease)
-        return self._cmd("ZADD", f"q:{name}", "XX", "CH", repr(self._clock() + delay), i) > 0
+    def nack(self, lease, delay: float = 0.0, error: str | None = None) -> bool:
+        name, i, tok = self._lease(lease)
+        return self._cmd("EVAL", self._NACK, 3, f"q:{name}", f"q:{name}:data", f"q:{name}:dlq", i, tok,
+                         repr(self._clock() + delay), error or "", DEFAULT_MAX_ATTEMPTS) > 0
 
     def qsize(self, name) -> int:
         return self._cmd("ZCARD", f"q:{name}")
+
+    def dlq_list(self, name) -> list:
+        out = []
+        for m in self._cmd("ZRANGE", f"q:{name}:dlq", 0, -1) or []:
+            i = m.decode()
+            payload, n, err = self._cmd("HMGET", f"q:{name}:data", i, f"{i}:n", f"{i}:err")
+            out.append({"id": int(i), "payload": payload, "attempts": int(n or 0),
+                        "last_error": err.decode() if err else None})
+        return out
+
+    def dlq_requeue(self, name, item_id=None) -> int:
+        ids = [str(item_id["id"] if isinstance(item_id, dict) else getattr(item_id, "id", item_id))] \
+            if item_id is not None else [m.decode() for m in self._cmd("ZRANGE", f"q:{name}:dlq", 0, -1) or []]
+        n = 0
+        for i in ids:
+            if self._cmd("ZREM", f"q:{name}:dlq", i) > 0:
+                self._cmd("HSET", f"q:{name}:data", f"{i}:n", "0")
+                self._cmd("HDEL", f"q:{name}:data", f"{i}:t", f"{i}:err")
+                self._cmd("ZADD", f"q:{name}", repr(self._clock()), i)
+                n += 1
+        return n
 
 
 # --------------------------------------------------------------------------- analytics DB (DuckDB optional)

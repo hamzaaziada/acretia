@@ -36,6 +36,13 @@ USER_AGENT = "AcretiaBot/1.0 (+research crawler)"
 MAX_BYTES = 10 * 1024 * 1024
 MAX_REDIRECTS = 5
 MIN_INTERVAL = 1.0
+MAX_CRAWL_DELAY = 30.0            # robots Crawl-delay is clamped to [MIN_INTERVAL, 30 s]; above 30 s the host is skipped
+ROBOTS_MAX_BYTES = 512 * 1024     # parse only the first 512 KiB (RFC 9309 asks for at least 500 KiB); never block the site
+ROBOTS_TIMEOUT = 10.0
+ROBOTS_TTL = 24 * 3600.0          # cached robots verdicts (incl. 5xx = disallow) expire after 24 h
+ROBOTS_UNREACHABLE_TTL = 3600.0
+MAX_PAGES = 100                   # per-run crawl budget (pages and wall-clock seconds)
+MAX_SECONDS = 900.0
 SNIPPET = 300
 
 
@@ -55,14 +62,51 @@ class ResponseTooLarge(CrawlError):
     pass
 
 
+class HostSkipped(CrawlError):
+    """robots.txt asked for a Crawl-delay above MAX_CRAWL_DELAY: the host is skipped for this run (never slept on)."""
+
+
+class CrawlBudgetExceeded(CrawlError):
+    pass
+
+
 # --------------------------------------------------------------------------- SSRF guard
+_NAT64 = ipaddress.ip_network("64:ff9b::/96")
+_NAT64_LOCAL = ipaddress.ip_network("64:ff9b:1::/48")      # RFC 8215 local-use: never globally routable
+_V4_COMPAT = ipaddress.ip_network("::/96")                 # deprecated ::a.b.c.d
+_SIIT = ipaddress.ip_network("::ffff:0:0:0/96")            # ::ffff:0:a.b.c.d (RFC 2765)
+_V6_BLOCKED = tuple(ipaddress.ip_network(n) for n in (
+    "2001::/32",        # Teredo
+    "2002::/16",        # 6to4 (the embedded IPv4 is also checked; relays are never needed by a crawler)
+    "fec0::/10",        # deprecated site-local
+    "fc00::/7",         # ULA
+    "fe80::/10",        # link-local
+    "ff00::/8",         # multicast
+))
+
+
+def _embedded_v4(ip: ipaddress.IPv6Address):
+    """The IPv4 address an IPv6 form carries, or None. Covers mapped, NAT64, IPv4-compatible, SIIT and 6to4."""
+    if ip.ipv4_mapped:
+        return ip.ipv4_mapped
+    if ip in _NAT64 or ip in _V4_COMPAT or ip in _SIIT:
+        return ipaddress.IPv4Address(int(ip) & 0xFFFFFFFF)
+    if ip in ipaddress.ip_network("2002::/16"):
+        return ipaddress.IPv4Address((int(ip) >> 80) & 0xFFFFFFFF)
+    return None
+
+
 def _ip_ok(addr: str) -> bool:
     ip = ipaddress.ip_address(addr.split("%")[0])
-    if isinstance(ip, ipaddress.IPv6Address) and ip.ipv4_mapped:
-        ip = ip.ipv4_mapped
-    if isinstance(ip, ipaddress.IPv6Address) and (ip.sixtofour or ip.teredo):
+    if isinstance(ip, ipaddress.IPv6Address):
+        if ip.is_unspecified or ip in _NAT64_LOCAL or any(ip in n for n in _V6_BLOCKED):
+            return False
+        v4 = _embedded_v4(ip)
+        if v4 is not None:
+            return _ip_ok(str(v4))                 # apply the IPv4 rules to the embedded address
+    if ip.is_unspecified or ip.is_multicast:
         return False
-    return ip.is_global and not ip.is_multicast
+    return ip.is_global
 
 
 def default_resolver(host: str, port: int) -> list[str]:
@@ -147,7 +191,7 @@ class RateLimiter:
         with self._lock:
             now = self._clock()
             start = max(now, self._next.get(host, 0.0))
-            self._next[host] = start + max(self.min, interval or 0.0)
+            self._next[host] = start + min(max(self.min, interval or 0.0), MAX_CRAWL_DELAY)
         if start > now:
             self._sleep(start - now)
 
@@ -257,42 +301,71 @@ _PR_HINT = re.compile(r"press|news|release|announce|earnings|results|investor", 
 # --------------------------------------------------------------------------- crawler
 class Crawler:
     def __init__(self, resolver=default_resolver, transport=default_transport, limiter: RateLimiter | None = None,
-                 timeout: float = 20.0, max_bytes: int = MAX_BYTES, user_agent: str = USER_AGENT, renderer=None):
+                 timeout: float = 20.0, max_bytes: int = MAX_BYTES, user_agent: str = USER_AGENT, renderer=None,
+                 max_pages: int = MAX_PAGES, max_seconds: float = MAX_SECONDS, clock=None):
         self.resolver, self.transport = resolver, transport
         self.limiter = limiter or RateLimiter()
         self.timeout, self.max_bytes, self.ua = timeout, max_bytes, user_agent
-        self._robots: dict[str, tuple[urllib.robotparser.RobotFileParser | None, float]] = {}
+        self.max_pages, self.max_seconds = max_pages, max_seconds
+        self.clock = clock or self.limiter._clock
+        self.pages = 0
+        self._started: float | None = None
+        self.skipped_hosts: dict[str, float] = {}      # host key -> the Crawl-delay that got it skipped (reported)
+        self._robots: dict[str, tuple] = {}            # key -> (parser | None, delay, expires_at)
         self.renderer = renderer if renderer is not None else _crawl4ai_renderer()
 
-    def _send(self, u, url, ip, headers, max_bytes, delay=None):
+    def reset_budget(self):
+        self.pages, self._started = 0, None
+
+    def _check_budget(self):
+        now = self.clock()
+        if self._started is None:
+            self._started = now
+        if self.pages >= self.max_pages:
+            raise CrawlBudgetExceeded(f"crawl budget: {self.max_pages} pages used")
+        if now - self._started > self.max_seconds:
+            raise CrawlBudgetExceeded(f"crawl budget: {self.max_seconds:g} s exhausted")
+
+    def _send(self, u, url, ip, headers, max_bytes, delay=None, timeout=None):
         self.limiter.wait(f"{u.scheme}://{u.netloc}", delay)
         h = {"User-Agent": self.ua, "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.5",
              "Accept-Encoding": "identity", **(headers or {})}
-        return self.transport("GET", url, h, ip, self.timeout, max_bytes or self.max_bytes)
+        return self.transport("GET", url, h, ip, timeout or self.timeout, max_bytes or self.max_bytes)
 
     def _robots_for(self, u) -> tuple[urllib.robotparser.RobotFileParser | None, float]:
         key = f"{u.scheme}://{u.netloc}"
-        if key not in self._robots:
+        cached = self._robots.get(key)
+        if cached is None or self.clock() >= cached[2]:
             rurl = f"{key}/robots.txt"
-            rp, delay = urllib.robotparser.RobotFileParser(), 0.0
+            rp, delay, ttl = urllib.robotparser.RobotFileParser(), 0.0, ROBOTS_TTL
             try:
                 ru, addrs = validate_url(rurl, self.resolver)
-                status, hdrs, body = self._send(ru, rurl, addrs[0], None, 512 * 1024)
+                status, hdrs, body = self._send(ru, rurl, addrs[0], None, MAX_BYTES, timeout=ROBOTS_TIMEOUT)
                 if 300 <= status < 400:       # robots redirects: follow once, re-validated
                     loc = urllib.parse.urljoin(rurl, hdrs.get("location", ""))
                     ru, addrs = validate_url(loc, self.resolver)
-                    status, hdrs, body = self._send(ru, loc, addrs[0], None, 512 * 1024)
+                    status, hdrs, body = self._send(ru, loc, addrs[0], None, MAX_BYTES, timeout=ROBOTS_TIMEOUT)
                 if status == 200:
+                    if len(body) > ROBOTS_MAX_BYTES:      # RFC 9309: parse the first part, never block the site
+                        body = body[:ROBOTS_MAX_BYTES]
+                        body = body[:body.rfind(b"\n") + 1] if b"\n" in body else b""   # no half-cut rule lines
                     rp.parse(body.decode("utf-8", "replace").splitlines())
-                    delay = float(rp.crawl_delay(self.ua) or 0)
+                    try:
+                        delay = float(rp.crawl_delay(self.ua) or 0)
+                    except (TypeError, ValueError):
+                        delay = 0.0
                 elif 400 <= status < 500:
                     rp.parse([])              # no robots.txt: allowed (RFC 9309)
                 else:
-                    rp = None                 # 5xx: treat as disallow-all
+                    rp = None                 # 5xx: disallow-all, cached for 24 h
             except (CrawlError, OSError):
-                rp = None                     # unreachable: be conservative
-            self._robots[key] = (rp, delay)
-        return self._robots[key]
+                rp, ttl = None, ROBOTS_UNREACHABLE_TTL     # unreachable: be conservative, retry sooner
+            if delay > MAX_CRAWL_DELAY:
+                self.skipped_hosts[key] = delay            # reported, never slept on
+            elif delay:
+                delay = max(delay, MIN_INTERVAL)
+            cached = self._robots[key] = (rp, delay, self.clock() + ttl)
+        return cached[0], cached[1]
 
     def allowed(self, url: str) -> bool:
         u = urllib.parse.urlsplit(url)
@@ -302,10 +375,15 @@ class Crawler:
     def fetch(self, url: str) -> tuple[str, bytes, dict]:
         """GET with robots, SSRF and redirect re-checks. -> (final_url, body, headers)"""
         for _hop in range(MAX_REDIRECTS + 1):
+            self._check_budget()
             u, addrs = validate_url(url, self.resolver)
             rp, delay = self._robots_for(u)
             if rp is None or not rp.can_fetch(self.ua, url):
                 raise RobotsDisallowed(f"robots.txt disallows (or is unavailable for) {url}")
+            if delay > MAX_CRAWL_DELAY:
+                raise HostSkipped(f"{u.netloc}: robots.txt Crawl-delay {delay:g} s exceeds {MAX_CRAWL_DELAY:g} s; "
+                                  f"host skipped for this run")
+            self.pages += 1
             status, hdrs, body = self._send(u, url, addrs[0], None, None, delay)
             if status in (301, 302, 303, 307, 308):
                 loc = hdrs.get("location")
@@ -347,6 +425,9 @@ class Crawler:
             seen.add(href)
             try:
                 f, _l = self.page_facts(href)
+            except CrawlBudgetExceeded as e:
+                out.append({"url": href, "error": str(e)[:200]})
+                break
             except CrawlError as e:
                 out.append({"url": href, "error": str(e)[:200]})
                 continue
