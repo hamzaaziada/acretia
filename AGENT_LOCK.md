@@ -24,6 +24,12 @@ One row per active claim. Claim a packet before you touch its files, commit the 
 | S4.5 manifest + delivery gate | worker (session C) | claude/busy-knuth-i3ewp5 | 2026-11-16 | om/manifest.py, om/delivery.py, tests/test_manifest.py |
 | S4.7a writer polish (styles, charts, print, outline) | worker (session C) | claude/busy-knuth-i3ewp5 | 2026-11-16 | om/xlsx.py, tests/test_xlsx_polish.py |
 | S4.6 bench + S4 gate | Boss (session C) | claude/busy-knuth-i3ewp5 | 2026-11-16 | om/bench.py, scripts/verify_s4.py, tests/test_bench.py, docs/s4/* |
+| S3.core render+theme+model+archetype base | session B worker | claude/upbeat-mccarthy-viqjuo | 2026-11-16 | om/deck/__init__.py, om/deck/model.py, om/deck/theme.py, om/deck/render.py, om/deck/archetypes/__init__.py, om/deck/archetypes/base.py, om/deck/archetypes/core.py, tests/test_deck_render.py |
+| S3.4/S3.5 metrics, fit, RTL | session B worker | claude/upbeat-mccarthy-viqjuo | 2026-11-16 | om/deck/metrics.py, om/deck/fit.py, om/deck/rtl.py, tests/test_deck_fit.py, tests/test_deck_rtl.py |
+| S3.1/S3.2 ghost deck + spec | session B worker | claude/upbeat-mccarthy-viqjuo | 2026-11-16 | om/deck/spec.py, om/deck/ghost.py, tests/test_deck_spec.py, tests/test_deck_ghost.py, tests/fixtures/llm/deck_* |
+| S3.6/S3.7 slop + validate_pptx | session B worker | claude/upbeat-mccarthy-viqjuo | 2026-11-16 | om/deck/slop.py, om/deck/validate.py, scripts/validate_pptx.py, tests/test_validate_pptx.py |
+| S3.11 visual layer | session B worker | claude/upbeat-mccarthy-viqjuo | 2026-11-16 | om/deck/visuals/**, tests/test_deck_visuals.py |
+| S3 gate + docs | session B Boss | claude/upbeat-mccarthy-viqjuo | 2026-11-16 | scripts/verify_s3.py, docs/deck-engine.md, PROGRESS.md (S3 row only) |
 
 ## Log
 - 2026-11-16: created; no active claims.
@@ -35,3 +41,4 @@ One row per active claim. Claim a packet before you touch its files, commit the 
 - 2026-11-16: Session C claimed S4.1–S4.7 (Excel engine); disjoint from S1/S2 rows.
 - 2026-11-16: S2.2, S2.3 done (pending S2 gate); rows released.
 - 2026-11-16: Session D claimed S5.1–S5.4 and the S5 gate.
+- 2026-11-16: session B claimed S3 wave 1 (core, fit/RTL, spec/ghost, validator, visuals) and the S3 gate.
