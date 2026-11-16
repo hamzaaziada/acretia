@@ -1,0 +1,244 @@
+import hashlib
+import os
+import sqlite3
+import tempfile
+import threading
+import unittest
+from datetime import datetime, timezone
+
+from om import storage as st
+
+AK = "AKIAIOSFODNN7EXAMPLE"
+SK = "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY"
+EMPTY = hashlib.sha256(b"").hexdigest()
+
+
+class LocalBlobTests(unittest.TestCase):
+    def test_round_trip(self):
+        with tempfile.TemporaryDirectory() as d:
+            b = st.LocalBlobStore(os.path.join(d, "blobs"))
+            k = b.put(b"hello")
+            self.assertEqual(k, hashlib.sha256(b"hello").hexdigest())
+            self.assertEqual(b.get(k), b"hello")
+            self.assertTrue(b.exists(k))
+            self.assertEqual(b.put(b"hello"), k)
+            self.assertEqual(b.list(), [k])
+            self.assertTrue(os.path.isfile(os.path.join(d, "blobs", k[:2], k[2:4], k)))
+            self.assertTrue(b.delete(k))
+            self.assertFalse(b.delete(k))
+            self.assertFalse(b.exists(k))
+            with self.assertRaises(KeyError):
+                b.get(k)
+
+    def test_traversal_rejected(self):
+        with tempfile.TemporaryDirectory() as d:
+            b = st.LocalBlobStore(d)
+            for bad in ("../../etc/passwd", "a" * 63, "A" * 64, "/" + "a" * 63, "", "g" * 64):
+                with self.assertRaises(ValueError):
+                    b.get(bad)
+                with self.assertRaises(ValueError):
+                    b.delete(bad)
+
+
+class SigV4Tests(unittest.TestCase):
+    def test_aws_get_object_vector(self):
+        auth = st.sigv4_authorization(
+            "GET", "examplebucket.s3.amazonaws.com", "/test.txt",
+            {"Range": "bytes=0-9", "x-amz-content-sha256": EMPTY, "x-amz-date": "20130524T000000Z"},
+            EMPTY, AK, SK, "us-east-1", "20130524T000000Z")
+        self.assertIn("SignedHeaders=host;range;x-amz-content-sha256;x-amz-date", auth)
+        self.assertTrue(auth.endswith("Signature=f0e8bdb87c964420e857bd35b5d6ed310bd44f0170aba48dd91039c6036bdb41"))
+        self.assertIn(f"Credential={AK}/20130524/us-east-1/s3/aws4_request", auth)
+
+    def test_aws_presigned_vector(self):
+        url = st.sigv4_presign("GET", "examplebucket.s3.amazonaws.com", "/test.txt", 86400, AK, SK,
+                               "us-east-1", "20130524T000000Z")
+        self.assertTrue(url.endswith("X-Amz-Signature=aeeed9bbccd4d02ee5c0109b86d86835f995330da4c265957d157751f604d404"))
+        self.assertIn("X-Amz-Credential=AKIAIOSFODNN7EXAMPLE%2F20130524%2Fus-east-1%2Fs3%2Faws4_request", url)
+        self.assertIn("X-Amz-Expires=86400", url)
+
+
+class FakeS3:
+    def __init__(self):
+        self.objs, self.calls = {}, []
+
+    def __call__(self, method, url, headers, body):
+        self.calls.append((method, url, headers))
+        path = url.split("?")[0].split("//", 1)[1].split("/", 1)[1]
+        bucket, _, key = path.partition("/")
+        if method == "PUT":
+            self.objs[key] = body
+            return 200, {}, b""
+        if method == "GET" and not key:
+            xml = "".join(f"<Contents><Key>{k}</Key></Contents>" for k in sorted(self.objs))
+            return 200, {}, ('<ListBucketResult xmlns="http://s3.amazonaws.com/doc/2006-03-01/">'
+                             f"<IsTruncated>false</IsTruncated>{xml}</ListBucketResult>").encode()
+        if method in ("GET", "HEAD"):
+            return (200, {}, self.objs[key]) if key in self.objs else (404, {}, b"")
+        if method == "DELETE":
+            self.objs.pop(key, None)
+            return 204, {}, b""
+        return 400, {}, b""
+
+
+class S3Tests(unittest.TestCase):
+    def make(self):
+        t = FakeS3()
+        clock = lambda: datetime(2013, 5, 24, tzinfo=timezone.utc)
+        return st.S3BlobStore("http://minio:9000", "bkt", "us-east-1", AK, SK, transport=t, clock=clock), t
+
+    def test_put_get_list_delete(self):
+        s, t = self.make()
+        k = s.put(b"data")
+        self.assertEqual(s.get(k), b"data")
+        self.assertTrue(s.exists(k))
+        self.assertEqual(s.list(), [k])
+        self.assertTrue(s.delete(k))
+        self.assertFalse(s.exists(k))
+        with self.assertRaises(KeyError):
+            s.get(k)
+        m, url, h = t.calls[0]
+        self.assertEqual(url, f"http://minio:9000/bkt/{k}")
+        self.assertTrue(h["Authorization"].startswith(f"AWS4-HMAC-SHA256 Credential={AK}/20130524/us-east-1/s3/"))
+        self.assertEqual(h["x-amz-content-sha256"], hashlib.sha256(b"data").hexdigest())
+
+    def test_secret_not_in_repr_and_bad_key(self):
+        s, _ = self.make()
+        self.assertNotIn(SK, repr(s))
+        self.assertNotIn(SK, str(s.presign_url("GET", "a" * 64)))
+        with self.assertRaises(ValueError):
+            s.get("../x")
+
+    def test_presign(self):
+        s, _ = self.make()
+        u = s.presign_url("GET", "a" * 64, 60)
+        self.assertTrue(u.startswith("http://minio:9000/bkt/" + "a" * 64 + "?X-Amz-Algorithm="))
+        self.assertIn("X-Amz-Expires=60", u)
+
+    def test_missing_credentials(self):
+        old = {k: os.environ.pop(k, None) for k in ("ACRETIA_S3_ACCESS_KEY", "ACRETIA_S3_SECRET_KEY")}
+        try:
+            with self.assertRaises(st.StorageError):
+                st.S3BlobStore("h", "b")
+        finally:
+            for k, v in old.items():
+                if v is not None:
+                    os.environ[k] = v
+
+
+class KVTests(unittest.TestCase):
+    def setUp(self):
+        self.d = tempfile.TemporaryDirectory()
+        self.now = [1000.0]
+        self.kv = st.SQLiteKV(os.path.join(self.d.name, "kv.sqlite"), clock=lambda: self.now[0])
+
+    def tearDown(self):
+        self.kv.close()
+        self.d.cleanup()
+
+    def test_kv(self):
+        self.assertIsNone(self.kv.get("a"))
+        self.kv.set("a", "x")
+        self.assertEqual(self.kv.get("a"), "x")
+        self.assertEqual(self.kv.incr("n"), 1)
+        self.assertEqual(self.kv.incr("n", 4), 5)
+        self.assertTrue(self.kv.delete("a"))
+        self.assertFalse(self.kv.delete("a"))
+
+    def test_queue_fifo_ack_nack_lease(self):
+        for p in (b"1", b"2", b"3"):
+            self.kv.enqueue("q", p)
+        a = self.kv.dequeue("q", lease=10)
+        self.assertEqual(a.payload, b"1")
+        self.assertEqual(self.kv.dequeue("q", lease=10).payload, b"2")
+        self.assertTrue(self.kv.ack(a))
+        self.assertEqual(self.kv.qsize("q"), 2)
+        c = self.kv.dequeue("q", lease=10)
+        self.assertEqual(c.payload, b"3")
+        self.assertIsNone(self.kv.dequeue("q"))
+        self.kv.nack(c)  # immediately visible again
+        self.assertEqual(self.kv.dequeue("q", lease=10).attempts, 2)
+        self.now[0] += 11  # leases expire
+        got = [self.kv.dequeue("q", lease=10) for _ in range(3)]
+        self.assertEqual([g.payload for g in got if g], [b"2", b"3"])
+        self.assertIsNone(self.kv.dequeue("other"))
+
+    def test_concurrent_dequeue_once(self):
+        n = 200
+        for i in range(n):
+            self.kv.enqueue("q", str(i))
+        other = st.SQLiteKV(os.path.join(self.d.name, "kv.sqlite"), clock=lambda: self.now[0])
+        seen, lock = [], threading.Lock()
+
+        def worker(kv):
+            while True:
+                it = kv.dequeue("q", lease=1000)
+                if it is None:
+                    return
+                with lock:
+                    seen.append(it.payload)
+                kv.ack(it)
+
+        ts = [threading.Thread(target=worker, args=(self.kv if i % 2 else other,)) for i in range(8)]
+        [t.start() for t in ts]
+        [t.join() for t in ts]
+        other.close()
+        self.assertEqual(len(seen), n)
+        self.assertEqual(len(set(seen)), n)
+
+    def test_redis_unreachable_is_clear(self):
+        with self.assertRaises(st.StorageError):
+            st.RedisKV("redis://127.0.0.1:1/0", timeout=0.2)
+
+    def test_resp_encode(self):
+        self.assertEqual(st.RedisKV.encode("SET", "k", b"v"), b"*3\r\n$3\r\nSET\r\n$1\r\nk\r\n$1\r\nv\r\n")
+
+
+class DBTests(unittest.TestCase):
+    def test_sqlite_pragmas(self):
+        with tempfile.TemporaryDirectory() as d:
+            for dsn in (os.path.join(d, "a.sqlite"), "sqlite:///" + os.path.join(d, "b.sqlite")):
+                db = st.connect(dsn)
+                self.assertEqual(db.execute("PRAGMA journal_mode").fetchone()[0], "wal")
+                self.assertEqual(db.execute("PRAGMA foreign_keys").fetchone()[0], 1)
+                self.assertGreaterEqual(db.execute("PRAGMA busy_timeout").fetchone()[0], 1000)
+                db.close()
+            self.assertTrue(os.path.exists(os.path.join(d, "b.sqlite")))
+
+    def test_postgres_needs_psycopg(self):
+        try:
+            import psycopg  # noqa: F401
+            self.skipTest("psycopg installed")
+        except ImportError:
+            with self.assertRaises(st.StorageError):
+                st.connect("postgres://u:p@h/db")
+
+
+class FromEnvTests(unittest.TestCase):
+    def test_local_default(self):
+        with tempfile.TemporaryDirectory() as d:
+            s = st.from_env({"ACRETIA_BLOB_ROOT": d + "/b", "ACRETIA_KV_PATH": d + "/kv.db", "ACRETIA_DB": d + "/m.db"})
+            self.assertIsInstance(s.blobs, st.LocalBlobStore)
+            self.assertIsInstance(s.kv, st.SQLiteKV)
+            self.assertIsInstance(s.db, sqlite3.Connection)
+            s.kv.close()
+            s.db.close()
+
+    def test_s3(self):
+        with tempfile.TemporaryDirectory() as d:
+            s = st.from_env({"ACRETIA_BLOB_BACKEND": "s3", "ACRETIA_S3_ENDPOINT": "http://m:9000",
+                             "ACRETIA_S3_BUCKET": "b", "ACRETIA_S3_ACCESS_KEY": AK, "ACRETIA_S3_SECRET_KEY": SK,
+                             "ACRETIA_KV_PATH": d + "/kv.db"}, connect_db=False)
+            self.assertIsInstance(s.blobs, st.S3BlobStore)
+            self.assertNotIn(SK, repr(s.blobs))
+            s.kv.close()
+
+    def test_errors(self):
+        with self.assertRaises(st.StorageError):
+            st.from_env({"ACRETIA_BLOB_BACKEND": "gcs"})
+        with self.assertRaises(st.StorageError):
+            st.from_env({"ACRETIA_BLOB_BACKEND": "s3"})
+
+
+if __name__ == "__main__":
+    unittest.main()
