@@ -121,6 +121,13 @@ English and Arabic (`٣٠ يونيو ٢٠٢٤`).
 4. A `User-Agent` that identifies Acretia is sent; Companies House reads its key only from the environment and errors
    cleanly when absent; no key literal in the repo.
 5. Connectors store facts and links; nothing writes report bytes outside `data/raw/`.
+6. (e954406) Companies House API + bulk iXBRL accounts (parsed with the same iXBRL reader as ESEF), KvK open dataset,
+   INPI RNE, Brønnøysund (marked fragile), Ireland CRO and GLEIF LEI each have a connector with an offline fixture; GLEIF
+   resolves one entity across ≥ 2 registries in a fixture. German/Spanish accounts route to `om.intl.extract`.
+7. `docs/s8/source-terms.md` has one row per source: terms URL, licence, date reviewed, rate limit, what is stored.
+   Personal data is minimised: officer/PSC records keep name, role and dates only (no addresses or birth dates).
+8. Paid sources (Pappers, North Data, Bigdata.com) and partnerships (Third Bridge, Arbolus) exist only as interfaces
+   that raise `NotConfigured`; no credentials, no purchase.
 
 **G9 Evals** (recompute from committed per-figure results; don't trust summary numbers)
 1. XBRL gold (`evals/intl/xbrl_gold/results.jsonl`): ≥ 20 filers, ≥ 5 countries, ≥ 300 figures; accuracy of released
