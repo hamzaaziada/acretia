@@ -42,8 +42,9 @@ One row per active claim. Claim a packet before you touch its files, commit the 
 | S4 gate script | gate worker (session C) | claude/busy-knuth-i3ewp5 | 2026-11-16 | scripts/verify_s4.py |
 | S4.8 model API for product app | worker (session C) | claude/busy-knuth-i3ewp5 | 2026-11-16 | om/modelapi.py, tests/test_modelapi.py, docs/interfaces.md (Models section only) |
 | S4.9 reference-structure generation + firm templates | worker (session C) | claude/busy-knuth-i3ewp5 | 2026-11-17 | om/templatefit.py, tests/test_templatefit.py |
-| S7.5a CI workflow + secret scan | worker (session A) | claude/dreamy-ramanujan-k8p2xt | 2026-11-16 | .github/workflows/ci.yml, scripts/secret_scan.py, tests/test_secret_scan.py |
-| S1-fin S1 gate allow-list + ledger reason | gate-writer + worker (session A) | claude/dreamy-ramanujan-k8p2xt | 2026-11-16 | scripts/verify_s1.py, license-and-repo-ledger.csv, docs/ledger-notes.md |
+| FP-S1a S1 gate strictness | gate-writer (session A) | claude/dreamy-ramanujan-k8p2xt | 2026-11-17 | scripts/verify_s1.py |
+| FP-S1b ledger + notices | worker (session A) | claude/dreamy-ramanujan-k8p2xt | 2026-11-17 | license-and-repo-ledger.csv, docs/ledger-notes.md, THIRD_PARTY_NOTICES.md, requirements.txt (anthropic line only) |
+| FP-S1c buyer-research rubric thresholds | worker (session A) | claude/dreamy-ramanujan-k8p2xt | 2026-11-17 | docs/buyer-research.md |
 
 ## Log
 - 2026-11-16: created; no active claims.
@@ -72,3 +73,4 @@ One row per active claim. Claim a packet before you touch its files, commit the 
 - 2026-11-16: session E: S8.4, S8.6a, S8.1 landed; S8.7c and the S8 gate writer dispatched.
 - 2026-11-17: S5.1, S5.2, S5.3 verified on main and released. Claimed S5.fix1, S5.5a; S5.4a resumed; S5 gate writer dispatched (session D).
 - 2026-11-16: session A: S1.3, FP-R4, S2 connector gate done; S1-fin claimed.
+- 2026-11-16: session A: S7.5a CI on main (a6c1b2b); S1 grader findings → FP-S1a/b/c claimed.
