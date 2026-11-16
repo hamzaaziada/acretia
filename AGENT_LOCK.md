@@ -25,7 +25,8 @@ One row per active claim. Claim a packet before you touch its files, commit the 
 | S8.0/S8.7-corpus anchors + eval sourcing (session E) | worker | main | 2026-11-16 | evals/intl/corpus/**, evals/intl/anchors/*/sources.json, scripts/fetch_intl_corpus.py, data/raw/intl/** (never committed) |
 | S8.0 anchor notes + QA (session E, wave 2) | worker | main | 2026-11-16 | om/intl/companies/**, evals/intl/anchors/*/{figures,release_recon,qa}.jsonl |
 | S8.5 intl connectors (session E, wave 2; new files only, base.py untouched) | worker | main | 2026-11-16 | src/harness/connectors/intl_*.py, om/intl/sources/**, om/intl/ixbrl.py, docs/s8/source-terms.md, tests/test_intl_connectors.py, tests/fixtures/intl_connectors/** |
-| S8 gate + docs (session E) | Boss | main | 2026-11-16 | scripts/verify_s8.py, docs/s8/*.md, om/intl/__init__.py, PROGRESS.md (S8 row only) |
+| S8.7c standards QA eval (session E) | worker | main | 2026-11-16 | evals/intl/standards_qa/**, scripts/eval_intl_qa.py, tests/test_eval_intl_qa.py, scorecard.csv (S8 rows only) |
+| S8 gate + docs (session E) | Boss + gate worker | main | 2026-11-16 | scripts/verify_s8.py, tests/test_verify_s8_smoke.py, docs/s8/*.md, om/intl/__init__.py, PROGRESS.md (S8 row only) |
 | SF.0 product spec + gate spec (session F) | Boss | main | 2026-11-16 | docs/product/**, docs/product-requests.md, PROGRESS.md (Product row only), DECISIONS.md (D-SF-* only) |
 | SF.1 API backend (session F) | session F workers | main | 2026-11-16 | om/api/**, tests/test_api_*.py, tests/fixtures/api/** |
 | SF.2 frontend app (session F) | session F workers | main | 2026-11-16 | frontend/** |
@@ -70,3 +71,4 @@ One row per active claim. Claim a packet before you touch its files, commit the 
 - 2026-11-16: S4.2, S4.3a/b/c, S4.4, S4.7b merged and released. Session C wave 2 claimed: S4.7c, S4.6a/b/c, S4.fix1, S4 gate script.
 - 2026-11-16: session B: S3.8, S3.9 merged and released; S3.fix-env claimed (reviewer: deck deps/fonts on clean machines).
 - 2026-11-16: session A: S6.1a released (agent loop belongs to harness lab S9, D-033); S7.5a CI claimed early (reviewer: main red on clean machine).
+- 2026-11-16: session E: S8.4, S8.6a, S8.1 landed; S8.7c and the S8 gate writer dispatched.
