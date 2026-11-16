@@ -667,8 +667,7 @@ def grid_answer(cx):
             best = (0, None, None)
             for pg, text in d["page_items"]:
                 for sent in re.split(r"(?<=[.!?])\s+|\n+", text):
-                    low = sent.lower()
-                    hits = sum(1 for t in terms if t in low)
+                    hits = matrix._stem_hits(sent, terms)
                     if hits > best[0] and len(sent) > 15:
                         best = (hits, pg, sent.strip())
             if best[1] is None or best[0] < max(1, min(2, len(terms))):

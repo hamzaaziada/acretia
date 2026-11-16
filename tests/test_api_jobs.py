@@ -354,6 +354,7 @@ class MissingEngineTests(Base):
 
     def test_no_synthetic_peers_outside_demo_mode(self):
         jobs.shutdown()
+        self.st._conn.close()
         self.st = make_state(Path(tempfile.mkdtemp()), demo=False)
         self.svc = jobs.init(self.st)
         os.environ.pop("ACRETIA_SYNTHETIC_PEERS", None)

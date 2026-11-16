@@ -157,7 +157,7 @@ def _validate_agent(b: dict, partial: bool = False) -> dict:
         if not isinstance(t, list) or len(t) > 10 or not all(isinstance(x, str) and 0 < len(x) <= 30 for x in t):
             raise ApiError(400, "bad_tags", "Tags must be up to 10 short strings.", "Send tags like [\"valuation\", \"excel\"].")
         out["tags"] = t
-    kind = b.get("kind") or ("chain" if b.get("prompts") else "prompt")
+    kind = b.get("kind") or ("chain" if "prompts" in b and b.get("prompts") is not None else "prompt")
     if kind not in ("prompt", "chain"):
         raise ApiError(400, "bad_kind", "Saved agents are 'prompt' or 'chain'.", "Send kind: 'prompt' with a prompt, or kind: 'chain' with prompts.")
     if not partial or "prompt" in b or "prompts" in b or "kind" in b:
