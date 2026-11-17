@@ -298,7 +298,7 @@ def excluded_sources(svc, job: dict) -> list[dict]:
         if not isinstance(sel, list) or not row["plan_json"]:
             return []
         plan = json.loads(row["plan_json"])
-        return [s for s in describe_sources(svc, dict(row), plan, svc._db()) if s["id"] not in set(sel)]
+        return [s for s in _describe_sources(svc, dict(row), plan, svc._db()) if s["id"] not in set(sel)]
     except Exception:                                   # noqa: BLE001
         return []
 
@@ -1086,6 +1086,11 @@ def deliver(cx):
 
 # --------------------------------------------------------------------------- source review (pre-run, parity item 24)
 def describe_sources(svc, job: dict, plan: dict, conn) -> list[dict]:
+    """The sources the approval card shows: `{id, label, kind, task, detail, available}` (the contract keys; internal fields stay out)."""
+    return [{k: v for k, v in o.items() if k not in ("ticker", "peer")} for o in _describe_sources(svc, job, plan, conn)]
+
+
+def _describe_sources(svc, job: dict, plan: dict, conn) -> list[dict]:
     out = []
     for t in plan["tasks"]:
         tid, ins = t["task_id"], t["inputs"]

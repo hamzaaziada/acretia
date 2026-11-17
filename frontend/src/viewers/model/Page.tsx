@@ -34,6 +34,22 @@ interface Sel {
 }
 type Status = { kind: 'idle' } | { kind: 'busy' } | { kind: 'done'; ms: number; n: number } | { kind: 'error'; message: string; hint?: string | null };
 
+/** `GET /models/{deal}/{name}/diff` (SF.7): cell-level changes between two versions, in sheet then row order. */
+interface ModelDiff {
+  a: number;
+  b: number;
+  count: number;
+  truncated: boolean;
+  sheets: Record<string, number>;
+  changed: Array<{ key: string; sheet: string; ref: string; old: number | string | null; new: number | string | null }>;
+}
+
+/** `?diff=<prev>..<v>` from the roll-forward notification link. */
+function parseDiff(raw: string | null): { a: number; b: number } | null {
+  const m = /^(\d+)\.\.(\d+)$/.exec(raw ?? '');
+  return m && Number(m[1]) !== Number(m[2]) ? { a: Number(m[1]), b: Number(m[2]) } : null;
+}
+
 function parseRef(ref: string): Sel | null {
   const m = /^(.*)!\$?([A-Z]{1,3})\$?(\d+)$/.exec(ref);
   if (!m) return null;
@@ -45,10 +61,17 @@ function parseRef(ref: string): Sel | null {
 export default function ModelViewerPage() {
   const { id: dealId = '', name = '' } = useParams();
   const [sp, setSp] = useSearchParams();
-  const version = sp.get('version');
+  const diffSpec = parseDiff(sp.get('diff'));
+  // the diff link names the version it ends on; show that version (the latest when it is the latest)
+  const version = sp.get('version') ?? (diffSpec ? String(diffSpec.b) : null);
   const { t } = useI18n();
   const nav = useNavigate();
   const view = useResource<ModelView>((signal) => api.get<ModelView>(modelPath(dealId, name), { signal, query: { version } }), [dealId, name, version]);
+  const diffKey = diffSpec ? `${diffSpec.a}..${diffSpec.b}` : '';
+  const diff = useResource<ModelDiff | null>(
+    async (signal) => (diffSpec ? api.get<ModelDiff>(`${modelPath(dealId, name)}/diff`, { signal, query: { a: diffSpec.a, b: diffSpec.b } }) : null),
+    [dealId, name, diffKey],
+  );
 
   return (
     <div className="mv" data-testid="model-view">
@@ -74,6 +97,13 @@ export default function ModelViewerPage() {
         <Model
           key={`${view.data.name}:${view.data.version}`}
           data={view.data}
+          diff={diffSpec ? diff.data : null}
+          diffFailed={!!diffSpec && !!diff.error}
+          onCloseDiff={() => {
+            const n = new URLSearchParams(sp);
+            n.delete('diff');
+            setSp(n, { replace: true });
+          }}
           onVersion={(v) => {
             const n = new URLSearchParams(sp);
             if (v === view.data!.latest) n.delete('version');
@@ -92,7 +122,7 @@ export default function ModelViewerPage() {
   );
 }
 
-function Model({ data, onVersion, onSaved }: { data: ModelView; onVersion: (v: number) => void; onSaved: () => void }) {
+function Model({ data, diff, diffFailed, onCloseDiff, onVersion, onSaved }: { data: ModelView; diff: ModelDiff | null; diffFailed: boolean; onCloseDiff: () => void; onVersion: (v: number) => void; onSaved: () => void }) {
   const { t, fmt, arabicDigits } = useI18n();
   const toast = useSafeToast();
   const base = modelPath(data.deal_id, data.name);
@@ -215,6 +245,31 @@ function Model({ data, onVersion, onSaved }: { data: ModelView; onVersion: (v: n
     setEdits({});
     run({});
   };
+
+  /* ---- roll-forward diff: highlight what moved, step through it ---- */
+  const diffKeys = useMemo(() => new Set((diff?.changed ?? []).map((c) => c.key)), [diff]);
+  const [diffAt, setDiffAt] = useState(-1);
+  const diffStep = useCallback(
+    (d: 1 | -1) => {
+      const list = diff?.changed ?? [];
+      if (!list.length) return;
+      const next = (diffAt + d + list.length) % list.length;
+      setDiffAt(next);
+      const p = parseRef(list[next].key);
+      if (p) {
+        setSel(p);
+        setFocusToken((n) => n + 1);
+      }
+    },
+    [diff, diffAt],
+  );
+  const firstDiff = useRef(false);
+  useEffect(() => {
+    if (diff && diff.changed.length && !firstDiff.current) {
+      firstDiff.current = true;
+      diffStep(1);
+    }
+  }, [diff, diffStep]);
 
   /* ---- navigation inside the model ---- */
   const sheet = data.sheets.find((s) => s.name === sel.sheet) ?? data.sheets[0];
@@ -419,6 +474,7 @@ function Model({ data, onVersion, onSaved }: { data: ModelView; onVersion: (v: n
           onCommit={setInput}
           edits={edits}
           flash={flash}
+          diffKeys={diffKeys}
           flags={flags}
           checkStatus={checkStatus}
           onSheetStep={stepSheet}
@@ -438,6 +494,11 @@ function Model({ data, onVersion, onSaved }: { data: ModelView; onVersion: (v: n
             onClick={() => setSheet(s.name)}
           >
             {s.name}
+            {diff?.sheets[s.name] ? (
+              <span className="mv__sheet-diff acr-num" title={t('viewers.model.diff.sheet', { n: diff.sheets[s.name] })}>
+                {diff.sheets[s.name]}
+              </span>
+            ) : null}
           </button>
         ))}
         <span className="mv__keys">
@@ -515,6 +576,40 @@ function Model({ data, onVersion, onSaved }: { data: ModelView; onVersion: (v: n
           </Button>
         </div>
       </header>
+
+      {diff && (
+        <div className="mv__diff" role="region" aria-label={t('viewers.model.diff.region')} data-testid="diff-banner" data-count={diff.count}>
+          <span className="mv__diff-text" role="status">
+            {diff.count === 0
+              ? t('viewers.model.diff.none', { a: diff.a })
+              : t('viewers.model.diff.banner', { n: fmt.integer(diff.count), a: diff.a }) + (diff.truncated ? ` ${t('viewers.model.diff.truncated')}` : '')}
+          </span>
+          {diff.count > 0 && (
+            <span className="mv__diff-nav">
+              <span className="acr-num mv__diff-pos" aria-live="polite">
+                {diffAt >= 0 ? fmt.integer(diffAt + 1) : '–'} / {fmt.integer(diff.changed.length)}
+              </span>
+              <Button size="sm" variant="secondary" onClick={() => diffStep(-1)} data-testid="diff-prev">
+                {t('viewers.model.diff.prev')}
+              </Button>
+              <Button size="sm" variant="secondary" onClick={() => diffStep(1)} data-testid="diff-next">
+                {t('viewers.model.diff.next')}
+              </Button>
+            </span>
+          )}
+          <Button size="sm" variant="ghost" onClick={onCloseDiff} data-testid="diff-close">
+            {t('viewers.model.diff.close')}
+          </Button>
+        </div>
+      )}
+      {diffFailed && !diff && (
+        <div className="mv__diff is-error" role="status" data-testid="diff-banner-error">
+          <span className="mv__diff-text">{t('viewers.model.diff.failed')}</span>
+          <Button size="sm" variant="ghost" onClick={onCloseDiff}>
+            {t('viewers.model.diff.close')}
+          </Button>
+        </div>
+      )}
 
       {data.outputs.length > 0 && (
         <div className="mv__kpis" role="group" aria-label={t('viewers.model.outputs')} data-testid="model-outputs">

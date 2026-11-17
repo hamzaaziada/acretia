@@ -31,6 +31,8 @@ export interface GridProps {
   onCommit: (ref: string, value: number | string) => void;
   edits: Record<string, number | string>;
   flash: Record<string, number>;
+  /** Cells that changed against another version (`sheet!A1` keys); drawn with a marker. */
+  diffKeys?: Set<string>;
   flags: Record<string, Flag>;
   checkStatus: Record<string, 'pass' | 'fail'>;
   onSheetStep: (d: 1 | -1) => void;
@@ -50,6 +52,7 @@ interface CellProps {
   selected: boolean;
   edited: boolean;
   flashN: number | undefined;
+  changed: boolean;
   flag: Flag | undefined;
   check: 'pass' | 'fail' | undefined;
   arabicDigits: boolean;
@@ -76,6 +79,7 @@ const Cell = memo(function Cell(p: CellProps) {
     bgKind === 'dark' ? 'bg-dark' : bgKind === 'light' ? 'bg-light' : bgKind === 'mid' ? 'bg-mid' : '',
     p.selected ? 'is-selected' : '',
     p.edited ? 'is-edited' : '',
+    p.changed ? 'is-diff' : '',
     p.flag ? `flag-${p.flag}` : '',
     cell?.err ? 'is-err' : '',
   ]
@@ -91,6 +95,7 @@ const Cell = memo(function Cell(p: CellProps) {
       data-class={cls}
       data-row={p.r}
       data-col={p.c}
+      data-diff={p.changed ? 'true' : undefined}
       aria-selected={p.selected}
       aria-rowindex={p.r}
       aria-colindex={p.c}
@@ -379,6 +384,7 @@ export function Grid(props: GridProps) {
         selected={selected.r === r && selected.c === c}
         edited={ref in props.edits}
         flashN={props.flash[ref]}
+        changed={props.diffKeys?.has(ref) ?? false}
         flag={props.flags[ref]}
         check={props.checkStatus[ref]}
         arabicDigits={arabicDigits}
