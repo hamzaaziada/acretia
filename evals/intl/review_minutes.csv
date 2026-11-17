@@ -1,0 +1,7 @@
+reason_class,minutes_per_flag,source
+low_ocr_conf,1.5,"[INFERENCE] An analyst opens the highlighted crop beside the extracted number and compares digits; about 1 to 2 minutes per cell including the correction, taken at 1.5."
+tie_fail,3.0,"[INFERENCE] A failed tie flags several figures; the analyst finds the misread or mistyped one by re-adding the column on the page, so about 3 minutes per failed tie flag."
+unmapped_label,0.5,"[INFERENCE] The row is already extracted with its number; the analyst only decides whether the line matters to the model, a glance of about 30 seconds."
+comparative_mismatch,4.0,"[INFERENCE] The analyst compares the figure with the prior-year report and reads the restatement note to decide which value stands, about 4 minutes per figure."
+unit_ambiguous,2.0,"[INFERENCE] The printed unit line is missing or unclear; the analyst finds the unit on the page or cover and confirms it once per document, about 2 minutes."
+ocr_disagreement,2.0,"[INFERENCE] Two independent OCR readings of the cell differ; the analyst reads the page crop and picks the right digits, about 2 minutes per cell."
