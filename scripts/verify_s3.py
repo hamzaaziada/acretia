@@ -672,9 +672,11 @@ def source_problems(d: Deck):
         n += 1
         src = [s for s in shapes_of(d.p.xml(sp)) if s["role"] == "source"]
         txt = " ".join(text_of(s["el"]) for s in src)
-        if "source" not in txt.lower():
+        ar = d.spec.get("lang") == "ar"
+        if "source" not in txt.lower() and not (ar and "\u0627\u0644\u0645\u0635\u062f\u0631" in txt):
             bad.append(f"{d.name} s{i}({ss['archetype']}): no 'Source' line")
-        elif not re.search(r"as of\s+\S*\d", txt, re.I):
+        elif not (re.search(r"as of\s+\S*\d", txt, re.I) or (ar and (re.search(r"\u0628\u062a\u0627\u0631\u064a\u062e\s*\S*\d", txt)
+                                                                   or re.search(r"\d{4}-\d{2}-\d{2}", txt)))):
             bad.append(f"{d.name} s{i}({ss['archetype']}): no as-of date in '{txt[:50]}'")
     return bad, n
 
