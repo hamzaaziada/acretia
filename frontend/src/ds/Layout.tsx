@@ -51,7 +51,7 @@ export function PageHeader({ title, subtitle, actions, meta, breadcrumb }: { tit
     <header className="acr-pageheader">
       <div className="acr-pageheader__main">
         {breadcrumb && <div className="acr-pageheader__crumb">{breadcrumb}</div>}
-        <h1 className="acr-pageheader__title">{title}</h1>
+        <h1 className="acr-pageheader__title" dir="auto">{title}</h1>
         {subtitle && <div className="acr-pageheader__sub">{subtitle}</div>}
         {meta && <div className="acr-pageheader__meta">{meta}</div>}
       </div>
@@ -65,7 +65,7 @@ export function Panel({ title, actions, children, flush, className }: { title?: 
     <section className={cx('acr-panel', className)}>
       {(title || actions) && (
         <div className="acr-panel__head">
-          {title && <h2 className="acr-panel__title">{title}</h2>}
+          {title && <h2 className="acr-panel__title" dir="auto">{title}</h2>}
           {actions && <div className="acr-panel__actions">{actions}</div>}
         </div>
       )}

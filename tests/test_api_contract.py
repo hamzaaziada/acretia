@@ -98,7 +98,9 @@ class FullRun(Base):
         self.pending_events = self.svc.events_after(self.jid, 0)
         self.pending_view = self.svc.view(self.svc._row(self.jid))
         # approve body: {step, payload: {selected: [source id...], skip_next_time}} (see om/api/jobs.py _approve)
-        self.svc.approve("org_a", self.jid, "source_review", {"selected": [], "skip_next_time": False}, "usr_1")
+        # SF.7: `selected` now decides what the run reads, so tick every source the review listed
+        ids = [x["id"] for e in self.pending_events if e["type"] == "approval" for x in e["data"]["payload"]["sources"]]
+        self.svc.approve("org_a", self.jid, "source_review", {"selected": ids, "skip_next_time": False}, "usr_1")
         wait_status(self.svc, self.jid)
         self.events = self.svc.events_after(self.jid, 0)
         self.seen = self.check_events(self.events)

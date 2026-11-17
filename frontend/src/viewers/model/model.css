@@ -1088,3 +1088,49 @@
   flex: none;
   white-space: nowrap;
 }
+
+/* ---- roll-forward diff (SF.7) ---- */
+.mv__cell.is-diff:not(.is-selected):not(.bg-dark) {
+  background: color-mix(in srgb, var(--acr-warning) 20%, transparent);
+  box-shadow: inset 0 -2px 0 var(--acr-warning);
+}
+.mv__cell.is-diff.bg-dark {
+  box-shadow: inset 0 -2px 0 var(--acr-warning);
+}
+.mv__sheet-diff {
+  margin-inline-start: var(--acr-s-2);
+  padding: 0 6px;
+  border-radius: 999px;
+  background: var(--acr-warning-bg);
+  color: var(--acr-warning);
+  font-size: var(--acr-fs-11);
+  font-weight: 600;
+}
+.mv__diff {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--acr-s-2) var(--acr-s-4);
+  padding: var(--acr-s-2) var(--acr-s-4);
+  background: var(--acr-warning-bg);
+  border-block-end: 1px solid var(--acr-border);
+  color: var(--acr-text);
+  font-size: var(--acr-fs-13);
+}
+.mv__diff.is-error {
+  background: var(--acr-negative-bg);
+}
+.mv__diff-text {
+  font-weight: 600;
+}
+.mv__diff-nav {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--acr-s-2);
+  margin-inline-start: auto;
+}
+.mv__diff-pos {
+  color: var(--acr-text-2);
+  min-inline-size: 5ch;
+  text-align: center;
+}

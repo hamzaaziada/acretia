@@ -1,14 +1,16 @@
+import { useState } from 'react';
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom';
-import { Badge, Button, EmptyState, IconExternal, IconPlay, PageHeader, Panel, SkeletonRows, Skeleton, Stat, TabPanel, Table, Tabs } from '../ds';
+import { Badge, Button, Dialog, EmptyState, IconExternal, IconPlay, Input, PageHeader, Panel, SkeletonRows, Skeleton, Stat, TabPanel, Table, Tabs, useToast } from '../ds';
 import type { Column, TabItem } from '../ds';
-import { api } from '../api/client';
-import { items, normalizeDeal, useOrgEvents, useResource } from '../api/hooks';
+import { ApiError, api } from '../api/client';
+import { items, normalizeDeal, useMe, useOrgEvents, useResource } from '../api/hooks';
 import type { DealDetail, Job, Page } from '../api/types';
 import { useI18n } from '../i18n';
 import { DocumentsTab } from '../features/Documents';
 import { DeliverablesTable } from '../features/Deliverables';
 import type { DeliverableRowData } from '../features/Deliverables';
-import { jobDuration, statusTone, viewerPath } from '../app/lib';
+import { errorToast, jobDuration, statusTone, viewerPath } from '../app/lib';
+import { Switch } from '../firm/lib/Switch';
 import { useShell } from '../app/shell';
 import { dealTone } from './Deals';
 
@@ -78,6 +80,7 @@ export default function Deal() {
             {t(`deal.status.${deal.status}`)}
           </Badge>
         }
+        actions={<RollForward dealId={id} />}
       />
       <Tabs
         items={tabItems}
@@ -224,5 +227,88 @@ function Activity({ deal }: { deal: DealDetail }) {
         </li>
       ))}
     </ol>
+  );
+}
+
+interface WatchState {
+  enabled: boolean;
+  ticker: string;
+  last_checked: string | null;
+}
+
+/** Roll forward (member+) and the automatic-update switch (`POST /deals/{id}/rollforward`, `GET/PUT /deals/{id}/watch`). */
+function RollForward({ dealId }: { dealId: string }) {
+  const { t, fmt } = useI18n();
+  const { me } = useMe();
+  const toast = useToast();
+  const canAct = me?.role === 'owner' || me?.role === 'member';
+  const watch = useResource<WatchState | null>(async (signal) => (canAct ? api.get<WatchState>(`/deals/${dealId}/watch`, { signal }) : null), [dealId, canAct]);
+  const [busy, setBusy] = useState(false);
+  const [ask, setAsk] = useState<null | 'roll' | 'watch'>(null);
+  const [ticker, setTicker] = useState('');
+  if (!canAct) return null;
+
+  async function roll(tk?: string) {
+    setBusy(true);
+    try {
+      await api.post(`/deals/${dealId}/rollforward`, tk ? { ticker: tk } : {});
+      toast.push({ kind: 'success', title: t('deal.rollforward.started'), body: t('deal.rollforward.startedBody') });
+      setAsk(null);
+    } catch (e) {
+      if (e instanceof ApiError && e.code === 'ticker_needed') setAsk('roll');
+      else toast.push(errorToast(e, t('deal.rollforward.failed')));
+    } finally {
+      setBusy(false);
+    }
+  }
+  async function setWatch(enabled: boolean, tk?: string) {
+    setBusy(true);
+    try {
+      await api.put(`/deals/${dealId}/watch`, tk ? { enabled, ticker: tk } : { enabled });
+      toast.push({ kind: 'success', title: t(enabled ? 'deal.watch.on' : 'deal.watch.off') });
+      setAsk(null);
+      watch.reload();
+    } catch (e) {
+      if (enabled && e instanceof ApiError && e.code === 'ticker_needed') setAsk('watch');
+      else toast.push(errorToast(e, t('deal.watch.failed')));
+    } finally {
+      setBusy(false);
+    }
+  }
+  const w = watch.data;
+  return (
+    <div className="acr-rollforward" data-testid="rollforward-actions" style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: 'var(--acr-s-3) var(--acr-s-4)' }}>
+      <Switch
+        checked={!!w?.enabled}
+        disabled={busy || watch.loading}
+        label={t('deal.watch.label')}
+        hint={w?.enabled ? (w.last_checked ? t('deal.watch.checked', { when: fmt.relative(w.last_checked) }) : t('deal.watch.never')) : undefined}
+        onChange={(v) => setWatch(v)}
+        testId="watch-toggle"
+      />
+      <Button variant="secondary" loading={busy} title={t('deal.rollforward.hint')} data-testid="rollforward-button" onClick={() => roll()}>
+        {t('deal.rollforward')}
+      </Button>
+      <Dialog
+        open={ask !== null}
+        onClose={() => setAsk(null)}
+        title={t('deal.rollforward.ticker.title')}
+        description={t('deal.rollforward.ticker.body')}
+        closeLabel={t('common.close')}
+        size="sm"
+        footer={
+          <>
+            <Button variant="ghost" onClick={() => setAsk(null)}>
+              {t('common.cancel')}
+            </Button>
+            <Button variant="primary" disabled={!ticker.trim()} loading={busy} onClick={() => (ask === 'watch' ? setWatch(true, ticker.trim()) : roll(ticker.trim()))}>
+              {t('deal.rollforward.ticker.go')}
+            </Button>
+          </>
+        }
+      >
+        <Input label={t('deal.rollforward.ticker.label')} value={ticker} dir="ltr" onChange={(e) => setTicker(e.target.value.toUpperCase())} />
+      </Dialog>
+    </div>
   );
 }
