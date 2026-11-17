@@ -67,5 +67,94 @@ Every third-party (non-stdlib) module imported under `om/`, `src/`, `scripts/` a
 | `duckdb` | `duckdb/duckdb` | see ledger |
 | `edgar` | `dgunning/edgartools` | see ledger |
 | `crawl4ai` | `unclecode/crawl4ai` | see ledger (attribution clause) |
+| `arabic_reshaper` | `mpcabd/python-arabic-reshaper` | adopt (MIT; om/deck/rtl.py, om/deck/validate.py) |
+| `docling_core` | `docling-project/docling-core` | adopt (MIT; om/docparse.py) |
+| `lxml` | `lxml/lxml` | adopt (BSD-3-Clause; om/deck/*) |
+| `yaml` | `yaml/pyyaml` | adopt (MIT; om/deck/spec.py) |
+| `fontTools` | `fonttools/fonttools` | adopt (MIT, optional textfit extra) |
+| `wasmtime` | `bytecodealliance/wasmtime-py` | adopt (Apache-2.0 WITH LLVM-exception; declared in requirements-extras.txt, formulon's WASM runtime) |
+| `uno` | `LibreOffice/core` | isolated_service (MPL-2.0; lazy import in om/recalc.py from the system soffice Python, never vendored) |
+| `com` | `LibreOffice/core` | isolated_service (`com.sun.star.*` UNO bindings, om/recalc.py) |
 
-Names that differ from the repo, kept for future imports (rows already in the ledger): `bidi → MeirKriheli/python-bidi`, `PIL → python-pillow/Pillow`, `pptx → scanny/python-pptx`, `fitz → pymupdf/PyMuPDF`, `yaml → yaml/pyyaml` (add a row if first imported), `redis → redis/redis`.
+Names that differ from the repo, kept for future imports (rows already in the ledger): `bidi → MeirKriheli/python-bidi`, `PIL → python-pillow/Pillow`, `pptx → scanny/python-pptx`, `fitz → pymupdf/PyMuPDF`, `redis → redis/redis`.
+
+LibreOffice note (D-S1-02): `soffice` runs as a separate headless process. The pyuno client bridge (MPL-2.0: `uno`, `com.sun.star`) is imported lazily, only in `om/recalc.py`, inside a function body or try/except, never at module top level. The S1 gate allow-lists exactly `(om/recalc.py, uno)` and `(om/recalc.py, com)` and fails any other in-process import of an `isolated_service` row.
+
+## Distribution → ledger row map
+
+One line per distribution declared in `requirements.txt` or `requirements-extras.txt` (there is no `pyproject.toml`), plus the optional or transitive distributions the code imports. Distribution names are the PyPI names, matched case-insensitively. A gate maps exactly on the left name; it must not use substring matching (specialist F1).
+
+Declared in `requirements.txt` / `requirements-extras.txt`:
+
+- PyYAML → yaml/pyyaml
+- python-pptx → scanny/python-pptx
+- XlsxWriter → jmcnamara/XlsxWriter
+- lxml → lxml/lxml
+- Pillow → python-pillow/Pillow
+- fonttools → fonttools/fonttools
+- arabic-reshaper → mpcabd/python-arabic-reshaper
+- openpyxl → openpyxl/openpyxl
+- pdfplumber → jsvine/pdfplumber
+- duckdb → duckdb/duckdb
+- docling → docling-project/docling
+- formulon → libraz/formulon
+- wasmtime → bytecodealliance/wasmtime-py
+
+Imported or pulled in, not declared in a requirements file:
+
+- psycopg → psycopg/psycopg
+- pypdf → py-pdf/pypdf
+- edgartools → dgunning/edgartools
+- python-bidi → MeirKriheli/python-bidi
+- pdfminer.six → pdfminer/pdfminer.six
+- docling-core → docling-project/docling-core
+- docling-parse → docling-project/docling-parse
+- torch → pytorch/pytorch
+- transformers → huggingface/transformers
+- pypdfium2 → pypdfium2-team/pypdfium2
+
+`anthropic` is no longer declared (FP-S1b): `grep -rn "import anthropic\|from anthropic" --include=*.py .` outside `reference/` matches only `tests/test_grid.py:521`, which asserts that no provider SDK is imported. D-020 and `src/harness/adapter.py` are the only model path, which speaks to providers over HTTP, so no `anthropics/anthropic-sdk-python` row is needed. Add one (and the dependency) only if an SDK import is ever approved inside the adapter.
+
+`XlsxWriter` is pinned to the commit of tag `RELEASE_3.2.9` (`e943bee8...`) because `requirements.txt` pins 3.2.9. Its only consumer is python-pptx chart embedding via `om/deck/render.py` (`slide.shapes.add_chart`); no file imports `xlsxwriter` directly.
+
+## Transitive dependencies policy
+
+Transitive packages (for example rapidocr, opencv-python-headless, shapely, scipy, numpy, pandas, tqdm, orjson, certifi, the docling-ibm-models and EasyOCR family) are covered by their parent's ledger row plus a CI licence report, not by one ledger row each. The rule:
+
+- Every direct or declared distribution has an exact row (map above).
+- CI produces a licence report of the installed environment for each shipped image (`pip-licenses --format=json`, or a CycloneDX SBOM) and fails if any distribution is GPL, AGPL, SSPL, a non-commercial licence, or has no licence metadata, unless the distribution is named in the exceptions below.
+- A transitive package that is imported directly by our code gets its own row (that is how pypdf, psycopg and edgartools were added).
+- Attribution and notice texts of transitive packages ride in the image's own licence report; `THIRD_PARTY_NOTICES.md` lists only the ledger rows.
+
+Inspection done on 2026-11-16 from `importlib.metadata` of this environment (171 installed distributions; docling, torch, formulon and transformers are not installed here, so docling's own closure could not be listed from metadata and must be generated in the docling image by the CI report):
+
+| Distribution | Licence (metadata) | Pulled in by | Assessment |
+|---|---|---|---|
+| rapidocr 3.10.0 | Apache-2.0 | docling OCR extra | permissive; its model weights have their own licence, check in the docling image |
+| opencv-python-headless 5.0.0.93 | Apache-2.0 (wheel bundles third-party libs) | rapidocr | permissive; wheels bundle third-party native libraries, read the wheel's third-party licence file in the image [UNKNOWN] |
+| shapely 2.2.0 | BSD-3-Clause | rapidocr | permissive; wheels bundle native libraries (GEOS is LGPL) [INFERENCE, check in the image] |
+| scipy 1.18.1 | BSD | docling closure | permissive; wheels bundle native runtime libraries [UNKNOWN, check in the image] |
+| numpy 2.5.3, pandas 3.0.5 | BSD-3-Clause family | edgartools, docling | permissive |
+| certifi 2026.10.18 | MPL-2.0 | requests, httpx | file-level copyleft; unmodified, fine |
+| tqdm 4.70.1 | MPL-2.0 AND MIT | edgartools, rapidocr | file-level copyleft; unmodified, fine |
+| orjson 3.13.0 | MPL-2.0 AND (Apache-2.0 OR MIT) | edgartools | file-level copyleft; unmodified, fine |
+| python-bidi 0.6.12 | LGPL-3.0 | optional RTL | LGPL: keep a replaceable pip install, no one-file bundle |
+| psycopg | LGPL-3.0 | optional Postgres | same LGPL condition (row above) |
+| cuda-toolkit 13.2.2 | no licence metadata (NVIDIA EULA expected) | cuda-bindings, a GPU torch build | proprietary redistribution terms; ship the CPU torch wheel in the docling image (ledger row pytorch says CPU wheel) |
+| httpxthrottlecache 0.7.0 | no licence metadata | edgartools | unknown; read its repository licence before shipping an image that includes edgartools |
+| launchpadlib, lazr.*, wadllib, PyGObject, python-apt | LGPL / GPL | this operating system, not Acretia | not part of any shipped image; ignore |
+
+[INFERENCE] Copyleft or proprietary risks to watch in docling's own closure, none confirmed because docling is not installed here; the CI report in the docling image must confirm or clear each: an `opencv-python` (non-headless) or `PyMuPDF` pulled by an OCR or PDF extra (AGPL for PyMuPDF; our docling extra must not install it), `python-bidi` (LGPL, above), LGPL or MPL packages (MPL is file-level and fine if unmodified; LGPL needs the replaceable-install condition), and GPU wheels (`nvidia-*`, `cuda-*`, proprietary EULA). The CI report fails the build on any of these that are not listed above.
+
+## Docling weights (revision note, FP-S1b)
+
+Checked at docling commit `e16c4b71` and with the Hugging Face API on 2026-11-16:
+
+- `docling-project/docling-models` (TableFormer): docling requests revision tag `v2.3.0` (`docling/models/stages/table_structure/table_structure_model.py:151`). The HF API resolves `v2.3.0` to `fc0f2d45e2218ea24bce5045f58a389aed16dc23`, the commit in the ledger row, and the card at that revision declares `cdla-permissive-2.0`. This closes specialist F6 for this row. A tag can move, so mirror the weights or pass the SHA before release.
+- `docling-project/docling-layout-heron`: docling requests `revision="main"` (`docling/datamodel/layout_model_specs.py:83-85`). The commit in the ledger row is only the `main` HEAD read on 2026-11-16. These are unpinned weights; pin before release.
+
+## Other decisions in FP-S1b
+
+- psycopg row corrected: it is not declared in any requirements file (specialist F4).
+- `THIRD_PARTY_NOTICES.md` added at the repo root. It is hand-assembled from the pinned LICENSE and NOTICE files listed in the ledger; regenerate it whenever an `adopt` row is added.
+- FinanceBench numbers may be quoted only as an internal benchmark, never in sales material, without Patronus AI's permission (CC-BY-NC-4.0; specialist weights note).

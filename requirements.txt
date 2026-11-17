@@ -1,4 +1,3 @@
-anthropic>=1.0  # only needed for the Matrix (LLM) features; everything else is stdlib
 PyYAML>=6.0  # om/intl/standards and label dictionaries (S8); ledger row added by S8.3a
 python-pptx==1.0.2  # deck engine: PPTX read/write (om/deck/*)
 XlsxWriter==3.2.9  # python-pptx dependency (chart workbooks)
