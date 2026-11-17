@@ -1,0 +1,12 @@
+{
+  "data": {
+    "text": "# Results\nApple Inc. FY2026 revenue was $478.8 billion against $416.2 billion in the prior year, a change of +15.1%.\n# Profitability\nOperating income was $158.1 billion (33.0% of revenue); net income was $132.2 billion.\n# Cash flow\nOperating cash flow was $145.1 billion.\n# Source\nAll figures are from the 10-K filed 2026-11-03. Check each against the filing before use."
+  },
+  "key": "b044f9f81ff0fc8e07f0eb2fec508cc3d58c7c3c874938c71775a7a7ead7c3b4",
+  "model": "claude-sonnet-replay",
+  "task": "adapter:auto",
+  "usage": {
+    "input_tokens": 420,
+    "output_tokens": 380
+  }
+}

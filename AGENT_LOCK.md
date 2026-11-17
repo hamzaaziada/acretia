@@ -8,7 +8,8 @@ One row per active claim. Claim a packet before you touch its files, commit the 
 | S5.4b evals + VDR50 (session D) | worker | main | 2026-11-17 | evals/vdr50/*, evals/odl_bench/*, evals/out/*, scripts/build_vdr50.py, scripts/eval_s5.py, tests/test_s5_eval_runner.py, scorecard.csv (S5 rows only) |
 | S5.5c Matrix Chat (session D) | worker | main | 2026-11-17 | om/grid_chat.py, tests/test_grid_chat.py, tests/fixtures/grid_chat/* |
 | S5.6 grid interfaces doc (session D) | worker | main | 2026-11-17 | docs/interfaces.md ("Document grid (S5)" section only) |
-| S5 gate (session D) | gate-writer worker | main | 2026-11-17 | scripts/verify_s5.py |
+| S5.F1 completeness recovery (session D) | worker | main | 2026-11-17 | om/docparse.py, tests/test_docparse.py |
+| S5.F2 extractive precision (session D) | worker | main | 2026-11-17 | om/grid.py, tests/test_grid.py, tests/test_grid_parity.py, tests/test_grid_extractive.py |
 | S5 docs (session D) | Boss | main | 2026-11-16 | docs/s5/* |
 | S1 gate | Boss | claude/dreamy-ramanujan-k8p2xt | 2026-11-16 | scripts/verify_s1.py |
 | S3 gate script (independent writer) | session B gate worker | claude/upbeat-mccarthy-viqjuo | 2026-11-16 | scripts/verify_s3.py |
@@ -34,15 +35,9 @@ One row per active claim. Claim a packet before you touch its files, commit the 
 | S4 gate script | gate worker (session C) | claude/busy-knuth-i3ewp5 | 2026-11-16 | scripts/verify_s4.py |
 | FP-S1c buyer-research rubric thresholds | worker (session A) | claude/dreamy-ramanujan-k8p2xt | 2026-11-17 | docs/buyer-research.md |
 | S4.fix2 formula engine coverage (SpreadsheetBench) | worker (session C) | claude/busy-knuth-i3ewp5 | 2026-11-17 | om/formula.py, tests/test_formula_ext2.py |
-| S6.1 research workflows | worker (session A) | claude/dreamy-ramanujan-k8p2xt | 2026-11-17 | src/harness/research/workflows/**, src/harness/research/api.py, tests/test_research_workflows.py, docs/interfaces-s6/workflows.md |
-| S6.4 schedules + email | worker (session A) | claude/dreamy-ramanujan-k8p2xt | 2026-11-17 | src/harness/research/schedule.py, src/harness/research/email_io.py, tests/test_research_schedule.py, docs/interfaces-s6/schedule-email.md |
-| S6.5a admin core | worker (session A) | claude/dreamy-ramanujan-k8p2xt | 2026-11-17 | src/harness/admin/__init__.py, src/harness/admin/agents.py, src/harness/admin/spend.py, src/harness/admin/sources.py, src/harness/admin/mcp_tools.py, tests/test_admin_core.py, docs/interfaces-s6/admin.md |
-| S6.5b SCIM + ACL mirroring | worker (session A) | claude/dreamy-ramanujan-k8p2xt | 2026-11-17 | src/harness/admin/scim.py, src/harness/connectors/acl.py, tests/test_admin_scim_acl.py, docs/interfaces-s6/scim-acl.md |
-| FP-S2a MCP/grid query safety | worker (session A) | claude/dreamy-ramanujan-k8p2xt | 2026-11-17 | src/harness/mcp/**, src/harness/research/tools.py, tests/test_mcp.py, tests/test_research_tools.py |
 | FP-S2b adapter/ledger/PII/router | worker (session A) | claude/dreamy-ramanujan-k8p2xt | 2026-11-17 | src/harness/adapter.py, src/harness/ledger.py, src/harness/router.py, src/harness/profiles/*, om/pii.py, om/replay.py, tests/test_adapter.py, tests/test_harness_router.py, tests/test_llm_router.py |
-| FP-S2c evidence/deals/queue | worker (session A) | claude/dreamy-ramanujan-k8p2xt | 2026-11-17 | src/harness/evidence.py, om/deals.py, om/storage.py, tests/test_evidence.py, tests/test_deal_memory.py, tests/test_storage.py |
-| FP-S2d unpack/crawler | worker (session A) | claude/dreamy-ramanujan-k8p2xt | 2026-11-17 | src/harness/connectors/unpack.py, src/harness/connectors/web.py, tests/test_connectors_harness.py |
 | S4.10 rendered samples | worker (session C) | claude/busy-knuth-i3ewp5 | 2026-11-17 | docs/samples/s4/**, scripts/render_samples_s4.py |
+| S6.1c awaiting_review + quarterly data | worker (session A) | claude/dreamy-ramanujan-k8p2xt | 2026-11-17 | om/contracts.py (Job.status enum only), src/harness/research/jobs.py, src/harness/research/workflows/review.py, src/harness/research/tools.py, tests/test_research_api.py, tests/test_research_tools.py, tests/test_research_workflows.py |
 
 ## Log
 - 2026-11-16: created; no active claims.
@@ -83,3 +78,9 @@ One row per active claim. Claim a packet before you touch its files, commit the 
 - 2026-11-17: S5.5b verified on main and released; S5.5c, S5.6 claimed (session D).
 - 2026-11-17: session B: FP-S3-a, FP-S3-b, S3.12 merged and released; claimed S3.10 corpus, FP-S3-c, FP-S3-d.
 - 2026-11-17: S4.7c, S4.6a, S4.8, S4.9 merged and released; S4.10 samples claimed.
+- 2026-11-17: S5 gate script landed; Fix Packets S5.F1, S5.F2 claimed (session D).
+- 2026-11-16: session A: FP-S2d done; FP-CI2 claimed (CI forced replay mode broke 12 fake-provider tests).
+- 2026-11-16: session A: FP-CI2 landed (8619648).
+- 2026-11-16: session A: FP-S2a done (pending S2 re-review).
+- 2026-11-16: session A: FP-S2c done (pending S2 re-review).
+- 2026-11-16: session A: S6.1, S6.4, S6.5a, S6.5b done; S6.1c claimed.

@@ -1,0 +1,10 @@
+{
+ "resources": {
+  "application/xhtml+xml": {
+   "content_length": 2000
+  },
+  "application/pdf": {
+   "content_length": 9000
+  }
+ }
+}

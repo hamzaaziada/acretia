@@ -1,0 +1,7 @@
+{
+ "https://filings.xbrl.org/api/filings?page%5Bsize%5D=20&sort=-date_added": "filings.json",
+ "https://filings.xbrl.org/api/filings": "filings.json",
+ "https://filings.xbrl.org/api/filings/27911": "filing_27911.json",
+ "https://filings.xbrl.org/213800MU3B7CS88PY290/2026-06-30/ESEF/GB/0/213800MU3B7CS88PY290-2026-06-30.json": "report.json",
+ "https://filings.xbrl.org/213800MU3B7CS88PY290/2026-06-30/ESEF/GB/0/213800MU3B7CS88PY290-2026-06-30.zip": "package.zip.bin"
+}

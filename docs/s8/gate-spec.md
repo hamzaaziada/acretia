@@ -25,7 +25,7 @@ Order (D-030): G0 (anchors) must pass before the wider MENA and XBRL-gold result
 ADNOCDIST, ALDAR. Data in `evals/intl/anchors/<ticker>/`.
 1. `sources.json` lists ≥ 2 audited annual financial statements and ≥ 1 latest quarterly earnings release or investor
    presentation, each with URL, sha256, retrieval date, and `committed: false` unless the publisher's terms allow it
-   (then the terms URL is recorded).
+   (then the terms URL is recorded). Where a company publishes no release or presentation (e.g. EAST), a `none_published` record listing the hosts checked satisfies the release requirement; consolidated FS fall back to separate FS only when the company publishes no consolidated set, recorded as such.
 2. `figures.jsonl`: full IS, BS and CF for both annual reports (every printed line, not only the model lines), each
    record with page, bbox, confidence and key (or `null` with the printed label); for both years, BS balances,
    CF ties to the change in cash, and IS/CF net income agree, either in `check()` or with a review item explaining why.

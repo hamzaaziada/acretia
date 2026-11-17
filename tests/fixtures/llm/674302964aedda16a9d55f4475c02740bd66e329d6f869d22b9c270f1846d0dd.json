@@ -1,0 +1,12 @@
+{
+  "data": {
+    "text": "# Buyer universe (hypotheses to verify)\nThis is canned replay text. It names no real buyers; a live run drafts a buyer universe from the model and the sector, and every name must be verified.\n# Strategic buyers\nCategory: large technology platforms with adjacent product lines. Rationale: scale and distribution. Verify capacity to pay against their own filings.\n# Financial buyers\nCategory: large-cap sponsors and sovereign funds. Rationale: cash generation of $145.1 billion supports leverage. Verify appetite and fund size."
+  },
+  "key": "674302964aedda16a9d55f4475c02740bd66e329d6f869d22b9c270f1846d0dd",
+  "model": "claude-sonnet-replay",
+  "task": "adapter:auto",
+  "usage": {
+    "input_tokens": 420,
+    "output_tokens": 380
+  }
+}

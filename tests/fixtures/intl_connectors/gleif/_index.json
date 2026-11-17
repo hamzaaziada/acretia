@@ -1,0 +1,9 @@
+{
+ "https://api.gleif.org/api/v1/lei-records/213800LH1BZH3DI6G760": "bp_single.json",
+ "https://api.gleif.org/api/v1/lei-records/OW6OFBNCKXC4US5C7523": "equinor_single.json",
+ "https://api.gleif.org/api/v1/lei-records": "bp.json",
+ "https://api.gleif.org/api/v1/lei-records?filter%5Bentity.legalName%5D=EQUINOR+ASA&page%5Bsize%5D=10": "equinor.json",
+ "https://api.gleif.org/api/v1/lei-records?filter%5Bentity.registeredAs%5D=00102498&filter%5Bentity.registeredAt.id%5D=RA000585&page%5Bsize%5D=10": "bp.json",
+ "https://api.gleif.org/api/v1/lei-records?filter%5Bentity.registeredAs%5D=923609016&filter%5Bentity.registeredAt.id%5D=RA000472&page%5Bsize%5D=10": "equinor.json",
+ "https://api.gleif.org/api/v1/lei-records?filter%5Bentity.legalName%5D=Equinor+ASA&page%5Bsize%5D=10": "equinor.json"
+}

@@ -1,0 +1,27 @@
+[
+ {
+  "id": 5027445,
+  "journalnr": "2024515327",
+  "regnskapstype": "KONSERN",
+  "virksomhet": {
+   "organisasjonsnummer": "923609016",
+   "organisasjonsform": "ASA",
+   "morselskap": true
+  },
+  "regnskapsperiode": {
+   "fraDato": "2023-01-01",
+   "tilDato": "2023-12-31"
+  },
+  "valuta": "USD",
+  "regnkapsprinsipper": {
+   "smaaForetak": false,
+   "regnskapsregler": "IFRS"
+  },
+  "egenkapitalGjeld": {
+   "sumEgenkapitalGjeld": 143580000000.0,
+   "egenkapital": {
+    "sumEgenkapital": 48500000000.0
+   }
+  }
+ }
+]

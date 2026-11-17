@@ -1,0 +1,28 @@
+{
+ "data": [
+  {
+   "type": "lei-records",
+   "id": "OW6OFBNCKXC4US5C7523",
+   "attributes": {
+    "lei": "OW6OFBNCKXC4US5C7523",
+    "entity": {
+     "legalName": {
+      "name": "EQUINOR ASA",
+      "language": "no"
+     },
+     "registeredAt": {
+      "id": "RA000472",
+      "other": null
+     },
+     "registeredAs": "923 609 016",
+     "jurisdiction": "NO",
+     "legalForm": {
+      "id": "O0NB",
+      "other": null
+     },
+     "status": "ACTIVE"
+    }
+   }
+  }
+ ]
+}
