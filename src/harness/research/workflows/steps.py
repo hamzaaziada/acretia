@@ -84,9 +84,13 @@ def usable(ctx, fig: dict) -> bool:
     return cache[k]
 
 
-def add_figure(ctx, fig: dict) -> dict:
-    ctx.figures.append(fig)
-    ctx._ingest({"figures": [fig], "data": {}})
+def add_figure(ctx, fig: dict, *, ingest: bool = True) -> dict:
+    """Candidate figure for verification. ``ingest`` registers its quote as a source snapshot: only for figures this
+    code computed from verified inputs, never for caller-supplied figures or document numbers."""
+    if ingest:
+        ctx._ingest({"figures": [fig], "data": {}})
+    else:
+        ctx.figures.append(fig)
     return fig
 
 
@@ -484,7 +488,7 @@ def asm_buyer_list(ctx):
             if debt and usable(ctx, debt):
                 figs.append(debt)
         for m in c["metrics"]:
-            add_figure(ctx, m)
+            add_figure(ctx, m, ingest=False)
             if usable(ctx, m) and re.search(r"cash|dry powder|aum|capacity", str(m.get("label", "")), re.I) \
                     and capfig is None:
                 capfig = m
@@ -679,7 +683,7 @@ def asm_tick_and_tie(ctx):
     sources = []
     for f in ctx.options.get("figures") or []:
         if isinstance(f, dict):
-            add_figure(ctx, f)
+            add_figure(ctx, f, ingest=False)
             if usable(ctx, f):
                 sources.append(f)
     mc = ctx.outputs.get("model_cells")
@@ -731,7 +735,7 @@ def asm_tick_and_tie(ctx):
                            "sha256_span_hash": sha256_hex(canonical_bytes([doc, page, sent, k])), "as_of": as_of}
                     dfig = {"label": f"{doc} p{page} n{k}", "value": abs(num["value"]) * (-1 if num["value"] < 0 else 1),
                             "units": num["units"], "period": as_of, "citation": cit, "v": 1}
-                    add_figure(ctx, dfig)
+                    add_figure(ctx, dfig, ingest=False)
                     dok = usable(ctx, dfig)
                     if not dok and status == "ok":
                         status = "unsourced"
@@ -764,7 +768,7 @@ _TITLE_SCHEMA = {"type": "object", "required": ["title"], "properties": {"title"
 
 
 def _no_new_numbers(title: str) -> bool:
-    return not re.search(r"\d", re.sub(r"\b(19|20)\d{2}\b", "", title))
+    return not re.search(r"\d", re.sub(r"(?<!\d)(19|20)\d{2}(?!\d)", "", title))
 
 
 @text_step("action_titles")
