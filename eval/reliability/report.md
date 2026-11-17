@@ -1,6 +1,6 @@
 # Reliability report, first replay run
 
-Generated 2026-11-17 09:44 UTC by `eval/reliability/run.py` in **replay** mode; harness wall time 290s. Ran 126 briefs (`--n 130`).
+Generated 2026-11-17 09:47 UTC by `eval/reliability/run.py` in **replay** mode; harness wall time 113s. Ran 126 briefs (`--n 130`).
 
 Everything below is from fixtures: one real company (AAPL), three labelled synthetic companies (DEMOA, DEMOB, DEMOT) and two seeded synthetic deals. It tests the product's plumbing and number discipline on offline data. It says **nothing** yet about live-data reliability, MENA/IFRS filings or live model drafting; those briefs are in the corpus and are skipped here (listed at the end).
 
@@ -11,8 +11,8 @@ Everything below is from fixtures: one real company (AAPL), three labelled synth
 | Task success (done + expected deliverable) | >= 97% | 98.3% (116/118 supported briefs run); incl. engine-blocked: 95.1% | MET |
 | Silent wrong numbers | 0 | **0** of 23543 numbers checked (15281 sourced, 8262 flagged) | MET |
 | Determinism (two runs, identical numbers) | 100% | 100.0% (116/116) | MET |
-| Failed jobs resume cleanly | 100% | 99.1% (115/116) | NOT MET |
-| p95 latency (job wall seconds, replay) | published | p50 0.22 s, p95 0.57 s, max 0.75 s | published; no live-model latency included |
+| Failed jobs resume cleanly | 100% | 100.0% (116/116) | MET |
+| p95 latency (job wall seconds, replay) | published | p50 0.20 s, p95 0.63 s, max 0.77 s | published; no live-model latency included |
 | Cost per deliverable | published | **not a live measurement.** Replay books the recorded token usage of the canned fixtures at ledger rates: $0.0487 over 116 deliverables = $0.0004 each on average; the 7 prose runs (5600 replayed tokens) account for all of it (about $0.0070 per prose deliverable); engine-only deliverables cost $0.00 | not measured |
 
 Briefs run: 126 of 142 in the corpus (16 need live data/model and are skipped). Supported briefs run: 118; engine blocked: 4; Arabic-only probes (planner has no Arabic rules): 4.
@@ -28,43 +28,43 @@ Briefs run: 126 of 142 in the corpus (16 need live data/model and are skipped). 
 
 | task_id | briefs | done | success | blocked/unsupported | silent numbers | deterministic | resume ok | p50 s | p95 s |
 |---|---|---|---|---|---|---|---|---|---|
-| buyer_list | 2 | 2 | 2/2 | 0 | 0 | 2/2 | 2/2 | 0.03 | 0.03 |
-| comps | 12 | 11 | 11/11 | 1 | 0 | 11/11 | 11/11 | 0.11 | 0.14 |
-| dcf | 30 | 29 | 29/29 | 1 | 0 | 29/29 | 29/29 | 0.47 | 0.61 |
-| earnings_recap | 2 | 2 | 2/2 | 0 | 0 | 2/2 | 2/2 | 0.03 | 0.04 |
-| earnings_update | 8 | 6 | 6/8 | 0 | 0 | 6/6 | 6/6 | 0.54 | 0.57 |
-| ic_memo | 3 | 3 | 3/3 | 0 | 0 | 3/3 | 3/3 | 0.04 | 0.08 |
-| lbo | 10 | 10 | 10/10 | 0 | 0 | 10/10 | 10/10 | 0.23 | 0.26 |
-| merger | 9 | 9 | 9/9 | 0 | 0 | 9/9 | 9/9 | 0.13 | 0.20 |
-| pitchbook_section | 8 | 8 | 8/8 | 0 | 0 | 8/8 | 8/8 | 0.17 | 0.24 |
+| buyer_list | 2 | 2 | 2/2 | 0 | 0 | 2/2 | 2/2 | 0.03 | 0.04 |
+| comps | 12 | 11 | 11/11 | 1 | 0 | 11/11 | 11/11 | 0.10 | 0.18 |
+| dcf | 30 | 29 | 29/29 | 1 | 0 | 29/29 | 29/29 | 0.52 | 0.66 |
+| earnings_recap | 2 | 2 | 2/2 | 0 | 0 | 2/2 | 2/2 | 0.04 | 0.05 |
+| earnings_update | 8 | 6 | 6/8 | 0 | 0 | 6/6 | 6/6 | 0.56 | 0.60 |
+| ic_memo | 3 | 3 | 3/3 | 0 | 0 | 3/3 | 3/3 | 0.05 | 0.06 |
+| lbo | 10 | 10 | 10/10 | 0 | 0 | 10/10 | 10/10 | 0.21 | 0.28 |
+| merger | 9 | 9 | 9/9 | 0 | 0 | 9/9 | 9/9 | 0.13 | 0.16 |
+| pitchbook_section | 8 | 8 | 8/8 | 0 | 0 | 8/8 | 8/8 | 0.17 | 0.18 |
 | precedents | 4 | 0 | 0/0 | 4 | 0 | 0/0 | 0/0 | n/a | n/a |
-| profile | 11 | 10 | 10/10 | 1 | 0 | 10/10 | 9/10 | 0.21 | 0.30 |
-| teaser | 10 | 10 | 10/10 | 0 | 0 | 10/10 | 10/10 | 0.13 | 0.22 |
-| three_statement | 10 | 10 | 10/10 | 0 | 0 | 10/10 | 10/10 | 0.30 | 0.42 |
-| vdr_review | 7 | 6 | 6/6 | 1 | 0 | 6/6 | 6/6 | 0.04 | 0.06 |
+| profile | 11 | 10 | 10/10 | 1 | 0 | 10/10 | 10/10 | 0.21 | 0.34 |
+| teaser | 10 | 10 | 10/10 | 0 | 0 | 10/10 | 10/10 | 0.13 | 0.17 |
+| three_statement | 10 | 10 | 10/10 | 0 | 0 | 10/10 | 10/10 | 0.33 | 0.39 |
+| vdr_review | 7 | 6 | 6/6 | 1 | 0 | 6/6 | 6/6 | 0.03 | 0.05 |
 
 ## By perturbation
 
 | perturbation | briefs | done | success | blocked/unsupported | silent numbers | deterministic | resume ok | p50 s | p95 s |
 |---|---|---|---|---|---|---|---|---|---|
-| arabic_mixed | 6 | 6 | 6/6 | 0 | 0 | 6/6 | 6/6 | 0.19 | 0.52 |
+| arabic_mixed | 6 | 6 | 6/6 | 0 | 0 | 6/6 | 6/6 | 0.25 | 0.59 |
 | arabic_only | 4 | 0 | 0/0 | 4 | 0 | 0/0 | 0/0 | n/a | n/a |
-| base | 43 | 38 | 38/39 | 4 | 0 | 38/38 | 37/38 | 0.18 | 0.51 |
-| deal_context | 16 | 16 | 16/16 | 0 | 0 | 16/16 | 16/16 | 0.12 | 0.40 |
-| override | 18 | 18 | 18/18 | 0 | 0 | 18/18 | 18/18 | 0.51 | 0.64 |
-| phrasing | 39 | 38 | 38/39 | 0 | 0 | 38/38 | 38/38 | 0.19 | 0.52 |
+| base | 43 | 38 | 38/39 | 4 | 0 | 38/38 | 38/38 | 0.18 | 0.48 |
+| deal_context | 16 | 16 | 16/16 | 0 | 0 | 16/16 | 16/16 | 0.11 | 0.35 |
+| override | 18 | 18 | 18/18 | 0 | 0 | 18/18 | 18/18 | 0.57 | 0.67 |
+| phrasing | 39 | 38 | 38/39 | 0 | 0 | 38/38 | 38/38 | 0.17 | 0.56 |
 
 ## By data kind and region
 
 | data | briefs | done | success | blocked/unsupported | silent numbers | deterministic | resume ok | p50 s | p95 s |
 |---|---|---|---|---|---|---|---|---|---|
-| real | 41 | 35 | 35/37 | 4 | 0 | 35/35 | 35/35 | 0.23 | 0.58 |
-| synthetic | 85 | 81 | 81/81 | 4 | 0 | 81/81 | 80/81 | 0.21 | 0.57 |
+| real | 41 | 35 | 35/37 | 4 | 0 | 35/35 | 35/35 | 0.20 | 0.66 |
+| synthetic | 85 | 81 | 81/81 | 4 | 0 | 81/81 | 81/81 | 0.20 | 0.59 |
 
 | region | briefs | done | success | blocked/unsupported | silent numbers | deterministic | resume ok | p50 s | p95 s |
 |---|---|---|---|---|---|---|---|---|---|
-| MENA | 4 | 3 | 3/3 | 1 | 0 | 3/3 | 3/3 | 0.06 | 0.06 |
-| US | 122 | 113 | 113/115 | 7 | 0 | 113/113 | 112/113 | 0.22 | 0.57 |
+| MENA | 4 | 3 | 3/3 | 1 | 0 | 3/3 | 3/3 | 0.03 | 0.05 |
+| US | 122 | 113 | 113/115 | 7 | 0 | 113/113 | 113/113 | 0.21 | 0.63 |
 
 ## Failures
 
@@ -94,7 +94,7 @@ None. Every re-run matched cell for cell / text for text.
 
 ## Resume failures
 
-- `rel-022` (profile): resume raised TimeoutError: job job_a4f4320ce56221ba did not finish within 180.0s (status=queued, in worker set=False, steps=[('profile.resolve', 'done'), ('profile.statements', 'done'), ('profile.deck_outline', 'done'), ('profile.approve_outline', 'pending'), ('profile.deck_render', 'pending'), ('profile.deliver', 'pending')])
+None. Every injected failure resumed to a result identical to the clean run, without re-running finished steps.
 
 ## Product observations from this run (not fixed here)
 
@@ -131,6 +131,7 @@ None. Every re-run matched cell for cell / text for text.
 - `rel-141` lbo SWDY (MENA)
 - `rel-142` lbo SAP (IFRS)
 
-## Unreproduced hang (honest note)
+## Product bugs and observations found by this run (reported, not fixed)
 
-One earlier full run aborted at about brief 61 because a determinism re-run of a deck brief had not finished after 180 s, while the unit-test suite ran in a second process. It did not recur in later clean full runs or in 80 back-to-back approve-immediately trials. Cause unknown; possibly an intermittent job-runtime stall under CPU contention, not a confirmed bug. The harness now records job status on a timeout and reports a hang as a failed row.
+1. **Approve race (confirmed by job state).** `JobService.approve()` re-enqueues the job while the worker thread that paused it can still be in `_active`; `_run()` returns early for an active job, so the job stays `queued` forever with its next step pending. One full run hit it (a profile deck job after approval, 180 s timeout; state: queued, not in worker set, approve_outline pending). The harness now waits for the worker to release the job before approving, so this report is not affected, but a fast client approving right after the pause event can hit it.
+2. **earnings_update depends on what is already in the deal library.** On AAPL, once an AAPL model exists in the library the roll-forward picks it up and fails with "The workbook must be one of ours ... with a later fiscal year in the filings" because the fixture has no later year (2 briefs: rel-033, rel-072; 98.3% success instead of 100%). On a clean library the same brief passes.

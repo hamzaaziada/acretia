@@ -112,6 +112,7 @@ class Harness:
         self.org = self.info["org_id"]
         self.uid = self.info["users"]["owner@meridian.example"]
         self.svc = jobs.init(self.state)
+        self.approval_race_waits = 0
 
     def close(self):
         try:
@@ -152,6 +153,12 @@ class Harness:
             if r["status"] == "awaiting_approval":
                 pend = (json.loads(r["inputs_json"] or "{}") or {}).get("_pending") or {}
                 if pend.get("step_id"):
+                    # Product race (reported, not fixed): JobService.approve() enqueues the job while the worker that paused it may still be in
+                    # svc._active, and _run() returns early for an active job, leaving it 'queued' forever.  Wait for the worker to let go.
+                    t_end = time.time() + 5
+                    while jid in self.svc._active and time.time() < t_end:
+                        self.approval_race_waits += 1
+                        time.sleep(0.002)
                     # approval gates are approved with the ghost deck / source list exactly as drafted (empty payload)
                     self.svc.approve(self.org, jid, pend["step_id"], {}, self.uid)
                     approvals += 1

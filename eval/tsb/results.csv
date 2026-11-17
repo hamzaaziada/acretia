@@ -1,92 +1,92 @@
 brief_id,task_id,region,ticker,data,outcome,blocked_reason,wall_min,review_fix_min,t_a_min,t_h_low_min,t_h_mid_min,t_h_high_min,saved_low,saved_mid,saved_high,baseline,gates_pass,model_score,silent_numbers,client_ready,blocking,persona_score,edits,status
-wsp-apple-3stmt,three_statement,US,AAPL,real,done,,0.00583,15.0,15.0058,120.0,147.0,180.0,0.875,0.8979,0.9166,estimate,True,100.0,0,unknown,,,2,estimate
-comps-aapl-1,comps,US,AAPL,real,done,,0.0017,20.0,20.0017,120.0,120.0,120.0,0.8333,0.8333,0.8333,estimate,True,100.0,0,unknown,,,5,estimate
-comps-aapl-2,comps,US,AAPL,real,done,,0.00135,20.0,20.0013,120.0,120.0,120.0,0.8333,0.8333,0.8333,estimate,True,100.0,0,unknown,,,5,estimate
-comps-demoa-1,comps,US,DEMOA,synthetic,done,,0.00165,20.0,20.0017,120.0,120.0,120.0,0.8333,0.8333,0.8333,estimate,True,100.0,0,unknown,,,5,estimate
-comps-demoa-2,comps,US,DEMOA,synthetic,done,,0.00151,20.0,20.0015,120.0,120.0,120.0,0.8333,0.8333,0.8333,estimate,True,100.0,0,unknown,,,5,estimate
-comps-demob-1,comps,US,DEMOB,synthetic,done,,0.00145,20.0,20.0014,120.0,120.0,120.0,0.8333,0.8333,0.8333,estimate,True,100.0,0,unknown,,,5,estimate
-comps-demob-2,comps,US,DEMOB,synthetic,done,,0.00139,20.0,20.0014,120.0,120.0,120.0,0.8333,0.8333,0.8333,estimate,True,100.0,0,unknown,,,5,estimate
-comps-demot-1,comps,US,DEMOT,synthetic,done,,0.00272,20.0,20.0027,120.0,120.0,120.0,0.8333,0.8333,0.8333,estimate,True,100.0,0,unknown,,,5,estimate
-comps-demot-2,comps,US,DEMOT,synthetic,done,,0.00136,20.0,20.0014,120.0,120.0,120.0,0.8333,0.8333,0.8333,estimate,True,100.0,0,unknown,,,5,estimate
-precedents-aapl-1,precedents,US,AAPL,real,blocked,The S4 precedents engine hasn't landed yet (S4 precedents stage); this step cannot run until it does. The other steps in this run are unaffected.,0.00013,,,,,,,,,,,,,,,,,estimate
-precedents-aapl-2,precedents,US,AAPL,real,blocked,The S4 precedents engine hasn't landed yet (S4 precedents stage); this step cannot run until it does. The other steps in this run are unaffected.,0.00012,,,,,,,,,,,,,,,,,estimate
-precedents-demoa-1,precedents,US,DEMOA,synthetic,blocked,The S4 precedents engine hasn't landed yet (S4 precedents stage); this step cannot run until it does. The other steps in this run are unaffected.,8e-05,,,,,,,,,,,,,,,,,estimate
-precedents-demoa-2,precedents,US,DEMOA,synthetic,blocked,The S4 precedents engine hasn't landed yet (S4 precedents stage); this step cannot run until it does. The other steps in this run are unaffected.,9e-05,,,,,,,,,,,,,,,,,estimate
-precedents-demob-1,precedents,US,DEMOB,synthetic,blocked,The S4 precedents engine hasn't landed yet (S4 precedents stage); this step cannot run until it does. The other steps in this run are unaffected.,6e-05,,,,,,,,,,,,,,,,,estimate
-precedents-demob-2,precedents,US,DEMOB,synthetic,blocked,The S4 precedents engine hasn't landed yet (S4 precedents stage); this step cannot run until it does. The other steps in this run are unaffected.,7e-05,,,,,,,,,,,,,,,,,estimate
-precedents-demot-1,precedents,US,DEMOT,synthetic,blocked,The S4 precedents engine hasn't landed yet (S4 precedents stage); this step cannot run until it does. The other steps in this run are unaffected.,0.00013,,,,,,,,,,,,,,,,,estimate
+wsp-apple-3stmt,three_statement,US,AAPL,real,done,,0.00643,15.0,15.0064,120.0,147.0,180.0,0.8749,0.8979,0.9166,estimate,True,100.0,0,unknown,,,2,estimate
+comps-aapl-1,comps,US,AAPL,real,done,,0.00199,20.0,20.002,120.0,120.0,120.0,0.8333,0.8333,0.8333,estimate,True,100.0,0,unknown,,,5,estimate
+comps-aapl-2,comps,US,AAPL,real,done,,0.00195,20.0,20.002,120.0,120.0,120.0,0.8333,0.8333,0.8333,estimate,True,100.0,0,unknown,,,5,estimate
+comps-demoa-1,comps,US,DEMOA,synthetic,done,,0.00205,20.0,20.0021,120.0,120.0,120.0,0.8333,0.8333,0.8333,estimate,True,100.0,0,unknown,,,5,estimate
+comps-demoa-2,comps,US,DEMOA,synthetic,done,,0.00153,20.0,20.0015,120.0,120.0,120.0,0.8333,0.8333,0.8333,estimate,True,100.0,0,unknown,,,5,estimate
+comps-demob-1,comps,US,DEMOB,synthetic,done,,0.00185,20.0,20.0019,120.0,120.0,120.0,0.8333,0.8333,0.8333,estimate,True,100.0,0,unknown,,,5,estimate
+comps-demob-2,comps,US,DEMOB,synthetic,done,,0.00189,20.0,20.0019,120.0,120.0,120.0,0.8333,0.8333,0.8333,estimate,True,100.0,0,unknown,,,5,estimate
+comps-demot-1,comps,US,DEMOT,synthetic,done,,0.0022,20.0,20.0022,120.0,120.0,120.0,0.8333,0.8333,0.8333,estimate,True,100.0,0,unknown,,,5,estimate
+comps-demot-2,comps,US,DEMOT,synthetic,done,,0.0016,20.0,20.0016,120.0,120.0,120.0,0.8333,0.8333,0.8333,estimate,True,100.0,0,unknown,,,5,estimate
+precedents-aapl-1,precedents,US,AAPL,real,blocked,The S4 precedents engine hasn't landed yet (S4 precedents stage); this step cannot run until it does. The other steps in this run are unaffected.,0.0002,,,,,,,,,,,,,,,,,estimate
+precedents-aapl-2,precedents,US,AAPL,real,blocked,The S4 precedents engine hasn't landed yet (S4 precedents stage); this step cannot run until it does. The other steps in this run are unaffected.,0.00016,,,,,,,,,,,,,,,,,estimate
+precedents-demoa-1,precedents,US,DEMOA,synthetic,blocked,The S4 precedents engine hasn't landed yet (S4 precedents stage); this step cannot run until it does. The other steps in this run are unaffected.,0.0001,,,,,,,,,,,,,,,,,estimate
+precedents-demoa-2,precedents,US,DEMOA,synthetic,blocked,The S4 precedents engine hasn't landed yet (S4 precedents stage); this step cannot run until it does. The other steps in this run are unaffected.,0.00011,,,,,,,,,,,,,,,,,estimate
+precedents-demob-1,precedents,US,DEMOB,synthetic,blocked,The S4 precedents engine hasn't landed yet (S4 precedents stage); this step cannot run until it does. The other steps in this run are unaffected.,0.00011,,,,,,,,,,,,,,,,,estimate
+precedents-demob-2,precedents,US,DEMOB,synthetic,blocked,The S4 precedents engine hasn't landed yet (S4 precedents stage); this step cannot run until it does. The other steps in this run are unaffected.,0.0001,,,,,,,,,,,,,,,,,estimate
+precedents-demot-1,precedents,US,DEMOT,synthetic,blocked,The S4 precedents engine hasn't landed yet (S4 precedents stage); this step cannot run until it does. The other steps in this run are unaffected.,0.00012,,,,,,,,,,,,,,,,,estimate
 precedents-demot-2,precedents,US,DEMOT,synthetic,blocked,The S4 precedents engine hasn't landed yet (S4 precedents stage); this step cannot run until it does. The other steps in this run are unaffected.,0.00011,,,,,,,,,,,,,,,,,estimate
-three_statement-aapl-1,three_statement,US,AAPL,real,done,,0.00461,15.0,15.0046,120.0,147.0,180.0,0.875,0.8979,0.9166,estimate,True,100.0,0,unknown,,,2,estimate
-three_statement-aapl-2,three_statement,US,AAPL,real,done,,0.00568,15.0,15.0057,120.0,147.0,180.0,0.875,0.8979,0.9166,estimate,True,100.0,0,unknown,,,2,estimate
-three_statement-demoa-1,three_statement,US,DEMOA,synthetic,done,,0.00447,15.0,15.0045,120.0,147.0,180.0,0.875,0.8979,0.9166,estimate,False,99.1,0,no,model check failed: checks,,2,estimate
-three_statement-demoa-2,three_statement,US,DEMOA,synthetic,done,,0.00425,15.0,15.0043,120.0,147.0,180.0,0.875,0.8979,0.9166,estimate,False,99.1,0,no,model check failed: checks,,2,estimate
-three_statement-demob-1,three_statement,US,DEMOB,synthetic,done,,0.00503,15.0,15.005,120.0,147.0,180.0,0.875,0.8979,0.9166,estimate,False,99.1,0,no,model check failed: checks,,2,estimate
-three_statement-demob-2,three_statement,US,DEMOB,synthetic,done,,0.0046,15.0,15.0046,120.0,147.0,180.0,0.875,0.8979,0.9166,estimate,False,99.1,0,no,model check failed: checks,,2,estimate
-three_statement-demot-1,three_statement,US,DEMOT,synthetic,done,,0.00479,15.0,15.0048,120.0,147.0,180.0,0.875,0.8979,0.9166,estimate,False,99.1,0,no,model check failed: checks,,2,estimate
-three_statement-demot-2,three_statement,US,DEMOT,synthetic,done,,0.00461,15.0,15.0046,120.0,147.0,180.0,0.875,0.8979,0.9166,estimate,False,99.1,0,no,model check failed: checks,,2,estimate
-dcf-aapl-1,dcf,US,AAPL,real,done,,0.00526,15.0,15.0053,90.0,90.0,90.0,0.8333,0.8333,0.8333,estimate,True,100.0,0,unknown,,,2,estimate
-dcf-aapl-2,dcf,US,AAPL,real,done,,0.00476,15.0,15.0048,90.0,90.0,90.0,0.8333,0.8333,0.8333,estimate,True,100.0,0,unknown,,,2,estimate
-dcf-demoa-1,dcf,US,DEMOA,synthetic,done,,0.00442,15.0,15.0044,90.0,90.0,90.0,0.8333,0.8333,0.8333,estimate,False,99.1,0,no,model check failed: checks,,2,estimate
-dcf-demoa-2,dcf,US,DEMOA,synthetic,done,,0.00468,15.0,15.0047,90.0,90.0,90.0,0.8333,0.8333,0.8333,estimate,False,99.1,0,no,model check failed: checks,,2,estimate
-dcf-demob-1,dcf,US,DEMOB,synthetic,done,,0.00361,15.0,15.0036,90.0,90.0,90.0,0.8333,0.8333,0.8333,estimate,False,99.1,0,no,model check failed: checks,,2,estimate
-dcf-demob-2,dcf,US,DEMOB,synthetic,done,,0.00452,15.0,15.0045,90.0,90.0,90.0,0.8333,0.8333,0.8333,estimate,False,99.1,0,no,model check failed: checks,,2,estimate
-dcf-demot-1,dcf,US,DEMOT,synthetic,done,,0.00531,15.0,15.0053,90.0,90.0,90.0,0.8333,0.8333,0.8333,estimate,False,99.1,0,no,model check failed: checks,,2,estimate
-dcf-demot-2,dcf,US,DEMOT,synthetic,done,,0.00474,15.0,15.0047,90.0,90.0,90.0,0.8333,0.8333,0.8333,estimate,False,99.1,0,no,model check failed: checks,,2,estimate
-lbo-aapl-1,lbo,US,AAPL,real,done,,0.00283,30.0,30.0028,480.0,587.9,720.0,0.9375,0.949,0.9583,estimate,True,100.0,0,unknown,,,6,estimate
-lbo-aapl-2,lbo,US,AAPL,real,done,,0.00328,30.0,30.0033,480.0,587.9,720.0,0.9375,0.949,0.9583,estimate,True,100.0,0,unknown,,,6,estimate
-lbo-demoa-1,lbo,US,DEMOA,synthetic,done,,0.00331,30.0,30.0033,480.0,587.9,720.0,0.9375,0.949,0.9583,estimate,True,100.0,0,unknown,,,6,estimate
-lbo-demoa-2,lbo,US,DEMOA,synthetic,done,,0.00349,30.0,30.0035,480.0,587.9,720.0,0.9375,0.949,0.9583,estimate,True,100.0,0,unknown,,,6,estimate
-lbo-demob-1,lbo,US,DEMOB,synthetic,done,,0.00307,30.0,30.0031,480.0,587.9,720.0,0.9375,0.949,0.9583,estimate,True,100.0,0,unknown,,,6,estimate
-lbo-demob-2,lbo,US,DEMOB,synthetic,done,,0.00355,30.0,30.0036,480.0,587.9,720.0,0.9375,0.949,0.9583,estimate,True,100.0,0,unknown,,,6,estimate
-lbo-demot-1,lbo,US,DEMOT,synthetic,done,,0.0036,30.0,30.0036,480.0,587.9,720.0,0.9375,0.949,0.9583,estimate,True,100.0,0,unknown,,,6,estimate
-lbo-demot-2,lbo,US,DEMOT,synthetic,done,,0.00424,30.0,30.0042,480.0,587.9,720.0,0.9375,0.949,0.9583,estimate,True,100.0,0,unknown,,,6,estimate
-merger-aapl-1,merger,US,AAPL,real,done,,0.00205,30.0,30.0021,30.0,42.4,60.0,-0.0001,0.2924,0.5,estimate,True,100.0,0,unknown,,,6,estimate
-merger-aapl-2,merger,US,AAPL,real,done,,0.00199,30.0,30.002,30.0,42.4,60.0,-0.0001,0.2924,0.5,estimate,True,100.0,0,unknown,,,6,estimate
-merger-demoa-1,merger,US,DEMOA,synthetic,done,,0.00255,30.0,30.0025,30.0,42.4,60.0,-0.0001,0.2924,0.5,estimate,True,100.0,0,unknown,,,6,estimate
-merger-demoa-2,merger,US,DEMOA,synthetic,done,,0.00167,30.0,30.0017,30.0,42.4,60.0,-0.0001,0.2924,0.5,estimate,True,100.0,0,unknown,,,6,estimate
-merger-demob-1,merger,US,DEMOB,synthetic,done,,0.00264,30.0,30.0026,30.0,42.4,60.0,-0.0001,0.2924,0.5,estimate,True,100.0,0,unknown,,,6,estimate
-merger-demob-2,merger,US,DEMOB,synthetic,done,,0.0019,30.0,30.0019,30.0,42.4,60.0,-0.0001,0.2924,0.5,estimate,True,100.0,0,unknown,,,6,estimate
-merger-demot-1,merger,US,DEMOT,synthetic,done,,0.00221,30.0,30.0022,30.0,42.4,60.0,-0.0001,0.2924,0.5,estimate,True,100.0,0,unknown,,,6,estimate
-merger-demot-2,merger,US,DEMOT,synthetic,done,,0.00198,30.0,30.002,30.0,42.4,60.0,-0.0001,0.2924,0.5,estimate,True,100.0,0,unknown,,,6,estimate
-vdr_review-nile-1,vdr_review,MENA,,synthetic,done,,0.00119,90.0,90.0012,1200.0,1469.7,1800.0,0.925,0.9388,0.95,estimate,True,,0,unknown,,,13,estimate
-vdr_review-nile-2,vdr_review,MENA,,synthetic,done,,0.00045,90.0,90.0005,1200.0,1469.7,1800.0,0.925,0.9388,0.95,estimate,True,,0,unknown,,,13,estimate
-vdr_review-atlas-1,vdr_review,US,,synthetic,done,,0.00037,90.0,90.0004,1200.0,1469.7,1800.0,0.925,0.9388,0.95,estimate,True,,0,unknown,,,13,estimate
-vdr_review-atlas-2,vdr_review,US,,synthetic,done,,0.00034,90.0,90.0003,1200.0,1469.7,1800.0,0.925,0.9388,0.95,estimate,True,,0,unknown,,,13,estimate
-profile-aapl-1,profile,US,AAPL,real,done,,0.00577,25.0,25.0058,,,,,,,own timing study needed,True,,0,unknown,,,4,estimate
-profile-aapl-2,profile,US,AAPL,real,done,,0.00313,25.0,25.0031,,,,,,,own timing study needed,True,,0,unknown,,,4,estimate
-profile-demoa-1,profile,US,DEMOA,synthetic,done,,0.00339,25.0,25.0034,,,,,,,own timing study needed,True,,0,unknown,,,4,estimate
-profile-demoa-2,profile,US,DEMOA,synthetic,done,,0.00314,25.0,25.0031,,,,,,,own timing study needed,True,,0,unknown,,,4,estimate
-profile-demob-1,profile,US,DEMOB,synthetic,done,,0.00367,25.0,25.0037,,,,,,,own timing study needed,True,,0,unknown,,,4,estimate
-profile-demob-2,profile,US,DEMOB,synthetic,done,,0.00336,25.0,25.0034,,,,,,,own timing study needed,True,,0,unknown,,,4,estimate
-profile-demot-1,profile,US,DEMOT,synthetic,done,,0.00307,25.0,25.0031,,,,,,,own timing study needed,True,,0,unknown,,,4,estimate
-profile-demot-2,profile,US,DEMOT,synthetic,done,,0.0033,25.0,25.0033,,,,,,,own timing study needed,True,,0,unknown,,,4,estimate
-pitchbook_section-aapl-1,pitchbook_section,US,AAPL,real,done,,0.00353,35.0,35.0035,,,,,,,own timing study needed,True,,0,unknown,,,3,estimate
-pitchbook_section-aapl-2,pitchbook_section,US,AAPL,real,done,,0.00259,35.0,35.0026,,,,,,,own timing study needed,True,,0,unknown,,,3,estimate
-pitchbook_section-demoa-1,pitchbook_section,US,DEMOA,synthetic,done,,0.00211,35.0,35.0021,,,,,,,own timing study needed,True,,0,unknown,,,3,estimate
-pitchbook_section-demoa-2,pitchbook_section,US,DEMOA,synthetic,done,,0.00262,35.0,35.0026,,,,,,,own timing study needed,True,,0,unknown,,,3,estimate
-pitchbook_section-demob-1,pitchbook_section,US,DEMOB,synthetic,done,,0.00197,35.0,35.002,,,,,,,own timing study needed,True,,0,unknown,,,3,estimate
-pitchbook_section-demob-2,pitchbook_section,US,DEMOB,synthetic,done,,0.00236,35.0,35.0024,,,,,,,own timing study needed,True,,0,unknown,,,3,estimate
-pitchbook_section-demot-1,pitchbook_section,US,DEMOT,synthetic,done,,0.00246,35.0,35.0025,,,,,,,own timing study needed,True,,0,unknown,,,3,estimate
-pitchbook_section-demot-2,pitchbook_section,US,DEMOT,synthetic,done,,0.00254,35.0,35.0025,,,,,,,own timing study needed,True,,0,unknown,,,3,estimate
-teaser-aapl-1,teaser,US,AAPL,real,done,,0.00216,25.0,25.0022,,,,,,,own timing study needed,True,,0,unknown,,,4,estimate
-teaser-aapl-2,teaser,US,AAPL,real,done,,0.00229,25.0,25.0023,,,,,,,own timing study needed,True,,0,unknown,,,4,estimate
-teaser-demoa-1,teaser,US,DEMOA,synthetic,done,,0.00212,25.0,25.0021,,,,,,,own timing study needed,True,,0,unknown,,,4,estimate
-teaser-demoa-2,teaser,US,DEMOA,synthetic,done,,0.00178,25.0,25.0018,,,,,,,own timing study needed,True,,0,unknown,,,4,estimate
-teaser-demob-1,teaser,US,DEMOB,synthetic,done,,0.00221,25.0,25.0022,,,,,,,own timing study needed,True,,0,unknown,,,4,estimate
-teaser-demob-2,teaser,US,DEMOB,synthetic,done,,0.00199,25.0,25.002,,,,,,,own timing study needed,True,,0,unknown,,,4,estimate
-teaser-demot-1,teaser,US,DEMOT,synthetic,done,,0.00176,25.0,25.0018,,,,,,,own timing study needed,True,,0,unknown,,,4,estimate
-teaser-demot-2,teaser,US,DEMOT,synthetic,done,,0.0015,25.0,25.0015,,,,,,,own timing study needed,True,,0,unknown,,,4,estimate
-ic_memo-aapl-1,ic_memo,US,AAPL,real,done,,0.00054,60.0,60.0005,240.0,464.8,900.0,0.75,0.8709,0.9333,estimate,True,,0,no,canned replay text (not drafted from research); a live run is needed before this can be client-ready,,9,estimate
-ic_memo-aapl-2,ic_memo,US,AAPL,real,done,,0.00044,60.0,60.0004,240.0,464.8,900.0,0.75,0.8709,0.9333,estimate,True,,0,no,canned replay text (not drafted from research); a live run is needed before this can be client-ready,,9,estimate
-earnings_update-aapl-1,earnings_update,US,AAPL,real,failed,"new statements end in FY2026, not after the workbook's last actual FY2026; nothing to roll forward",0.00302,,,,,,,,,,,,,,,,,estimate
-earnings_update-aapl-2,earnings_update,US,AAPL,real,failed,"new statements end in FY2026, not after the workbook's last actual FY2026; nothing to roll forward",0.0033,,,,,,,,,,,,,,,,,estimate
-earnings_update-demoa-1,earnings_update,US,DEMOA,synthetic,done,,0.00972,10.0,10.0097,15.0,42.4,120.0,0.3327,0.7639,0.9166,estimate,False,99.1,0,no,model check failed: checks,,4,estimate
-earnings_update-demoa-2,earnings_update,US,DEMOA,synthetic,done,,0.00858,10.0,10.0086,15.0,42.4,120.0,0.3328,0.7639,0.9166,estimate,False,99.1,0,no,model check failed: checks,,4,estimate
-earnings_update-demob-1,earnings_update,US,DEMOB,synthetic,done,,0.01067,10.0,10.0107,15.0,42.4,120.0,0.3326,0.7639,0.9166,estimate,False,99.1,0,no,model check failed: checks,,4,estimate
-earnings_update-demob-2,earnings_update,US,DEMOB,synthetic,done,,0.01017,10.0,10.0102,15.0,42.4,120.0,0.3327,0.7639,0.9166,estimate,False,99.1,0,no,model check failed: checks,,4,estimate
-earnings_update-demot-1,earnings_update,US,DEMOT,synthetic,done,,0.00778,10.0,10.0078,15.0,42.4,120.0,0.3328,0.764,0.9166,estimate,False,99.1,0,no,model check failed: checks,,4,estimate
-earnings_update-demot-2,earnings_update,US,DEMOT,synthetic,done,,0.01019,10.0,10.0102,15.0,42.4,120.0,0.3327,0.7639,0.9166,estimate,False,99.1,0,no,model check failed: checks,,4,estimate
-earnings_recap-aapl-1,earnings_recap,US,AAPL,real,done,,0.00054,20.0,20.0005,,,,,,,own timing study needed,True,,0,no,canned replay text (not drafted from research); a live run is needed before this can be client-ready,,5,estimate
-earnings_recap-aapl-2,earnings_recap,US,AAPL,real,done,,0.00059,20.0,20.0006,,,,,,,own timing study needed,True,,0,no,canned replay text (not drafted from research); a live run is needed before this can be client-ready,,5,estimate
-buyer_list-aapl-1,buyer_list,US,AAPL,real,done,,0.00057,40.0,40.0006,,,,,,,own timing study needed,True,,0,no,canned replay text (not drafted from research); a live run is needed before this can be client-ready,,4,estimate
-buyer_list-aapl-2,buyer_list,US,AAPL,real,done,,0.0005,40.0,40.0005,,,,,,,own timing study needed,True,,0,no,canned replay text (not drafted from research); a live run is needed before this can be client-ready,,4,estimate
+three_statement-aapl-1,three_statement,US,AAPL,real,done,,0.00667,15.0,15.0067,120.0,147.0,180.0,0.8749,0.8979,0.9166,estimate,True,100.0,0,unknown,,,2,estimate
+three_statement-aapl-2,three_statement,US,AAPL,real,done,,0.00583,15.0,15.0058,120.0,147.0,180.0,0.875,0.8979,0.9166,estimate,True,100.0,0,unknown,,,2,estimate
+three_statement-demoa-1,three_statement,US,DEMOA,synthetic,done,,0.00542,15.0,15.0054,120.0,147.0,180.0,0.875,0.8979,0.9166,estimate,False,99.1,0,no,model check failed: checks,,2,estimate
+three_statement-demoa-2,three_statement,US,DEMOA,synthetic,done,,0.00456,15.0,15.0046,120.0,147.0,180.0,0.875,0.8979,0.9166,estimate,False,99.1,0,no,model check failed: checks,,2,estimate
+three_statement-demob-1,three_statement,US,DEMOB,synthetic,done,,0.00536,15.0,15.0054,120.0,147.0,180.0,0.875,0.8979,0.9166,estimate,False,99.1,0,no,model check failed: checks,,2,estimate
+three_statement-demob-2,three_statement,US,DEMOB,synthetic,done,,0.0043,15.0,15.0043,120.0,147.0,180.0,0.875,0.8979,0.9166,estimate,False,99.1,0,no,model check failed: checks,,2,estimate
+three_statement-demot-1,three_statement,US,DEMOT,synthetic,done,,0.00355,15.0,15.0036,120.0,147.0,180.0,0.875,0.8979,0.9166,estimate,False,99.1,0,no,model check failed: checks,,2,estimate
+three_statement-demot-2,three_statement,US,DEMOT,synthetic,done,,0.00486,15.0,15.0049,120.0,147.0,180.0,0.875,0.8979,0.9166,estimate,False,99.1,0,no,model check failed: checks,,2,estimate
+dcf-aapl-1,dcf,US,AAPL,real,done,,0.0063,15.0,15.0063,90.0,90.0,90.0,0.8333,0.8333,0.8333,estimate,True,100.0,0,unknown,,,2,estimate
+dcf-aapl-2,dcf,US,AAPL,real,done,,0.00575,15.0,15.0058,90.0,90.0,90.0,0.8333,0.8333,0.8333,estimate,True,100.0,0,unknown,,,2,estimate
+dcf-demoa-1,dcf,US,DEMOA,synthetic,done,,0.00467,15.0,15.0047,90.0,90.0,90.0,0.8333,0.8333,0.8333,estimate,False,99.1,0,no,model check failed: checks,,2,estimate
+dcf-demoa-2,dcf,US,DEMOA,synthetic,done,,0.00438,15.0,15.0044,90.0,90.0,90.0,0.8333,0.8333,0.8333,estimate,False,99.1,0,no,model check failed: checks,,2,estimate
+dcf-demob-1,dcf,US,DEMOB,synthetic,done,,0.00456,15.0,15.0046,90.0,90.0,90.0,0.8333,0.8333,0.8333,estimate,False,99.1,0,no,model check failed: checks,,2,estimate
+dcf-demob-2,dcf,US,DEMOB,synthetic,done,,0.00464,15.0,15.0046,90.0,90.0,90.0,0.8333,0.8333,0.8333,estimate,False,99.1,0,no,model check failed: checks,,2,estimate
+dcf-demot-1,dcf,US,DEMOT,synthetic,done,,0.00523,15.0,15.0052,90.0,90.0,90.0,0.8333,0.8333,0.8333,estimate,False,99.1,0,no,model check failed: checks,,2,estimate
+dcf-demot-2,dcf,US,DEMOT,synthetic,done,,0.00528,15.0,15.0053,90.0,90.0,90.0,0.8333,0.8333,0.8333,estimate,False,99.1,0,no,model check failed: checks,,2,estimate
+lbo-aapl-1,lbo,US,AAPL,real,done,,0.00339,30.0,30.0034,480.0,587.9,720.0,0.9375,0.949,0.9583,estimate,True,100.0,0,unknown,,,6,estimate
+lbo-aapl-2,lbo,US,AAPL,real,done,,0.00366,30.0,30.0037,480.0,587.9,720.0,0.9375,0.949,0.9583,estimate,True,100.0,0,unknown,,,6,estimate
+lbo-demoa-1,lbo,US,DEMOA,synthetic,done,,0.00338,30.0,30.0034,480.0,587.9,720.0,0.9375,0.949,0.9583,estimate,True,100.0,0,unknown,,,6,estimate
+lbo-demoa-2,lbo,US,DEMOA,synthetic,done,,0.00311,30.0,30.0031,480.0,587.9,720.0,0.9375,0.949,0.9583,estimate,True,100.0,0,unknown,,,6,estimate
+lbo-demob-1,lbo,US,DEMOB,synthetic,done,,0.00299,30.0,30.003,480.0,587.9,720.0,0.9375,0.949,0.9583,estimate,True,100.0,0,unknown,,,6,estimate
+lbo-demob-2,lbo,US,DEMOB,synthetic,done,,0.00313,30.0,30.0031,480.0,587.9,720.0,0.9375,0.949,0.9583,estimate,True,100.0,0,unknown,,,6,estimate
+lbo-demot-1,lbo,US,DEMOT,synthetic,done,,0.00323,30.0,30.0032,480.0,587.9,720.0,0.9375,0.949,0.9583,estimate,True,100.0,0,unknown,,,6,estimate
+lbo-demot-2,lbo,US,DEMOT,synthetic,done,,0.00324,30.0,30.0032,480.0,587.9,720.0,0.9375,0.949,0.9583,estimate,True,100.0,0,unknown,,,6,estimate
+merger-aapl-1,merger,US,AAPL,real,done,,0.00155,30.0,30.0016,30.0,42.4,60.0,-0.0001,0.2924,0.5,estimate,True,100.0,0,unknown,,,6,estimate
+merger-aapl-2,merger,US,AAPL,real,done,,0.00195,30.0,30.002,30.0,42.4,60.0,-0.0001,0.2924,0.5,estimate,True,100.0,0,unknown,,,6,estimate
+merger-demoa-1,merger,US,DEMOA,synthetic,done,,0.00172,30.0,30.0017,30.0,42.4,60.0,-0.0001,0.2924,0.5,estimate,True,100.0,0,unknown,,,6,estimate
+merger-demoa-2,merger,US,DEMOA,synthetic,done,,0.00165,30.0,30.0017,30.0,42.4,60.0,-0.0001,0.2924,0.5,estimate,True,100.0,0,unknown,,,6,estimate
+merger-demob-1,merger,US,DEMOB,synthetic,done,,0.00183,30.0,30.0018,30.0,42.4,60.0,-0.0001,0.2924,0.5,estimate,True,100.0,0,unknown,,,6,estimate
+merger-demob-2,merger,US,DEMOB,synthetic,done,,0.00139,30.0,30.0014,30.0,42.4,60.0,-0.0,0.2924,0.5,estimate,True,100.0,0,unknown,,,6,estimate
+merger-demot-1,merger,US,DEMOT,synthetic,done,,0.00199,30.0,30.002,30.0,42.4,60.0,-0.0001,0.2924,0.5,estimate,True,100.0,0,unknown,,,6,estimate
+merger-demot-2,merger,US,DEMOT,synthetic,done,,0.00187,30.0,30.0019,30.0,42.4,60.0,-0.0001,0.2924,0.5,estimate,True,100.0,0,unknown,,,6,estimate
+vdr_review-nile-1,vdr_review,MENA,,synthetic,done,,0.00075,90.0,90.0007,1200.0,1469.7,1800.0,0.925,0.9388,0.95,estimate,True,,0,unknown,,,13,estimate
+vdr_review-nile-2,vdr_review,MENA,,synthetic,done,,0.0004,90.0,90.0004,1200.0,1469.7,1800.0,0.925,0.9388,0.95,estimate,True,,0,unknown,,,13,estimate
+vdr_review-atlas-1,vdr_review,US,,synthetic,done,,0.00046,90.0,90.0005,1200.0,1469.7,1800.0,0.925,0.9388,0.95,estimate,True,,0,unknown,,,13,estimate
+vdr_review-atlas-2,vdr_review,US,,synthetic,done,,0.00044,90.0,90.0004,1200.0,1469.7,1800.0,0.925,0.9388,0.95,estimate,True,,0,unknown,,,13,estimate
+profile-aapl-1,profile,US,AAPL,real,done,,0.00576,25.0,25.0058,,,,,,,own timing study needed,True,,0,unknown,,,4,estimate
+profile-aapl-2,profile,US,AAPL,real,done,,0.00242,25.0,25.0024,,,,,,,own timing study needed,True,,0,unknown,,,4,estimate
+profile-demoa-1,profile,US,DEMOA,synthetic,done,,0.00302,25.0,25.003,,,,,,,own timing study needed,True,,0,unknown,,,4,estimate
+profile-demoa-2,profile,US,DEMOA,synthetic,done,,0.00384,25.0,25.0038,,,,,,,own timing study needed,True,,0,unknown,,,4,estimate
+profile-demob-1,profile,US,DEMOB,synthetic,done,,0.00319,25.0,25.0032,,,,,,,own timing study needed,True,,0,unknown,,,4,estimate
+profile-demob-2,profile,US,DEMOB,synthetic,done,,0.0034,25.0,25.0034,,,,,,,own timing study needed,True,,0,unknown,,,4,estimate
+profile-demot-1,profile,US,DEMOT,synthetic,done,,0.00292,25.0,25.0029,,,,,,,own timing study needed,True,,0,unknown,,,4,estimate
+profile-demot-2,profile,US,DEMOT,synthetic,done,,0.00282,25.0,25.0028,,,,,,,own timing study needed,True,,0,unknown,,,4,estimate
+pitchbook_section-aapl-1,pitchbook_section,US,AAPL,real,done,,0.00201,35.0,35.002,,,,,,,own timing study needed,True,,0,unknown,,,3,estimate
+pitchbook_section-aapl-2,pitchbook_section,US,AAPL,real,done,,0.00251,35.0,35.0025,,,,,,,own timing study needed,True,,0,unknown,,,3,estimate
+pitchbook_section-demoa-1,pitchbook_section,US,DEMOA,synthetic,done,,0.00263,35.0,35.0026,,,,,,,own timing study needed,True,,0,unknown,,,3,estimate
+pitchbook_section-demoa-2,pitchbook_section,US,DEMOA,synthetic,done,,0.00285,35.0,35.0029,,,,,,,own timing study needed,True,,0,unknown,,,3,estimate
+pitchbook_section-demob-1,pitchbook_section,US,DEMOB,synthetic,done,,0.00207,35.0,35.0021,,,,,,,own timing study needed,True,,0,unknown,,,3,estimate
+pitchbook_section-demob-2,pitchbook_section,US,DEMOB,synthetic,done,,0.00203,35.0,35.002,,,,,,,own timing study needed,True,,0,unknown,,,3,estimate
+pitchbook_section-demot-1,pitchbook_section,US,DEMOT,synthetic,done,,0.00282,35.0,35.0028,,,,,,,own timing study needed,True,,0,unknown,,,3,estimate
+pitchbook_section-demot-2,pitchbook_section,US,DEMOT,synthetic,done,,0.00308,35.0,35.0031,,,,,,,own timing study needed,True,,0,unknown,,,3,estimate
+teaser-aapl-1,teaser,US,AAPL,real,done,,0.00224,25.0,25.0022,,,,,,,own timing study needed,True,,0,unknown,,,4,estimate
+teaser-aapl-2,teaser,US,AAPL,real,done,,0.00215,25.0,25.0022,,,,,,,own timing study needed,True,,0,unknown,,,4,estimate
+teaser-demoa-1,teaser,US,DEMOA,synthetic,done,,0.00208,25.0,25.0021,,,,,,,own timing study needed,True,,0,unknown,,,4,estimate
+teaser-demoa-2,teaser,US,DEMOA,synthetic,done,,0.00265,25.0,25.0026,,,,,,,own timing study needed,True,,0,unknown,,,4,estimate
+teaser-demob-1,teaser,US,DEMOB,synthetic,done,,0.00266,25.0,25.0027,,,,,,,own timing study needed,True,,0,unknown,,,4,estimate
+teaser-demob-2,teaser,US,DEMOB,synthetic,done,,0.00219,25.0,25.0022,,,,,,,own timing study needed,True,,0,unknown,,,4,estimate
+teaser-demot-1,teaser,US,DEMOT,synthetic,done,,0.00218,25.0,25.0022,,,,,,,own timing study needed,True,,0,unknown,,,4,estimate
+teaser-demot-2,teaser,US,DEMOT,synthetic,done,,0.0021,25.0,25.0021,,,,,,,own timing study needed,True,,0,unknown,,,4,estimate
+ic_memo-aapl-1,ic_memo,US,AAPL,real,done,,0.00052,60.0,60.0005,240.0,464.8,900.0,0.75,0.8709,0.9333,estimate,True,,0,no,canned replay text (not drafted from research); a live run is needed before this can be client-ready,,9,estimate
+ic_memo-aapl-2,ic_memo,US,AAPL,real,done,,0.0005,60.0,60.0005,240.0,464.8,900.0,0.75,0.8709,0.9333,estimate,True,,0,no,canned replay text (not drafted from research); a live run is needed before this can be client-ready,,9,estimate
+earnings_update-aapl-1,earnings_update,US,AAPL,real,failed,"new statements end in FY2026, not after the workbook's last actual FY2026; nothing to roll forward",0.00299,,,,,,,,,,,,,,,,,estimate
+earnings_update-aapl-2,earnings_update,US,AAPL,real,failed,"new statements end in FY2026, not after the workbook's last actual FY2026; nothing to roll forward",0.00338,,,,,,,,,,,,,,,,,estimate
+earnings_update-demoa-1,earnings_update,US,DEMOA,synthetic,done,,0.01013,10.0,10.0101,15.0,42.4,120.0,0.3327,0.7639,0.9166,estimate,False,99.1,0,no,model check failed: checks,,4,estimate
+earnings_update-demoa-2,earnings_update,US,DEMOA,synthetic,done,,0.0075,10.0,10.0075,15.0,42.4,120.0,0.3328,0.764,0.9166,estimate,False,99.1,0,no,model check failed: checks,,4,estimate
+earnings_update-demob-1,earnings_update,US,DEMOB,synthetic,done,,0.00972,10.0,10.0097,15.0,42.4,120.0,0.3327,0.7639,0.9166,estimate,False,99.1,0,no,model check failed: checks,,4,estimate
+earnings_update-demob-2,earnings_update,US,DEMOB,synthetic,done,,0.00835,10.0,10.0084,15.0,42.4,120.0,0.3328,0.764,0.9166,estimate,False,99.1,0,no,model check failed: checks,,4,estimate
+earnings_update-demot-1,earnings_update,US,DEMOT,synthetic,done,,0.00899,10.0,10.009,15.0,42.4,120.0,0.3327,0.7639,0.9166,estimate,False,99.1,0,no,model check failed: checks,,4,estimate
+earnings_update-demot-2,earnings_update,US,DEMOT,synthetic,done,,0.01035,10.0,10.0104,15.0,42.4,120.0,0.3326,0.7639,0.9166,estimate,False,99.1,0,no,model check failed: checks,,4,estimate
+earnings_recap-aapl-1,earnings_recap,US,AAPL,real,done,,0.0006,20.0,20.0006,,,,,,,own timing study needed,True,,0,no,canned replay text (not drafted from research); a live run is needed before this can be client-ready,,5,estimate
+earnings_recap-aapl-2,earnings_recap,US,AAPL,real,done,,0.00058,20.0,20.0006,,,,,,,own timing study needed,True,,0,no,canned replay text (not drafted from research); a live run is needed before this can be client-ready,,5,estimate
+buyer_list-aapl-1,buyer_list,US,AAPL,real,done,,0.00053,40.0,40.0005,,,,,,,own timing study needed,True,,0,no,canned replay text (not drafted from research); a live run is needed before this can be client-ready,,4,estimate
+buyer_list-aapl-2,buyer_list,US,AAPL,real,done,,0.00053,40.0,40.0005,,,,,,,own timing study needed,True,,0,no,canned replay text (not drafted from research); a live run is needed before this can be client-ready,,4,estimate

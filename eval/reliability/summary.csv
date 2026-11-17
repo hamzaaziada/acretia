@@ -1,2 +1,2 @@
 briefs,supported,success_rate,silent_wrong_numbers,numbers_checked,determinism_rate,resume_rate,p50_s,p95_s,cost_per_deliverable_usd,mode
-126,118,0.9831,0,23543,1.0,0.9914,0.2216,0.5736,0.00042,replay
+126,118,0.9831,0,23543,1.0,1.0,0.2016,0.6263,0.00042,replay
