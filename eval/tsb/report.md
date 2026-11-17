@@ -1,6 +1,6 @@
 # Time-saved benchmark (TSB), first replay report
 
-Generated 2026-11-17 09:22 UTC by `eval/tsb/run.py` in **replay** mode (tasks=comps,precedents,three_statement,dcf,lbo,merger,vdr_review,profile,pitchbook_section,teaser,ic_memo,earnings_update,earnings_recap,buyer_list; n cap=all runnable); harness wall time 23s. All rows: `status = estimate`. **Human-validated rows: 0.** Nothing in this file may be quoted as a measured customer result.
+Generated 2026-11-17 09:39 UTC by `eval/tsb/run.py` in **replay** mode (tasks=comps,precedents,three_statement,dcf,lbo,merger,vdr_review,profile,pitchbook_section,teaser,ic_memo,earnings_update,earnings_recap,buyer_list; n cap=all runnable); harness wall time 20s. All rows: `status = estimate`. **Human-validated rows: 0.** Nothing in this file may be quoted as a measured customer result.
 
 ## How to read this
 
@@ -16,8 +16,8 @@ Generated 2026-11-17 09:22 UTC by `eval/tsb/run.py` in **replay** mode (tasks=co
 |---|---|---|---|---|---|---|---|---|---|---|---|
 | comps | 8 | 4 | 4 | 120/120/120 | 20.0 | 0.00 / 20 | 83% | 83% (83% to 83%) | 83% | 0% | 0/8/0 |
 | precedents | 8 | 0 | 4 | - | **blocked: The S4 precedents engine hasn't landed yet (S4 precedents stage); this step cannot run until it does. The other steps in this run are unaffected.** | - | - | - | - | - | - |
-| three_statement | 8 | 4 | 4 | 120/147/180 | 15.0 | 0.01 / 15 | 88% | 90% (90% to 90%) | 92% | 75% | 0/2/6 |
-| dcf | 8 | 4 | 4 | 90/90/90 | 15.0 | 0.01 / 15 | 83% | 83% (83% to 83%) | 83% | 75% | 0/2/6 |
+| three_statement | 8 | 4 | 4 | 120/147/180 | 15.0 | 0.00 / 15 | 88% | 90% (90% to 90%) | 92% | 75% | 0/2/6 |
+| dcf | 8 | 4 | 4 | 90/90/90 | 15.0 | 0.00 / 15 | 83% | 83% (83% to 83%) | 83% | 75% | 0/2/6 |
 | lbo | 8 | 4 | 4 | 480/588/720 | 30.0 | 0.00 / 30 | 94% | 95% (95% to 95%) | 96% | 0% | 0/8/0 |
 | merger | 8 | 4 | 4 | 30/42/60 | 30.0 | 0.00 / 30 | 0% | 29% (29% to 29%) | 50% | 0% | 0/8/0 |
 | vdr_review | 4 | 4 | 6 | 1200/1470/1800 | 90.0 | 0.00 / 90 | 92% | 94% (94% to 94%) | 95% | 0% | 0/4/0 |
@@ -25,7 +25,7 @@ Generated 2026-11-17 09:22 UTC by `eval/tsb/run.py` in **replay** mode (tasks=co
 | pitchbook_section | 8 | 4 | 4 | baseline: own timing study needed | 35.0 | 0.00 / 35 | n/a | n/a | n/a | 0% | 0/8/0 |
 | teaser | 8 | 4 | 4 | baseline: own timing study needed | 25.0 | 0.00 / 25 | n/a | n/a | n/a | 0% | 0/8/0 |
 | ic_memo | 2 | 1 | 8 | 240/465/900 | 60.0 | 0.00 / 60 | 75% | 87% (87% to 87%) | 93% | 0% | 0/0/2 |
-| earnings_update | 8 | 4 | 4 | 15/42/120 | 10.0 | 0.01 / 10 | 33% | 76% (76% to 76%) | 92% | 75% | 0/2/6 |
+| earnings_update | 6 | 3 | 4 | 15/42/120 | 10.0 | 0.01 / 10 | 33% | 76% (76% to 76%) | 92% | 100% | 0/0/6 |
 | earnings_recap | 2 | 1 | 8 | baseline: own timing study needed | 20.0 | 0.00 / 20 | n/a | n/a | n/a | 0% | 0/0/2 |
 | buyer_list | 2 | 1 | 8 | baseline: own timing study needed | 40.0 | 0.00 / 40 | n/a | n/a | n/a | 0% | 0/0/2 |
 
@@ -70,9 +70,9 @@ Same task as the [independent] Wall Street Prep ranking (baselines doc section 1
 
 | Measure | Acretia (replay, fixture data) | Independent bar (WSP) |
 |---|---|---|
-| Wall time | 0.4 s (0.007 min); no model latency in replay | tools 15-60 min; analysts 1-3 hrs |
+| Wall time | 0.3 s (0.006 min); no model latency in replay | tools 15-60 min; analysts 1-3 hrs |
 | Deterministic model grade (`om.modelcheck`) | 100.0/100 | tools 2.5-5.9 /10; analysts 6.4-9.4 /10 (human rubric, not the same scale) |
-| Interest circularity modelled and converging | **PASS** (converged=True, iterations=24, iterative calc on=True, switch on=True) | every tool scored 0 |
+| Interest circularity modelled and converging | **PASS** (converged=True, iterations=22, iterative calc on=True, switch on=True) | every tool scored 0 |
 
 The model-check score and the WSP 0-10 rubric are different instruments; only the circularity pass/fail is a like-for-like observation, and even that is one run on a fixture. It is not a claim of beating WSP's analysts.
 
@@ -87,6 +87,7 @@ Diagnosis (checked by opening the workbook): the failing `om.modelcheck` grader 
 ## Skipped and blocked (honest gaps)
 
 - **precedents**: blocked or no runnable brief. The S4 precedents engine hasn't landed yet (S4 precedents stage); this step cannot run until it does. The other steps in this run are unaffected.
+- earnings_update: 0 blocked, 2 failed of 8 runs.
 - 70 briefs across all tasks need live SEC data, user documents or a live model (US, IFRS and MENA companies outside the four fixtures); they run only through the user's Mac (D-021).
 
 ## Next steps to turn estimates into claims

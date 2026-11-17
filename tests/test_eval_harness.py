@@ -169,6 +169,19 @@ class TsbRunnerTests(unittest.TestCase):
         for needle in ("Per-task results (estimate)", "Competitor claims beside each task", "WSP Apple 3-statement", "[independent]", "own timing study needed"):
             self.assertIn(needle, txt)
 
+    def test_summary_csv_matches_aggregates(self):
+        with open(self.out / "summary.csv", newline="", encoding="utf-8") as f:
+            r = csv.DictReader(f)
+            self.assertEqual(r.fieldnames, tsb.SUMMARY_COLS)
+            rows = {d["task_id"]: d for d in r}
+        self.assertEqual(set(rows), {"three_statement", "dcf", "profile"})
+        a = next(x for x in self.res["agg"] if x["task_id"] == "dcf")
+        self.assertEqual(int(rows["dcf"]["n"]), 2)
+        self.assertAlmostEqual(float(rows["dcf"]["median_saved_mid"]), a["saved_mid_median"], places=3)
+        self.assertEqual(rows["profile"]["median_saved_mid"], "")
+        self.assertEqual(rows["profile"]["t_h_status"], "own timing study needed")
+        self.assertTrue(all(d["status"] == "estimate" for d in rows.values()))
+
     def test_two_briefs_per_task_ran_and_were_graded(self):
         for t in ("three_statement", "dcf", "profile"):
             done = [r for r in self.rows if r["task_id"] == t and r["outcome"] == "done" and not r["brief_id"].startswith("wsp-")]
@@ -245,6 +258,18 @@ class ReliabilityRunnerTests(unittest.TestCase):
         self.assertGreater(self.s["numbers_checked"], 0)
         self.assertEqual(self.s["determinism"], 1.0, [r["notes"] for r in done if r["deterministic"] is False])
         self.assertEqual(self.s["n_det"], len(done))
+
+    def test_summary_csv_matches_summary(self):
+        with open(self.out / "summary.csv", newline="", encoding="utf-8") as f:
+            rows = list(csv.DictReader(f))
+        self.assertEqual(len(rows), 1)
+        r = rows[0]
+        self.assertEqual(list(r), ["briefs", "supported", "success_rate", "silent_wrong_numbers", "numbers_checked", "determinism_rate", "resume_rate", "p50_s",
+                                   "p95_s", "cost_per_deliverable_usd", "mode"])
+        self.assertEqual(int(r["silent_wrong_numbers"]), 0)
+        self.assertEqual(float(r["determinism_rate"]), 1.0)
+        self.assertEqual(int(r["briefs"]), 10)
+        self.assertEqual(r["mode"], "replay")
 
     def test_resume_after_injected_failure_matches_clean_run(self):
         self.assertGreater(self.s["n_resume"], 0)

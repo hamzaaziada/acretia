@@ -299,6 +299,18 @@ def write_csv(path: Path, rows: list[dict]):
             w.writerow({k: ("" if r.get(k) is None else r.get(k)) for k in CSV_COLS})
 
 
+def write_summary(path: Path, s: dict, corpus: list[dict], mode: str):
+    cols = ["briefs", "supported", "success_rate", "silent_wrong_numbers", "numbers_checked", "determinism_rate", "resume_rate", "p50_s", "p95_s",
+            "cost_per_deliverable_usd", "mode"]
+    r = lambda x, k=4: "" if x is None else round(x, k)      # noqa: E731
+    vals = [s["n_briefs_run"], s["n_supported_run"], r(s["success_rate"]), s["silent"], s["numbers_checked"], r(s["determinism"]), r(s["resume_rate"]),
+            r(s["p50"]), r(s["p95"]), r(s["cost"] / max(1, s["n_deliverables"]), 6), mode]
+    with open(path, "w", newline="", encoding="utf-8") as f:
+        w = csv.writer(f)
+        w.writerow(cols)
+        w.writerow(vals)
+
+
 def run_all(n: int | None = None, out_dir: Path = HERE, mode: str = "replay", write: bool = True, corpus_path: Path | None = None,
             progress=None, budget_s: float | None = None) -> dict:
     corpus = load_corpus(corpus_path or HERE / "corpus.json")
@@ -327,6 +339,7 @@ def run_all(n: int | None = None, out_dir: Path = HERE, mode: str = "replay", wr
         note = stopped or (f"Ran {len(rows)} briefs (`--n {n}`)." if n else f"Ran all {len(rows)} runnable briefs.")
         write_report(out_dir / "report.md", rows, s, corpus, mode, time.strftime("%Y-%m-%d %H:%M UTC", time.gmtime()), time.perf_counter() - t0, note)
         write_csv(out_dir / "results.csv", rows)
+        write_summary(out_dir / "summary.csv", s, corpus, mode)
     return res
 
 

@@ -1,0 +1,15 @@
+task_id,n,median_saved_mid,iqr_low,iqr_high,saved_low,saved_high,t_h_status,client_ready,error_rate,status
+comps,8,0.8333,0.8333,0.8333,0.8333,0.8333,estimate,0/8/0 (yes/unknown/no),0.0,estimate
+precedents,0,,,,,,blocked: The S4 precedents engine hasn't landed yet (S4 precedents stage); this step cannot run until it does. The other steps in,,,estimate
+three_statement,8,0.8979,0.8979,0.8979,0.875,0.9166,estimate,0/2/6 (yes/unknown/no),0.75,estimate
+dcf,8,0.8333,0.8333,0.8333,0.8333,0.8333,estimate,0/2/6 (yes/unknown/no),0.75,estimate
+lbo,8,0.949,0.949,0.949,0.9375,0.9583,estimate,0/8/0 (yes/unknown/no),0.0,estimate
+merger,8,0.2924,0.2924,0.2924,-0.0001,0.5,estimate,0/8/0 (yes/unknown/no),0.0,estimate
+vdr_review,4,0.9388,0.9388,0.9388,0.925,0.95,estimate,0/4/0 (yes/unknown/no),0.0,estimate
+profile,8,,,,,,own timing study needed,0/8/0 (yes/unknown/no),0.0,estimate
+pitchbook_section,8,,,,,,own timing study needed,0/8/0 (yes/unknown/no),0.0,estimate
+teaser,8,,,,,,own timing study needed,0/8/0 (yes/unknown/no),0.0,estimate
+ic_memo,2,0.8709,0.8709,0.8709,0.75,0.9333,estimate,0/0/2 (yes/unknown/no),0.0,estimate
+earnings_update,6,0.7639,0.7639,0.7639,0.3327,0.9166,estimate,0/0/6 (yes/unknown/no),1.0,estimate
+earnings_recap,2,,,,,,own timing study needed,0/0/2 (yes/unknown/no),0.0,estimate
+buyer_list,2,,,,,,own timing study needed,0/0/2 (yes/unknown/no),0.0,estimate

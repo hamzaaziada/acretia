@@ -1,6 +1,6 @@
 # Reliability report, first replay run
 
-Generated 2026-11-17 09:21 UTC by `eval/reliability/run.py` in **replay** mode; harness wall time 114s. Ran 126 briefs (`--n 130`).
+Generated 2026-11-17 09:44 UTC by `eval/reliability/run.py` in **replay** mode; harness wall time 290s. Ran 126 briefs (`--n 130`).
 
 Everything below is from fixtures: one real company (AAPL), three labelled synthetic companies (DEMOA, DEMOB, DEMOT) and two seeded synthetic deals. It tests the product's plumbing and number discipline on offline data. It says **nothing** yet about live-data reliability, MENA/IFRS filings or live model drafting; those briefs are in the corpus and are skipped here (listed at the end).
 
@@ -8,12 +8,12 @@ Everything below is from fixtures: one real company (AAPL), three labelled synth
 
 | SLO | Target | Measured (replay) | Verdict |
 |---|---|---|---|
-| Task success (done + expected deliverable) | >= 97% | 100.0% (118/118 supported briefs run); incl. engine-blocked: 96.7% | MET |
-| Silent wrong numbers | 0 | **0** of 24241 numbers checked (15655 sourced, 8586 flagged) | MET |
-| Determinism (two runs, identical numbers) | 100% | 100.0% (118/118) | MET |
-| Failed jobs resume cleanly | 100% | 100.0% (118/118) | MET |
-| p95 latency (job wall seconds, replay) | published | p50 0.20 s, p95 0.66 s, max 0.92 s | published; no live-model latency included |
-| Cost per deliverable | published | **not a live measurement.** Replay books the recorded token usage of the canned fixtures at ledger rates: $0.0487 over 118 deliverables = $0.0004 each on average; the 7 prose runs (5600 replayed tokens) account for all of it (about $0.0070 per prose deliverable); engine-only deliverables cost $0.00 | not measured |
+| Task success (done + expected deliverable) | >= 97% | 98.3% (116/118 supported briefs run); incl. engine-blocked: 95.1% | MET |
+| Silent wrong numbers | 0 | **0** of 23543 numbers checked (15281 sourced, 8262 flagged) | MET |
+| Determinism (two runs, identical numbers) | 100% | 100.0% (116/116) | MET |
+| Failed jobs resume cleanly | 100% | 99.1% (115/116) | NOT MET |
+| p95 latency (job wall seconds, replay) | published | p50 0.22 s, p95 0.57 s, max 0.75 s | published; no live-model latency included |
+| Cost per deliverable | published | **not a live measurement.** Replay books the recorded token usage of the canned fixtures at ledger rates: $0.0487 over 116 deliverables = $0.0004 each on average; the 7 prose runs (5600 replayed tokens) account for all of it (about $0.0070 per prose deliverable); engine-only deliverables cost $0.00 | not measured |
 
 Briefs run: 126 of 142 in the corpus (16 need live data/model and are skipped). Supported briefs run: 118; engine blocked: 4; Arabic-only probes (planner has no Arabic rules): 4.
 
@@ -28,47 +28,48 @@ Briefs run: 126 of 142 in the corpus (16 need live data/model and are skipped). 
 
 | task_id | briefs | done | success | blocked/unsupported | silent numbers | deterministic | resume ok | p50 s | p95 s |
 |---|---|---|---|---|---|---|---|---|---|
-| buyer_list | 2 | 2 | 2/2 | 0 | 0 | 2/2 | 2/2 | 0.03 | 0.04 |
-| comps | 12 | 11 | 11/11 | 1 | 0 | 11/11 | 11/11 | 0.10 | 0.15 |
-| dcf | 30 | 29 | 29/29 | 1 | 0 | 29/29 | 29/29 | 0.47 | 0.74 |
-| earnings_recap | 2 | 2 | 2/2 | 0 | 0 | 2/2 | 2/2 | 0.04 | 0.04 |
-| earnings_update | 8 | 8 | 8/8 | 0 | 0 | 8/8 | 8/8 | 0.55 | 0.91 |
-| ic_memo | 3 | 3 | 3/3 | 0 | 0 | 3/3 | 3/3 | 0.04 | 0.04 |
-| lbo | 10 | 10 | 10/10 | 0 | 0 | 10/10 | 10/10 | 0.21 | 0.26 |
-| merger | 9 | 9 | 9/9 | 0 | 0 | 9/9 | 9/9 | 0.11 | 0.15 |
-| pitchbook_section | 8 | 8 | 8/8 | 0 | 0 | 8/8 | 8/8 | 0.15 | 0.20 |
+| buyer_list | 2 | 2 | 2/2 | 0 | 0 | 2/2 | 2/2 | 0.03 | 0.03 |
+| comps | 12 | 11 | 11/11 | 1 | 0 | 11/11 | 11/11 | 0.11 | 0.14 |
+| dcf | 30 | 29 | 29/29 | 1 | 0 | 29/29 | 29/29 | 0.47 | 0.61 |
+| earnings_recap | 2 | 2 | 2/2 | 0 | 0 | 2/2 | 2/2 | 0.03 | 0.04 |
+| earnings_update | 8 | 6 | 6/8 | 0 | 0 | 6/6 | 6/6 | 0.54 | 0.57 |
+| ic_memo | 3 | 3 | 3/3 | 0 | 0 | 3/3 | 3/3 | 0.04 | 0.08 |
+| lbo | 10 | 10 | 10/10 | 0 | 0 | 10/10 | 10/10 | 0.23 | 0.26 |
+| merger | 9 | 9 | 9/9 | 0 | 0 | 9/9 | 9/9 | 0.13 | 0.20 |
+| pitchbook_section | 8 | 8 | 8/8 | 0 | 0 | 8/8 | 8/8 | 0.17 | 0.24 |
 | precedents | 4 | 0 | 0/0 | 4 | 0 | 0/0 | 0/0 | n/a | n/a |
-| profile | 11 | 10 | 10/10 | 1 | 0 | 10/10 | 10/10 | 0.19 | 0.29 |
-| teaser | 10 | 10 | 10/10 | 0 | 0 | 10/10 | 10/10 | 0.12 | 0.18 |
-| three_statement | 10 | 10 | 10/10 | 0 | 0 | 10/10 | 10/10 | 0.32 | 0.43 |
-| vdr_review | 7 | 6 | 6/6 | 1 | 0 | 6/6 | 6/6 | 0.04 | 0.05 |
+| profile | 11 | 10 | 10/10 | 1 | 0 | 10/10 | 9/10 | 0.21 | 0.30 |
+| teaser | 10 | 10 | 10/10 | 0 | 0 | 10/10 | 10/10 | 0.13 | 0.22 |
+| three_statement | 10 | 10 | 10/10 | 0 | 0 | 10/10 | 10/10 | 0.30 | 0.42 |
+| vdr_review | 7 | 6 | 6/6 | 1 | 0 | 6/6 | 6/6 | 0.04 | 0.06 |
 
 ## By perturbation
 
 | perturbation | briefs | done | success | blocked/unsupported | silent numbers | deterministic | resume ok | p50 s | p95 s |
 |---|---|---|---|---|---|---|---|---|---|
-| arabic_mixed | 6 | 6 | 6/6 | 0 | 0 | 6/6 | 6/6 | 0.21 | 0.64 |
+| arabic_mixed | 6 | 6 | 6/6 | 0 | 0 | 6/6 | 6/6 | 0.19 | 0.52 |
 | arabic_only | 4 | 0 | 0/0 | 4 | 0 | 0/0 | 0/0 | n/a | n/a |
-| base | 43 | 39 | 39/39 | 4 | 0 | 39/39 | 39/39 | 0.18 | 0.54 |
-| deal_context | 16 | 16 | 16/16 | 0 | 0 | 16/16 | 16/16 | 0.09 | 0.36 |
-| override | 18 | 18 | 18/18 | 0 | 0 | 18/18 | 18/18 | 0.51 | 0.73 |
-| phrasing | 39 | 39 | 39/39 | 0 | 0 | 39/39 | 39/39 | 0.19 | 0.53 |
+| base | 43 | 38 | 38/39 | 4 | 0 | 38/38 | 37/38 | 0.18 | 0.51 |
+| deal_context | 16 | 16 | 16/16 | 0 | 0 | 16/16 | 16/16 | 0.12 | 0.40 |
+| override | 18 | 18 | 18/18 | 0 | 0 | 18/18 | 18/18 | 0.51 | 0.64 |
+| phrasing | 39 | 38 | 38/39 | 0 | 0 | 38/38 | 38/38 | 0.19 | 0.52 |
 
 ## By data kind and region
 
 | data | briefs | done | success | blocked/unsupported | silent numbers | deterministic | resume ok | p50 s | p95 s |
 |---|---|---|---|---|---|---|---|---|---|
-| real | 41 | 37 | 37/37 | 4 | 0 | 37/37 | 37/37 | 0.20 | 0.78 |
-| synthetic | 85 | 81 | 81/81 | 4 | 0 | 81/81 | 81/81 | 0.20 | 0.53 |
+| real | 41 | 35 | 35/37 | 4 | 0 | 35/35 | 35/35 | 0.23 | 0.58 |
+| synthetic | 85 | 81 | 81/81 | 4 | 0 | 81/81 | 80/81 | 0.21 | 0.57 |
 
 | region | briefs | done | success | blocked/unsupported | silent numbers | deterministic | resume ok | p50 s | p95 s |
 |---|---|---|---|---|---|---|---|---|---|
-| MENA | 4 | 3 | 3/3 | 1 | 0 | 3/3 | 3/3 | 0.04 | 0.06 |
-| US | 122 | 115 | 115/115 | 7 | 0 | 115/115 | 115/115 | 0.20 | 0.67 |
+| MENA | 4 | 3 | 3/3 | 1 | 0 | 3/3 | 3/3 | 0.06 | 0.06 |
+| US | 122 | 113 | 113/115 | 7 | 0 | 113/113 | 112/113 | 0.22 | 0.57 |
 
 ## Failures
 
-None among supported briefs.
+- `rel-033` (earnings_update, base): The workbook must be one of ours (Assumptions and IS sheets) with a later fiscal year in the filings.
+- `rel-072` (earnings_update, phrasing): The workbook must be one of ours (Assumptions and IS sheets) with a later fiscal year in the filings.
 
 ## Blocked (engine has not landed)
 
@@ -93,7 +94,7 @@ None. Every re-run matched cell for cell / text for text.
 
 ## Resume failures
 
-None. Every injected failure resumed to a result identical to the clean run, without re-running finished steps.
+- `rel-022` (profile): resume raised TimeoutError: job job_a4f4320ce56221ba did not finish within 180.0s (status=queued, in worker set=False, steps=[('profile.resolve', 'done'), ('profile.statements', 'done'), ('profile.deck_outline', 'done'), ('profile.approve_outline', 'pending'), ('profile.deck_render', 'pending'), ('profile.deliver', 'pending')])
 
 ## Product observations from this run (not fixed here)
 
@@ -132,4 +133,4 @@ None. Every injected failure resumed to a result identical to the clean run, wit
 
 ## Unreproduced hang (honest note)
 
-One earlier full run of this harness aborted at about brief 61 because a determinism re-run of a deck brief had not finished after 180 s. It happened while the full unit-test suite was running in a second process on the same machine. The harness had no diagnostics then (it now records job status, worker-set membership and step states, and a hang becomes a failed row instead of a crash). It did not recur in three further full runs without concurrent load, nor in 80 back-to-back approve-immediately trials. Cause unknown; treat as a possible intermittent job-runtime stall under CPU contention, not a confirmed bug.
+One earlier full run aborted at about brief 61 because a determinism re-run of a deck brief had not finished after 180 s, while the unit-test suite ran in a second process. It did not recur in later clean full runs or in 80 back-to-back approve-immediately trials. Cause unknown; possibly an intermittent job-runtime stall under CPU contention, not a confirmed bug. The harness now records job status on a timeout and reports a hang as a failed row.

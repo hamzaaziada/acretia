@@ -275,6 +275,25 @@ def write_csv(path: Path, rows: list[dict]):
             w.writerow({k: ("" if r.get(k) is None else r.get(k)) for k in CSV_COLS})
 
 
+SUMMARY_COLS = ["task_id", "n", "median_saved_mid", "iqr_low", "iqr_high", "saved_low", "saved_high", "t_h_status", "client_ready", "error_rate", "status"]
+
+
+def write_summary(path: Path, agg: list[dict]):
+    """One row per task; the same numbers as report.md (saved_* are medians; iqr_* bound the mid saving)."""
+    r4 = lambda x: "" if x is None else round(x, 4)      # noqa: E731
+    with open(path, "w", newline="", encoding="utf-8") as f:
+        w = csv.DictWriter(f, fieldnames=SUMMARY_COLS)
+        w.writeheader()
+        for a in agg:
+            if a["n_done"] == 0:
+                w.writerow({"task_id": a["task_id"], "n": 0, "t_h_status": "blocked: " + (a.get("blocked_reason") or "no runnable brief offline")[:120], "status": "estimate"})
+                continue
+            w.writerow({"task_id": a["task_id"], "n": a["n_done"], "median_saved_mid": r4(a.get("saved_mid_median")), "iqr_low": r4(a.get("saved_mid_q1")),
+                        "iqr_high": r4(a.get("saved_mid_q3")), "saved_low": r4(a.get("saved_low_median")), "saved_high": r4(a.get("saved_high_median")),
+                        "t_h_status": a["baseline"], "client_ready": f"{a['client_ready_yes']}/{a['client_ready_unknown']}/{a['client_ready_no']} (yes/unknown/no)",
+                        "error_rate": a["error_rate"], "status": "estimate"})
+
+
 # --------------------------------------------------------------------------- main
 def run_all(tasks=None, n=None, out_dir: Path = HERE, mode: str = "replay", per_task_brief_ids: dict | None = None, write: bool = True,
             live_hook=None, only_ids: list[str] | None = None) -> dict:
@@ -305,6 +324,7 @@ def run_all(tasks=None, n=None, out_dir: Path = HERE, mode: str = "replay", per_
         note = f"tasks={','.join(tasks)}; n cap={n or 'all runnable'}"
         write_report(out_dir / "report.md", agg, rows, bl, mode, note, wsp, time.strftime("%Y-%m-%d %H:%M UTC", time.gmtime()), time.perf_counter() - t_start)
         write_csv(out_dir / "results.csv", rows)
+        write_summary(out_dir / "summary.csv", agg)
     return result
 
 
