@@ -6,7 +6,7 @@
 
 ### `diff-leases-ifrs16-asc842`
 - **Frameworks:** IFRS, USGAAP, SOCPA-IFRS, UAE-IFRS, IndAS
-- **Confidence:** verified
+- **Confidence:** unverified
 - **Summary:** IFRS 16 puts nearly every lease on the balance sheet and splits cost into depreciation and interest, so lease expense leaves operating costs. US GAAP ASC 842 also records a liability and asset for operating leases, but keeps one straight-line lease cost inside operating expenses; only finance leases are split. The same lease therefore gives higher EBITDA under IFRS than under US GAAP.
 - **Analyst impact:** EBITDA, operating cash flow and net debt are not comparable between IFRS and US GAAP retailers, airlines and restaurants. Move IFRS companies to a pre-IFRS 16 basis (deduct lease payments from EBITDA) or move US companies to a post-16 basis.
 - **Adjustment recipe:** `ifrs16_to_pre16_ebitda`
@@ -16,7 +16,7 @@
 
 ### `diff-leases-net-debt`
 - **Frameworks:** IFRS, USGAAP, SOCPA-IFRS, UAE-IFRS, EAS
-- **Confidence:** verified
+- **Confidence:** unverified
 - **Summary:** Lease liabilities are debt-like but are reported in different places. IFRS companies show them with borrowings or in their own line; US companies split operating and finance lease liabilities. Whether to add them to net debt depends on whether EBITDA in the same ratio is before or after rent.
 - **Analyst impact:** Keep numerator and denominator consistent: post-16 EBITDA with lease-inclusive net debt, or pre-16 EBITDA with lease-exclusive net debt. Mixed bases overstate or understate leverage.
 - **Adjustment recipe:** `lease_adjusted_net_debt`
@@ -71,7 +71,7 @@
 
 ### `diff-revenue-ifrs15-asc606-eas48`
 - **Frameworks:** IFRS, USGAAP, EAS, IndAS, SOCPA-IFRS, UAE-IFRS
-- **Confidence:** verified
+- **Confidence:** unverified
 - **Summary:** IFRS 15 and ASC 606 share the five-step model for revenue from contracts with customers (identify the contract, the performance obligations, the transaction price, allocate it, recognise as control passes), so most revenue is recognised alike. Remaining gaps: the collectability test wording, treatment of some licences, impairment reversal on contract costs, and interim disclosure. EAS 48 (Revenue from Contracts with Customers, which replaced the older Egyptian revenue standard) and Ind AS 115 follow IFRS 15 and apply the same five-step model to contracts with customers. Under older Egyptian and UK-style rules, revenue recognition followed risk-and-reward and percentage-of-completion methods.
 - **Analyst impact:** Revenue growth across the transition year can step; check the transition method and whether comparatives were restated. For gross versus net, rely on the principal-agent note.
 - **Adjustment recipe:** `revenue_principal_agent_net`
@@ -82,7 +82,7 @@
 
 ### `diff-revenue-principal-agent`
 - **Frameworks:** IFRS, USGAAP, EAS, IndAS
-- **Confidence:** verified
+- **Confidence:** unverified
 - **Summary:** A company that controls goods or services before transfer reports revenue gross; an agent reports only its fee. Distributors, platforms and travel businesses differ in judgement, so identical business models can show revenue at very different levels while gross profit stays similar.
 - **Analyst impact:** Compare margin on a net-revenue or gross-profit basis when peers differ in principal-agent conclusions.
 - **Adjustment recipe:** `revenue_principal_agent_net`
@@ -93,7 +93,7 @@
 
 ### `diff-inventory-lifo`
 - **Frameworks:** IFRS, USGAAP, EAS, FRS102, IndAS, SOCPA-IFRS, UAE-IFRS
-- **Confidence:** verified
+- **Confidence:** unverified
 - **Summary:** IFRS, EAS, FRS 102 and Ind AS ban last-in first-out. US GAAP permits it, and US companies using LIFO in rising prices show lower profit and inventory than FIFO peers. LIFO users disclose a LIFO reserve, the cumulative gap to FIFO.
 - **Analyst impact:** Convert LIFO inventory to FIFO by adding the LIFO reserve and adjust cost of sales by the change in reserve before comparing margins or working capital with IFRS peers.
 - **Adjustment recipe:** `lifo_to_fifo`
@@ -105,7 +105,7 @@
 
 ### `diff-development-costs`
 - **Frameworks:** IFRS, USGAAP, FRS102, IndAS, EAS
-- **Confidence:** verified
+- **Confidence:** unverified
 - **Summary:** IFRS requires capitalising development costs once defined criteria are met. US GAAP generally expenses research and development as incurred, with exceptions for certain software costs. FRS 102 lets entities choose to capitalise or expense. Capitalised development appears in intangible assets, with amortisation later.
 - **Analyst impact:** Capitalising raises current EBIT and operating cash flow and shifts spending to investing. For comparability, expense the capitalised amount and reverse the related amortisation.
 - **Adjustment recipe:** `dev_cost_expense`
@@ -118,7 +118,7 @@
 
 ### `diff-revaluation`
 - **Frameworks:** IFRS, USGAAP, FRS102, IndAS, EAS, SOCPA-IFRS, UAE-IFRS
-- **Confidence:** verified
+- **Confidence:** unverified
 - **Summary:** IFRS allows revaluing whole classes of PPE (and intangibles with active markets) to fair value, with the increase held in a revaluation surplus in OCI. US GAAP prohibits upward revaluation. Ind AS allows revaluation of PPE but not the fair value model for investment property. Egypt did not permit revaluation of PPE, intangibles or investment property until January 2023. Saudi Arabia kept the cost model for listed companies until fiscal years starting 2022 and allows fair value or revaluation after that.
 - **Analyst impact:** Revalued assets lift equity and the depreciation base; reverse the surplus and the extra depreciation for return-on-capital comparisons across jurisdictions, and treat Egypt and Saudi periods before the change as cost-based.
 - **Adjustment recipe:** `revaluation_reverse`
@@ -133,7 +133,7 @@
 
 ### `diff-impairment-reversal`
 - **Frameworks:** IFRS, USGAAP, FRS102, IndAS, EAS
-- **Confidence:** verified
+- **Confidence:** unverified
 - **Summary:** IFRS lets a company reverse an earlier impairment of PPE, intangibles other than goodwill and investments when the reasons fade, up to the depreciated cost that would have existed. Goodwill impairment is never reversed. US GAAP prohibits reversing an impairment of assets held and used; written-down cost becomes the new basis.
 - **Analyst impact:** Reversals inflate IFRS earnings in recoveries (commodities, shipping). Remove reversals from normalised profit before comparing with US peers.
 - **Adjustment recipe:** `impairment_reversal_strip`
@@ -145,7 +145,7 @@
 
 ### `diff-borrowing-costs`
 - **Frameworks:** IFRS, USGAAP, FRS102, IndAS, EAS
-- **Confidence:** verified
+- **Confidence:** unverified
 - **Summary:** IFRS requires capitalising borrowing costs on qualifying assets, and deducts investment income on funds borrowed specifically. US GAAP also capitalises interest but does not net investment income and uses the weighted average accumulated expenditure method. FRS 102 permits either capitalising or expensing.
 - **Analyst impact:** Capitalised interest hides financing cost inside capex. Add it back to interest expense for interest cover and EBIT-to-interest ratios.
 - **Adjustment recipe:** `capitalised_interest_expense`
@@ -157,7 +157,7 @@
 
 ### `diff-associates-jvs`
 - **Frameworks:** IFRS, USGAAP, EAS, IndAS, SOCPA-IFRS, UAE-IFRS, FRS102
-- **Confidence:** verified
+- **Confidence:** unverified
 - **Summary:** Both frameworks use the equity method for associates and joint ventures. IFRS requires uniform accounting policies with the investor, forbids proportionate consolidation of joint ventures and treats joint operations line by line. US GAAP allows proportionate consolidation in some industries and the fair value option. The share of results sits in one P&L line, often before tax.
 - **Analyst impact:** EBITDA should exclude equity-accounted profit; add the equity investment (or market value) to the EV bridge and consider proportionate debt.
 - **Adjustment recipe:** `associates_share_strip`
@@ -205,7 +205,7 @@
 
 ### `diff-fx-translation`
 - **Frameworks:** IFRS, USGAAP, EAS, FRS102, IndAS, SOCPA-IFRS, UAE-IFRS
-- **Confidence:** verified
+- **Confidence:** unverified
 - **Summary:** Under IAS 21 and ASC 830, a foreign operation is translated into the reporting currency with the closing rate for the balance sheet and average (or transaction date) rates for the income statement, and the difference goes to OCI as a translation reserve. Using the wrong rate mix distorts margins and ratios.
 - **Analyst impact:** Compare companies on the same translation basis. Use period-end rates for balances and period average for flows; keep a constant-currency view for growth.
 - **Adjustment recipe:** `fx_translate_period_end_average`
@@ -407,7 +407,7 @@
 
 ### `diff-government-grants`
 - **Frameworks:** IFRS, USGAAP, FRS102, IndAS, EAS, SOCPA-IFRS, UAE-IFRS
-- **Confidence:** verified
+- **Confidence:** unverified
 - **Summary:** IAS 20 gives clear rules: recognise grants when conditions are reasonably assured, take them to income to match costs or deduct them from the asset. US GAAP has no general standard; practice often applies IAS 20 by analogy, with new disclosure rules for government assistance. FRS 102 permits a performance or accrual model. The line used (other income, a deduction from cost of sales or from capex) changes margins.
 - **Analyst impact:** Gross up grants netted against costs to compare margins, and separate grants from recurring operating profit when subsidies may end.
 - **Adjustment recipe:** `gov_grant_gross_up`
@@ -419,7 +419,7 @@
 
 ### `diff-presentation-by-nature-function`
 - **Frameworks:** IFRS, IndAS, EAS, FRS102, USGAAP
-- **Confidence:** verified
+- **Confidence:** unverified
 - **Summary:** IFRS and most local sets let a company choose expenses by function or by nature. Ind AS schedule III forces by nature. Companies using by nature show raw materials, staff cost and depreciation and often no operating profit line. IFRS 18 from 2027 will require an operating profit subtotal for everyone, while US GAAP income from operations is by function and the SEC requires some natural-expense detail.
 - **Analyst impact:** Build EBIT as revenue less operating expenses by nature, with flagged basis, and separate other operating income and FX items consistently.
 - **Adjustment recipe:** `by_nature_ebit`
@@ -429,7 +429,7 @@
 
 ### `diff-cash-flow-classification`
 - **Frameworks:** IFRS, USGAAP, EAS, IndAS
-- **Confidence:** verified
+- **Confidence:** unverified
 - **Summary:** IFRS lets entities place interest and dividends received or paid in different sections; US GAAP fixes them (interest received and paid and dividends received in operating, dividends paid in financing). Ind AS 116 always puts the interest part of lease payments in financing, and Ind AS usually shows interest paid in financing for non-finance entities.
 - **Analyst impact:** Align cash flow from operations by moving interest to a single section before comparing free cash flow.
 - **Adjustment recipe:** `ifrs16_to_pre16_ebitda`
@@ -440,7 +440,7 @@
 
 ### `diff-ind-as-carveouts`
 - **Frameworks:** IndAS, IFRS
-- **Confidence:** verified
+- **Confidence:** unverified
 - **Summary:** Ind AS differs from IFRS in a few places: no fair value model for investment property (Ind AS 40), pooling at carrying values for common-control business combinations (Ind AS 103 Appendix C), a mandatory by-nature layout in Schedule III, and some financial instrument and employee benefit details. The reporting year ends 31 March.
 - **Analyst impact:** Calendarise to a common year end; expect no goodwill on group reorganisations; handle by-nature profit.
 - **Adjustment recipe:** `by_nature_ebit`
@@ -450,7 +450,7 @@
 
 ### `diff-frs102-vs-ifrs`
 - **Frameworks:** FRS102, IFRS
-- **Confidence:** verified
+- **Confidence:** unverified
 - **Summary:** FRS 102 permits policy choices that IFRS removes: expensing or capitalising development, expensing or capitalising borrowing costs, and amortising goodwill over its useful life (a maximum of ten years when the life cannot be estimated reliably) where IFRS tests goodwill for impairment each year and never amortises it. Until 2026 operating leases of lessees stayed off balance sheet. After the 2024 amendments (periods from 1 January 2026), revenue and leases follow an IFRS 15 and IFRS 16 like approach.
 - **Analyst impact:** Compare UK private company accounts with IFRS peers after adding back goodwill amortisation and pre-2026 lease commitments, and decide a common development and borrowing cost policy.
 - **Adjustment recipe:** `capitalise_operating_leases`
@@ -511,7 +511,7 @@
 
 ### `diff-ecl-ifrs9-eas47-cecl`
 - **Frameworks:** IFRS, EAS, USGAAP
-- **Confidence:** verified
+- **Confidence:** unverified
 - **Summary:** IFRS 9 uses three stages of expected credit loss, with lifetime loss on significant credit deterioration. US CECL books lifetime loss at initial recognition for all assets at amortised cost. EAS 47 follows IFRS 9 where adopted; earlier Egyptian rules used incurred loss or regulator-set provisions for banks.
 - **Analyst impact:** Compare provisioning on loans and receivables by looking at coverage ratios; do not read a first-year ECL step as underlying deterioration.
 - **Adjustment recipe:** `eas_to_ifrs_map`
@@ -562,7 +562,7 @@
 
 ### `diff-business-combinations`
 - **Frameworks:** IFRS, USGAAP, IndAS, FRS102, EAS
-- **Confidence:** verified
+- **Confidence:** unverified
 - **Summary:** IFRS 3 and ASC 805 both require the acquisition method for business combinations: identify the acquirer, measure assets and liabilities at fair value, recognise goodwill, expense deal costs; pooling of interests is not allowed for acquisitions. Transactions under common control are outside the scope of IFRS 3, so practice varies (book value or predecessor accounting, sometimes with restatement of comparatives); US GAAP uses carrying amounts for common-control transfers. Ind AS 103 Appendix C prescribes pooling of interests at carrying values for common-control combinations, so no goodwill arises. FRS 102 uses acquisition accounting for acquisitions but still allows merger accounting for qualifying group reconstructions.
 - **Analyst impact:** After a group reorganisation, expect no fair value step-up or goodwill under pooling or merger accounting and restated comparatives; for acquisitions compare on the acquisition method and add back purchase-price amortisation. Use pro forma figures to compare organic growth.
 - **Adjustment recipe:** `associates_share_strip`
@@ -576,7 +576,7 @@
 
 ### `diff-provisions-ias37-asc450`
 - **Frameworks:** IFRS, USGAAP, EAS, IndAS, FRS102
-- **Confidence:** verified
+- **Confidence:** unverified
 - **Summary:** Under IAS 37 a provision needs a present obligation, legal or constructive, arising from a past event, a probable outflow of economic benefits (more likely than not), and a reliable estimate; it is measured at the best estimate and discounted when the effect is material. Possible obligations or ones that cannot be measured are contingent liabilities, disclosed but not booked. US GAAP (ASC 450) accrues a loss contingency when a loss is probable (a higher likelihood bar than IFRS) and reasonably estimable, uses the low end of a range when no point is better, and generally does not discount. Egyptian, Indian and UK standards follow the IAS 37 approach.
 - **Analyst impact:** IFRS reporters book some litigation and restructuring liabilities earlier and at a higher point in a range than US reporters; treat litigation, decommissioning and warranty provisions with expected cash outflows as debt-like and read the contingent liability note for unbooked exposure.
 - **Adjustment recipe:** `eosb_as_debt_like`
