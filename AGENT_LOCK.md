@@ -42,6 +42,8 @@ One row per active claim. Claim a packet before you touch its files, commit the 
 | FP-S4-F validator 3-column rows | worker (session C) | claude/busy-knuth-i3ewp5 | 2026-11-17 | om/validate_xlsx.py, tests/test_validate_fix.py |
 | S2-rr S2 specialist re-review | reviewer (session A) | claude/dreamy-ramanujan-k8p2xt | 2026-11-17 | docs/reviews/s2-specialist.md |
 | S6-gate verify_s6.py | gate-writer (session A) | claude/dreamy-ramanujan-k8p2xt | 2026-11-17 | scripts/verify_s6.py, tests/fixtures/s6gate/** |
+| S7.5b Docker/compose/deploy | worker (session A) | claude/dreamy-ramanujan-k8p2xt | 2026-11-17 | Dockerfile, .dockerignore, docker-compose.yml, deploy/**, DEPLOY.md, scripts/verify_s7_deploy.py |
+| S7.4a security review | reviewer (session A) | claude/dreamy-ramanujan-k8p2xt | 2026-11-17 | SECURITY_REPORT.md, docs/reviews/security-*.md |
 
 ## Log
 - 2026-11-16: created; no active claims.
@@ -92,3 +94,4 @@ One row per active claim. Claim a packet before you touch its files, commit the 
 - 2026-11-16: session A: FP-S2a-d all done; S2 specialist re-review claimed.
 - 2026-11-17: S5.F1 verified on main and released; S5.F3a claimed (session D).
 - 2026-11-16: session A: S6 gate-writer claimed.
+- 2026-11-16: session A: S7.5b and S7.4a claimed.
