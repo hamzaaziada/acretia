@@ -1,0 +1,8 @@
+{
+  "ticker": "DEMOT",
+  "entity": "Demo Target Co (synthetic)",
+  "synthetic": true,
+  "as_of": "2027-02-15",
+  "source_url": "synthetic: tests/test_model3.py::synthetic_companyfacts scaled x0.3",
+  "licence": "synthetic test data, not a real company"
+}
