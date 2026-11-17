@@ -32,6 +32,9 @@ def main(argv=None) -> int:
     c.add_argument("--password", default=None, help="or set ACRETIA_OWNER_PASSWORD, or you will be prompted")
     m = sub.add_parser("poll-mail", help="poll the configured mailbox once")
     m.add_argument("--data", default="data/app")
+    m.add_argument("--org", default=None)
+    m.add_argument("--no-wait", action="store_true")
+    m.add_argument("--wait-seconds", type=int, default=900)
     argv_rest = list(sys.argv[1:] if argv is None else argv)
     args = ap.parse_args(argv)
     if args.cmd == "poll-mail":

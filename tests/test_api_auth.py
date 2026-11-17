@@ -9,6 +9,8 @@ import threading
 import unittest
 from unittest import mock
 
+os.environ.setdefault("ACRETIA_BACKGROUND", "0")   # SF.7: tests do not start the mail and watch pollers unless they ask
+
 from om.api import auth, db, deals, security, server, state as state_mod
 
 PASSWORD = "correct-horse-battery"
