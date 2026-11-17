@@ -28,13 +28,12 @@ One row per active claim. Claim a packet before you touch its files, commit the 
 | SF.4 TSB + reliability harness (session F, D-032) | session F workers | main | 2026-11-16 | eval/tsb/**, eval/reliability/** |
 | S6.2 figure verifier | worker (session A) | claude/dreamy-ramanujan-k8p2xt | 2026-11-16 | src/harness/research/verify.py, tests/test_research_verify.py |
 | FP-S1c buyer-research rubric thresholds | worker (session A) | claude/dreamy-ramanujan-k8p2xt | 2026-11-17 | docs/buyer-research.md |
-| S4.fix2 formula engine coverage (SpreadsheetBench) | worker (session C) | claude/busy-knuth-i3ewp5 | 2026-11-17 | om/formula.py, tests/test_formula_ext2.py |
+| S4.fix2 formula engine coverage (SpreadsheetBench) | worker (session C) | claude/busy-knuth-i3ewp5 | 2026-11-17 | om/formula.py, tests/test_formula_ext2.py, tests/test_sbench.py, tests/test_model3.py (obsolete 'unsupported' assertions only) |
 | FP-S4-A data fidelity (statements/concepts/facts) | worker (session C) | claude/busy-knuth-i3ewp5 | 2026-11-17 | om/statements.py, om/concepts.py, om/facts.py, tests/test_statements_fix.py |
 | FP-S4-B model3 valuation + robustness | worker (session C) | claude/busy-knuth-i3ewp5 | 2026-11-17 | om/model3.py, tests/test_model3_fix.py, license-and-repo-ledger.csv (one row) |
 | FP-S4-C print/polish + manifest | worker (session C) | claude/busy-knuth-i3ewp5 | 2026-11-17 | om/polish.py, om/xlsx.py, om/manifest.py, tests/test_polish_fix.py |
 | FP-S4-D LBO + merger | worker (session C) | claude/busy-knuth-i3ewp5 | 2026-11-17 | om/lbo.py, om/merger.py, tests/test_lbo_merger_fix.py |
 | FP-S4-E comps + market | worker (session C) | claude/busy-knuth-i3ewp5 | 2026-11-17 | om/comps.py, om/market.py, tests/test_comps_fix.py |
-| FP-S4-F validator 3-column rows | worker (session C) | claude/busy-knuth-i3ewp5 | 2026-11-17 | om/validate_xlsx.py, tests/test_validate_fix.py |
 | S6-gate verify_s6.py | gate-writer (session A) | claude/dreamy-ramanujan-k8p2xt | 2026-11-17 | scripts/verify_s6.py, tests/fixtures/s6gate/** |
 | S7.5b Docker/compose/deploy | worker (session A) | claude/dreamy-ramanujan-k8p2xt | 2026-11-17 | Dockerfile, .dockerignore, docker-compose.yml, deploy/**, DEPLOY.md, scripts/verify_s7_deploy.py |
 | S7.4a security review | reviewer (session A) | claude/dreamy-ramanujan-k8p2xt | 2026-11-17 | SECURITY_REPORT.md, docs/reviews/security-*.md |
