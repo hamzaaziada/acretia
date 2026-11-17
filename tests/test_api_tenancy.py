@@ -39,6 +39,25 @@ class TenancyTests(ServerCase):
         store = self.st.deal_store(self.conn, self.org_a)
         store.save_deliverable(self.deal_id, "Model A.txt", b"v1", "other")
         store.save_deliverable(self.deal_id, "Model A.txt", b"v2", "other")
+        # grid / deck fixtures so the positive controls of om.api.grid and om.api.decks routes resolve for org A
+        self.conn.execute("UPDATE document_pages SET tables_json=? WHERE org_id=? AND doc_id=?",
+                          ('[[["Item","2024"],["Revenue","1200"]]]', self.org_a, self.doc_id))
+        s, g, _ = self.a.j("GET", f"/api/v1/deals/{self.deal_id}/grid")
+        self.assertEqual(s, 200, g)
+        self.grid_id = g["grid"]["id"]
+        s, c, _ = self.a.j("POST", f"/api/v1/grids/{self.grid_id}/columns", {"prompt": "What is the change of control clause?"})
+        self.assertEqual(s, 201, c)
+        self.col_id = c["column"]["id"]
+        from pptx import Presentation
+        import io as _io
+        prs = Presentation()
+        prs.slides.add_slide(prs.slide_layouts[5]).shapes.title.text = "Secret deck title"
+        buf = _io.BytesIO()
+        prs.save(buf)
+        store.save_deliverable(self.deal_id, "Deck A.pptx", buf.getvalue(), "pptx")
+        s, cm, _ = self.a.j("POST", f"/api/v1/decks/{self.deal_id}/Deck%20A.pptx/comments", {"slide": 1, "x": 0.5, "y": 0.5, "body": "title: Secret"})
+        self.assertEqual(s, 201, cm)
+        self.comment_id = cm["id"]
         self.ntf = notify.notify(self.conn, self.org_a, None, "info", "Secret A notice", "body")["id"]
         s, inv, _ = self.a.j("POST", "/api/v1/org/invites", {"email": "secret-invitee@a.example", "role": "viewer"})
         self.invite_id = inv["invite"]["id"]
@@ -47,11 +66,14 @@ class TenancyTests(ServerCase):
 
     def real_params(self, pattern):
         known = {"deal_id": self.deal_id, "doc_id": self.doc_id, "user_id": self.owner_a, "name": "Model A.txt",
-                 "v": "1", "n": "1", "invite_id": self.invite_id}
+                 "v": "1", "n": "1", "invite_id": self.invite_id, "grid_id": self.grid_id, "col_id": self.col_id,
+                 "version": "1", "comment_id": self.comment_id}
         out, complete = {}, True
         for p in re.findall(r"\{(\w+)\}", pattern):
             if p == "id" and "/notifications/" in pattern:
                 out[p] = self.ntf
+            elif p == "name" and "/decks/" in pattern:
+                out[p] = "Deck A.pptx"
             elif p in known:
                 out[p] = known[p]
             else:
@@ -110,7 +132,7 @@ class TenancyTests(ServerCase):
         s, d, _ = self.a.j("GET", "/api/v1/deals")
         self.assertEqual([x["deal_id"] for x in d["items"]], [self.deal_id])
         s, d, _ = self.a.j("GET", "/api/v1/library")
-        self.assertEqual([x["name"] for x in d["items"]], ["Model A.txt"])
+        self.assertEqual([x["name"] for x in d["items"]], ["Deck A.pptx", "Model A.txt"])
         s, d, _ = self.b.j("GET", "/api/v1/library")
         self.assertEqual(d["items"], [])
         s, d, _ = self.b.j("GET", "/api/v1/notifications")
