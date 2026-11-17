@@ -519,7 +519,8 @@ def _grid_payload(ctx, g) -> dict:
     return {"grid": {"id": g["id"], "deal_id": g["deal_id"], "name": g["name"], "created_at": g["created_at"],
                      "source_grid_id": g["source_grid_id"]},
             "columns": cols_out, "rows": rows, "cells": out_cells, "inputs": _load_inputs(ctx.conn, g["id"], ctx.org_id),
-            "pending": pending, "models": MODELS, "types": list(TYPES[:5])}
+            "pending": pending, "models": MODELS, "types": list(TYPES[:5]),
+            "seq": ctx.conn.execute("SELECT COALESCE(MAX(seq),0) FROM grid_events WHERE grid_id=?", (g["id"],)).fetchone()[0]}
 
 
 # --------------------------------------------------------------------------- the filler (background thread)

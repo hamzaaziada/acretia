@@ -450,10 +450,11 @@ def renderer_available() -> bool:
     return bool(shutil.which("soffice") or shutil.which("libreoffice")) and bool(shutil.which("pdftoppm"))
 
 
-def render_pngs(data: bytes, cache_root: Path) -> list[Path]:
-    """Slide PNGs (80 dpi) for a deck, cached by sha256. Raises ApiError 503 when LibreOffice/poppler are missing."""
+def render_pngs(data: bytes, cache_root: Path, dpr: int = 1) -> list[Path]:
+    """Slide PNGs for a deck at 80 dpi x the device pixel ratio (1..3), cached by sha256. 503 when LibreOffice/poppler are missing."""
+    dpr = max(1, min(3, int(dpr)))
     key = hashlib.sha256(data).hexdigest()
-    out_dir = Path(cache_root) / "slides" / key
+    out_dir = Path(cache_root) / "slides" / f"{key}-{80 * dpr}"
     done = out_dir / "done"
     if done.exists():
         return sorted(out_dir.glob("s-*.png"), key=lambda p: int(re.search(r"(\d+)\.png$", p.name).group(1)))
@@ -464,7 +465,7 @@ def render_pngs(data: bytes, cache_root: Path) -> list[Path]:
         lock = _RENDER_LOCKS.setdefault(key, threading.Lock())
     with lock:
         if done.exists():
-            return render_pngs(data, cache_root)
+            return render_pngs(data, cache_root, dpr)
         out_dir.mkdir(parents=True, exist_ok=True)
         soffice = shutil.which("soffice") or shutil.which("libreoffice")
         with tempfile.TemporaryDirectory(prefix="acr-lo-") as tmp:
@@ -473,7 +474,7 @@ def render_pngs(data: bytes, cache_root: Path) -> list[Path]:
             try:
                 subprocess.run([soffice, "--headless", f"-env:UserInstallation=file://{tmp}/profile", "--convert-to", "pdf",
                                 "--outdir", tmp, str(src)], check=True, capture_output=True, timeout=180)
-                subprocess.run(["pdftoppm", "-png", "-r", "80", str(Path(tmp) / "deck.pdf"), str(out_dir / "s")],
+                subprocess.run(["pdftoppm", "-png", "-r", str(80 * dpr), str(Path(tmp) / "deck.pdf"), str(out_dir / "s")],
                                check=True, capture_output=True, timeout=120)
             except (subprocess.SubprocessError, OSError) as e:
                 raise ApiError(503, "render_failed", "The slide preview could not be rendered.",
@@ -483,7 +484,7 @@ def render_pngs(data: bytes, cache_root: Path) -> list[Path]:
             if m and p.name != f"s-{int(m.group(1))}.png":
                 p.rename(out_dir / f"s-{int(m.group(1))}.png")
         done.write_text("ok")
-    return render_pngs(data, cache_root)
+    return render_pngs(data, cache_root, dpr)
 
 
 # --------------------------------------------------------------------------- jobs and approvals (optional modules)
@@ -539,6 +540,11 @@ def _citation_for_source(ctx, deal_id: str, text: str):
         return None
 
 
+def _source_out(ctx, deal_id: str, text: str) -> dict:
+    c = _citation_for_source(ctx, deal_id, text) or {}
+    return {"text": text, "citation_token": c.get("token"), "doc_id": c.get("doc_id"), "page": c.get("page")}
+
+
 # --------------------------------------------------------------------------- state: accepts and comments
 def _accepted(ctx, deal_id, name) -> set:
     return {r["slide_key"] for r in ctx.conn.execute("SELECT slide_key FROM deck_accepts WHERE org_id=? AND deal_id=? AND deck_name=?",
@@ -568,7 +574,7 @@ def get_deck(ctx):
     for s in slides:
         fs = [f for f in findings if f["slide"] == s["n"]]
         out.append({"n": s["n"], "title": s["title"], "png_url": f"{base}/{s['n']}.png", "outline": s["outline"],
-                    "sources": [{"text": t, "citation_token": (_citation_for_source(ctx, deal_id, t) or {}).get("token")} for t in s["sources"]],
+                    "sources": [_source_out(ctx, deal_id, t) for t in s["sources"]],
                     "badges": [{"rule": f["rule"], "severity": f["severity"], "message": f["message"], "shape": f.get("shape_name")} for f in fs],
                     "status": _status(fs), "accepted": s["key"] in accepted, "key": s["key"][:16]})
     deck_level = [f for f in findings if f["slide"] == 0]
@@ -590,7 +596,11 @@ def slide_png(ctx):
     if not 1 <= n <= len(slide_parts(read_zip(data))):
         raise _nf()
     cache = Path(ctx.data_dir or tempfile.gettempdir()) / "cache"
-    pngs = render_pngs(data, cache)
+    try:
+        dpr = int(ctx.query.get("dpr") or 1)
+    except ValueError:
+        dpr = 1
+    pngs = render_pngs(data, cache, dpr)
     if n > len(pngs):
         raise _nf()
     return Response(200, pngs[n - 1].read_bytes(), "image/png", {"Cache-Control": "private, max-age=31536000, immutable"})
