@@ -137,6 +137,7 @@ def run_one(h: Harness, b: dict, do_resume: bool = True, do_determinism: bool = 
                     if c is not None and c.color != INPUT_BLUE:
                         unstyled += 1
     row["_override_unstyled"] = unstyled
+    row["_override_cells"] = len(oc_cells)
     row["_audit_examples"] = aud.examples + (["DCF override was not applied to the workbook"] if ov is False else [])
     row["_gate_blocking"] = gates["blocking"]
     row["_cost"] = run.cost_usd
@@ -267,9 +268,9 @@ def write_report(path: Path, rows: list[dict], s: dict, corpus: list[dict], mode
     L += ["", "## Resume failures", ""]
     L += [f"- `{r['brief_id']}` ({r['task_id']}): {r['resume_detail']}" for r in nr[:15]] or ["None. Every injected failure resumed to a result identical to the clean run, without re-running finished steps."]
     uo = sum(r.get("_override_unstyled", 0) for r in rows if r["outcome"] == "done")
-    n_ov = sum(1 for r in rows if r["outcome"] == "done" and r["perturbation"] == "override")
+    n_ov = sum(1 for r in rows if r["outcome"] == "done" and r.get("_override_cells"))
     L += ["", "## Product observations from this run (not fixed here)", "",
-          f"- **Override cells lose the input styling.** In {sum(1 for r in rows if r['outcome'] == 'done' and r.get('_override_unstyled'))} of {n_ov} DCF override runs the overridden WACC / growth cell is a plain "
+          f"- **Override cells lose the input styling.** In {sum(1 for r in rows if r['outcome'] == 'done' and r.get('_override_unstyled'))} of {n_ov} runs that applied a WACC / growth override from the prompt, the overridden cell is a plain "
           f"constant that is not blue and has no comment, so the workbook alone does not show it is a user override. The job's step note does disclose it (\"Overrides applied: ...\"), "
           f"so the number is counted as flagged here, but a reader who only opens the xlsx sees an unmarked hard-code ({uo} cells)."]
     gf = s["gate_fail"]

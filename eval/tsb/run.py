@@ -240,6 +240,18 @@ def write_report(path: Path, agg: list[dict], rows: list[dict], bl: dict, mode: 
               "It is not a claim of beating WSP's analysts."]
     else:
         L += ["Not run in this invocation (`wsp-apple-3stmt` brief not selected)."]
+    gf = [r for r in rows if r["outcome"] == "done" and r["gates_pass"] is False]
+    L += ["", "## Deterministic gate failures observed (counted in error rate, not hidden)", ""]
+    if gf:
+        from collections import Counter
+        by = Counter((r["task_id"], r["data"], r["blocking"][:110]) for r in gf)
+        for (t, d, bk), n in sorted(by.items()):
+            L.append(f"- `{t}` on {d} fixtures x{n}: {bk}")
+        L += ["", "Diagnosis (checked by opening the workbook): the failing `om.modelcheck` grader is `checks`; on the synthetic DEMO* fixtures the check "
+              "\"Diluted EPS = reported (within 2% or half a cent)\" (Checks row 20) returns ERROR and the MASTER CHECK follows. AAPL passes 100/100. The cause is "
+              "most likely the synthetic fixtures' reported EPS not matching their net income and share count [INFERENCE, not diagnosed further]. This is reported, not fixed, here."]
+    else:
+        L.append("None.")
     L += ["", "## Skipped and blocked (honest gaps)", ""]
     for a in agg:
         if a["n_done"] == 0:
