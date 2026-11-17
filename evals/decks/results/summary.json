@@ -9,8 +9,8 @@
     "ten_slide": 17,
     "zero_critical": 20,
     "zero_critical_share": 1.0,
-    "major_total": 1,
-    "max_major": 1,
+    "major_total": 0,
+    "max_major": 0,
     "variety_total": 0,
     "unsourced_total": 0,
     "distinct_archetypes": 35,
@@ -35,8 +35,8 @@
         "variety": 0,
         "unsourced": 0,
         "art_direction": "annotated_map",
-        "build_seconds": 2.231,
-        "numbers_digest": "c2e1e3eab9ce71984cb99d81c9bd36d110fa7fe62749e440f6e773335e74ab08",
+        "build_seconds": 1.907,
+        "numbers_digest": "3b5e0433350cece074cc92a73ca7f34b50316ce2bc8e9c2632d09ee496c254b2",
         "visual_candidates_min": 3,
         "findings": []
       },
@@ -49,8 +49,8 @@
         "variety": 0,
         "unsourced": 0,
         "art_direction": "duotone_hero",
-        "build_seconds": 1.999,
-        "numbers_digest": "7a117291e11033ed2cd87e3380458fe65f95b9391c05b4e7caf2b371d1bc9319",
+        "build_seconds": 1.89,
+        "numbers_digest": "195c0d9e9e55c9d6bcaf1379dec770ee750a2469974e4397c198982770174b68",
         "visual_candidates_min": 3,
         "findings": []
       },
@@ -63,8 +63,8 @@
         "variety": 0,
         "unsourced": 0,
         "art_direction": "annotated_map",
-        "build_seconds": 2.262,
-        "numbers_digest": "c825aeedcbee2a45cfc5a804c514846e3177ea075f4e506c7252aecd50f4244c",
+        "build_seconds": 2.28,
+        "numbers_digest": "7baa721b170260523616d2b123a5b197507ac09c770fdf4c01debdc135456249",
         "visual_candidates_min": 3,
         "findings": []
       },
@@ -77,8 +77,8 @@
         "variety": 0,
         "unsourced": 0,
         "art_direction": "editorial_illustration",
-        "build_seconds": 2.488,
-        "numbers_digest": "11904e9c734e354ae4e23baa17eb4a55f06ed2da14caeafbefcda2e0a7a7d721",
+        "build_seconds": 2.25,
+        "numbers_digest": "6acdc9694fb8f92b985988c7bbc2c4046692f6353ee9b239feea66e424c9bdac",
         "visual_candidates_min": 3,
         "findings": []
       },
@@ -91,8 +91,8 @@
         "variety": 0,
         "unsourced": 0,
         "art_direction": "data_art",
-        "build_seconds": 2.177,
-        "numbers_digest": "798fdac4f9fbf047108da75d3ef15744a14d4551d492fb0bbbb0e1fc82298b77",
+        "build_seconds": 2.138,
+        "numbers_digest": "e849237b262be6fa4559ede4ef2513d24da983e43c466652bf7de76113a6a705",
         "visual_candidates_min": 3,
         "findings": []
       },
@@ -105,8 +105,8 @@
         "variety": 0,
         "unsourced": 0,
         "art_direction": "isometric_system",
-        "build_seconds": 1.964,
-        "numbers_digest": "b2f91f90b2f7b824f7ca63012516d254866ce65249fc1b187a60d41a31bac24c",
+        "build_seconds": 1.982,
+        "numbers_digest": "ab3dee57b08a0d23f9a593b5000603730cc5b425cb4f28ddae72c295b8a27ee4",
         "visual_candidates_min": 3,
         "findings": []
       },
@@ -119,8 +119,8 @@
         "variety": 0,
         "unsourced": 0,
         "art_direction": "iconographic_system",
-        "build_seconds": 1.76,
-        "numbers_digest": "102e25f1ea1f1b1f45f2ea2840b821a610c2ed2dd3d3cc6558ecc8b05d78330e",
+        "build_seconds": 1.627,
+        "numbers_digest": "7613a897b6206e7d73deaf7871d9467cfd41d719eeb9adc71cb03cbb279a0e22",
         "visual_candidates_min": 3,
         "findings": []
       },
@@ -133,8 +133,8 @@
         "variety": 0,
         "unsourced": 0,
         "art_direction": "duotone_hero",
-        "build_seconds": 2.084,
-        "numbers_digest": "3057266e88115a60ded11275881f09236fa89d45305ae8a70e169818a0bd19da",
+        "build_seconds": 2.17,
+        "numbers_digest": "8c0aa24c8c984c1ce834f13f2d9f56802dbdd8eb9b5e5733c6ff39dacb003185",
         "visual_candidates_min": 3,
         "findings": []
       },
@@ -147,8 +147,8 @@
         "variety": 0,
         "unsourced": 0,
         "art_direction": "data_art",
-        "build_seconds": 1.995,
-        "numbers_digest": "e8e893f1c42be45efde3a718748e235bb288293e892a9de58935e93977e00b18",
+        "build_seconds": 2.171,
+        "numbers_digest": "40af49b4ee8dcbd1bae676c3f6c08b16175b1fbcb11e85875ded3e40fd41fe4f",
         "visual_candidates_min": 3,
         "findings": []
       },
@@ -161,8 +161,8 @@
         "variety": 0,
         "unsourced": 0,
         "art_direction": "duotone_hero",
-        "build_seconds": 2.057,
-        "numbers_digest": "54e9307f9211e99e7123d84dc87ddc74dfcd080bc3ec85e99d71c4f1f95340bd",
+        "build_seconds": 1.816,
+        "numbers_digest": "dfafa4891096a05022f69c681aa9c4f2934810f2352c9123ce137dd4dbaf774c",
         "visual_candidates_min": 3,
         "findings": []
       },
@@ -175,8 +175,8 @@
         "variety": 0,
         "unsourced": 0,
         "art_direction": "bold_typographic",
-        "build_seconds": 1.795,
-        "numbers_digest": "819ea68b5f8a77448dfa2ac84b35937c99407b64dee8166974d621411604e960",
+        "build_seconds": 2.462,
+        "numbers_digest": "b98d7e2ef7aaf09e44b123815b888077190db1bbd580c4dd098b341d87a455e4",
         "visual_candidates_min": 3,
         "findings": []
       },
@@ -189,8 +189,8 @@
         "variety": 0,
         "unsourced": 0,
         "art_direction": "data_art",
-        "build_seconds": 2.109,
-        "numbers_digest": "4a99aaf439c4a7093d020ab86729a74d48f8c41000192e4764ecb352bfbd7f0d",
+        "build_seconds": 2.287,
+        "numbers_digest": "b65ca6ed5e062ef50070556581277b19778ac5ba6868f352bc98186e6875b664",
         "visual_candidates_min": 3,
         "findings": []
       },
@@ -203,8 +203,8 @@
         "variety": 0,
         "unsourced": 0,
         "art_direction": "line_art_schematic",
-        "build_seconds": 2.2,
-        "numbers_digest": "bddd531a1ca68530e42bd3bee481ed94e0f395ac404e712c112d08b4fedcaaef",
+        "build_seconds": 2.312,
+        "numbers_digest": "b6a8d7d07b7d6f9c1b2f96bed85380448a7527a2dc633935613523fe5ffd679a",
         "visual_candidates_min": 3,
         "findings": []
       },
@@ -213,16 +213,14 @@
         "lang": "ar",
         "slides": 10,
         "critical": 0,
-        "major": 1,
+        "major": 0,
         "variety": 0,
         "unsourced": 0,
         "art_direction": "duotone_hero",
-        "build_seconds": 2.324,
-        "numbers_digest": "cf3019691309bdd53649dc17b2a2fc994b1585e9e41c3cea95c9ffe399aa8134",
+        "build_seconds": 2.406,
+        "numbers_digest": "0c3b1ce0a32d16960bac9e07b6408057f3d9908ece961d98aa88cf4953f640cf",
         "visual_candidates_min": 3,
-        "findings": [
-          "major type_sizes s3: 5 distinct type sizes (10, 13, 14, 24, 40), maximum 4"
-        ]
+        "findings": []
       },
       {
         "name": "15-ar-uae-bank-merger",
@@ -233,8 +231,8 @@
         "variety": 0,
         "unsourced": 0,
         "art_direction": "editorial_illustration",
-        "build_seconds": 2.209,
-        "numbers_digest": "6d4c82c5b4595bd5f9f8a353b9f8ec74ded1905dd73b70c237a8ff43764d5614",
+        "build_seconds": 2.538,
+        "numbers_digest": "14628c53f185b605fa00bd1430356382fdb487b0388a367d54864b93fc20970a",
         "visual_candidates_min": 3,
         "findings": []
       },
@@ -247,8 +245,8 @@
         "variety": 0,
         "unsourced": 0,
         "art_direction": "duotone_hero",
-        "build_seconds": 2.065,
-        "numbers_digest": "49964b0fd29d33ab42d285d1939ead5134656929b1dd491e278708e7f8891fce",
+        "build_seconds": 1.711,
+        "numbers_digest": "c0719c4b91d7c8e32efaeef50d853ce9e645c4e0fbec3c122423012927d8fef6",
         "visual_candidates_min": 3,
         "findings": []
       },
@@ -261,8 +259,8 @@
         "variety": 0,
         "unsourced": 0,
         "art_direction": "iconographic_system",
-        "build_seconds": 1.784,
-        "numbers_digest": "2174e83df4707b99b909e99b95f4192884865e3f8f19fc9e0b060bfeab3c5e66",
+        "build_seconds": 1.788,
+        "numbers_digest": "764b180c001beaed0bda21e68494ec50e0ee7529bef458be70d37828053509b9",
         "visual_candidates_min": 3,
         "findings": []
       },
@@ -275,8 +273,8 @@
         "variety": 0,
         "unsourced": 0,
         "art_direction": "line_art_schematic",
-        "build_seconds": 2.156,
-        "numbers_digest": "c67c2aa51ead20d3049dd9c7b7e3acac2a5ba1416956c002d48dde8a89f20371",
+        "build_seconds": 2.276,
+        "numbers_digest": "4d52753c257d24b1db6d7dd775903819053aadb69778465710177c883f4fe961",
         "visual_candidates_min": 3,
         "findings": []
       },
@@ -289,8 +287,8 @@
         "variety": 0,
         "unsourced": 0,
         "art_direction": "isometric_system",
-        "build_seconds": 2.073,
-        "numbers_digest": "c30425075daada16518564d6216122061914c7df6a8a40cf5b0ca24d2fb49a0c",
+        "build_seconds": 2.076,
+        "numbers_digest": "abcfd9317add45738c95646788b5272117e08bc1797b2040e484b65310bb6f27",
         "visual_candidates_min": 3,
         "findings": []
       },
@@ -303,8 +301,8 @@
         "variety": 0,
         "unsourced": 0,
         "art_direction": "isometric_system",
-        "build_seconds": 1.963,
-        "numbers_digest": "4f35f28b5ead92736599cb7c3cc242e71a762a8d249380d2fa9f2df8da53fd04",
+        "build_seconds": 1.91,
+        "numbers_digest": "97018c05796471381053b7662ea73b00c1d6d6583e8a166ade1d8c03bb982631",
         "visual_candidates_min": 3,
         "findings": []
       }
@@ -318,8 +316,8 @@
     "arabic": 6,
     "ten_slide": 42,
     "ten_slide_share": 0.42,
-    "p50_10_slide_s": 2.049,
-    "p90_10_slide_s": 2.386,
+    "p50_10_slide_s": 2.085,
+    "p90_10_slide_s": 2.389,
     "unsourced": 0,
     "critical_total": 0,
     "major_total": 0,
@@ -365,7 +363,7 @@
         "slides": 8,
         "critical": 0,
         "major": 0,
-        "build_seconds": 2.175
+        "build_seconds": 2.702
       },
       {
         "deck_id": "rel-001-pitchbook-ifrs",
@@ -373,7 +371,7 @@
         "slides": 12,
         "critical": 0,
         "major": 0,
-        "build_seconds": 1.988
+        "build_seconds": 2.43
       },
       {
         "deck_id": "rel-002-pitchbook-mena",
@@ -381,7 +379,7 @@
         "slides": 10,
         "critical": 0,
         "major": 0,
-        "build_seconds": 2.049
+        "build_seconds": 2.154
       },
       {
         "deck_id": "rel-003-ic-deck-us-gaap",
@@ -389,7 +387,7 @@
         "slides": 6,
         "critical": 0,
         "major": 0,
-        "build_seconds": 1.994
+        "build_seconds": 2.012
       },
       {
         "deck_id": "rel-004-ic-deck-ifrs",
@@ -397,7 +395,7 @@
         "slides": 8,
         "critical": 0,
         "major": 0,
-        "build_seconds": 1.911
+        "build_seconds": 1.95
       },
       {
         "deck_id": "rel-005-market-entry-mena",
@@ -405,7 +403,7 @@
         "slides": 10,
         "critical": 0,
         "major": 0,
-        "build_seconds": 2.214
+        "build_seconds": 2.332
       },
       {
         "deck_id": "rel-006-earnings-us-gaap",
@@ -413,7 +411,7 @@
         "slides": 6,
         "critical": 0,
         "major": 0,
-        "build_seconds": 1.872
+        "build_seconds": 1.689
       },
       {
         "deck_id": "rel-007-earnings-ifrs",
@@ -421,7 +419,7 @@
         "slides": 10,
         "critical": 0,
         "major": 0,
-        "build_seconds": 2.139
+        "build_seconds": 2.389
       },
       {
         "deck_id": "rel-008-earnings-mena",
@@ -429,7 +427,7 @@
         "slides": 11,
         "critical": 0,
         "major": 0,
-        "build_seconds": 2.366
+        "build_seconds": 2.851
       },
       {
         "deck_id": "rel-009-market-entry-us-gaap",
@@ -437,7 +435,7 @@
         "slides": 7,
         "critical": 0,
         "major": 0,
-        "build_seconds": 1.579
+        "build_seconds": 2.013
       },
       {
         "deck_id": "rel-010-market-entry-ifrs",
@@ -445,7 +443,7 @@
         "slides": 10,
         "critical": 0,
         "major": 0,
-        "build_seconds": 2.185
+        "build_seconds": 2.056
       },
       {
         "deck_id": "rel-011-market-entry-mena",
@@ -453,7 +451,7 @@
         "slides": 6,
         "critical": 0,
         "major": 0,
-        "build_seconds": 1.999
+        "build_seconds": 1.753
       },
       {
         "deck_id": "rel-012-carve-out-us-gaap",
@@ -461,7 +459,7 @@
         "slides": 10,
         "critical": 0,
         "major": 0,
-        "build_seconds": 2.138
+        "build_seconds": 2.153
       },
       {
         "deck_id": "rel-013-carve-out-ifrs",
@@ -469,7 +467,7 @@
         "slides": 9,
         "critical": 0,
         "major": 0,
-        "build_seconds": 1.873
+        "build_seconds": 2.486
       },
       {
         "deck_id": "rel-014-carve-out-mena",
@@ -477,7 +475,7 @@
         "slides": 12,
         "critical": 0,
         "major": 0,
-        "build_seconds": 1.946
+        "build_seconds": 1.995
       },
       {
         "deck_id": "rel-015-pitchbook-us-gaap",
@@ -485,7 +483,7 @@
         "slides": 10,
         "critical": 0,
         "major": 0,
-        "build_seconds": 1.77
+        "build_seconds": 2.235
       },
       {
         "deck_id": "rel-016-pitchbook-ifrs",
@@ -493,7 +491,7 @@
         "slides": 8,
         "critical": 0,
         "major": 0,
-        "build_seconds": 1.871
+        "build_seconds": 1.979
       },
       {
         "deck_id": "rel-017-pitchbook-mena",
@@ -501,7 +499,7 @@
         "slides": 9,
         "critical": 0,
         "major": 0,
-        "build_seconds": 1.96
+        "build_seconds": 1.931
       },
       {
         "deck_id": "rel-018-ic-deck-us-gaap",
@@ -509,7 +507,7 @@
         "slides": 8,
         "critical": 0,
         "major": 0,
-        "build_seconds": 1.997
+        "build_seconds": 2.062
       },
       {
         "deck_id": "rel-019-ic-deck-ifrs",
@@ -517,7 +515,7 @@
         "slides": 10,
         "critical": 0,
         "major": 0,
-        "build_seconds": 2.061
+        "build_seconds": 1.989
       },
       {
         "deck_id": "rel-020-ic-deck-mena",
@@ -525,7 +523,7 @@
         "slides": 6,
         "critical": 0,
         "major": 0,
-        "build_seconds": 2.119
+        "build_seconds": 1.808
       },
       {
         "deck_id": "rel-021-ic-deck-mena",
@@ -533,7 +531,7 @@
         "slides": 7,
         "critical": 0,
         "major": 0,
-        "build_seconds": 2.428
+        "build_seconds": 2.152
       },
       {
         "deck_id": "rel-022-earnings-ifrs",
@@ -541,7 +539,7 @@
         "slides": 6,
         "critical": 0,
         "major": 0,
-        "build_seconds": 1.837
+        "build_seconds": 1.893
       },
       {
         "deck_id": "rel-023-earnings-mena",
@@ -549,7 +547,7 @@
         "slides": 10,
         "critical": 0,
         "major": 0,
-        "build_seconds": 2.133
+        "build_seconds": 2.288
       },
       {
         "deck_id": "rel-024-market-entry-us-gaap",
@@ -557,7 +555,7 @@
         "slides": 10,
         "critical": 0,
         "major": 0,
-        "build_seconds": 1.684
+        "build_seconds": 1.537
       },
       {
         "deck_id": "rel-025-market-entry-ifrs",
@@ -565,7 +563,7 @@
         "slides": 8,
         "critical": 0,
         "major": 0,
-        "build_seconds": 2.407
+        "build_seconds": 2.196
       },
       {
         "deck_id": "rel-026-market-entry-mena",
@@ -573,7 +571,7 @@
         "slides": 7,
         "critical": 0,
         "major": 0,
-        "build_seconds": 1.933
+        "build_seconds": 1.653
       },
       {
         "deck_id": "rel-027-carve-out-us-gaap",
@@ -581,7 +579,7 @@
         "slides": 7,
         "critical": 0,
         "major": 0,
-        "build_seconds": 2.131
+        "build_seconds": 2.116
       },
       {
         "deck_id": "rel-028-carve-out-ifrs",
@@ -589,7 +587,7 @@
         "slides": 9,
         "critical": 0,
         "major": 0,
-        "build_seconds": 1.67
+        "build_seconds": 2.316
       },
       {
         "deck_id": "rel-029-carve-out-mena",
@@ -597,7 +595,7 @@
         "slides": 10,
         "critical": 0,
         "major": 0,
-        "build_seconds": 1.828
+        "build_seconds": 1.567
       },
       {
         "deck_id": "rel-030-pitchbook-us-gaap",
@@ -605,7 +603,7 @@
         "slides": 11,
         "critical": 0,
         "major": 0,
-        "build_seconds": 1.865
+        "build_seconds": 1.785
       },
       {
         "deck_id": "rel-031-pitchbook-ifrs",
@@ -613,7 +611,7 @@
         "slides": 10,
         "critical": 0,
         "major": 0,
-        "build_seconds": 1.955
+        "build_seconds": 2.059
       },
       {
         "deck_id": "rel-032-pitchbook-mena",
@@ -621,7 +619,7 @@
         "slides": 12,
         "critical": 0,
         "major": 0,
-        "build_seconds": 2.279
+        "build_seconds": 1.888
       },
       {
         "deck_id": "rel-033-ic-deck-us-gaap",
@@ -629,7 +627,7 @@
         "slides": 7,
         "critical": 0,
         "major": 0,
-        "build_seconds": 2.093
+        "build_seconds": 1.935
       },
       {
         "deck_id": "rel-034-ic-deck-ifrs",
@@ -637,7 +635,7 @@
         "slides": 6,
         "critical": 0,
         "major": 0,
-        "build_seconds": 2.289
+        "build_seconds": 2.32
       },
       {
         "deck_id": "rel-035-ic-deck-mena",
@@ -645,7 +643,7 @@
         "slides": 11,
         "critical": 0,
         "major": 0,
-        "build_seconds": 2.032
+        "build_seconds": 1.658
       },
       {
         "deck_id": "rel-036-earnings-us-gaap",
@@ -653,7 +651,7 @@
         "slides": 8,
         "critical": 0,
         "major": 0,
-        "build_seconds": 1.865
+        "build_seconds": 1.825
       },
       {
         "deck_id": "rel-037-carve-out-mena",
@@ -661,7 +659,7 @@
         "slides": 9,
         "critical": 0,
         "major": 0,
-        "build_seconds": 2.29
+        "build_seconds": 2.465
       },
       {
         "deck_id": "rel-038-earnings-mena",
@@ -669,7 +667,7 @@
         "slides": 6,
         "critical": 0,
         "major": 0,
-        "build_seconds": 1.886
+        "build_seconds": 1.661
       },
       {
         "deck_id": "rel-039-market-entry-us-gaap",
@@ -677,7 +675,7 @@
         "slides": 10,
         "critical": 0,
         "major": 0,
-        "build_seconds": 1.898
+        "build_seconds": 2.379
       },
       {
         "deck_id": "rel-040-market-entry-ifrs",
@@ -685,7 +683,7 @@
         "slides": 10,
         "critical": 0,
         "major": 0,
-        "build_seconds": 2.587
+        "build_seconds": 2.588
       },
       {
         "deck_id": "rel-041-market-entry-mena",
@@ -693,7 +691,7 @@
         "slides": 10,
         "critical": 0,
         "major": 0,
-        "build_seconds": 1.895
+        "build_seconds": 2.19
       },
       {
         "deck_id": "rel-042-carve-out-us-gaap",
@@ -701,7 +699,7 @@
         "slides": 12,
         "critical": 0,
         "major": 0,
-        "build_seconds": 2.318
+        "build_seconds": 2.28
       },
       {
         "deck_id": "rel-043-carve-out-ifrs",
@@ -709,7 +707,7 @@
         "slides": 10,
         "critical": 0,
         "major": 0,
-        "build_seconds": 2.127
+        "build_seconds": 2.102
       },
       {
         "deck_id": "rel-044-carve-out-mena",
@@ -717,7 +715,7 @@
         "slides": 10,
         "critical": 0,
         "major": 0,
-        "build_seconds": 2.038
+        "build_seconds": 1.999
       },
       {
         "deck_id": "rel-045-pitchbook-us-gaap",
@@ -725,7 +723,7 @@
         "slides": 6,
         "critical": 0,
         "major": 0,
-        "build_seconds": 1.546
+        "build_seconds": 2.42
       },
       {
         "deck_id": "rel-046-pitchbook-ifrs",
@@ -733,7 +731,7 @@
         "slides": 10,
         "critical": 0,
         "major": 0,
-        "build_seconds": 2.009
+        "build_seconds": 1.948
       },
       {
         "deck_id": "rel-047-pitchbook-mena",
@@ -741,7 +739,7 @@
         "slides": 7,
         "critical": 0,
         "major": 0,
-        "build_seconds": 1.804
+        "build_seconds": 2.32
       },
       {
         "deck_id": "rel-048-ic-deck-us-gaap",
@@ -749,7 +747,7 @@
         "slides": 6,
         "critical": 0,
         "major": 0,
-        "build_seconds": 1.898
+        "build_seconds": 1.376
       },
       {
         "deck_id": "rel-049-ic-deck-ifrs",
@@ -757,7 +755,7 @@
         "slides": 10,
         "critical": 0,
         "major": 0,
-        "build_seconds": 1.808
+        "build_seconds": 1.891
       },
       {
         "deck_id": "rel-050-ic-deck-mena",
@@ -765,7 +763,7 @@
         "slides": 10,
         "critical": 0,
         "major": 0,
-        "build_seconds": 2.44
+        "build_seconds": 2.254
       },
       {
         "deck_id": "rel-051-earnings-us-gaap",
@@ -773,7 +771,7 @@
         "slides": 10,
         "critical": 0,
         "major": 0,
-        "build_seconds": 2.064
+        "build_seconds": 1.91
       },
       {
         "deck_id": "rel-052-earnings-ifrs",
@@ -781,7 +779,7 @@
         "slides": 6,
         "critical": 0,
         "major": 0,
-        "build_seconds": 1.776
+        "build_seconds": 1.762
       },
       {
         "deck_id": "rel-053-market-entry-mena",
@@ -789,7 +787,7 @@
         "slides": 10,
         "critical": 0,
         "major": 0,
-        "build_seconds": 1.976
+        "build_seconds": 2.071
       },
       {
         "deck_id": "rel-054-market-entry-us-gaap",
@@ -797,7 +795,7 @@
         "slides": 9,
         "critical": 0,
         "major": 0,
-        "build_seconds": 1.916
+        "build_seconds": 1.951
       },
       {
         "deck_id": "rel-055-market-entry-ifrs",
@@ -805,7 +803,7 @@
         "slides": 6,
         "critical": 0,
         "major": 0,
-        "build_seconds": 1.541
+        "build_seconds": 2.218
       },
       {
         "deck_id": "rel-056-market-entry-mena",
@@ -813,7 +811,7 @@
         "slides": 9,
         "critical": 0,
         "major": 0,
-        "build_seconds": 1.722
+        "build_seconds": 1.59
       },
       {
         "deck_id": "rel-057-carve-out-us-gaap",
@@ -821,7 +819,7 @@
         "slides": 6,
         "critical": 0,
         "major": 0,
-        "build_seconds": 1.869
+        "build_seconds": 2.021
       },
       {
         "deck_id": "rel-058-carve-out-ifrs",
@@ -829,7 +827,7 @@
         "slides": 8,
         "critical": 0,
         "major": 0,
-        "build_seconds": 1.692
+        "build_seconds": 2.172
       },
       {
         "deck_id": "rel-059-carve-out-mena",
@@ -837,7 +835,7 @@
         "slides": 10,
         "critical": 0,
         "major": 0,
-        "build_seconds": 2.488
+        "build_seconds": 2.401
       },
       {
         "deck_id": "rel-060-pitchbook-us-gaap",
@@ -845,7 +843,7 @@
         "slides": 10,
         "critical": 0,
         "major": 0,
-        "build_seconds": 2.055
+        "build_seconds": 2.181
       },
       {
         "deck_id": "rel-061-pitchbook-ifrs",
@@ -853,7 +851,7 @@
         "slides": 6,
         "critical": 0,
         "major": 0,
-        "build_seconds": 2.087
+        "build_seconds": 1.919
       },
       {
         "deck_id": "rel-062-pitchbook-mena",
@@ -861,7 +859,7 @@
         "slides": 12,
         "critical": 0,
         "major": 0,
-        "build_seconds": 2.094
+        "build_seconds": 2.028
       },
       {
         "deck_id": "rel-063-ic-deck-us-gaap",
@@ -869,7 +867,7 @@
         "slides": 10,
         "critical": 0,
         "major": 0,
-        "build_seconds": 1.747
+        "build_seconds": 2.326
       },
       {
         "deck_id": "rel-064-ic-deck-ifrs",
@@ -877,7 +875,7 @@
         "slides": 10,
         "critical": 0,
         "major": 0,
-        "build_seconds": 2.386
+        "build_seconds": 2.013
       },
       {
         "deck_id": "rel-065-ic-deck-mena",
@@ -885,7 +883,7 @@
         "slides": 10,
         "critical": 0,
         "major": 0,
-        "build_seconds": 2.271
+        "build_seconds": 2.056
       },
       {
         "deck_id": "rel-066-earnings-us-gaap",
@@ -893,7 +891,7 @@
         "slides": 11,
         "critical": 0,
         "major": 0,
-        "build_seconds": 1.962
+        "build_seconds": 1.854
       },
       {
         "deck_id": "rel-067-earnings-ifrs",
@@ -901,7 +899,7 @@
         "slides": 8,
         "critical": 0,
         "major": 0,
-        "build_seconds": 1.717
+        "build_seconds": 2.182
       },
       {
         "deck_id": "rel-068-earnings-mena",
@@ -909,7 +907,7 @@
         "slides": 11,
         "critical": 0,
         "major": 0,
-        "build_seconds": 2.274
+        "build_seconds": 1.969
       },
       {
         "deck_id": "rel-069-ic-deck-mena",
@@ -917,7 +915,7 @@
         "slides": 9,
         "critical": 0,
         "major": 0,
-        "build_seconds": 2.099
+        "build_seconds": 2.077
       },
       {
         "deck_id": "rel-070-market-entry-ifrs",
@@ -925,7 +923,7 @@
         "slides": 10,
         "critical": 0,
         "major": 0,
-        "build_seconds": 2.083
+        "build_seconds": 1.993
       },
       {
         "deck_id": "rel-071-market-entry-mena",
@@ -933,7 +931,7 @@
         "slides": 10,
         "critical": 0,
         "major": 0,
-        "build_seconds": 2.163
+        "build_seconds": 1.928
       },
       {
         "deck_id": "rel-072-carve-out-us-gaap",
@@ -941,7 +939,7 @@
         "slides": 10,
         "critical": 0,
         "major": 0,
-        "build_seconds": 2.412
+        "build_seconds": 2.394
       },
       {
         "deck_id": "rel-073-carve-out-ifrs",
@@ -949,7 +947,7 @@
         "slides": 7,
         "critical": 0,
         "major": 0,
-        "build_seconds": 1.8
+        "build_seconds": 1.757
       },
       {
         "deck_id": "rel-074-carve-out-mena",
@@ -957,7 +955,7 @@
         "slides": 8,
         "critical": 0,
         "major": 0,
-        "build_seconds": 2.044
+        "build_seconds": 1.974
       },
       {
         "deck_id": "rel-075-pitchbook-us-gaap",
@@ -965,7 +963,7 @@
         "slides": 10,
         "critical": 0,
         "major": 0,
-        "build_seconds": 2.244
+        "build_seconds": 2.085
       },
       {
         "deck_id": "rel-076-pitchbook-ifrs",
@@ -973,7 +971,7 @@
         "slides": 12,
         "critical": 0,
         "major": 0,
-        "build_seconds": 2.208
+        "build_seconds": 2.456
       },
       {
         "deck_id": "rel-077-pitchbook-mena",
@@ -981,7 +979,7 @@
         "slides": 9,
         "critical": 0,
         "major": 0,
-        "build_seconds": 2.1
+        "build_seconds": 2.113
       },
       {
         "deck_id": "rel-078-ic-deck-us-gaap",
@@ -989,7 +987,7 @@
         "slides": 10,
         "critical": 0,
         "major": 0,
-        "build_seconds": 1.958
+        "build_seconds": 1.639
       },
       {
         "deck_id": "rel-079-ic-deck-ifrs",
@@ -997,7 +995,7 @@
         "slides": 8,
         "critical": 0,
         "major": 0,
-        "build_seconds": 1.91
+        "build_seconds": 1.855
       },
       {
         "deck_id": "rel-080-ic-deck-mena",
@@ -1005,7 +1003,7 @@
         "slides": 12,
         "critical": 0,
         "major": 0,
-        "build_seconds": 1.934
+        "build_seconds": 2.131
       },
       {
         "deck_id": "rel-081-earnings-us-gaap",
@@ -1013,7 +1011,7 @@
         "slides": 9,
         "critical": 0,
         "major": 0,
-        "build_seconds": 2.454
+        "build_seconds": 2.178
       },
       {
         "deck_id": "rel-082-earnings-ifrs",
@@ -1021,7 +1019,7 @@
         "slides": 11,
         "critical": 0,
         "major": 0,
-        "build_seconds": 2.543
+        "build_seconds": 2.629
       },
       {
         "deck_id": "rel-083-earnings-mena",
@@ -1029,7 +1027,7 @@
         "slides": 8,
         "critical": 0,
         "major": 0,
-        "build_seconds": 1.838
+        "build_seconds": 1.979
       },
       {
         "deck_id": "rel-084-market-entry-us-gaap",
@@ -1037,7 +1035,7 @@
         "slides": 10,
         "critical": 0,
         "major": 0,
-        "build_seconds": 2.04
+        "build_seconds": 1.626
       },
       {
         "deck_id": "rel-085-carve-out-mena",
@@ -1045,7 +1043,7 @@
         "slides": 10,
         "critical": 0,
         "major": 0,
-        "build_seconds": 2.04
+        "build_seconds": 2.233
       },
       {
         "deck_id": "rel-086-market-entry-mena",
@@ -1053,7 +1051,7 @@
         "slides": 10,
         "critical": 0,
         "major": 0,
-        "build_seconds": 1.77
+        "build_seconds": 2.576
       },
       {
         "deck_id": "rel-087-carve-out-us-gaap",
@@ -1061,7 +1059,7 @@
         "slides": 8,
         "critical": 0,
         "major": 0,
-        "build_seconds": 2.164
+        "build_seconds": 2.274
       },
       {
         "deck_id": "rel-088-carve-out-ifrs",
@@ -1069,7 +1067,7 @@
         "slides": 11,
         "critical": 0,
         "major": 0,
-        "build_seconds": 1.753
+        "build_seconds": 1.826
       },
       {
         "deck_id": "rel-089-carve-out-mena",
@@ -1077,7 +1075,7 @@
         "slides": 10,
         "critical": 0,
         "major": 0,
-        "build_seconds": 2.208
+        "build_seconds": 2.094
       },
       {
         "deck_id": "rel-090-pitchbook-us-gaap",
@@ -1085,7 +1083,7 @@
         "slides": 10,
         "critical": 0,
         "major": 0,
-        "build_seconds": 2.016
+        "build_seconds": 1.603
       },
       {
         "deck_id": "rel-091-pitchbook-ifrs",
@@ -1093,7 +1091,7 @@
         "slides": 10,
         "critical": 0,
         "major": 0,
-        "build_seconds": 2.273
+        "build_seconds": 2.039
       },
       {
         "deck_id": "rel-092-pitchbook-mena",
@@ -1101,7 +1099,7 @@
         "slides": 11,
         "critical": 0,
         "major": 0,
-        "build_seconds": 1.899
+        "build_seconds": 2.322
       },
       {
         "deck_id": "rel-093-ic-deck-us-gaap",
@@ -1109,7 +1107,7 @@
         "slides": 10,
         "critical": 0,
         "major": 0,
-        "build_seconds": 1.869
+        "build_seconds": 1.738
       },
       {
         "deck_id": "rel-094-ic-deck-ifrs",
@@ -1117,7 +1115,7 @@
         "slides": 10,
         "critical": 0,
         "major": 0,
-        "build_seconds": 1.941
+        "build_seconds": 1.769
       },
       {
         "deck_id": "rel-095-ic-deck-mena",
@@ -1125,7 +1123,7 @@
         "slides": 12,
         "critical": 0,
         "major": 0,
-        "build_seconds": 2.126
+        "build_seconds": 2.012
       },
       {
         "deck_id": "rel-096-earnings-us-gaap",
@@ -1133,7 +1131,7 @@
         "slides": 10,
         "critical": 0,
         "major": 0,
-        "build_seconds": 2.155
+        "build_seconds": 2.088
       },
       {
         "deck_id": "rel-097-earnings-ifrs",
@@ -1141,7 +1139,7 @@
         "slides": 10,
         "critical": 0,
         "major": 0,
-        "build_seconds": 1.766
+        "build_seconds": 2.186
       },
       {
         "deck_id": "rel-098-earnings-mena",
@@ -1149,7 +1147,7 @@
         "slides": 10,
         "critical": 0,
         "major": 0,
-        "build_seconds": 1.727
+        "build_seconds": 2.277
       },
       {
         "deck_id": "rel-099-market-entry-us-gaap",
@@ -1157,7 +1155,7 @@
         "slides": 11,
         "critical": 0,
         "major": 0,
-        "build_seconds": 1.935
+        "build_seconds": 2.183
       }
     ]
   }

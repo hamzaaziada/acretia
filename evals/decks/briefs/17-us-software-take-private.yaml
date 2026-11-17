@@ -102,7 +102,7 @@ spec:
         text: All-cash offer per share for the public shareholders
         figure: $41.50
       - lead: Premium
-        text: Premium to the unaffected price of $31.20
+        text: Premium to the unaffected price of $31.20 [2]
         figure: 33.0%
       - lead: Value
         text: Enterprise value as a multiple of ARR of $520m
@@ -111,7 +111,7 @@ spec:
         text: Base case sponsor money multiple over five years
         figure: 3.0x
       so_what:
-        text: Submit the offer on 16 November and seek a go-shop of 30 days.
+        text: Submit the offer on 16 November and seek a go-shop of 30 days [1].
     notes: 'Evidence slide 2: A $41.50 offer takes Beacon private at 7.3x ARR and returns '
   - id: s3
     archetype: kpi_row
@@ -363,7 +363,7 @@ spec:
         - 'Value: standalone DCF at 12.8% below the offer'
         - 'Timing: no deal risk'
         - 'Risk: growth slows below 19%'
-      verdict: The offer exceeds the standalone value by $4.70 per share.
+      verdict: The offer exceeds the standalone value by $4.70 per share [1].
     notes: 'Evidence slide 9: The offer of $41.50 beats the standalone value of $36.80 per'
   - id: s10
     archetype: recommendation

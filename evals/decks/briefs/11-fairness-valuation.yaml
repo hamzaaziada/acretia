@@ -100,7 +100,7 @@ spec:
         text: All-cash offer from the bidder, per share
         figure: $58.00
       - lead: Premium
-        text: Premium to the unaffected share price of $44.10
+        text: Premium to the unaffected share price of $44.10 [2]
         figure: 31.5%
       - lead: DCF
         text: The standalone DCF midpoint sits near the offer
@@ -109,7 +109,7 @@ spec:
         text: The offer implies this multiple against a peer median of 11.4x
         figure: 12.6x
       so_what:
-        text: Recommend the board accept the offer, subject to the fairness opinion.
+        text: Recommend the board accept the offer, subject to the fairness opinion [1].
     notes: 'Evidence slide 2: The $58.00 offer sits above the midpoint of four of six valu'
   - id: s3
     archetype: football_field
@@ -389,7 +389,7 @@ spec:
         - 'Value: the plan needs three years of delivery'
         - 'Timing: no closing risk'
         - 'Risk: input costs and execution'
-      verdict: Accepting is worth $7.00 per share more than the risk-adjusted standalone value.
+      verdict: Accepting is worth $7.00 per share more than the risk-adjusted standalone value [1].
     notes: 'Evidence slide 9: Accepting at $58.00 beats the standalone value of $51.00 per'
   - id: s10
     archetype: takeaway_box

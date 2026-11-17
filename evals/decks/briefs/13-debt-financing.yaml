@@ -101,7 +101,7 @@ spec:
         text: Term loan B and senior notes fund the acquisition
         figure: $950m
       - lead: Equity
-        text: Sponsor equity completes the sources of funds
+        text: Sponsor equity completes the sources of funds [2]
         figure: $480m
       - lead: Leverage
         text: Total debt to EBITDA at closing
@@ -110,7 +110,7 @@ spec:
         text: Blended cash cost of the package
         figure: 7.9%
       so_what:
-        text: Launch syndication to lenders on 16 November.
+        text: Launch syndication to lenders on 16 November [1].
     notes: 'Evidence slide 2: A $950m debt package at 7.0x funds the $1,350m purchase with'
   - id: s3
     archetype: deal_structure

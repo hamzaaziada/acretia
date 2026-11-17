@@ -17,9 +17,9 @@ if str(ROOT) not in sys.path:
 
 AS_OF = "2026-10-31"
 REGIMES = {
-    "us_gaap": {"cur": "$", "src": ("Company 10-K filings (synthetic)", "Market data, Oct 2026 (synthetic)"), "acct": "US GAAP"},
+    "us_gaap": {"cur": "$", "src": ("Company 10-K filings, US GAAP (synthetic)", "Market data, Oct 2026 (synthetic)"), "acct": "US GAAP"},
     "ifrs": {"cur": "€", "src": ("Annual report, IFRS (synthetic)", "Market data, Oct 2026 (synthetic)"), "acct": "IFRS"},
-    "mena": {"cur": "$", "src": ("Exchange filings, IFRS 9 (synthetic)", "Regional market data (synthetic)"), "acct": "IFRS"},
+    "mena": {"cur": "$", "src": ("Tadawul/ADX exchange filings, SOCPA/IFRS as adopted in KSA (synthetic)", "Regional market data (synthetic)"), "acct": "IFRS"},
 }
 NAMES = ["Falcon", "Harbor", "Atlas", "Cedar", "Orion", "Meridian", "Beacon", "Keystone", "Lighthouse", "Dune", "Oasis", "Rhine",
          "Summit", "Anchor", "Nimbus", "Vertex", "Crescent", "Delta", "Echo", "Granite", "Helios", "Ivory", "Juniper", "Kestrel"]

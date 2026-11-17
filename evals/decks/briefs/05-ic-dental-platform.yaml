@@ -103,7 +103,7 @@ spec:
         text: Entry at 10.5x EBITDA of $54.0m across 148 clinics
         figure: $567m
       - lead: Returns
-        text: Base case money multiple over a five-year hold
+        text: Base case money multiple over a five-year hold [2]
         figure: 3.1x
       - lead: Plan
         text: Add-on clinics at 6.0x lift EBITDA to the exit level
@@ -112,7 +112,7 @@ spec:
         text: Dentist retention after acquisition is the key diligence item
         figure: 94%
       so_what:
-        text: Approve a $371m equity commitment to the platform.
+        text: Approve a $371m equity commitment to the platform [1].
     notes: 'Evidence slide 2: Meridian returns 3.1x and 25.4% IRR from a dental platform b'
   - id: s3
     archetype: stat_hero
@@ -131,7 +131,7 @@ spec:
       - value: 12%
         label: share of clinics owned by DSOs
         context: Up from 8% in 2020
-      so_what: Low penetration leaves room for consolidation at 6.0x add-on multiples [1]
+      so_what: Low penetration leaves room for consolidation at 6.0x add-on multiples [1].
     notes: 'Evidence slide 3: The US dental services market is worth $34bn, and DSOs hold '
   - id: s4
     archetype: column_kpi

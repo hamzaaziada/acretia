@@ -20,13 +20,33 @@ def S(arch: str, title: str, blocks: dict | None = None, *, src=None, sec: str =
             "why": why, "cite": cite}
 
 
+def _mark(v, n: int):
+    """Append `[n]` to a string, or to the `text` of a dict; None when there is nothing to mark."""
+    if isinstance(v, str) and v and not re.search(r"\[\d\]", v):
+        return v.rstrip(". ") + f" [{n}]" + ("." if v.rstrip().endswith(".") else "")
+    if isinstance(v, dict) and isinstance(v.get("text"), str) and v["text"] and not re.search(r"\[\d\]", v["text"]):
+        return {**v, "text": _mark(v["text"], n)}
+    return None
+
+
 def _cite(blocks: dict, n: int) -> dict:
+    """Inline `[1]` (and `[2]` where a second source exists) on the claim the sources back; never on titles."""
     b = dict(blocks)
-    for k in ("takeaway", "so_what"):
-        v = b.get(k)
-        if isinstance(v, str) and v and not re.search(r"\[\d\]", v):
-            b[k] = v.rstrip(". ") + " [1]"
+    done = 0
+    for k in ("takeaway", "so_what", "verdict"):
+        m = _mark(b.get(k), 1)
+        if m is not None:
+            b[k], done = m, 1
             break
+    ins = b.get("insights")
+    if isinstance(ins, list) and ins:
+        ins = [dict(i) if isinstance(i, dict) else i for i in ins]
+        j = 1 if n >= 2 and len(ins) > 1 else 0
+        m = _mark(ins[j], 2 if n >= 2 and j else 1) if isinstance(ins[j], dict) else None
+        if m is not None:
+            ins[j] = m
+            b["insights"] = ins
+            done = 1
     return b
 
 

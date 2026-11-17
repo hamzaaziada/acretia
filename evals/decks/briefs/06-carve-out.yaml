@@ -103,7 +103,7 @@ spec:
         text: A trade sale gives the highest value of the three options
         figure: $1,880m
       - lead: Multiple
-        text: The sale price equals this multiple of standalone EBITDA
+        text: The sale price equals this multiple of standalone EBITDA [2]
         figure: 11.5x
       - lead: Standalone
         text: EBITDA after new costs and transition services
@@ -112,7 +112,7 @@ spec:
         text: Day-one readiness is the critical path
         figure: 9 months
       so_what:
-        text: Approve exclusive talks with the lead bidder.
+        text: Approve exclusive talks with the lead bidder [1].
     notes: 'Evidence slide 2: A trade sale of Cedar at $1,880m beats an IPO, with separati'
   - id: s3
     archetype: kpi_row

@@ -104,7 +104,7 @@ spec:
         text: Entry at 11.0x FY25E EBITDA of $96.0m sets the enterprise value
         figure: $1,056m
       - lead: Returns
-        text: Gross IRR in the base case clears the 20% fund hurdle over a five-year hold
+        text: Gross IRR in the base case clears the 20% fund hurdle over a five-year hold [2]
         figure: 22.4%
       - lead: Growth
         text: EBITDA rises on price and cost savings, ahead of input-cost inflation
@@ -113,7 +113,7 @@ spec:
         text: Top-3 customer renewals are the open diligence item before the bid
         figure: 31%
       so_what:
-        text: Approve a final bid of up to $1,090m EV at the 6 November deadline.
+        text: Approve a final bid of up to $1,090m EV at the 6 November deadline [1].
     notes: 'Evidence slide 2: Harbor clears our 20% IRR hurdle at 11.0x entry, with a 22.4'
   - id: s3
     archetype: kpi_row

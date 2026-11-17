@@ -82,12 +82,13 @@ class TestEval(unittest.TestCase):
             lines = p.read_text(encoding="utf-8").splitlines()
         self.assertIn('S8,standards_qa,50,0.980,"keep me"', lines)
         self.assertFalse(any(l.startswith("S3,old") for l in lines))
-        s3 = [l for l in lines if l.startswith("S3,")]
+        s3 = [l for l in lines if l.startswith(("S3,", "S3.10,"))]
         self.assertEqual(len(s3), 3 + 1 + 1 + 3)
         for l in s3:
             if "not run live" in l:
                 self.assertTrue(l.split(",")[3] == "", l)          # no score on a not-run-live row
         self.assertEqual(len(set(s3)), len(s3))
+        self.assertTrue(any(l.startswith("S3,deck_01-x__") and "model=" in l for l in s3), s3)   # full file stem + model tag
 
 
 if __name__ == "__main__":

@@ -205,18 +205,18 @@ def scorecard_rows(corpus: list[dict] | None, rel: dict | None) -> dict[str, lis
     """New S3 rows keyed by group (corpus, offline, reliability, bench)."""
     out: dict[str, list[str]] = {}
     if corpus is not None:
-        out["corpus"] = [_row("S3", f"deck_{r['name'].split('-', 1)[1]}__{m}", 1, "",
-                              f"not run live (D-021); offline: critical={r['critical']} major={r['major']} build_s={r['build_seconds']}")
+        out["corpus"] = [_row("S3", f"deck_{r['name']}__{m}", 1, "",
+                              f"model={m}; not run live (D-021); offline: critical={r['critical']} major={r['major']} variety={r['variety']} build_s={r['build_seconds']}")
                          for r in corpus for m in MODELS]
         share = sum(r["critical"] == 0 and r["ok"] for r in corpus) / max(1, len(corpus))
-        out["offline"] = [_row("S3", "deck_corpus_offline", len(corpus), f"{share:.3f}",
+        out["offline"] = [_row("S3.10", "deck_corpus_offline", len(corpus), f"{share:.3f}",
                                f"offline; share of decks with 0 critical; major={sum(r['major'] for r in corpus)} "
                                f"variety={sum(r['variety'] for r in corpus)} unsourced={sum(r['unsourced'] for r in corpus)}; critic skipped offline")]
     if rel is not None:
-        out["reliability"] = [_row("S3", "deck_reliability_offline", rel["n"], f"{rel['success_rate']:.3f}",
+        out["reliability"] = [_row("S3.10", "deck_reliability_offline", rel["n"], f"{rel['success_rate']:.3f}",
                                    f"offline; 0-critical success rate; 10-slide build p50={rel['p50_10_slide_s']}s p90={rel['p90_10_slide_s']}s; "
                                    f"unsourced={rel['unsourced']}")]
-    out["bench"] = [_row("S3", b, "", "", BENCH_NOTE) for b in BENCHES]
+    out["bench"] = [_row("S3.10", b, "", "", BENCH_NOTE) for b in BENCHES]
     return out
 
 
@@ -227,8 +227,8 @@ def write_scorecard(corpus: list[dict] | None, rel: dict | None, path: Path | No
     if not lines:
         lines = ["stage,eval,n,score,notes"]
     new = scorecard_rows(corpus, rel)
-    old_s3 = [l for l in lines if l.startswith("S3,")]
-    keep = [l for l in lines if not l.startswith("S3,")]
+    old_s3 = [l for l in lines if l.startswith(("S3,", "S3.10,"))]
+    keep = [l for l in lines if not l.startswith(("S3,", "S3.10,"))]
 
     def group_of(l: str) -> str:
         e = l.split(",", 2)[1]

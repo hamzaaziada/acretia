@@ -103,7 +103,7 @@ spec:
         text: Enterprise value for the whole platform
         figure: $1,380m
       - lead: Cheque
-        text: Our 40% share of the equity value
+        text: Our 40% share of the equity value [2]
         figure: $552m
       - lead: Contracts
         text: Revenue is secured by 25-year capacity contracts
@@ -112,7 +112,7 @@ spec:
         text: Base case equity IRR against a 12% hurdle
         figure: 14.0%
       so_what:
-        text: Approve the 40% stake and exclusivity with the seller.
+        text: Approve the 40% stake and exclusivity with the seller [1].
     notes: 'Evidence slide 2: A 40% stake in Dune at $1,380m EV returns 14.0% IRR on 94% c'
   - id: s3
     archetype: stat_hero
@@ -131,7 +131,7 @@ spec:
       - value: 22%
         label: Dune share of independent capacity
         context: Largest of five operators
-      so_what: Demand follows new developments in the UAE and Saudi Arabia [1]
+      so_what: Demand follows new developments in the UAE and Saudi Arabia [1].
     notes: 'Evidence slide 3: GCC district cooling grows to $9.6bn by 2030 and Dune holds '
   - id: s4
     archetype: market_map

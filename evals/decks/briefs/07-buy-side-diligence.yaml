@@ -103,7 +103,7 @@ spec:
         text: Quality of earnings adjustments lift reported EBITDA of $74.0m
         figure: $79.3m
       - lead: Price
-        text: At 11.0x the adjusted EBITDA implies this enterprise value
+        text: At 11.0x the adjusted EBITDA implies this enterprise value [2]
         figure: $872m
       - lead: Concentration
         text: The top-5 customers account for this share of revenue
@@ -112,7 +112,7 @@ spec:
         text: A normalised peg is set above the seller proposal
         figure: $38m
       so_what:
-        text: Proceed to signing with three price protections.
+        text: Proceed to signing with three price protections [1].
     notes: 'Evidence slide 2: Diligence supports $79.3m of adjusted EBITDA and a price of '
   - id: s3
     archetype: waterfall

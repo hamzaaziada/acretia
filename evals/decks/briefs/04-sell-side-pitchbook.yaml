@@ -101,7 +101,7 @@ spec:
         text: Peers, precedents and the DCF point to one range
         figure: $1.9bn to $2.3bn
       - lead: Multiple
-        text: The range equals this multiple of FY26E revenue of $240m
+        text: The range equals this multiple of FY26E revenue of $240m [2]
         figure: 7.9x to 9.6x
       - lead: Quality
         text: Annual recurring revenue grows at this rate with high retention
@@ -110,7 +110,7 @@ spec:
         text: Three strategic buyers combine fit and balance sheet
         figure: $2.5bn
       so_what:
-        text: Launch a targeted process to 40 buyers in November 2026.
+        text: Launch a targeted process to 40 buyers in November 2026 [1].
     notes: 'Evidence slide 2: Falcon supports an enterprise value of $1.9bn to $2.3bn, or '
   - id: s3
     archetype: kpi_row

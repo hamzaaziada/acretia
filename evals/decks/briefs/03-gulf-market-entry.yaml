@@ -101,7 +101,7 @@ spec:
         text: The Gulf B2B payments revenue pool grows by 12% a year to 2030
         figure: $4.2bn
       - lead: Focus
-        text: The UAE and Saudi Arabia hold this share of the 2025 pool
+        text: The UAE and Saudi Arabia hold this share of the 2025 pool [2]
         figure: 71%
       - lead: Economics
         text: A bank partnership breaks even earlier than a direct licence
@@ -110,7 +110,7 @@ spec:
         text: Funding over three years and a regional lead hired in Q1 2027
         figure: $38m
       so_what:
-        text: Approve the staged funding in the November board vote.
+        text: Approve the staged funding in the November board vote [1].
     notes: 'Evidence slide 2: Enter the UAE with a bank partner in 2027 and Saudi Arabia i'
   - id: s3
     archetype: column_kpi

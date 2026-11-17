@@ -96,7 +96,7 @@ spec:
         text: Sector net interest margin recovers on fixed-asset repricing
         figure: 3.38%
       - lead: Funding
-        text: Non-interest deposits stabilise as a share of funding
+        text: Non-interest deposits stabilise as a share of funding [2]
         figure: 24%
       - lead: Capital
         text: Median CET1 ratio sits comfortably above requirements
@@ -105,7 +105,7 @@ spec:
         text: The sector trades at a discount to tangible book
         figure: 1.4x
       so_what:
-        text: Favour banks with high deposit growth and low securities losses.
+        text: Favour banks with high deposit growth and low securities losses [1].
     notes: 'Evidence slide 2: Regional bank margins turned up in Q3 as NIM reached 3.38%, '
   - id: s3
     archetype: annotated_line

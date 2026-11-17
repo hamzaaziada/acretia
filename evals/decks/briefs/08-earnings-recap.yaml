@@ -88,7 +88,7 @@ spec:
         text: Adjusted EPS beat the consensus estimate of $1.00
         figure: $1.06
       - lead: Sales
-        text: Organic sales growth beat on pricing and mix
+        text: Organic sales growth beat on pricing and mix [2]
         figure: +4.8%
       - lead: Margin
         text: Gross margin expanded as input costs eased
@@ -97,7 +97,7 @@ spec:
         text: Full-year EPS guidance was raised from $3.95 to $4.05
         figure: $4.05 to $4.15
       so_what:
-        text: We raise our price target and keep an overweight rating.
+        text: We raise our price target and keep an overweight rating [1].
     notes: 'Evidence slide 2: Atlas beat on EPS by 6% and raised full-year guidance to $4.'
   - id: s3
     archetype: kpi_row

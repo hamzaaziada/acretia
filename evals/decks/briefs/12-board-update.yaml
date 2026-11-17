@@ -96,7 +96,7 @@ spec:
         text: Third quarter revenue grew on price and volume
         figure: $842m
       - lead: Earnings
-        text: Adjusted EBITDA margin improved on cost savings
+        text: Adjusted EBITDA margin improved on cost savings [2]
         figure: 17.9%
       - lead: Savings
         text: Cost programme savings captured year to date
@@ -105,7 +105,7 @@ spec:
         text: Three approvals are requested at this meeting
         figure: $65m
       so_what:
-        text: Approve the plant 4 capex, the dividend increase and the buyback.
+        text: Approve the plant 4 capex, the dividend increase and the buyback [1].
     notes: 'Evidence slide 2: Redwood grew revenue 5.6% to $842m, and the cost programme h'
   - id: s3
     archetype: agenda

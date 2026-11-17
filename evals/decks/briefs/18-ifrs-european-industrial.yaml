@@ -102,7 +102,7 @@ spec:
         text: Sum-of-the-parts value per share against the current price
         figure: €46.00
       - lead: Earnings
-        text: IFRS EBITDA on revenue of €3,420m
+        text: IFRS EBITDA on revenue of €3,420m [2]
         figure: €412m
       - lead: Option
         text: A spin-off of Automation takes this long to complete
@@ -111,7 +111,7 @@ spec:
         text: Net debt to EBITDA excluding leases
         figure: 1.6x
       so_what:
-        text: Mandate a spin-off of Automation for a 2027 listing.
+        text: Mandate a spin-off of Automation for a 2027 listing [1].
     notes: 'Evidence slide 2: Separating Automation lifts the sum of the parts to €46.00 p'
   - id: s3
     archetype: kpi_row

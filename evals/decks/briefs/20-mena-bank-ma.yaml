@@ -102,7 +102,7 @@ spec:
         text: Equity value at 1.35x price to book of $960m
         figure: $1,296m
       - lead: Accretion
-        text: EPS accretion in the first full year
+        text: EPS accretion in the first full year [2]
         figure: 6.8%
       - lead: Capital
         text: Pro forma CET1 ratio against 15.1% today
@@ -111,7 +111,7 @@ spec:
         text: Delta's NPL ratio with provision coverage of 142%
         figure: 3.9%
       so_what:
-        text: Approve a non-binding offer and start confirmatory diligence.
+        text: Approve a non-binding offer and start confirmatory diligence [1].
     notes: 'Evidence slide 2: Acquiring Delta Bank at 1.35x book is 6.8% accretive and kee'
   - id: s3
     archetype: scorecard

@@ -101,7 +101,7 @@ spec:
         text: Liquidity turns negative in week 10 and reaches this low point
         figure: $9m
       - lead: Leverage
-        text: Total debt is this multiple of LTM EBITDA of $78m
+        text: Total debt is this multiple of LTM EBITDA of $78m [2]
         figure: 11.2x
       - lead: Option
         text: Amend and extend returns this share to term loan lenders
@@ -110,7 +110,7 @@ spec:
         text: Sponsor and lenders inject liquidity at signing
         figure: $60m
       so_what:
-        text: Open a 30-day standstill and agree term sheets with lenders.
+        text: Open a 30-day standstill and agree term sheets with lenders [1].
     notes: 'Evidence slide 2: Amend and extend closes the liquidity gap and returns 78% to'
   - id: s3
     archetype: kpi_row

@@ -102,7 +102,7 @@ spec:
         text: Four methods overlap in one enterprise value band
         figure: $912m to $980m
       - lead: Multiple
-        text: The band equals this multiple of FY26E EBITDA of $96.0m
+        text: The band equals this multiple of FY26E EBITDA of $96.0m [2]
         figure: 9.5x to 10.2x
       - lead: Discount
         text: Northwind trades below the peer median multiple of 9.5x
@@ -111,7 +111,7 @@ spec:
         text: The gap reflects a lower EBITDA margin, not lower growth
         figure: 17.1%
       so_what:
-        text: Anchor the board discussion on the overlap of the four methods.
+        text: Anchor the board discussion on the overlap of the four methods [1].
     notes: 'Evidence slide 2: Triangulated enterprise value is $912m to $980m, or 9.5x to '
   - id: s3
     archetype: comps_table
