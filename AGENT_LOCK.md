@@ -8,7 +8,7 @@ One row per active claim. Claim a packet before you touch its files, commit the 
 | S5.4b evals + VDR50 (session D) | worker | main | 2026-11-17 | evals/vdr50/*, evals/odl_bench/*, evals/out/*, scripts/build_vdr50.py, scripts/eval_s5.py, tests/test_s5_eval_runner.py, scorecard.csv (S5 rows only) |
 | S5.5c Matrix Chat (session D) | worker | main | 2026-11-17 | om/grid_chat.py, tests/test_grid_chat.py, tests/fixtures/grid_chat/* |
 | S5.6 grid interfaces doc (session D) | worker | main | 2026-11-17 | docs/interfaces.md ("Document grid (S5)" section only) |
-| S5.F1 completeness recovery (session D) | worker | main | 2026-11-17 | om/docparse.py, tests/test_docparse.py |
+| S5.F3a RTL logical order (session D) | worker | main | 2026-11-17 | om/docparse.py, tests/test_docparse.py, tests/test_docparse_rtl.py |
 | S5.F2 extractive precision (session D) | worker | main | 2026-11-17 | om/grid.py, tests/test_grid.py, tests/test_grid_parity.py, tests/test_grid_extractive.py |
 | S5 docs (session D) | Boss | main | 2026-11-16 | docs/s5/* |
 | S1 gate | Boss | claude/dreamy-ramanujan-k8p2xt | 2026-11-16 | scripts/verify_s1.py |
@@ -89,3 +89,4 @@ One row per active claim. Claim a packet before you touch its files, commit the 
 - 2026-11-16: session A: S6.1, S6.4, S6.5a, S6.5b done; S6.1c claimed.
 - 2026-11-17: S4.6c, S4 gate, S4.10 merged and released. Fix Packets FP-S4-A..F claimed (IB VP review 6.2/10, gate FAILs, reliability 52%).
 - 2026-11-16: session A: FP-S2a-d all done; S2 specialist re-review claimed.
+- 2026-11-17: S5.F1 verified on main and released; S5.F3a claimed (session D).
