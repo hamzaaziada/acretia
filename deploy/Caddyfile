@@ -1,0 +1,48 @@
+# Acretia reverse proxy (S7.5b). TLS terminates here; the app is never published directly.
+#   ACRETIA_DOMAIN : public host name (default localhost)
+#   ACRETIA_TLS    : "internal" (Caddy's local CA, default) or an e-mail address for ACME (Let's Encrypt)
+{
+	admin localhost:2019
+	servers {
+		trusted_proxies static private_ranges
+	}
+}
+
+{$ACRETIA_DOMAIN:localhost} {
+	tls {$ACRETIA_TLS:internal}
+
+	encode zstd gzip
+
+	header {
+		Strict-Transport-Security "max-age=31536000; includeSubDomains"
+		X-Content-Type-Options "nosniff"
+		Referrer-Policy "same-origin"
+		X-Frame-Options "DENY"
+		# The app sends its own, stricter CSP; this only applies when the app sends none (e.g. error pages from Caddy).
+		?Content-Security-Policy "default-src 'self'; frame-ancestors 'none'; base-uri 'none'; form-action 'self'; object-src 'none'"
+		-Server
+	}
+
+	request_body {
+		max_size 256MB
+	}
+
+	reverse_proxy app:8791 {
+		# Server-sent events (job streams) must not be buffered.
+		flush_interval -1
+		header_up X-Forwarded-Proto {scheme}
+		health_uri /api/v1/healthz
+		health_interval 15s
+		transport http {
+			read_timeout 10m
+			dial_timeout 5s
+		}
+	}
+
+	# Rate limiting is not part of Caddy core. The app throttles failed sign-ins itself (om/api/security.py);
+	# for per-IP request limits build Caddy with github.com/mholt/caddy-ratelimit (see DEPLOY.md).
+	log {
+		output stdout
+		format json
+	}
+}
