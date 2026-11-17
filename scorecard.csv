@@ -96,3 +96,4 @@ S5,tenk_qa_accuracy_docling,100,0.990,run_mode=extractive over docling parse; 5.
 S5,odl_bench_acretia-pdfdoc,200,0.647,opendataloader-bench @7af1d8f evaluator run in place; nid 0.8268 teds 0.0 mhs 0.3885; 0.1163 s/page; ocr=off
 S5,odl_bench_acretia-docling-first6,6,0.935,opendataloader-bench @7af1d8f evaluator run in place; nid 0.9348 teds None mhs 0.9423; 3.0162 s/page; ocr=off
 S5,odl_bench_acretia-pdfdoc-first6,6,0.638,opendataloader-bench @7af1d8f evaluator run in place; nid 0.9669 teds None mhs 0.0; 0.08 s/page; ocr=off
+S4,ombench_three_engine_agree_recalc_on_load,16,1.000,"live SEC; re-verified after d65cb3b (LibreOffice OOXMLRecalcMode=0): 16/16 workbooks agree on every formula cell (om, LibreOffice, formulon, cached); comps now validate-clean; GOOGL still fails calculates"
