@@ -217,6 +217,34 @@ class GridTools(Base):
                 with self.assertRaises(ToolError):
                     T.grid_query(bad, grid_db=db)
 
+    def test_grid_query_engine_hardening(self):
+        from src.harness.mcp import grid_server
+        from src.harness.mcp.server import ToolFailure
+        secret = self.root / "o.csv"
+        secret.write_text("c\nOUTSIDE_SECRET\n")
+        with mock.patch.dict(os.environ, {"ACRETIA_MCP_ROOT": str(self.root)}):
+            db = self.make_db(self.ROWS)
+            for bad in (f"select * from (select 1) t, '{secret}'", f"select * from read_ndjson_auto('{secret}')",
+                        "select * from (select 1) t, query('sel'||'ect 1')", f"select * from glob('{self.root}/*')",
+                        f"ATTACH '{self.root}/x.db' AS x", f"COPY grid_cells TO '{self.root}/out.csv'"):
+                with self.assertRaises(ToolError) as cm:
+                    T.grid_query(bad, grid_db=db)
+                self.assertNotIn("OUTSIDE_SECRET", str(cm.exception))
+            # engine alone (guard bypassed), via the shared helper the tool uses
+            for backend in ("sqlite",):
+                adb = AnalyticsDB(db, prefer=backend)
+                with self.assertRaises(ToolFailure):
+                    grid_server.run_select(adb, f"select * from (select 1) t, '{secret}'", check=False)
+                with self.assertRaises(ToolFailure):
+                    grid_server.run_select(adb, "DELETE FROM grid_cells", check=False)
+            r = T.grid_query("WITH x AS (SELECT doc_id FROM grid_cells) SELECT COUNT(*) AS n FROM x", grid_db=db).to_dict()
+            self.assertEqual(r["data"]["rows"], [{"n": 2}])
+            with self.assertRaises(ToolError) as cm:
+                T.grid_query("with recursive r(n) as (select 1 union all select n+1 from r) select count(*) from r",
+                             grid_db=db)
+            self.assertIn("timeout", str(cm.exception))
+        self.assertFalse((self.root / "out.csv").exists())
+
     def test_grid_db_path_confined(self):
         outside = tempfile.NamedTemporaryFile(suffix=".sqlite", delete=False)
         self.addCleanup(os.unlink, outside.name)
