@@ -34,14 +34,10 @@ One row per active claim. Claim a packet before you touch its files, commit the 
 | FP-S4-C print/polish + manifest | worker (session C) | claude/busy-knuth-i3ewp5 | 2026-11-17 | om/polish.py, om/xlsx.py, om/manifest.py, tests/test_polish_fix.py |
 | FP-S4-D LBO + merger | worker (session C) | claude/busy-knuth-i3ewp5 | 2026-11-17 | om/lbo.py, om/merger.py, tests/test_lbo_merger_fix.py |
 | FP-S4-E comps + market | worker (session C) | claude/busy-knuth-i3ewp5 | 2026-11-17 | om/comps.py, om/market.py, tests/test_comps_fix.py |
-| S6-gate verify_s6.py | gate-writer (session A) | claude/dreamy-ramanujan-k8p2xt | 2026-11-17 | scripts/verify_s6.py, tests/fixtures/s6gate/** |
-| S7.5b Docker/compose/deploy | worker (session A) | claude/dreamy-ramanujan-k8p2xt | 2026-11-17 | Dockerfile, .dockerignore, docker-compose.yml, deploy/**, DEPLOY.md, scripts/verify_s7_deploy.py |
-| S7.4a security review | reviewer (session A) | claude/dreamy-ramanujan-k8p2xt | 2026-11-17 | SECURITY_REPORT.md, docs/reviews/security-*.md |
-| S6.1d quarterly recap + park/re-enqueue review | worker (session A) | claude/dreamy-ramanujan-k8p2xt | 2026-11-17 | src/harness/research/workflows/steps.py, src/harness/research/workflows/catalog.py, src/harness/research/jobs.py, tests/test_research_workflows.py, tests/test_research_api.py |
-| FP-S2e1 grid query isolation | worker (session A) | claude/dreamy-ramanujan-k8p2xt | 2026-11-17 | src/harness/mcp/grid_server.py, src/harness/mcp/grid_worker.py, tests/test_mcp.py |
-| FP-S2e2 adapter/ledger/PII residuals | worker (session A) | claude/dreamy-ramanujan-k8p2xt | 2026-11-17 | src/harness/adapter.py, src/harness/ledger.py, om/pii.py, tests/test_adapter.py |
-| FP-S2e3 evidence wiring + lease fence | worker (session A) | claude/dreamy-ramanujan-k8p2xt | 2026-11-17 | src/harness/evidence.py, om/storage.py, src/harness/research/api.py, src/harness/mcp/server.py, tests/test_evidence.py, tests/test_storage.py, tests/test_evidence_wiring.py |
 | FP-S2e4 crawler residuals | worker (session A) | claude/dreamy-ramanujan-k8p2xt | 2026-11-17 | src/harness/connectors/web.py, tests/test_connectors_harness.py |
+| FP-S6g scorer units | worker (session A) | claude/dreamy-ramanujan-k8p2xt | 2026-11-17 | eval/research/score.py, tests/test_research_evals.py |
+| FP-S1l S1 gate first-party dirs | gate-writer (session A) | claude/dreamy-ramanujan-k8p2xt | 2026-11-17 | scripts/verify_s1.py |
+| FP-SEC1 web_facts exfil guard | worker (session A) | claude/dreamy-ramanujan-k8p2xt | 2026-11-17 | src/harness/research/tools.py, src/harness/research/workflows/review.py, tests/test_research_tools.py |
 
 ## Log
 - 2026-11-16: created; no active claims.
@@ -100,3 +96,4 @@ One row per active claim. Claim a packet before you touch its files, commit the 
 - 2026-11-17: S5.F2 verified on main and released (session D).
 - 2026-11-17: S5.4b verified on main and released; S5.F4 claimed (session D).
 - 2026-11-17: S5.5c verified on main and released; S5.F3b claimed (session D).
+- 2026-11-16: session A: FP-S2e1/2/3, S6.1d, S6 gate, S7.5b, S7.4a done; FP-S6g, FP-S1l, FP-SEC1 claimed.
