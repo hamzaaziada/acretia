@@ -10,8 +10,10 @@ One row per active claim. Claim a packet before you touch its files, commit the 
 | S5 docs (session D) | Boss | main | 2026-11-16 | docs/s5/* |
 | S1 gate | Boss | claude/dreamy-ramanujan-k8p2xt | 2026-11-16 | scripts/verify_s1.py |
 | FP-S3-e corpus citations, scorecard naming, reliability labels | session B worker | claude/upbeat-mccarthy-viqjuo | 2026-11-17 | evals/decks/** (except evals/decks/edits/), om/deck/eval.py, scripts/eval_s3.py, scorecard.csv (S3 rows only), tests/test_deck_eval.py |
-| FP-S3-f archetype robustness (Arabic, gantt, deal, football), year provenance, typographic art, theme effects | session B worker | claude/upbeat-mccarthy-viqjuo | 2026-11-17 | om/deck/archetypes/*.py, om/deck/provenance.py, om/deck/render.py, om/deck/visuals/procedural.py, tests/test_deck_arch_*.py, tests/test_deck_engine.py, tests/test_deck_render.py, tests/test_deck_visuals.py |
-| S3 specialist review r1 (MBB EM/designer) | session B reviewer | claude/upbeat-mccarthy-viqjuo | 2026-11-17 | docs/s3/reviews/** |
+| R2-a frameworks: unit-aware tables, single-hue ramps, RTL tables, fitted cards | session B worker | claude/upbeat-mccarthy-viqjuo | 2026-11-17 | om/deck/archetypes/frameworks.py, tests/test_deck_arch_frameworks.py |
+| R2-b frame/text/core: titles on the rule, cover fitter, fitted panels, chevrons, visual slots | session B worker | claude/upbeat-mccarthy-viqjuo | 2026-11-17 | om/deck/archetypes/__init__.py, om/deck/archetypes/base.py, om/deck/archetypes/core.py, om/deck/archetypes/text.py, tests/test_deck_arch_text.py |
+| R2-c charts polish | session B worker | claude/upbeat-mccarthy-viqjuo | 2026-11-17 | om/deck/archetypes/charts.py, om/deck/render.py, tests/test_deck_arch_charts.py, tests/test_deck_render.py |
+| R2-d claim-check + content-slide visuals in the engine | session B worker | claude/upbeat-mccarthy-viqjuo | 2026-11-17 | om/deck/claims.py, om/deck/engine.py, tests/test_deck_claims.py, tests/test_deck_engine.py |
 | S3 gate + docs | session B Boss | claude/upbeat-mccarthy-viqjuo | 2026-11-16 | docs/s3/*, docs/deck-engine.md, PROGRESS.md (S3 row only) |
 | S8.1 standards KB (session E) | worker | main | 2026-11-16 | om/intl/standards/**, docs/s8/standards/**, scripts/gen_standards_docs.py, tests/test_intl_standards.py |
 | S8.3a numbers + OCR service + synthetic fixtures (session E) | worker | main | 2026-11-16 | om/intl/numparse.py, om/intl/ocr.py, scripts/make_intl_fixtures.py, tests/fixtures/intl/**, tests/test_intl_numparse.py, tests/test_intl_ocr.py, license-and-repo-ledger.csv (S8 rows only) |
@@ -97,3 +99,4 @@ One row per active claim. Claim a packet before you touch its files, commit the 
 - 2026-11-17: S5.4b verified on main and released; S5.F4 claimed (session D).
 - 2026-11-17: S5.5c verified on main and released; S5.F3b claimed (session D).
 - 2026-11-16: session A: FP-S2e1/2/3, S6.1d, S6 gate, S7.5b, S7.4a done; FP-S6g, FP-S1l, FP-SEC1 claimed.
+- 2026-11-17: session B: FP-S3-f merged, specialist r1 6.4/10 FAIL; claimed R2-a..d fix packets.
