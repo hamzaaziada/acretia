@@ -1,0 +1,1241 @@
+{
+ "version": 1,
+ "documents": 50,
+ "questions": [
+  {
+   "id": "v01",
+   "text": "Who are the parties to the agreement?",
+   "type": "text"
+  },
+  {
+   "id": "v02",
+   "text": "What is the expiry date or term end date of the agreement?",
+   "type": "date"
+  },
+  {
+   "id": "v03",
+   "text": "What happens upon a change of control?",
+   "type": "text"
+  },
+  {
+   "id": "v04",
+   "text": "Is assignment of the agreement restricted without consent?",
+   "type": "text"
+  },
+  {
+   "id": "v05",
+   "text": "Is there an exclusivity or non-compete obligation?",
+   "type": "text"
+  },
+  {
+   "id": "v06",
+   "text": "Is there a most favoured nation (MFN) pricing clause?",
+   "type": "text"
+  },
+  {
+   "id": "v07",
+   "text": "What is the governing law?",
+   "type": "text"
+  },
+  {
+   "id": "v08",
+   "text": "What is the maximum total leverage ratio covenant?",
+   "type": "number"
+  },
+  {
+   "id": "v09",
+   "text": "What was total revenue for the fiscal year?",
+   "type": "currency"
+  },
+  {
+   "id": "v10",
+   "text": "Who is the independent auditor?",
+   "type": "text"
+  },
+  {
+   "id": "v11",
+   "text": "What is the minimum interest coverage ratio covenant?",
+   "type": "number"
+  },
+  {
+   "id": "v12",
+   "text": "What is the annual base rent or annual fee payable?",
+   "type": "currency"
+  },
+  {
+   "id": "v13",
+   "text": "What is the notice period for termination?",
+   "type": "text"
+  }
+ ],
+ "entity": "Meridian Components Holdings, Inc.",
+ "files": [
+  {
+   "path": "01 Financials/10-K/AAPL 10-K.pdf",
+   "ref": "evals/vdr50/docs/01 Financials/10-K/AAPL 10-K.pdf",
+   "kind": "10-K",
+   "source": "evals/tenk/pdfs/AAPL.pdf",
+   "language": "en",
+   "scanned": false,
+   "room": "tenk",
+   "sha256": "472fd39bae43ac4a9c0d07b9e67263a5a7182d01da054f7497ddca99aa75bbef",
+   "bytes": 147651,
+   "planted": []
+  },
+  {
+   "path": "01 Financials/10-K/MSFT 10-K.pdf",
+   "ref": "evals/vdr50/docs/01 Financials/10-K/MSFT 10-K.pdf",
+   "kind": "10-K",
+   "source": "evals/tenk/pdfs/MSFT.pdf",
+   "language": "en",
+   "scanned": false,
+   "room": "tenk",
+   "sha256": "cb4c9ffdc708e35d88876ab04cf775e5dd4c405a38734d02c917b73574d4e9f2",
+   "bytes": 140506,
+   "planted": []
+  },
+  {
+   "path": "01 Financials/10-K/KO 10-K.pdf",
+   "ref": "evals/vdr50/docs/01 Financials/10-K/KO 10-K.pdf",
+   "kind": "10-K",
+   "source": "evals/tenk/pdfs/KO.pdf",
+   "language": "en",
+   "scanned": false,
+   "room": "tenk",
+   "sha256": "fabe16361746d357be92d94fb9896d467bcb769ec94845d7ba4853d42ea75ce1",
+   "bytes": 159406,
+   "planted": []
+  },
+  {
+   "path": "01 Financials/10-K/JNJ 10-K.pdf",
+   "ref": "evals/vdr50/docs/01 Financials/10-K/JNJ 10-K.pdf",
+   "kind": "10-K",
+   "source": "evals/tenk/pdfs/JNJ.pdf",
+   "language": "en",
+   "scanned": false,
+   "room": "tenk",
+   "sha256": "ab689d936246414ae73bca83303aebc0f5eea1e466361a9570fc51e49ed14b78",
+   "bytes": 160582,
+   "planted": []
+  },
+  {
+   "path": "01 Financials/10-K/PG 10-K.pdf",
+   "ref": "evals/vdr50/docs/01 Financials/10-K/PG 10-K.pdf",
+   "kind": "10-K",
+   "source": "evals/tenk/pdfs/PG.pdf",
+   "language": "en",
+   "scanned": false,
+   "room": "tenk",
+   "sha256": "221ac7812953d555a41ede9dddace9c3f1f77169bffef04ef989bb355fe6174d",
+   "bytes": 202059,
+   "planted": []
+  },
+  {
+   "path": "01 Financials/10-K/WMT 10-K.pdf",
+   "ref": "evals/vdr50/docs/01 Financials/10-K/WMT 10-K.pdf",
+   "kind": "10-K",
+   "source": "evals/tenk/pdfs/WMT.pdf",
+   "language": "en",
+   "scanned": false,
+   "room": "tenk",
+   "sha256": "84d18c3d5c0ed12437eaacc5e756b0557e1c52a97f8ed3ecd57a1ce564f143a2",
+   "bytes": 137759,
+   "planted": []
+  },
+  {
+   "path": "01 Financials/10-K/COST 10-K.pdf",
+   "ref": "evals/vdr50/docs/01 Financials/10-K/COST 10-K.pdf",
+   "kind": "10-K",
+   "source": "evals/tenk/pdfs/COST.pdf",
+   "language": "en",
+   "scanned": false,
+   "room": "tenk",
+   "sha256": "72a4c5ea73cbdbabf81391b77fdd54c32cb9de17db8fb349c855e8cd437b473b",
+   "bytes": 141964,
+   "planted": []
+  },
+  {
+   "path": "01 Financials/10-K/HD 10-K.pdf",
+   "ref": "evals/vdr50/docs/01 Financials/10-K/HD 10-K.pdf",
+   "kind": "10-K",
+   "source": "evals/tenk/pdfs/HD.pdf",
+   "language": "en",
+   "scanned": false,
+   "room": "tenk",
+   "sha256": "75fbe79bc04631cbc8929d1796d116445346f544e3d4b44e6a69efbd49351e8d",
+   "bytes": 176762,
+   "planted": []
+  },
+  {
+   "path": "01 Financials/10-K/MCD 10-K.pdf",
+   "ref": "evals/vdr50/docs/01 Financials/10-K/MCD 10-K.pdf",
+   "kind": "10-K",
+   "source": "evals/tenk/pdfs/MCD.pdf",
+   "language": "en",
+   "scanned": false,
+   "room": "tenk",
+   "sha256": "a9b9e0775a651b799869d684a3623f2f7b655b8d6084cfe079ea16fcdcef56be",
+   "bytes": 163837,
+   "planted": []
+  },
+  {
+   "path": "01 Financials/10-K/LOW 10-K.pdf",
+   "ref": "evals/vdr50/docs/01 Financials/10-K/LOW 10-K.pdf",
+   "kind": "10-K",
+   "source": "evals/tenk/pdfs/LOW.pdf",
+   "language": "en",
+   "scanned": false,
+   "room": "tenk",
+   "sha256": "3d7b43c7bedf760d89fd6b42662976342470f89e38c4bcbc6fd413f368ecdf2d",
+   "bytes": 150429,
+   "planted": []
+  },
+  {
+   "path": "01 Financials/Audited/Audited Financial Statements FY2021.pdf",
+   "ref": "evals/vdr50/docs/01 Financials/Audited/Audited Financial Statements FY2021.pdf",
+   "kind": "audited_financials",
+   "language": "en",
+   "scanned": false,
+   "room": "vdr_en",
+   "sha256": "27a0137a23c9cca0163b6a2050443f00dbbc637d54773ae1c64c68be986c250c",
+   "bytes": 2664,
+   "planted": [
+    {
+     "qid": "v09",
+     "answer": 35870000
+    },
+    {
+     "qid": "v10",
+     "answer": "Whitfield & Crane LLP"
+    }
+   ],
+   "note": "",
+   "pages": 3
+  },
+  {
+   "path": "01 Financials/Audited/Audited Financial Statements FY2022.pdf",
+   "ref": "evals/vdr50/docs/01 Financials/Audited/Audited Financial Statements FY2022.pdf",
+   "kind": "audited_financials",
+   "language": "en",
+   "scanned": false,
+   "room": "vdr_en",
+   "sha256": "d872e1032b83763b7c9313c7689786c06134ede7d28f326b12647c1667d020f3",
+   "bytes": 2655,
+   "planted": [
+    {
+     "qid": "v09",
+     "answer": 39410000
+    },
+    {
+     "qid": "v10",
+     "answer": "Whitfield & Crane LLP"
+    }
+   ],
+   "note": "",
+   "pages": 3
+  },
+  {
+   "path": "01 Financials/Audited/Audited Financial Statements FY2024.pdf",
+   "ref": "evals/vdr50/docs/01 Financials/Audited/Audited Financial Statements FY2024.pdf",
+   "kind": "audited_financials",
+   "language": "en",
+   "scanned": false,
+   "room": "vdr_en",
+   "sha256": "993830c3c1c8e7848774a090fb2e7ab51e2e42beae07f2522b7e0d5c7ea2cfcf",
+   "bytes": 2644,
+   "planted": [
+    {
+     "qid": "v09",
+     "answer": 48250000
+    },
+    {
+     "qid": "v10",
+     "answer": "Whitfield & Crane LLP"
+    }
+   ],
+   "note": "",
+   "pages": 3
+  },
+  {
+   "path": "01 Financials/Management Accounts/Management Accounts January 2025.pdf",
+   "ref": "evals/vdr50/docs/01 Financials/Management Accounts/Management Accounts January 2025.pdf",
+   "kind": "management_accounts",
+   "language": "en",
+   "scanned": false,
+   "room": "vdr_en",
+   "sha256": "2bd00991d2632758d00e03bed72aff14314734b14e75223d349452a31ec3c9ee",
+   "bytes": 1303,
+   "planted": [
+    {
+     "qid": "v09",
+     "answer": 3910000
+    }
+   ],
+   "note": "",
+   "pages": 1
+  },
+  {
+   "path": "01 Financials/Management Accounts/Management Accounts February 2025.pdf",
+   "ref": "evals/vdr50/docs/01 Financials/Management Accounts/Management Accounts February 2025.pdf",
+   "kind": "management_accounts",
+   "language": "en",
+   "scanned": false,
+   "room": "vdr_en",
+   "sha256": "28ec4a59d06dcd1ed739205b36f29a4f8e53f28ba9af4fc947c62f8e748474ef",
+   "bytes": 1300,
+   "planted": [],
+   "note": "",
+   "pages": 1
+  },
+  {
+   "path": "01 Financials/Management Accounts/Management Accounts March 2025.pdf",
+   "ref": "evals/vdr50/docs/01 Financials/Management Accounts/Management Accounts March 2025.pdf",
+   "kind": "management_accounts",
+   "language": "en",
+   "scanned": false,
+   "room": "vdr_en",
+   "sha256": "4896798fcf638058c0c47b68154d02ba47d99f578831a7c0da1aec68c96154c0",
+   "bytes": 1299,
+   "planted": [],
+   "note": "",
+   "pages": 1
+  },
+  {
+   "path": "01 Financials/Management Accounts/Management Accounts April 2025.pdf",
+   "ref": "evals/vdr50/docs/01 Financials/Management Accounts/Management Accounts April 2025.pdf",
+   "kind": "management_accounts",
+   "language": "en",
+   "scanned": false,
+   "room": "vdr_en",
+   "sha256": "d2b6f7103e969318f522a6b2aea4d3d49cd865455c5d8929c5c349e77d23dad8",
+   "bytes": 1296,
+   "planted": [],
+   "note": "",
+   "pages": 1
+  },
+  {
+   "path": "01 Financials/Management Accounts/Management Accounts June 2025.pdf",
+   "ref": "evals/vdr50/docs/01 Financials/Management Accounts/Management Accounts June 2025.pdf",
+   "kind": "management_accounts",
+   "language": "en",
+   "scanned": false,
+   "room": "vdr_en",
+   "sha256": "4c4830e7fc37d9e8d7336bf62f9d1b449c0a5aceb267f57615059c2ed1248269",
+   "bytes": 1303,
+   "planted": [
+    {
+     "qid": "v09",
+     "answer": 4290000
+    }
+   ],
+   "note": "",
+   "pages": 1
+  },
+  {
+   "path": "01 Financials/Budget/Budget and Forecast FY2025.pdf",
+   "ref": "evals/vdr50/docs/01 Financials/Budget/Budget and Forecast FY2025.pdf",
+   "kind": "budget",
+   "language": "en",
+   "scanned": false,
+   "room": "vdr_en",
+   "sha256": "4b6c8192e5684555d490d604af385201279dd623a6d184b3eb6b9cd4fa2bbca4",
+   "bytes": 1043,
+   "planted": [
+    {
+     "qid": "v09",
+     "answer": 51400000
+    }
+   ],
+   "note": "",
+   "pages": 1
+  },
+  {
+   "path": "01 Financials/CIM/Confidential Information Memorandum - Excerpt.pdf",
+   "ref": "evals/vdr50/docs/01 Financials/CIM/Confidential Information Memorandum - Excerpt.pdf",
+   "kind": "cim",
+   "language": "en",
+   "scanned": false,
+   "room": "vdr_en",
+   "sha256": "30e2e2caf0390ca8b86bb3ad3a192e4f7e5a94792c2565f392cfdddf76f4b044",
+   "bytes": 1209,
+   "planted": [
+    {
+     "qid": "v09",
+     "answer": 52900000
+    }
+   ],
+   "note": "",
+   "pages": 1
+  },
+  {
+   "path": "02 Legal/Material Contracts/Customers/Customer Agreement - Northwind.pdf",
+   "ref": "evals/vdr50/docs/02 Legal/Material Contracts/Customers/Customer Agreement - Northwind.pdf",
+   "kind": "customer_contract",
+   "language": "en",
+   "scanned": false,
+   "room": "vdr_en",
+   "sha256": "c27abd915cb2ab4db9fb6a3d1fe3c314c2061afb8ad91905cf0f8065c3c662fc",
+   "bytes": 4619,
+   "planted": [
+    {
+     "qid": "v01",
+     "answer": "Meridian Components Holdings, Inc."
+    },
+    {
+     "qid": "v02",
+     "answer": "31 December 2028"
+    },
+    {
+     "qid": "v04",
+     "answer": "prior written consent"
+    },
+    {
+     "qid": "v07",
+     "answer": "England and Wales"
+    },
+    {
+     "qid": "v12",
+     "answer": 2200000
+    },
+    {
+     "qid": "v13",
+     "answer": "ninety (90) days"
+    },
+    {
+     "qid": "v06",
+     "answer": "most favoured nation"
+    },
+    {
+     "qid": "v05",
+     "answer": "exclusive"
+    },
+    {
+     "qid": "v03",
+     "answer": "change of control"
+    }
+   ],
+   "note": "",
+   "pages": 2
+  },
+  {
+   "path": "02 Legal/Material Contracts/Customers/Customer Agreement - Castellan.pdf",
+   "ref": "evals/vdr50/docs/02 Legal/Material Contracts/Customers/Customer Agreement - Castellan.pdf",
+   "kind": "customer_contract",
+   "language": "en",
+   "scanned": false,
+   "room": "vdr_en",
+   "sha256": "2230e4ce8d4b1cf803a566c2e60925a4dae50d0ed111a03e5e425786cb944341",
+   "bytes": 4027,
+   "planted": [
+    {
+     "qid": "v01",
+     "answer": "Meridian Components Holdings, Inc."
+    },
+    {
+     "qid": "v02",
+     "answer": "30 June 2027"
+    },
+    {
+     "qid": "v04",
+     "answer": "prior written consent"
+    },
+    {
+     "qid": "v07",
+     "answer": "Delaware"
+    },
+    {
+     "qid": "v12",
+     "answer": 1750000
+    },
+    {
+     "qid": "v13",
+     "answer": "one hundred eighty (180) days"
+    },
+    {
+     "qid": "v03",
+     "answer": "change of control"
+    }
+   ],
+   "note": "",
+   "pages": 2
+  },
+  {
+   "path": "02 Legal/Material Contracts/Customers/Customer Agreement - Brightline.pdf",
+   "ref": "evals/vdr50/docs/02 Legal/Material Contracts/Customers/Customer Agreement - Brightline.pdf",
+   "kind": "customer_contract",
+   "language": "en",
+   "scanned": false,
+   "room": "vdr_en",
+   "sha256": "7fe35c7c6e70cedbc902088df6c2866e28024459ef47109054e6f94de21cae85",
+   "bytes": 3765,
+   "planted": [
+    {
+     "qid": "v01",
+     "answer": "Meridian Components Holdings, Inc."
+    },
+    {
+     "qid": "v02",
+     "answer": "15 March 2029"
+    },
+    {
+     "qid": "v04",
+     "answer": "prior written consent"
+    },
+    {
+     "qid": "v07",
+     "answer": "New York"
+    },
+    {
+     "qid": "v12",
+     "answer": 3100000
+    },
+    {
+     "qid": "v13",
+     "answer": "sixty (60) days"
+    },
+    {
+     "qid": "v06",
+     "answer": "most favoured nation"
+    }
+   ],
+   "note": "",
+   "pages": 2
+  },
+  {
+   "path": "02 Legal/Material Contracts/Customers/Customer Agreement - Orion.pdf",
+   "ref": "evals/vdr50/docs/02 Legal/Material Contracts/Customers/Customer Agreement - Orion.pdf",
+   "kind": "customer_contract",
+   "language": "en",
+   "scanned": false,
+   "room": "vdr_en",
+   "sha256": "ed9fcfcc7f308beab99eaaa88b83606323ce22ce85505ad9bda291718b147844",
+   "bytes": 3982,
+   "planted": [
+    {
+     "qid": "v01",
+     "answer": "Meridian Components Holdings, Inc."
+    },
+    {
+     "qid": "v02",
+     "answer": "31 October 2026"
+    },
+    {
+     "qid": "v04",
+     "answer": "prior written consent"
+    },
+    {
+     "qid": "v07",
+     "answer": "Germany"
+    },
+    {
+     "qid": "v12",
+     "answer": 980000
+    },
+    {
+     "qid": "v13",
+     "answer": "ninety (90) days"
+    },
+    {
+     "qid": "v05",
+     "answer": "exclusive"
+    }
+   ],
+   "note": "",
+   "pages": 2
+  },
+  {
+   "path": "02 Legal/Material Contracts/Suppliers/Supplier Agreement - Apex.pdf",
+   "ref": "evals/vdr50/docs/02 Legal/Material Contracts/Suppliers/Supplier Agreement - Apex.pdf",
+   "kind": "supplier_contract",
+   "language": "en",
+   "scanned": false,
+   "room": "vdr_en",
+   "sha256": "83563e63e07cc9ba0b9a6505e076bab324d9351fdecfbe129e1055a8efa37016",
+   "bytes": 3703,
+   "planted": [
+    {
+     "qid": "v01",
+     "answer": "Apex Alloys Ltd"
+    },
+    {
+     "qid": "v02",
+     "answer": "30 September 2029"
+    },
+    {
+     "qid": "v05",
+     "answer": "exclusive supplier"
+    },
+    {
+     "qid": "v07",
+     "answer": "England and Wales"
+    },
+    {
+     "qid": "v12",
+     "answer": 4800000
+    },
+    {
+     "qid": "v13",
+     "answer": "one hundred twenty (120) days"
+    },
+    {
+     "qid": "v04",
+     "answer": "prior written consent"
+    }
+   ],
+   "note": "",
+   "pages": 2
+  },
+  {
+   "path": "02 Legal/Material Contracts/Suppliers/Supplier Agreement - Helix.pdf",
+   "ref": "evals/vdr50/docs/02 Legal/Material Contracts/Suppliers/Supplier Agreement - Helix.pdf",
+   "kind": "supplier_contract",
+   "language": "en",
+   "scanned": false,
+   "room": "vdr_en",
+   "sha256": "58858749ea0b65b29935f1b5afd8cfaef7093ea08c265168748beadd0591ee6f",
+   "bytes": 3665,
+   "planted": [
+    {
+     "qid": "v01",
+     "answer": "Helix Polymers Inc."
+    },
+    {
+     "qid": "v02",
+     "answer": "31 May 2027"
+    },
+    {
+     "qid": "v05",
+     "answer": "exclusivity"
+    },
+    {
+     "qid": "v07",
+     "answer": "Ohio"
+    },
+    {
+     "qid": "v12",
+     "answer": 650000
+    },
+    {
+     "qid": "v13",
+     "answer": "thirty (30) days"
+    },
+    {
+     "qid": "v04",
+     "answer": "prior written consent"
+    }
+   ],
+   "note": "decoy: negated exclusivity",
+   "pages": 2
+  },
+  {
+   "path": "02 Legal/Material Contracts/Suppliers/Supplier Agreement - Tundra.pdf",
+   "ref": "evals/vdr50/docs/02 Legal/Material Contracts/Suppliers/Supplier Agreement - Tundra.pdf",
+   "kind": "supplier_contract",
+   "language": "en",
+   "scanned": false,
+   "room": "vdr_en",
+   "sha256": "4218c8cdf95ac6325431c45ca4a094172721cfd62e2fb512413163ea4f2348c5",
+   "bytes": 3652,
+   "planted": [
+    {
+     "qid": "v01",
+     "answer": "Tundra Logistics LLC"
+    },
+    {
+     "qid": "v02",
+     "answer": "31 January 2028"
+    },
+    {
+     "qid": "v05",
+     "answer": "shall not provide"
+    },
+    {
+     "qid": "v07",
+     "answer": "Texas"
+    },
+    {
+     "qid": "v12",
+     "answer": 1240000
+    },
+    {
+     "qid": "v13",
+     "answer": "sixty (60) days"
+    },
+    {
+     "qid": "v04",
+     "answer": "prior written consent"
+    }
+   ],
+   "note": "",
+   "pages": 2
+  },
+  {
+   "path": "02 Legal/Material Contracts/Suppliers/Supplier Agreement - Solace.pdf",
+   "ref": "evals/vdr50/docs/02 Legal/Material Contracts/Suppliers/Supplier Agreement - Solace.pdf",
+   "kind": "supplier_contract",
+   "language": "en",
+   "scanned": false,
+   "room": "vdr_en",
+   "sha256": "546791350e027a1e029923dc5e3f1915624319858c90b4a9a9a3bdf4417e962f",
+   "bytes": 3663,
+   "planted": [
+    {
+     "qid": "v01",
+     "answer": "Solace Packaging Co."
+    },
+    {
+     "qid": "v02",
+     "answer": "28 February 2027"
+    },
+    {
+     "qid": "v06",
+     "answer": "most favoured customer"
+    },
+    {
+     "qid": "v07",
+     "answer": "California"
+    },
+    {
+     "qid": "v12",
+     "answer": 310000
+    },
+    {
+     "qid": "v13",
+     "answer": "forty-five (45) days"
+    },
+    {
+     "qid": "v04",
+     "answer": "prior written consent"
+    }
+   ],
+   "note": "",
+   "pages": 2
+  },
+  {
+   "path": "02 Legal/Leases/Lease - Harbour Point Industrial Estate.pdf",
+   "ref": "evals/vdr50/docs/02 Legal/Leases/Lease - Harbour Point Industrial Estate.pdf",
+   "kind": "lease",
+   "language": "en",
+   "scanned": false,
+   "room": "vdr_en",
+   "sha256": "b128c7bd29330d935ed00c97cacf6758ba3f292e96d25c7b37eaa2709e06a20e",
+   "bytes": 3322,
+   "planted": [
+    {
+     "qid": "v01",
+     "answer": "Redwood Properties Ltd"
+    },
+    {
+     "qid": "v02",
+     "answer": "31 March 2032"
+    },
+    {
+     "qid": "v12",
+     "answer": 480000
+    },
+    {
+     "qid": "v07",
+     "answer": "England and Wales"
+    },
+    {
+     "qid": "v13",
+     "answer": "six (6) months"
+    }
+   ],
+   "note": "",
+   "pages": 2
+  },
+  {
+   "path": "02 Legal/Leases/Lease - Unit 14.pdf",
+   "ref": "evals/vdr50/docs/02 Legal/Leases/Lease - Unit 14.pdf",
+   "kind": "lease",
+   "language": "en",
+   "scanned": false,
+   "room": "vdr_en",
+   "sha256": "b5dc0cc67c405712a1755d545f1f9b2df0de819b9719073ae77440390ed5e116",
+   "bytes": 3295,
+   "planted": [
+    {
+     "qid": "v01",
+     "answer": "Lakeside Estates LLC"
+    },
+    {
+     "qid": "v02",
+     "answer": "30 November 2027"
+    },
+    {
+     "qid": "v12",
+     "answer": 212000
+    },
+    {
+     "qid": "v07",
+     "answer": "Ohio"
+    },
+    {
+     "qid": "v13",
+     "answer": "ninety (90) days"
+    }
+   ],
+   "note": "",
+   "pages": 2
+  },
+  {
+   "path": "02 Legal/Leases/Lease - Plot 7.pdf",
+   "ref": "evals/vdr50/docs/02 Legal/Leases/Lease - Plot 7.pdf",
+   "kind": "lease",
+   "language": "en",
+   "scanned": false,
+   "room": "vdr_en",
+   "sha256": "3a7aa92e9f6abf2a7808dbf328199c272a2ea4966681b4fe5eb8800057627c34",
+   "bytes": 3318,
+   "planted": [
+    {
+     "qid": "v01",
+     "answer": "Hub Realty Partners"
+    },
+    {
+     "qid": "v02",
+     "answer": "31 July 2030"
+    },
+    {
+     "qid": "v12",
+     "answer": 365000
+    },
+    {
+     "qid": "v07",
+     "answer": "Texas"
+    },
+    {
+     "qid": "v13",
+     "answer": "one hundred eighty (180) days"
+    }
+   ],
+   "note": "",
+   "pages": 2
+  },
+  {
+   "path": "03 Debt/Credit Agreement - Harborview Bank.pdf",
+   "ref": "evals/vdr50/docs/03 Debt/Credit Agreement - Harborview Bank.pdf",
+   "kind": "credit_agreement",
+   "language": "en",
+   "scanned": false,
+   "room": "vdr_en",
+   "sha256": "fffc656ef232d190ea8a8dd9273dbdca113f7f4d9ac4dd7e1d169c97a51338e1",
+   "bytes": 5816,
+   "planted": [
+    {
+     "qid": "v01",
+     "answer": "Harborview Bank, N.A."
+    },
+    {
+     "qid": "v02",
+     "answer": "2029-06-30"
+    },
+    {
+     "qid": "v03",
+     "answer": "event of default"
+    },
+    {
+     "qid": "v04",
+     "answer": "prior written consent"
+    },
+    {
+     "qid": "v07",
+     "answer": "New York"
+    },
+    {
+     "qid": "v08",
+     "answer": 3.5
+    },
+    {
+     "qid": "v11",
+     "answer": 4.0
+    }
+   ],
+   "note": "",
+   "pages": 3
+  },
+  {
+   "path": "03 Debt/Amendment No. 1 - Credit Agreement.pdf",
+   "ref": "evals/vdr50/docs/03 Debt/Amendment No. 1 - Credit Agreement.pdf",
+   "kind": "amendment",
+   "language": "en",
+   "scanned": false,
+   "room": "vdr_en",
+   "sha256": "24f8912149776a5677897afb35f2c0d12344cb62802c3e81d2ad9a55a10abee7",
+   "bytes": 1592,
+   "planted": [
+    {
+     "qid": "v08",
+     "answer": 4.0
+    },
+    {
+     "qid": "v07",
+     "answer": "New York"
+    }
+   ],
+   "note": "",
+   "pages": 1
+  },
+  {
+   "path": "03 Debt/Security Agreement.pdf",
+   "ref": "evals/vdr50/docs/03 Debt/Security Agreement.pdf",
+   "kind": "security_agreement",
+   "language": "en",
+   "scanned": false,
+   "room": "vdr_en",
+   "sha256": "76df0aa147d5383d21cfd564c18280ccfe6cf4b07650be6794e98a1af7281157",
+   "bytes": 2064,
+   "planted": [
+    {
+     "qid": "v07",
+     "answer": "New York"
+    }
+   ],
+   "note": "",
+   "pages": 1
+  },
+  {
+   "path": "04 Corporate/Cap Table.pdf",
+   "ref": "evals/vdr50/docs/04 Corporate/Cap Table.pdf",
+   "kind": "cap_table",
+   "language": "en",
+   "scanned": false,
+   "room": "vdr_en",
+   "sha256": "5522f57eab7c72145042f3419ed380369edf158d3607ab3ce1a410a03adfb30c",
+   "bytes": 1239,
+   "planted": [],
+   "note": "",
+   "pages": 1
+  },
+  {
+   "path": "04 Corporate/Board Minutes/Board Minutes - March 2024.pdf",
+   "ref": "evals/vdr50/docs/04 Corporate/Board Minutes/Board Minutes - March 2024.pdf",
+   "kind": "board_minutes",
+   "language": "en",
+   "scanned": false,
+   "room": "vdr_en",
+   "sha256": "56216b34f87248aff3ee2c1286a963f6e09924082804033c4ac2083d62702fe0",
+   "bytes": 1529,
+   "planted": [],
+   "note": "",
+   "pages": 1
+  },
+  {
+   "path": "04 Corporate/Board Minutes/Board Minutes - September 2024.pdf",
+   "ref": "evals/vdr50/docs/04 Corporate/Board Minutes/Board Minutes - September 2024.pdf",
+   "kind": "board_minutes",
+   "language": "en",
+   "scanned": false,
+   "room": "vdr_en",
+   "sha256": "0a03af57121e40808a319b57008ddcd10dbc7e19790246afea0217ff4a4e9645",
+   "bytes": 2656,
+   "planted": [],
+   "note": "",
+   "pages": 1
+  },
+  {
+   "path": "04 Corporate/Board Minutes/Board Minutes - February 2025.pdf",
+   "ref": "evals/vdr50/docs/04 Corporate/Board Minutes/Board Minutes - February 2025.pdf",
+   "kind": "board_minutes",
+   "language": "en",
+   "scanned": false,
+   "room": "vdr_en",
+   "sha256": "04751efc74b11d17a61bf092ce201482cc5d07cc059cbd791a4edc99150b551d",
+   "bytes": 1533,
+   "planted": [
+    {
+     "qid": "v05",
+     "answer": "exclusivity"
+    }
+   ],
+   "note": "",
+   "pages": 1
+  },
+  {
+   "path": "04 Corporate/Certificate of Incorporation.pdf",
+   "ref": "evals/vdr50/docs/04 Corporate/Certificate of Incorporation.pdf",
+   "kind": "corporate",
+   "language": "en",
+   "scanned": false,
+   "room": "vdr_en",
+   "sha256": "4dc422556147240aafb435a189ae2984a76a7edbcc9cfc14c0083afe9d8c281b",
+   "bytes": 1373,
+   "planted": [],
+   "note": "",
+   "pages": 1
+  },
+  {
+   "path": "05 HR/Employment Agreement - Dana Whitmore.pdf",
+   "ref": "evals/vdr50/docs/05 HR/Employment Agreement - Dana Whitmore.pdf",
+   "kind": "employment",
+   "language": "en",
+   "scanned": false,
+   "room": "vdr_en",
+   "sha256": "89a6a1df13324b72c564b4da00d89f9f3689d5c76ade50712fefc7be76ddb795",
+   "bytes": 3057,
+   "planted": [
+    {
+     "qid": "v01",
+     "answer": "Dana Whitmore"
+    },
+    {
+     "qid": "v12",
+     "answer": 420000
+    },
+    {
+     "qid": "v13",
+     "answer": "twelve (12) months"
+    },
+    {
+     "qid": "v03",
+     "answer": "change of control"
+    },
+    {
+     "qid": "v05",
+     "answer": "compete"
+    },
+    {
+     "qid": "v07",
+     "answer": "Delaware"
+    }
+   ],
+   "note": "",
+   "pages": 2
+  },
+  {
+   "path": "05 HR/Employment Agreement - Priya Raman.pdf",
+   "ref": "evals/vdr50/docs/05 HR/Employment Agreement - Priya Raman.pdf",
+   "kind": "employment",
+   "language": "en",
+   "scanned": false,
+   "room": "vdr_en",
+   "sha256": "a8c820920425f4a0897985b856097e5fe18d9549b5a1b5973ab8fd7fb4706cac",
+   "bytes": 2381,
+   "planted": [
+    {
+     "qid": "v01",
+     "answer": "Priya Raman"
+    },
+    {
+     "qid": "v12",
+     "answer": 335000
+    },
+    {
+     "qid": "v13",
+     "answer": "six (6) months"
+    },
+    {
+     "qid": "v03",
+     "answer": "change of control"
+    },
+    {
+     "qid": "v07",
+     "answer": "Delaware"
+    }
+   ],
+   "note": "",
+   "pages": 1
+  },
+  {
+   "path": "05 HR/Employment Agreement - Tomas Berg.pdf",
+   "ref": "evals/vdr50/docs/05 HR/Employment Agreement - Tomas Berg.pdf",
+   "kind": "employment",
+   "language": "en",
+   "scanned": false,
+   "room": "vdr_en",
+   "sha256": "85e1111b3a78678c890e11722139faa169f1cf4a9f626190c28e3edd66c9c9e9",
+   "bytes": 2115,
+   "planted": [
+    {
+     "qid": "v01",
+     "answer": "Tomas Berg"
+    },
+    {
+     "qid": "v12",
+     "answer": 245000
+    },
+    {
+     "qid": "v13",
+     "answer": "three (3) months"
+    },
+    {
+     "qid": "v07",
+     "answer": "Delaware"
+    }
+   ],
+   "note": "",
+   "pages": 1
+  },
+  {
+   "path": "06 Tax/Tax Return Summary FY2023.pdf",
+   "ref": "evals/vdr50/docs/06 Tax/Tax Return Summary FY2023.pdf",
+   "kind": "tax_return",
+   "language": "en",
+   "scanned": false,
+   "room": "vdr_en",
+   "sha256": "95e24d5ef163848cecc8a2b6fc45e6412bf62b067fd63078ea132e0f6e72ca42",
+   "bytes": 1311,
+   "planted": [],
+   "note": "",
+   "pages": 1
+  },
+  {
+   "path": "07 Insurance/Certificate of Insurance 2025.pdf",
+   "ref": "evals/vdr50/docs/07 Insurance/Certificate of Insurance 2025.pdf",
+   "kind": "insurance",
+   "language": "en",
+   "scanned": false,
+   "room": "vdr_en",
+   "sha256": "972ae06ea3c55d6d824137231f2956e362f4442cd7e4f2320e95c00e47d75f05",
+   "bytes": 1099,
+   "planted": [],
+   "note": "",
+   "pages": 1
+  },
+  {
+   "path": "02 Legal/Material Contracts/Customers/Customer Agreement - Vantage (scanned).pdf",
+   "ref": "evals/vdr50/docs/02 Legal/Material Contracts/Customers/Customer Agreement - Vantage (scanned).pdf",
+   "kind": "customer_contract",
+   "language": "en",
+   "scanned": true,
+   "room": "vdr_scanned_arabic",
+   "sha256": "68495ffc69c20c12b5ddc94bca7ade2d6fb05cfb4dcdcc59b635d79d4fbfe742",
+   "bytes": 150615,
+   "planted": [
+    {
+     "qid": "v02",
+     "answer": "2028-08-31"
+    },
+    {
+     "qid": "v12",
+     "answer": 1640000
+    },
+    {
+     "qid": "v03",
+     "answer": "change of control"
+    },
+    {
+     "qid": "v07",
+     "answer": "Scotland"
+    }
+   ],
+   "note": "",
+   "pages": 1
+  },
+  {
+   "path": "02 Legal/Leases/Lease Amendment - Riverside (scanned).pdf",
+   "ref": "evals/vdr50/docs/02 Legal/Leases/Lease Amendment - Riverside (scanned).pdf",
+   "kind": "lease",
+   "language": "en",
+   "scanned": true,
+   "room": "vdr_scanned_arabic",
+   "sha256": "6123b66ff076e231aa4cf5266c9b90d6900ddb7de04001e6580fc5d126d4cd51",
+   "bytes": 114953,
+   "planted": [
+    {
+     "qid": "v12",
+     "answer": 298000
+    },
+    {
+     "qid": "v02",
+     "answer": "2031-12-31"
+    },
+    {
+     "qid": "v07",
+     "answer": "Illinois"
+    }
+   ],
+   "note": "",
+   "pages": 1
+  },
+  {
+   "path": "04 Corporate/Board Minutes/Board Minutes - November 2024 (scanned).pdf",
+   "ref": "evals/vdr50/docs/04 Corporate/Board Minutes/Board Minutes - November 2024 (scanned).pdf",
+   "kind": "board_minutes",
+   "language": "en",
+   "scanned": true,
+   "room": "vdr_scanned_arabic",
+   "sha256": "b9cd07bccfea6b615d68976adec36b2530e6bdf91f7cf8a923d8aedb6ac29e2d",
+   "bytes": 124065,
+   "planted": [
+    {
+     "qid": "v10",
+     "answer": "Whitfield & Crane LLP"
+    }
+   ],
+   "note": "",
+   "pages": 1
+  },
+  {
+   "path": "02 Legal/Leases/Lease Agreement - Jebel Ali (Arabic).pdf",
+   "ref": "evals/vdr50/docs/02 Legal/Leases/Lease Agreement - Jebel Ali (Arabic).pdf",
+   "kind": "lease",
+   "language": "ar",
+   "scanned": false,
+   "room": "vdr_scanned_arabic",
+   "sha256": "a73287edd52d2f904dfdaa4c14db676f1d8c7a508720d00d049b75eed34e15d7",
+   "bytes": 35115,
+   "planted": [
+    {
+     "qid": "v12",
+     "answer": 1250000
+    },
+    {
+     "qid": "v02",
+     "answer": "2032-12-31"
+    }
+   ],
+   "note": "",
+   "pages": 1
+  },
+  {
+   "path": "04 Corporate/Board Minutes/Board Resolution - May 2024 (Arabic).pdf",
+   "ref": "evals/vdr50/docs/04 Corporate/Board Minutes/Board Resolution - May 2024 (Arabic).pdf",
+   "kind": "board_minutes",
+   "language": "ar",
+   "scanned": false,
+   "room": "vdr_scanned_arabic",
+   "sha256": "22a692f9c1afe4a0883b9f4d4e3063961c4ce16734c6e04eaf64e656e3c9175d",
+   "bytes": 27275,
+   "planted": [
+    {
+     "qid": "v09",
+     "answer": 44100000
+    },
+    {
+     "qid": "v05",
+     "answer": "SELF"
+    }
+   ],
+   "note": "",
+   "pages": 1
+  },
+  {
+   "path": "02 Legal/Material Contracts/Suppliers/Supplier Agreement - Gulf Materials (Arabic).pdf",
+   "ref": "evals/vdr50/docs/02 Legal/Material Contracts/Suppliers/Supplier Agreement - Gulf Materials (Arabic).pdf",
+   "kind": "supplier_contract",
+   "language": "ar",
+   "scanned": false,
+   "room": "vdr_scanned_arabic",
+   "sha256": "dd7b8db99bc5899466c1e6a749e49c1533418eed6717c24f1520b4e3c74c1e72",
+   "bytes": 30262,
+   "planted": [
+    {
+     "qid": "v12",
+     "answer": 2300000
+    },
+    {
+     "qid": "v02",
+     "answer": "2029-02-28"
+    },
+    {
+     "qid": "v05",
+     "answer": "SELF"
+    }
+   ],
+   "note": "",
+   "pages": 1
+  }
+ ]
+}

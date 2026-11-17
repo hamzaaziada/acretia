@@ -1,0 +1,29 @@
+{
+ "parser": "docling",
+ "docs": 10,
+ "ingest_ok": 10,
+ "ingest_failed": 0,
+ "pages": 209,
+ "ingest_s": 1215.4,
+ "s_per_page": 5.82,
+ "workers": 2,
+ "engine_version": "grid-2",
+ "grid_first_cell_s": 0.494958,
+ "score": {
+  "n": 100,
+  "success": 99,
+  "wrong_but_confident": 0,
+  "missed": 1,
+  "silent": 0,
+  "success_rate": 0.99,
+  "n_found": 100,
+  "n_not_found": 0,
+  "value_accuracy": 0.99,
+  "quote_on_page": 0.99,
+  "page_match": 0.92
+ },
+ "backends": [
+  "docling"
+ ],
+ "ingest_timing_from": "first docling ingest (parse cached since)"
+}

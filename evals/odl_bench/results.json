@@ -1,0 +1,64 @@
+{
+ "status": "run",
+ "commit": "7af1d8f4d0c09f51ea1a5c6ba5f66e993286d109",
+ "docs_total": 200,
+ "engines": {
+  "acretia-pdfdoc": {
+   "docs": 200,
+   "pages": 200,
+   "parse_failures": 0,
+   "seconds": 23.25,
+   "s_per_page": 0.1163,
+   "score": {
+    "overall_mean": 0.6473,
+    "nid_mean": 0.8268,
+    "nid_s_mean": 0.8051,
+    "teds_mean": 0.0,
+    "teds_s_mean": 0.0,
+    "mhs_mean": 0.3885,
+    "mhs_s_mean": 0.4774
+   },
+   "backend": "pdfdoc",
+   "ocr": "off",
+   "command": "cd data/raw/odl_bench && python3 src/evaluator.py --ground-truth-dir subset_gt_acretia-pdfdoc --prediction-root pred_acretia --engine acretia-pdfdoc --log-level WARNING"
+  },
+  "acretia-docling-first6": {
+   "docs": 6,
+   "pages": 6,
+   "parse_failures": 0,
+   "seconds": 18.1,
+   "s_per_page": 3.0162,
+   "score": {
+    "overall_mean": 0.9348,
+    "nid_mean": 0.9348,
+    "nid_s_mean": 0.9348,
+    "teds_mean": null,
+    "teds_s_mean": null,
+    "mhs_mean": 0.9423,
+    "mhs_s_mean": 1.0
+   },
+   "backend": "docling",
+   "ocr": "off",
+   "command": "cd data/raw/odl_bench && python3 src/evaluator.py --ground-truth-dir subset_gt_acretia-docling-first6 --prediction-root pred_acretia --engine acretia-docling-first6 --log-level WARNING"
+  },
+  "acretia-pdfdoc-first6": {
+   "docs": 6,
+   "pages": 6,
+   "parse_failures": 0,
+   "seconds": 0.48,
+   "s_per_page": 0.08,
+   "score": {
+    "overall_mean": 0.6382,
+    "nid_mean": 0.9669,
+    "nid_s_mean": 0.9669,
+    "teds_mean": null,
+    "teds_s_mean": null,
+    "mhs_mean": 0.0,
+    "mhs_s_mean": 0.0
+   },
+   "backend": "pdfdoc",
+   "ocr": "off",
+   "command": "cd data/raw/odl_bench && python3 src/evaluator.py --ground-truth-dir subset_gt_acretia-pdfdoc-first6 --prediction-root pred_acretia --engine acretia-pdfdoc-first6 --log-level WARNING"
+  }
+ }
+}

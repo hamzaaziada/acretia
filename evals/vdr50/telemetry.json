@@ -1,0 +1,395 @@
+{
+ "docs": 50,
+ "pages": 269,
+ "ocr_pages": 3,
+ "arabic_pages": 3,
+ "ingest_ok": 50,
+ "ingest_failed": 0,
+ "cells": 650,
+ "first_cell_s": 0.333945,
+ "tokens_in": 0,
+ "tokens_out": 0,
+ "cost_usd": 0.0,
+ "estimate": {
+  "pending_cells": 650,
+  "est_input_tokens": 0,
+  "est_output_tokens": 0,
+  "est_cost_usd": 0.0,
+  "model": "extractive",
+  "engine": "extractive",
+  "skipped_cells": 0,
+  "engine_calls": 650
+ },
+ "llm_estimate": {
+  "pending_cells": 650,
+  "est_input_tokens": 766714,
+  "est_output_tokens": 104000,
+  "est_cost_usd": 19.30071,
+  "model": "auto",
+  "engine": "llm:auto",
+  "skipped_cells": 0,
+  "engine_calls": 650
+ },
+ "completeness_min": 0.9797,
+ "completeness_median": 1.0,
+ "risk_s": 18.526,
+ "per_file": [
+  {
+   "source_path": "01 Financials/10-K/AAPL 10-K.pdf",
+   "status": "ok",
+   "pages": 19,
+   "completeness_min": 0.9959839357429718,
+   "seconds": 6.9211
+  },
+  {
+   "source_path": "01 Financials/10-K/MSFT 10-K.pdf",
+   "status": "ok",
+   "pages": 21,
+   "completeness_min": 0.9864864864864865,
+   "seconds": 4.7772
+  },
+  {
+   "source_path": "01 Financials/10-K/KO 10-K.pdf",
+   "status": "ok",
+   "pages": 23,
+   "completeness_min": 0.9824561403508771,
+   "seconds": 7.935
+  },
+  {
+   "source_path": "01 Financials/10-K/JNJ 10-K.pdf",
+   "status": "ok",
+   "pages": 25,
+   "completeness_min": 0.9888579387186629,
+   "seconds": 7.8561
+  },
+  {
+   "source_path": "01 Financials/10-K/PG 10-K.pdf",
+   "status": "ok",
+   "pages": 21,
+   "completeness_min": 0.9914163090128756,
+   "seconds": 8.7048
+  },
+  {
+   "source_path": "01 Financials/10-K/WMT 10-K.pdf",
+   "status": "ok",
+   "pages": 16,
+   "completeness_min": 0.9924433249370277,
+   "seconds": 5.7464
+  },
+  {
+   "source_path": "01 Financials/10-K/COST 10-K.pdf",
+   "status": "ok",
+   "pages": 16,
+   "completeness_min": 0.9970674486803519,
+   "seconds": 5.4557
+  },
+  {
+   "source_path": "01 Financials/10-K/HD 10-K.pdf",
+   "status": "ok",
+   "pages": 25,
+   "completeness_min": 0.9796954314720813,
+   "seconds": 8.4174
+  },
+  {
+   "source_path": "01 Financials/10-K/MCD 10-K.pdf",
+   "status": "ok",
+   "pages": 24,
+   "completeness_min": 0.98125,
+   "seconds": 5.1571
+  },
+  {
+   "source_path": "01 Financials/10-K/LOW 10-K.pdf",
+   "status": "ok",
+   "pages": 19,
+   "completeness_min": 0.9897959183673469,
+   "seconds": 4.8916
+  },
+  {
+   "source_path": "01 Financials/Audited/Audited Financial Statements FY2021.pdf",
+   "status": "ok",
+   "pages": 3,
+   "completeness_min": 1.0,
+   "seconds": 0.5995
+  },
+  {
+   "source_path": "01 Financials/Audited/Audited Financial Statements FY2022.pdf",
+   "status": "ok",
+   "pages": 3,
+   "completeness_min": 1.0,
+   "seconds": 0.5838
+  },
+  {
+   "source_path": "01 Financials/Audited/Audited Financial Statements FY2024.pdf",
+   "status": "ok",
+   "pages": 3,
+   "completeness_min": 1.0,
+   "seconds": 0.5801
+  },
+  {
+   "source_path": "01 Financials/Management Accounts/Management Accounts January 2025.pdf",
+   "status": "ok",
+   "pages": 1,
+   "completeness_min": 1.0,
+   "seconds": 0.4696
+  },
+  {
+   "source_path": "01 Financials/Management Accounts/Management Accounts February 2025.pdf",
+   "status": "ok",
+   "pages": 1,
+   "completeness_min": 1.0,
+   "seconds": 0.3499
+  },
+  {
+   "source_path": "01 Financials/Management Accounts/Management Accounts March 2025.pdf",
+   "status": "ok",
+   "pages": 1,
+   "completeness_min": 1.0,
+   "seconds": 0.3749
+  },
+  {
+   "source_path": "01 Financials/Management Accounts/Management Accounts April 2025.pdf",
+   "status": "ok",
+   "pages": 1,
+   "completeness_min": 1.0,
+   "seconds": 0.6261
+  },
+  {
+   "source_path": "01 Financials/Management Accounts/Management Accounts June 2025.pdf",
+   "status": "ok",
+   "pages": 1,
+   "completeness_min": 1.0,
+   "seconds": 0.5663
+  },
+  {
+   "source_path": "01 Financials/Budget/Budget and Forecast FY2025.pdf",
+   "status": "ok",
+   "pages": 1,
+   "completeness_min": 1.0,
+   "seconds": 0.3422
+  },
+  {
+   "source_path": "01 Financials/CIM/Confidential Information Memorandum - Excerpt.pdf",
+   "status": "ok",
+   "pages": 1,
+   "completeness_min": 1.0,
+   "seconds": 0.3208
+  },
+  {
+   "source_path": "02 Legal/Material Contracts/Customers/Customer Agreement - Northwind.pdf",
+   "status": "ok",
+   "pages": 2,
+   "completeness_min": 1.0,
+   "seconds": 0.6615
+  },
+  {
+   "source_path": "02 Legal/Material Contracts/Customers/Customer Agreement - Castellan.pdf",
+   "status": "ok",
+   "pages": 2,
+   "completeness_min": 1.0,
+   "seconds": 0.6528
+  },
+  {
+   "source_path": "02 Legal/Material Contracts/Customers/Customer Agreement - Brightline.pdf",
+   "status": "ok",
+   "pages": 2,
+   "completeness_min": 1.0,
+   "seconds": 0.5509
+  },
+  {
+   "source_path": "02 Legal/Material Contracts/Customers/Customer Agreement - Orion.pdf",
+   "status": "ok",
+   "pages": 2,
+   "completeness_min": 1.0,
+   "seconds": 0.5941
+  },
+  {
+   "source_path": "02 Legal/Material Contracts/Suppliers/Supplier Agreement - Apex.pdf",
+   "status": "ok",
+   "pages": 2,
+   "completeness_min": 1.0,
+   "seconds": 0.4384
+  },
+  {
+   "source_path": "02 Legal/Material Contracts/Suppliers/Supplier Agreement - Helix.pdf",
+   "status": "ok",
+   "pages": 2,
+   "completeness_min": 1.0,
+   "seconds": 0.3758
+  },
+  {
+   "source_path": "02 Legal/Material Contracts/Suppliers/Supplier Agreement - Tundra.pdf",
+   "status": "ok",
+   "pages": 2,
+   "completeness_min": 1.0,
+   "seconds": 0.2359
+  },
+  {
+   "source_path": "02 Legal/Material Contracts/Suppliers/Supplier Agreement - Solace.pdf",
+   "status": "ok",
+   "pages": 2,
+   "completeness_min": 1.0,
+   "seconds": 0.3904
+  },
+  {
+   "source_path": "02 Legal/Leases/Lease - Harbour Point Industrial Estate.pdf",
+   "status": "ok",
+   "pages": 2,
+   "completeness_min": 1.0,
+   "seconds": 0.3808
+  },
+  {
+   "source_path": "02 Legal/Leases/Lease - Unit 14.pdf",
+   "status": "ok",
+   "pages": 2,
+   "completeness_min": 1.0,
+   "seconds": 0.4278
+  },
+  {
+   "source_path": "02 Legal/Leases/Lease - Plot 7.pdf",
+   "status": "ok",
+   "pages": 2,
+   "completeness_min": 1.0,
+   "seconds": 0.3997
+  },
+  {
+   "source_path": "03 Debt/Credit Agreement - Harborview Bank.pdf",
+   "status": "ok",
+   "pages": 3,
+   "completeness_min": 1.0,
+   "seconds": 0.2811
+  },
+  {
+   "source_path": "03 Debt/Amendment No. 1 - Credit Agreement.pdf",
+   "status": "ok",
+   "pages": 1,
+   "completeness_min": 1.0,
+   "seconds": 0.1389
+  },
+  {
+   "source_path": "03 Debt/Security Agreement.pdf",
+   "status": "ok",
+   "pages": 1,
+   "completeness_min": 1.0,
+   "seconds": 0.249
+  },
+  {
+   "source_path": "04 Corporate/Cap Table.pdf",
+   "status": "ok",
+   "pages": 1,
+   "completeness_min": 1.0,
+   "seconds": 0.0277
+  },
+  {
+   "source_path": "04 Corporate/Board Minutes/Board Minutes - March 2024.pdf",
+   "status": "ok",
+   "pages": 1,
+   "completeness_min": 1.0,
+   "seconds": 0.173
+  },
+  {
+   "source_path": "04 Corporate/Board Minutes/Board Minutes - September 2024.pdf",
+   "status": "ok",
+   "pages": 1,
+   "completeness_min": 0.9979633401221996,
+   "seconds": 0.3193
+  },
+  {
+   "source_path": "04 Corporate/Board Minutes/Board Minutes - February 2025.pdf",
+   "status": "ok",
+   "pages": 1,
+   "completeness_min": 1.0,
+   "seconds": 0.2334
+  },
+  {
+   "source_path": "04 Corporate/Certificate of Incorporation.pdf",
+   "status": "ok",
+   "pages": 1,
+   "completeness_min": 1.0,
+   "seconds": 0.1905
+  },
+  {
+   "source_path": "05 HR/Employment Agreement - Dana Whitmore.pdf",
+   "status": "ok",
+   "pages": 2,
+   "completeness_min": 1.0,
+   "seconds": 0.2116
+  },
+  {
+   "source_path": "05 HR/Employment Agreement - Priya Raman.pdf",
+   "status": "ok",
+   "pages": 1,
+   "completeness_min": 1.0,
+   "seconds": 0.1491
+  },
+  {
+   "source_path": "05 HR/Employment Agreement - Tomas Berg.pdf",
+   "status": "ok",
+   "pages": 1,
+   "completeness_min": 1.0,
+   "seconds": 0.1244
+  },
+  {
+   "source_path": "06 Tax/Tax Return Summary FY2023.pdf",
+   "status": "ok",
+   "pages": 1,
+   "completeness_min": 1.0,
+   "seconds": 0.1049
+  },
+  {
+   "source_path": "07 Insurance/Certificate of Insurance 2025.pdf",
+   "status": "ok",
+   "pages": 1,
+   "completeness_min": 1.0,
+   "seconds": 0.0454
+  },
+  {
+   "source_path": "02 Legal/Material Contracts/Customers/Customer Agreement - Vantage (scanned).pdf",
+   "status": "ok",
+   "pages": 1,
+   "completeness_min": 1.0,
+   "seconds": 1.3546
+  },
+  {
+   "source_path": "02 Legal/Leases/Lease Amendment - Riverside (scanned).pdf",
+   "status": "ok",
+   "pages": 1,
+   "completeness_min": 1.0,
+   "seconds": 1.0906
+  },
+  {
+   "source_path": "04 Corporate/Board Minutes/Board Minutes - November 2024 (scanned).pdf",
+   "status": "ok",
+   "pages": 1,
+   "completeness_min": 1.0,
+   "seconds": 1.035
+  },
+  {
+   "source_path": "02 Legal/Leases/Lease Agreement - Jebel Ali (Arabic).pdf",
+   "status": "ok",
+   "pages": 1,
+   "completeness_min": 1.0,
+   "seconds": 0.2005
+  },
+  {
+   "source_path": "04 Corporate/Board Minutes/Board Resolution - May 2024 (Arabic).pdf",
+   "status": "ok",
+   "pages": 1,
+   "completeness_min": 1.0,
+   "seconds": 0.0898
+  },
+  {
+   "source_path": "02 Legal/Material Contracts/Suppliers/Supplier Agreement - Gulf Materials (Arabic).pdf",
+   "status": "ok",
+   "pages": 1,
+   "completeness_min": 1.0,
+   "seconds": 0.0905
+  }
+ ],
+ "parser": "pdfdoc",
+ "engine_version": "grid-2",
+ "ingest_s": 24.862,
+ "grid_s": 4.978,
+ "total_s": 94.63,
+ "run_mode": "extractive, pdfdoc parser, cold cache",
+ "cpu_note": "4 vCPU cloud container; timings are this run only"
+}
