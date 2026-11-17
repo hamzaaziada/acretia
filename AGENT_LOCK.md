@@ -41,6 +41,7 @@ One row per active claim. Claim a packet before you touch its files, commit the 
 | FP-S4-E comps + market | worker (session C) | claude/busy-knuth-i3ewp5 | 2026-11-17 | om/comps.py, om/market.py, tests/test_comps_fix.py |
 | FP-S4-F validator 3-column rows | worker (session C) | claude/busy-knuth-i3ewp5 | 2026-11-17 | om/validate_xlsx.py, tests/test_validate_fix.py |
 | S2-rr S2 specialist re-review | reviewer (session A) | claude/dreamy-ramanujan-k8p2xt | 2026-11-17 | docs/reviews/s2-specialist.md |
+| S6-gate verify_s6.py | gate-writer (session A) | claude/dreamy-ramanujan-k8p2xt | 2026-11-17 | scripts/verify_s6.py, tests/fixtures/s6gate/** |
 
 ## Log
 - 2026-11-16: created; no active claims.
@@ -90,3 +91,4 @@ One row per active claim. Claim a packet before you touch its files, commit the 
 - 2026-11-17: S4.6c, S4 gate, S4.10 merged and released. Fix Packets FP-S4-A..F claimed (IB VP review 6.2/10, gate FAILs, reliability 52%).
 - 2026-11-16: session A: FP-S2a-d all done; S2 specialist re-review claimed.
 - 2026-11-17: S5.F1 verified on main and released; S5.F3a claimed (session D).
+- 2026-11-16: session A: S6 gate-writer claimed.
