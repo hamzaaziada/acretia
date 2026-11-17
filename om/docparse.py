@@ -161,7 +161,7 @@ def _norm_token(t):
     """Canonical token. Arabic-script tokens compare direction-agnostically (visual vs logical order)."""
     t = _clean(t)
     if t and _ARABIC.search(t):
-        t = min(t, t[::-1])
+        t = "".join(sorted(t))
     return t
 
 
@@ -177,7 +177,7 @@ def _tokens(text, bidi=None):
         if not c:
             continue
         if bidi:   # RTL page: digit runs come out reversed too in visual-order extractors
-            out += [min(run, run[::-1]) for run in _RUN.findall(c)]
+            out += ["".join(sorted(run)) for run in _RUN.findall(c)]
         else:
             out.append(c)
     return out
@@ -220,16 +220,164 @@ def _block(kind, text, page, bbox, source):
     return Block(kind if kind in KINDS else "other", text, page, bbox, span_hash(page, text, bbox), source)
 
 
+# ------------------------------------------------- RTL: visual -> logical order
+# pdfplumber hands back Arabic/Hebrew lines in *visual* order (words by ascending x, characters of RTL
+# words reversed). Rebuild reading order from the word geometry with a minimal inverse-bidi (no new
+# dependency): RTL base direction -> runs reversed, LTR runs (Latin, digits, codes) keep their order.
+_RTL_CH = re.compile("[֐-׿؀-ۿݐ-ݿࢠ-ࣿיִ-﷿ﹰ-﻿]")
+
+
+def _cls(ch):
+    if _RTL_CH.match(ch):
+        return "R"
+    return "L" if ch.isalnum() else "N"
+
+
+def _units(text, chars=None):
+    """Glyph units: a lam-alef ligature glyph (2 chars, one glyph) and combining marks stay together."""
+    raw = list(chars) if chars and "".join(chars) == text else list(text)
+    out = []
+    for u in raw:
+        if out and unicodedata.category(u[0]) == "Mn":
+            out[-1] += u
+        else:
+            out.append(u)
+    return out
+
+
+def _logical_word(text, chars=None):
+    """Visual-order word text -> logical order (words without RTL letters are returned unchanged)."""
+    if not _RTL_CH.search(text):
+        return text
+    us = _units(text, chars)
+    cl = [_cls(u[0]) for u in us]
+    for i, c in enumerate(cl):          # neutrals (. , - / % :) between LTR units belong to the LTR run
+        if c == "N":
+            a = next((cl[j] for j in range(i - 1, -1, -1) if cl[j] != "N"), None)
+            b = next((cl[j] for j in range(i + 1, len(cl)) if cl[j] != "N"), None)
+            cl[i] = "L" if a == "L" and b == "L" else "R"
+    runs = []
+    for u, c in zip(us, cl):
+        if runs and runs[-1][0] == c:
+            runs[-1][1].append(u)
+        else:
+            runs.append([c, [u]])
+    return "".join("".join(r[::-1] if c == "R" else r) for c, r in reversed(runs))
+
+
+def _logical_line(line, wchars=None, page_rtl=True):
+    """Rebuild one visual line in reading order; lines without RTL letters are returned untouched."""
+    words = line.words
+    if not any(_RTL_CH.search(w.text) for w in words):
+        return line
+    cls = ["R" if _RTL_CH.search(w.text) else ("L" if any(c.isalnum() for c in w.text) else "N") for w in words]
+    strong = [c for c in cls if c != "N"]    # edges agree -> that direction; else the page's dominant one
+    base = strong[0] if strong[0] == strong[-1] else ("R" if page_rtl else "L")
+    for i, c in enumerate(cls):
+        if c == "N":
+            a = next((cls[j] for j in range(i - 1, -1, -1) if cls[j] != "N"), None)
+            b = next((cls[j] for j in range(i + 1, len(cls)) if cls[j] != "N"), None)
+            cls[i] = "L" if a == "L" and b == "L" else base
+    runs = []
+    for w, c in zip(words, cls):
+        if runs and runs[-1][0] == c:
+            runs[-1][1].append(w)
+        else:
+            runs.append([c, [w]])
+    if base == "R":
+        runs.reverse()
+    new = []
+    for c, ws in runs:
+        for w in (ws[::-1] if c == "R" else ws):
+            t = _logical_word(w.text, (wchars or {}).get(id(w)))
+            new.append(pdfdoc.Word(t, w.page, w.bbox_norm, span_hash(w.page, t, w.bbox_norm), w.font_size, w.ocr))
+    text = " ".join(w.text for w in new)
+    return pdfdoc.Line(text, line.page, line.bbox_norm, span_hash(line.page, text, line.bbox_norm), new)
+
+
+def _plumber_chars(data, page_nos):
+    """{page_no: [(x0, x1, top, bottom, text)]} (normalised) for ligature-aware reversal."""
+    out = {}
+    if pdfdoc.pdfplumber is None:
+        return out
+    import io
+    try:
+        with pdfdoc.pdfplumber.open(io.BytesIO(data)) as pdf:
+            for n in page_nos:
+                pp = pdf.pages[n - 1]
+                W, H = float(pp.width), float(pp.height)
+                out[n] = []
+                for c in pp.chars:
+                    b = norm_bbox(c["x0"], c["top"], c["x1"], c["bottom"], W, H)
+                    out[n].append((b[0], b[2], b[1], b[3], c["text"]))
+                pp.flush_cache()
+    except Exception:
+        return {}
+    return out
+
+
+def _word_chars(words, chars):
+    """id(word) -> its glyph texts (a ligature stays one entry), only where they re-assemble to the word text."""
+    out = {}
+    for w in words:
+        if not _RTL_CH.search(w.text):
+            continue
+        x0, y0, x1, y1 = w.bbox_norm
+        cs = [(i, c) for i, c in enumerate(chars)
+              if x0 - 1e-4 <= (c[0] + c[1]) / 2 <= x1 + 1e-4 and y0 - 1e-4 <= (c[2] + c[3]) / 2 <= y1 + 1e-4
+              and c[4].strip()]
+        cs.sort(key=lambda t: (t[1][0], t[0]))
+        if "".join(c[4] for _i, c in cs) == w.text:
+            out[id(w)] = [c[4] for _i, c in cs]
+    return out
+
+
+def _to_logical(pdf, data):
+    """Convert pdfplumber's visual-order RTL lines to logical order, in place (poppler words are logical)."""
+    if pdf.backend != "pdfplumber":
+        return pdf
+    pages = [p for p in pdf.pages if any(_RTL_CH.search(w.text) for w in p.words)]
+    if not pages:
+        return pdf
+    chars = _plumber_chars(data, [p.number for p in pages])
+    for p in pages:
+        wc = _word_chars(p.words, chars.get(p.number, []))
+        n_r = sum(1 for w in p.words if _RTL_CH.search(w.text))
+        n_s = sum(1 for w in p.words if any(c.isalnum() for c in w.text))
+        lines = [_logical_line(l, wc, 2 * n_r >= n_s) for l in p.lines]
+        rep = {}
+        for old, new in zip(p.lines, lines):
+            if new is old:
+                continue
+            pool = {}
+            for w in new.words:
+                pool.setdefault(w.bbox_norm, []).append(w)
+            for w in old.words:
+                rep[id(w)] = pool[w.bbox_norm].pop(0)
+        p.words = [rep.get(id(w), w) for w in p.words]
+        p.lines = lines
+    return pdf
+
+
 # --------------------------------------------------------- pdfdoc backend
 def _segments(line, gap=0.03):
+    """Column segments of a line; each segment keeps the line's own (reading) word order."""
+    ws = line.words
+    if all(ws[i].bbox_norm[0] <= ws[i + 1].bbox_norm[0] for i in range(len(ws) - 1)):
+        order = ws
+    else:                                # logical (RTL) lines run right-to-left: split on x, emit in line order
+        order = sorted(ws, key=lambda w: w.bbox_norm[0])
     segs, cur = [], []
-    for w in line.words:
+    for w in order:
         if cur and w.bbox_norm[0] - cur[-1].bbox_norm[2] > gap:
             segs.append(cur)
             cur = []
         cur.append(w)
     if cur:
         segs.append(cur)
+    if order is not ws:
+        pos = {id(w): i for i, w in enumerate(ws)}
+        segs = [sorted(sg, key=lambda w: pos[id(w)]) for sg in segs]
     return segs
 
 
@@ -445,7 +593,7 @@ def parse(path_or_bytes, backend=None, *, ocr="auto", threshold=None):
     thr = _threshold(threshold)
     want_ocr = ocr not in (False, None, "off", "never", "none")
     name = _resolve_backend(backend)
-    pdf = pdfdoc.load(data, ocr=want_ocr)
+    pdf = _to_logical(pdfdoc.load(data, ocr=want_ocr), data)
     raws = raw_page_texts(data)
     doc = ParsedDoc(pdf.doc_id, name, [], list(pdf.warnings))
     by_page = None
@@ -501,7 +649,10 @@ def parse(path_or_bytes, backend=None, *, ocr="auto", threshold=None):
 
 
 # ------------------------------------------------------------------- locate
-_TRANS = str.maketrans({"‘": "'", "’": "'", "‚": "'", "‛": "'", "“": '"',
+_TRANS = str.maketrans({"\u200e": None, "\u200f": None, "\u202a": None, "\u202b": None, "\u202c": None,
+                        "\u202d": None, "\u202e": None, "\u2066": None, "\u2067": None, "\u2068": None,
+                        "\u2069": None, "\u061c": None, "\u0640": None,
+                        "‘": "'", "’": "'", "‚": "'", "‛": "'", "“": '"',
                         "”": '"', "„": '"', "‐": "-", "‑": "-", "‒": "-",
                         "–": "-", "—": "-", "―": "-", "−": "-", "­": ""})
 
