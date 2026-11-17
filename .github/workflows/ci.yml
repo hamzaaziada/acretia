@@ -2,7 +2,7 @@ name: CI
 
 on:
   push:
-    branches: ["**"]
+    branches: ["main"]          # builder session branches run CI through their pull requests, not on every push
   pull_request:
   schedule:
     - cron: "17 2 * * *"

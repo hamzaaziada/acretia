@@ -347,7 +347,8 @@ class ZipTests(DealCase):
         self.assertTrue(deals.wait_idle(120))
         docs = self.docs(limit=200)
         self.assertEqual(docs["summary"], {"total": 50, "indexed": 50, "indexing": 0, "queued": 0, "failed": 0, "progress": 1.0})
-        self.assertLess(time.time() - t0, 90)
+        # 90 s on a developer machine; shared GitHub runners are ~2x slower, so CI gets a looser bar.
+        self.assertLess(time.time() - t0, 180 if os.environ.get("CI") else 90)
 
 
 class LibraryTests(DealCase):

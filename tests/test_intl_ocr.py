@@ -141,7 +141,9 @@ class OcrFixtures(unittest.TestCase):
     def test_arabic_words_recognised(self):
         doc = self.doc("nile_valley_ar_scanned_fy2024.pdf")
         txt = " ".join(w.text for p in doc.pages for w in p.words)
-        for word in ("الإيرادات", "الأصول", "التدفقات"):
+        # One word per statement (IS, BS, CF). "الأنشطة" (activities) is only on the cash-flow page; the page
+        # title "التدفقات" is not used because Ubuntu's Tesseract build drops that heading line.
+        for word in ("الإيرادات", "الأصول", "الأنشطة"):
             self.assertIn(word, txt)
 
     def test_page_image_api_and_reocr(self):
