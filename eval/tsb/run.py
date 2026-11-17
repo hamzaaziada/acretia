@@ -36,15 +36,15 @@ TASK_ORDER = ("comps", "precedents", "three_statement", "dcf", "lbo", "merger", 
               "ic_memo", "earnings_update", "earnings_recap", "buyer_list")
 PERSONA_PASS = 8.5
 # which competitor claims (matched on the `who` column of the baselines doc, section 1) sit beside which task
-CLAIM_MAP = {
-    "three_statement": ("Wall Street Prep", "Ankura", "Daloopa", "BankerToolBench"),
-    "dcf": ("Shortcut",), "lbo": ("Shortcut", "BankerToolBench"), "merger": ("Shortcut", "BankerToolBench"),
-    "comps": ("Daloopa", "Hebbia"), "precedents": ("Hebbia",),
-    "vdr_review": ("Rogo / Harbor View", "AlphaSense", "Brightwave", "Hebbia"),
-    "earnings_update": ("Daloopa",), "earnings_recap": ("Daloopa",), "ic_memo": ("Brightwave", "Rogo / Baird"),
-    "profile": ("Rogo / Baird",), "pitchbook_section": ("Rogo / Baird",), "teaser": ("Rogo / Harbor View",), "buyer_list": ("Hebbia",),
+CLAIM_MAP = {   # task -> "who" or "who|substring of the claim text"
+    "three_statement": ("Wall Street Prep", "Ankura", "Daloopa|Model build", "BankerToolBench (ICLR 2026)"),
+    "dcf": ("Shortcut",), "lbo": ("Shortcut",), "merger": ("Shortcut",),
+    "comps": (), "precedents": (),
+    "vdr_review": ("Rogo / Harbor View", "AlphaSense", "Brightwave"),
+    "earnings_update": ("Daloopa|2 hrs saved",), "earnings_recap": ("Daloopa|2 hrs saved",), "ic_memo": ("Brightwave",),
+    "profile": ("Rogo / Baird",), "pitchbook_section": ("Rogo / Baird",), "teaser": ("Rogo / Harbor View",), "buyer_list": (),
 }
-GENERAL_CLAIMS = ("Rogo", "Hebbia", "BankerToolBench", "Vals Finance Agent v2")
+GENERAL_CLAIMS = ("Rogo / Baird", "Rogo", "Hebbia (OpenAI page)", "Hebbia", "BankerToolBench", "Vals Finance Agent v2")
 CSV_COLS = ["brief_id", "task_id", "region", "ticker", "data", "outcome", "blocked_reason", "wall_min", "review_fix_min", "t_a_min", "t_h_low_min",
             "t_h_mid_min", "t_h_high_min", "saved_low", "saved_mid", "saved_high", "baseline", "gates_pass", "model_score", "silent_numbers",
             "client_ready", "blocking", "persona_score", "edits", "status"]
@@ -171,7 +171,10 @@ def aggregate(rows: list[dict], bl: dict, briefs: list[dict], tasks: tuple[str, 
 
 # --------------------------------------------------------------------------- report
 def pc(x) -> str:
-    return "n/a" if x is None else f"{x * 100:.0f}%"
+    if x is None:
+        return "n/a"
+    v = round(x * 100)
+    return f"{v:.0f}%" if v else "0%"
 
 
 def write_report(path: Path, agg: list[dict], rows: list[dict], bl: dict, mode: str, args_note: str, wsp: dict | None, started: str, total_s: float):
@@ -216,11 +219,11 @@ def write_report(path: Path, agg: list[dict], rows: list[dict], bl: dict, mode: 
     for a in agg:
         t = a["task_id"]
         for c in claims:
-            if any(c["who"].startswith(w) for w in CLAIM_MAP.get(t, ())):
+            if any(c["who"] == w.split("|")[0] and (len(w.split("|")) == 1 or w.split("|")[1] in c["claim"]) for w in CLAIM_MAP.get(t, ())):
                 L.append(f"| {t} | {c['who']} | {c['claim'][:170]} | {c['type']} | {c['method'][:50]} |")
     L += ["", "General headline claims (not task-specific):", ""]
     for c in claims:
-        if any(c["who"].startswith(w) for w in GENERAL_CLAIMS):
+        if c["who"].startswith(GENERAL_CLAIMS) and "prompt-caching" not in c["claim"]:
             L.append(f"- **{c['who']}** [{c['type']}]: {c['claim'][:200]} ({c['method']})")
     L += [""]
     L += ["## Fixed row: WSP Apple 3-statement", ""]
