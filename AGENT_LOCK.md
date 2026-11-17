@@ -33,7 +33,6 @@ One row per active claim. Claim a packet before you touch its files, commit the 
 | S6.2 figure verifier | worker (session A) | claude/dreamy-ramanujan-k8p2xt | 2026-11-16 | src/harness/research/verify.py, tests/test_research_verify.py |
 | FP-S1c buyer-research rubric thresholds | worker (session A) | claude/dreamy-ramanujan-k8p2xt | 2026-11-17 | docs/buyer-research.md |
 | S4.fix2 formula engine coverage (SpreadsheetBench) | worker (session C) | claude/busy-knuth-i3ewp5 | 2026-11-17 | om/formula.py, tests/test_formula_ext2.py |
-| S6.1c awaiting_review + quarterly data | worker (session A) | claude/dreamy-ramanujan-k8p2xt | 2026-11-17 | om/contracts.py (Job.status enum only), src/harness/research/jobs.py, src/harness/research/workflows/review.py, src/harness/research/tools.py, tests/test_research_api.py, tests/test_research_tools.py, tests/test_research_workflows.py |
 | FP-S4-A data fidelity (statements/concepts/facts) | worker (session C) | claude/busy-knuth-i3ewp5 | 2026-11-17 | om/statements.py, om/concepts.py, om/facts.py, tests/test_statements_fix.py |
 | FP-S4-B model3 valuation + robustness | worker (session C) | claude/busy-knuth-i3ewp5 | 2026-11-17 | om/model3.py, tests/test_model3_fix.py, license-and-repo-ledger.csv (one row) |
 | FP-S4-C print/polish + manifest | worker (session C) | claude/busy-knuth-i3ewp5 | 2026-11-17 | om/polish.py, om/xlsx.py, om/manifest.py, tests/test_polish_fix.py |
@@ -44,6 +43,7 @@ One row per active claim. Claim a packet before you touch its files, commit the 
 | S6-gate verify_s6.py | gate-writer (session A) | claude/dreamy-ramanujan-k8p2xt | 2026-11-17 | scripts/verify_s6.py, tests/fixtures/s6gate/** |
 | S7.5b Docker/compose/deploy | worker (session A) | claude/dreamy-ramanujan-k8p2xt | 2026-11-17 | Dockerfile, .dockerignore, docker-compose.yml, deploy/**, DEPLOY.md, scripts/verify_s7_deploy.py |
 | S7.4a security review | reviewer (session A) | claude/dreamy-ramanujan-k8p2xt | 2026-11-17 | SECURITY_REPORT.md, docs/reviews/security-*.md |
+| S6.1d quarterly recap + park/re-enqueue review | worker (session A) | claude/dreamy-ramanujan-k8p2xt | 2026-11-17 | src/harness/research/workflows/steps.py, src/harness/research/workflows/catalog.py, src/harness/research/jobs.py, tests/test_research_workflows.py, tests/test_research_api.py |
 
 ## Log
 - 2026-11-16: created; no active claims.
@@ -95,3 +95,4 @@ One row per active claim. Claim a packet before you touch its files, commit the 
 - 2026-11-17: S5.F1 verified on main and released; S5.F3a claimed (session D).
 - 2026-11-16: session A: S6 gate-writer claimed.
 - 2026-11-16: session A: S7.5b and S7.4a claimed.
+- 2026-11-16: session A: S6.1c done; S6.1d claimed.
