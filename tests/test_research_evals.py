@@ -94,6 +94,35 @@ class Scoring(NoNetwork):
         self.assertTrue(numbers_match(parse_numbers("-5.2")[0], normalise_figure(-5.2, "x")))
         self.assertEqual(parse_numbers("FY 2024 Q4"), [])                        # years / quarter labels are not numbers
 
+    def test_tool_emitted_unit_strings(self):
+        m = lambda gold, v, u: numbers_match(parse_numbers(gold)[0], normalise_figure(v, u))   # noqa: E731
+        # the exact S6 gate case
+        self.assertTrue(m("$1,210 million", 1210.0, "USD millions"))
+        self.assertTrue(m("$1,210 million", 1210.0, "usd MILLIONS"))
+        self.assertTrue(m("$1,210 million", 1_210_000, "USD thousands"))
+        self.assertTrue(m("$1.2 billion", 1.2, "USD billions"))
+        self.assertTrue(m("$310.00", 310, "USD"))
+        self.assertTrue(m("$4.50", 4.5, "USD/shares"))
+        self.assertTrue(m("$4.50", 4.5, "USD/share"))
+        self.assertTrue(m("12.5%", 12.5, "%"))
+        self.assertTrue(m("12.5%", 0.125, "ratio"))                    # ratio vs gold percentage (x100)
+        self.assertTrue(m("2.5x", 2.5, "ratio"))
+        self.assertTrue(m("80bps", 80, "bps"))
+        self.assertTrue(m("2.5x", 2.5, "x"))
+        for u, v, gold in [("EUR m", 300, "300 million"), ("GBP bn", 2, "2 billion"), ("EGP thousands", 5000, "5 million"),
+                           ("SAR millions", 7, "$7 million"), ("AED k", 900, "900 thousand"), ("USD mm", 12, "$12 million"),
+                           ("USD '000", 1500, "$1.5 million"), ("USD (000s)", 1500, "$1.5 million"),
+                           ("USD in millions", 1210, "$1,210 million"), ("$ millions", 1210, "$1,210 million")]:
+            self.assertTrue(m(gold, v, u), u)
+        self.assertFalse(m("$1,210 million", 1210.0, "USD thousands"))   # wrong scale must not match
+
+    def test_gate_case_scores_correct_only_with_citation(self):
+        it = self.item("$1,210 million")
+        self.assertTrue(score_item(it, ok(fig(1210.0, "USD millions")))["correct"])
+        s = score_item(it, ok(fig(1210.0, "USD millions", cited=False)))
+        self.assertTrue(s["numeric_ok"])
+        self.assertFalse(s["correct"])
+
     def test_tolerance_and_exact_counts(self):
         self.assertTrue(score_item(self.item("$1000 million"), ok(fig(1009)))["numeric_ok"])      # 0.9% off
         self.assertFalse(score_item(self.item("$1000 million"), ok(fig(1020)))["numeric_ok"])     # 2% off

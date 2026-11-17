@@ -76,6 +76,20 @@ def _urls(obj, out):
             _urls(v, out)
 
 
+def approved_urls(sources) -> list:
+    """http(s) URLs named by an (approved) source plan: ``url`` sources and URL-valued tool args. Order kept, no dupes."""
+    out: list = []
+    _urls(sources, out)
+    return [u for u in dict.fromkeys(out) if u.startswith(("http://", "https://"))]
+
+
+def _grant(ctx, sources) -> None:
+    """After approval, let ``web_facts`` fetch exactly the hosts the human approved (F-01)."""
+    guard = getattr(getattr(ctx, "tools", None), "web_guard", None)
+    if guard is not None:
+        guard.approve_sources(sources)
+
+
 def plan_sources(ctx) -> list:
     """Deterministic list of what the run will read: tool calls (templates resolved where possible), docs, URLs."""
     from .base import lookup, resolve, TemplateError
@@ -103,7 +117,10 @@ _ITEM = "<item>"
 def await_review(ctx, sources) -> str:
     cb = ctx.review
     if callable(cb):
-        return "approved" if cb(sources) else "rejected"
+        if not cb(sources):
+            return "rejected"
+        _grant(ctx, sources)
+        return "approved"
     job_id = ctx.job_id
     ev_dir = ctx.bundle.path.parent
     timeout = float(ctx.options.get("review_timeout_s", 86400))
@@ -119,7 +136,10 @@ def await_review(ctx, sources) -> str:
             d = flag.read_text(encoding="utf-8").strip() or None
         return d
     try:
-        return poll_decision(fetch, ctx.cancelled, timeout)
+        decision = poll_decision(fetch, ctx.cancelled, timeout)
+        if decision == "approved":
+            _grant(ctx, sources)
+        return decision
     finally:
         with _LOCK:
             _PENDING.pop(job_id, None)

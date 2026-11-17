@@ -20,6 +20,7 @@ import re
 from dataclasses import dataclass, field
 from datetime import date, datetime, timedelta, timezone
 from pathlib import Path
+from urllib.parse import unquote_plus, urlsplit
 
 from om.contracts import Citation, ContractError, sha256_hex
 from src.harness.evidence import canonical_bytes
@@ -712,9 +713,145 @@ def ratios(ticker: str, years: int = 3, *, sec=None, as_of=None) -> ToolResult:
 
 
 # ------------------------------------------------------------------------------------------------ web
-def web_facts(url: str, *, web=None, as_of=None) -> ToolResult:
-    if not isinstance(url, str) or not re.fullmatch(r"https?://\S+", url):
-        raise ToolError("url must be an http(s) URL")
+# F-01 (prompt-injection exfiltration): a model that has read untrusted text must not be able to smuggle it out through a
+# URL. Three deterministic layers, none of them an LLM: (1) the host must be approved, (2) the URL shape is bounded,
+# (3) no 24+ character run copied from a document seen in this job may appear in the URL.
+MAX_URL_TAIL = 128          # query string and fragment, each
+MAX_URL_PATH = 256
+MAX_ENCODED = 64            # total characters of base64-, hex- or percent-encoded runs
+SHINGLE = 24
+MAX_SHINGLES = 2_000_000
+_ENC_RES = (re.compile(r"(?:%[0-9A-Fa-f]{2})+"), re.compile(r"[0-9A-Fa-f]{16,}"), re.compile(r"[A-Za-z0-9+/]{24,}={0,2}"))
+_NON_ALNUM = re.compile(r"[\W_]+")
+
+
+def _norm(text: str) -> str:
+    return _NON_ALNUM.sub("", text.lower())
+
+
+def _host_of(url: str) -> str:
+    try:
+        return (urlsplit(url).hostname or "").lower().rstrip(".")
+    except ValueError:
+        return ""
+
+
+def check_url_shape(url: str) -> None:
+    """Shape rules that always apply, allowlisted host or not. Raises ``ToolError``."""
+    try:
+        parts = urlsplit(url)
+        host = parts.hostname
+    except ValueError:
+        raise ToolError("url not approved: malformed url")
+    if not host:
+        raise ToolError("url not approved: no host")
+    if "@" in parts.netloc or parts.username is not None or parts.password is not None:
+        raise ToolError(f"url not approved: userinfo is not allowed ({host})")
+    if len(parts.query) > MAX_URL_TAIL or len(parts.fragment) > MAX_URL_TAIL:
+        raise ToolError(f"url not approved: query or fragment too long ({host})")
+    if len(parts.path) > MAX_URL_PATH:
+        raise ToolError(f"url not approved: path too long ({host})")
+    tail = "?".join(x for x in (parts.path, parts.query) if x) + "#" + parts.fragment
+    if sum(len(m.group(0)) for rx in _ENC_RES for m in rx.finditer(tail)) > MAX_ENCODED:
+        raise ToolError(f"url not approved: encoded payload in url ({host})")
+
+
+class WebGuard:
+    """Per-registry state for ``web_facts``: approved hosts, exact approved URLs and the shingles of document text seen."""
+
+    def __init__(self, allow=None, request_urls=None, approved_sources=None, evidence=None):
+        self.enforce = allow is not None or request_urls is not None or approved_sources is not None
+        self.hosts: set[str] = set()
+        self.urls: set[str] = set()      # exact URLs a human or the request named
+        self.patterns: list[str] = []    # "*.example.com" entries
+        self.shingles: set[int] = set()
+        self.evidence = evidence
+        for e in allow or ():
+            self._add_host(e)
+        self.approve(request_urls or ())
+        self.approve_sources(approved_sources or ())
+
+    def _add_host(self, entry):
+        if not isinstance(entry, str) or not entry.strip():
+            return
+        e = entry.strip().lower()
+        if e.startswith("*."):
+            self.patterns.append(e[2:])
+        else:
+            h = _host_of(e) if "://" in e else e.rstrip(".")
+            if h:
+                self.hosts.add(h)
+
+    def approve(self, urls) -> None:
+        """Explicitly listed (request or human-approved) URLs: the exact URL and its host become fetchable."""
+        self.enforce = True
+        for u in urls:
+            if isinstance(u, str) and re.fullmatch(r"https?://\S+", u):
+                self.urls.add(u)
+                h = _host_of(u)
+                if h:
+                    self.hosts.add(h)
+
+    def approve_sources(self, sources) -> None:
+        """The approved pre-run source-review plan (``review.plan_sources`` output)."""
+        from .workflows.review import approved_urls
+        self.approve(approved_urls(sources))
+
+    def host_ok(self, host: str) -> bool:
+        return host in self.hosts or any(host == p or host.endswith("." + p) for p in self.patterns)
+
+    def note_text(self, text) -> None:
+        """Remember text from an untrusted document so none of it can leave inside a URL."""
+        if not isinstance(text, str) or len(self.shingles) >= MAX_SHINGLES:
+            return
+        n = _norm(text[:2_000_000])
+        for i in range(max(0, len(n) - SHINGLE + 1)):
+            self.shingles.add(hash(n[i:i + SHINGLE]))
+
+    def note_output(self, obj, _depth=0) -> None:
+        if _depth > 8:
+            return
+        if isinstance(obj, str):
+            self.note_text(obj)
+        elif isinstance(obj, dict):
+            for v in obj.values():
+                self.note_output(v, _depth + 1)
+        elif isinstance(obj, (list, tuple)):
+            for v in obj:
+                self.note_output(v, _depth + 1)
+
+    def copies_document_text(self, url: str) -> bool:
+        if not self.shingles:
+            return False
+        parts = urlsplit(url)
+        n = _norm(unquote_plus(" ".join((parts.path, parts.query, parts.fragment))))
+        return any(hash(n[i:i + SHINGLE]) in self.shingles for i in range(max(0, len(n) - SHINGLE + 1)))
+
+    def check(self, url: str) -> None:
+        """Raise ``ToolError`` unless ``url`` may be fetched; every refusal is appended to the evidence log."""
+        host = _host_of(url) if isinstance(url, str) else ""
+        try:
+            if not isinstance(url, str) or not re.fullmatch(r"https?://\S+", url):
+                raise ToolError("url must be an http(s) URL")
+            check_url_shape(url)
+            if self.enforce and url not in self.urls and not self.host_ok(host):
+                raise ToolError(f"url not approved: {host}")
+            if url not in self.urls and self.copies_document_text(url):
+                raise ToolError(f"url not approved: contains text copied from a document ({host})")
+        except ToolError as e:
+            if self.evidence is not None and isinstance(url, str):
+                self.evidence.append("web_facts.refused", {"url": url[:512]}, source=f"refused:{host or 'unknown'}",
+                                     output={"refused": True, "reason": str(e), "host": host})
+            raise
+
+
+def web_facts(url: str, *, web=None, as_of=None, guard: WebGuard | None = None) -> ToolResult:
+    if guard is not None:
+        guard.check(url)
+    else:
+        if not isinstance(url, str) or not re.fullmatch(r"https?://\S+", url):
+            raise ToolError("url must be an http(s) URL")
+        check_url_shape(url)
     if web is None:
         from src.harness.connectors.web import Crawler   # SSRF / robots / rate limits live in the Crawler
         web = Crawler()
@@ -907,19 +1044,35 @@ def xlsx_evaluate(path: str, cells: list, *, excel_root=None, as_of=None) -> Too
 
 
 # ------------------------------------------------------------------------------------------------ registry
+_UNTRUSTED_TEXT_TOOLS = frozenset({"grid_query", "grid_cell", "xlsx_evaluate", "web_facts"})
+
+
 def _obj(required, **props) -> dict:
     return {"type": "object", "required": list(required), "additionalProperties": False, "properties": props}
 
 
-def build_registry(*, evidence=None, sec=None, web=None, grid_db=None, excel_root=None, as_of=None) -> ToolRegistry:
-    """The research agent's tool surface. ``evidence`` (an EvidenceBundle) gets one record per successful call."""
+def build_registry(*, evidence=None, sec=None, web=None, grid_db=None, excel_root=None, as_of=None,
+                   web_allow=None, request_urls=None, approved_sources=None) -> ToolRegistry:
+    """The research agent's tool surface. ``evidence`` (an EvidenceBundle) gets one record per successful call.
+
+    ``web_facts`` (F-01): once any of ``web_allow`` (org IR-domain allowlist: hosts, URLs or ``*.host``),
+    ``request_urls`` (URLs the request lists) or ``approved_sources`` (the approved source-review plan) is given, only
+    those hosts may be fetched; anything else raises ``ToolError("url not approved: <host>")``. With none given the host
+    check is off (legacy), so callers that run untrusted text through a model must pass them or call
+    ``reg.web_guard.approve_sources(...)``. URL shape and document-text-copy checks always apply, and every refusal is
+    logged to ``evidence``. ``reg.web_guard.note_text`` records extra untrusted text (emails, VDR text).
+    """
     if as_of is not None and not _valid_date(as_of):
         raise ToolError(f"as_of must be YYYY-MM-DD, got {as_of!r}")
     reg = ToolRegistry()
+    guard = WebGuard(web_allow, request_urls, approved_sources, evidence)
+    reg.web_guard = guard
 
     def wrap(name, fn):
         def run(**kw):
             res = fn(**kw).to_dict()
+            if name in _UNTRUSTED_TEXT_TOOLS:
+                guard.note_output({"d": res["data"], "q": [c.get("quote") for c in res["citations"]]})
             if evidence is not None:
                 page = bbox = None
                 if len(res["figures"]) == 1:
@@ -947,7 +1100,7 @@ def build_registry(*, evidence=None, sec=None, web=None, grid_db=None, excel_roo
         ("ratios", lambda ticker, years=3: ratios(ticker, years, sec=sec, as_of=as_of),
          _obj(["ticker"], ticker=tickers, years={"type": "integer"}),
          "Derived ratios; each figure cites every input line it is computed from."),
-        ("web_facts", lambda url: web_facts(url, web=web, as_of=as_of),
+        ("web_facts", lambda url: web_facts(url, web=web, as_of=as_of, guard=guard),
          _obj(["url"], url={"type": "string"}),
          "Title, date and snippet of a public web page; figures only for numbers with explicit units."),
         ("grid_query", lambda sql, params=None: grid_query(sql, params, grid_db=grid_db, as_of=as_of),
