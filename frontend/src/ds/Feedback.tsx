@@ -171,7 +171,7 @@ function ToastView({ item, onDismiss, dismissLabel }: { item: ToastItem; onDismi
   }, [item, onDismiss]);
   const kind = item.kind ?? 'info';
   return (
-    <div className={cx('acr-toast', `acr-toast--${kind}`)} role={kind === 'error' ? 'alert' : 'status'}>
+    <div className={cx('acr-toast', `acr-toast--${kind}`)} data-testid="toast" data-kind={kind} role={kind === 'error' ? 'alert' : 'status'}>
       <span className="acr-toast__icon">{kind === 'error' ? <IconAlert size={16} /> : kind === 'success' ? <IconCheck size={16} /> : <IconInfo size={16} />}</span>
       <div className="acr-toast__main">
         <div className="acr-toast__title">{item.title}</div>

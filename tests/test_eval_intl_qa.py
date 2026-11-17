@@ -37,6 +37,12 @@ class Scorer(unittest.TestCase):
         self.assertTrue(ev.point_matches("زكاه", "الزكاة"))
         self.assertTrue(ev.point_matches("2024", "عام ٢٠٢٤"))
 
+    def test_percent_normalisation(self):
+        for txt in ("rate of 2.5 percent", "rate of 2.5 per cent", "rate of 2.5 pct", "rate of 2.5 %", "rate of 2.5%"):
+            self.assertTrue(ev.point_matches(r"2\.5 ?%", txt), txt)
+        self.assertTrue(ev.point_matches("9 percent", "tax at 9%"))
+        self.assertFalse(ev.point_matches(r"2\.5 ?%", "rate of 25 percent"))
+
     def test_bad_regex_falls_back_to_literal(self):
         self.assertTrue(ev.point_matches("a(b", "xa(by"))
 

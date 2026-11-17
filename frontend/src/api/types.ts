@@ -161,6 +161,44 @@ export interface Job {
   created_at?: string | null;
   error: string | null;
   source: JobSource;
+  time_saved?: TimeSaved | null;
+  /** Wall-clock seconds, when the server reports it. */
+  wall_seconds?: number | null;
+}
+
+/** Estimate (D-032). Never human-validated until `status` says so. */
+export interface TimeSaved {
+  task_id: string;
+  t_h_minutes?: { low: number; mid: number; high: number; source: string } | null;
+  t_a_minutes?: number | null;
+  pct?: number | null;
+  status?: string;
+  baseline?: string;
+}
+
+export interface Citation {
+  doc_id: string;
+  page: number | null;
+  bbox_norm?: number[] | null;
+  quote: string;
+  as_of?: string | null;
+  url?: string | null;
+  doc_name: string;
+}
+
+export interface ActivityRow {
+  id?: string;
+  at: string;
+  actor?: string | null;
+  action: string;
+  target?: string | null;
+  summary?: string | null;
+}
+
+export interface DealDetail extends Deal {
+  activity?: ActivityRow[];
+  instructions?: string | null;
+  definitions?: Record<string, string> | null;
 }
 
 export interface JobCreate {
@@ -213,6 +251,8 @@ export interface LogEvent extends EventBase {
 export interface ApprovalPayload {
   /** ghost_deck: slide titles to approve or edit. */
   titles?: string[];
+  /** source_review: sources the run proposes to read. */
+  sources?: Array<{ id?: string; name?: string; doc_name?: string; kind?: string; detail?: string }>;
   slides?: Array<{ title: string; bullets?: string[] }>;
   /** assumptions: key/value rows. */
   assumptions?: Array<{ key: string; label?: string; value: string | number }>;
@@ -220,7 +260,7 @@ export interface ApprovalPayload {
 }
 export interface ApprovalData {
   step_id: string;
-  kind: 'ghost_deck' | 'assumptions';
+  kind: 'ghost_deck' | 'assumptions' | 'source_review';
   payload: ApprovalPayload;
 }
 export interface ApprovalEvent extends EventBase {
@@ -271,6 +311,13 @@ export interface Agent {
   shared?: boolean;
   builtin?: boolean;
   created_at?: string;
+  tags?: string[];
+  /** Stable task id of a built-in agent (SPEC section 5). */
+  task_id?: string;
+  /** Admins can disable an agent org-wide (item 58). Absent means enabled. */
+  enabled?: boolean;
+  created_by?: string | null;
+  owner_name?: string | null;
 }
 
 export interface AuditRow {

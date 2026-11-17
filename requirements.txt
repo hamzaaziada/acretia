@@ -8,3 +8,5 @@ fonttools==4.68.0  # real glyph metrics for text fitting (om/deck/metrics.py)
 arabic-reshaper==3.1.0  # Arabic shaping for RTL slides (om/deck/rtl.py)
 openpyxl==3.1.5  # workbook read for deck <-> model sync
 PyYAML==6.0.3  # DeckSpec YAML (pinned for deck; S8 lists PyYAML>=6.0 above)
+pdfplumber>=0.11  # om/pdfdoc.py PDF backend (words, font sizes, rulings); poppler pdftotext is the system-binary fallback
+pypdfium2>=4.30  # pdfplumber's renderer (ledger-approved)

@@ -19,7 +19,7 @@ export function Stepper({ steps, label }: { steps: StepItem[]; label: string }) 
   return (
     <ol className="acr-stepper" aria-label={label}>
       {steps.map((s, i) => (
-        <li key={s.id} className={cx('acr-step', `acr-step--${s.status}`)} aria-current={s.status === 'running' ? 'step' : undefined}>
+        <li key={s.id} data-testid="run-step" data-status={s.status} data-id={s.id} className={cx('acr-step', `acr-step--${s.status}`)} aria-current={s.status === 'running' ? 'step' : undefined}>
           <span className="acr-step__mark" aria-hidden="true">
             {s.status === 'done' ? <IconCheck size={12} /> : s.status === 'running' ? <IconSpinner size={12} className="acr-spin" /> : s.status === 'failed' ? <IconAlert size={12} /> : s.status === 'skipped' ? <span className="acr-step__dash" /> : <span className="acr-num">{i + 1}</span>}
           </span>

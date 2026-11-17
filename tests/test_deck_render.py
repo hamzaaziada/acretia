@@ -9,9 +9,15 @@ import shutil
 import struct
 import subprocess
 import tempfile
-import unittest
 import zipfile
 import zlib
+
+import unittest
+
+try:
+    import pptx, PIL, fontTools  # noqa: F401,E401
+except ImportError as e:  # clean machine without deck deps: skip, do not error
+    raise unittest.SkipTest(f"deck deps missing: {e}")
 
 from lxml import etree
 from pptx import Presentation
@@ -126,6 +132,20 @@ class DeckRenderTests(unittest.TestCase):
         self.assertEqual(ff["s5.chart"].chart.chart_type, XL_CHART_TYPE.BAR_STACKED)
         self.assertEqual(len(ff["s5.chart.2"].chart.plots), 2)
 
+    def test_chart_polish_label_contrast_and_formats(self):
+        from om.deck.render import contrast, fmt_number, label_token, _Ctx
+        cx = _Ctx(THEME)
+        self.assertEqual(label_token(cx, "secondary"), "background")
+        self.assertEqual(label_token(cx, "mute_bar"), "text")
+        self.assertGreaterEqual(contrast("#FFFFFF", THEME.colors["secondary"]), 4.5)
+        self.assertEqual(fmt_number(-3.456, '0.0"x"'), "-3.5x")
+        self.assertEqual(fmt_number(0.123, "0.0%"), "12.3%")
+        ch = {s.name: s for s in self.prs.slides[2].shapes}["s3.chart"].chart
+        x = xml_of(ch._chartSpace)
+        self.assertIn('gapWidth val="60"', x)
+        self.assertIn("&#8722;", x)
+        self.assertIn('w="6350"', x)
+
     def test_waterfall_must_foot(self):
         bad = {**WATERFALL, "series": [{"name": "x", "values": [100, 12, -8, -4, 90]}]}
         el = Element("s1.chart", "chart", "chart", 1, 1, 5, 3, chart=bad)
@@ -225,6 +245,77 @@ class DeckRenderTests(unittest.TestCase):
                                 "--convert-to", "pdf", "--outdir", d, p], capture_output=True, timeout=240)
             self.assertEqual(r.returncode, 0, r.stderr)
             self.assertTrue(os.path.getsize(os.path.join(d, "deck.pdf")) > 1000)
+
+    # ---- FP-S3-a: native shapes, connectors, pie plot layout
+    PRSTS = ["chevron", "homePlate", "diamond", "ellipse", "triangle", "downTriangle", "rect", "rightArrow"]
+
+    def _shape_slide(self, rtl=False):
+        els = [Element(f"s1.shape.{i}", "shape", "shape", 0.7 + i * 1.4, 2.0, 1.2, 1.0, fill="accent",
+                       line=("text", 0.75), shape={"prst": p, **({"rot": 90} if p == "triangle" else {})},
+                       text=TextSpec([Para([Run("A")])], size=12, color="background", valign="m", inset=0.05)
+                       if p == "chevron" else None)
+               for i, p in enumerate(self.PRSTS)]
+        els.append(Element("s1.connector.1", "connector", "connector", 1, 4, 3, 1, line=("text", 1.5),
+                           connector={"type": "elbow", "start": [1, 4], "end": [4, 5], "arrow": True}))
+        els.append(Element("s1.connector.2", "connector", "connector", 1, 6, 3, 0, line=("text", 1.5),
+                           connector={"type": "straight", "start": [1, 6], "end": [4, 6], "arrow": False}))
+        return SolvedSlide(1, "shapes_test", els, rtl=rtl)
+
+    def test_native_shapes_and_connectors(self):
+        sl = self._shape_slide()
+        prs = Presentation(io.BytesIO(render([sl], THEME, title="t")))
+        x = xml_of(prs.slides[0]._element)
+        self.assertEqual(x.count("<p:cxnSp"), 2)
+        self.assertIn('prst="bentConnector3"', x)
+        self.assertIn('prst="line"', x)
+        self.assertEqual(x.count("tailEnd"), 1)
+        for bad in ("<p:style", "outerShdw", "gradFill"):
+            self.assertNotIn(bad, x)
+        got = {sh.name: sh._element.spPr.find("{%s}prstGeom" % "http://schemas.openxmlformats.org/drawingml/2006/main").get("prst")
+               for sh in prs.slides[0].shapes if sh.name.startswith("s1.shape.")}
+        self.assertEqual([got[f"s1.shape.{i}"] for i in range(len(self.PRSTS))], self.PRSTS)
+        self.assertIn("A", x)
+        self.assertNotIn("flipH", xml_of(prs.slides[0].shapes[0]._element))
+
+    def test_rtl_flips_directional_shapes(self):
+        prs = Presentation(io.BytesIO(render([self._shape_slide(rtl=True)], THEME, title="t")))
+        by = {sh.name: xml_of(sh._element) for sh in prs.slides[0].shapes}
+        for i, p in enumerate(self.PRSTS):
+            self.assertEqual('flipH="1"' in by[f"s1.shape.{i}"], p in ("chevron", "homePlate", "rightArrow"), p)
+        self.assertIn('flipH="1"', by["s1.connector.1"])
+
+    def test_shape_connector_model(self):
+        sl = self._shape_slide()
+        self.assertEqual(SolvedSlide.from_dict(sl.to_dict()), sl)
+        with self.assertRaises(ValueError):
+            Element("s1.a", "shape", "a", 0, 0, 1, 1, shape={"prst": "star"})
+        with self.assertRaises(ValueError):
+            Element("s1.a", "connector", "a", 0, 0, 1, 1, connector={"type": "curvy", "start": [0, 0], "end": [1, 1]})
+
+    def test_pie_plot_layout(self):
+        def render_chart(t, **extra):
+            el = Element("s1.chart", "chart", "chart", 1, 1, 3, 3, chart={
+                "type": t, "categories": ["a", "b"], "labels": False, "legend": False,
+                "series": [{"name": "s", "values": [30, 70]}], **extra})
+            prs = Presentation(io.BytesIO(render([SolvedSlide(1, "t", [el])], THEME, title="t")))
+            return xml_of(next(sh for sh in prs.slides[0].shapes if sh.has_chart).chart._chartSpace)
+        for t in ("pie", "doughnut"):
+            x = render_chart(t)
+            self.assertIn("manualLayout", x)
+            self.assertIn('<c:w val="0.9"', x)
+        x = render_chart("pie", plot_layout={"x": 0.1, "y": 0.1, "w": 0.8, "h": 0.8})
+        self.assertIn('<c:w val="0.8"', x)
+
+    @unittest.skipUnless(shutil.which("soffice"), "soffice not installed")
+    def test_libreoffice_converts_shapes(self):
+        with tempfile.TemporaryDirectory() as d:
+            p = os.path.join(d, "shapes.pptx")
+            with open(p, "wb") as fh:
+                fh.write(render([self._shape_slide()], THEME, title="t"))
+            r = subprocess.run(["soffice", f"-env:UserInstallation=file://{d}/profile", "--headless",
+                                "--convert-to", "pdf", "--outdir", d, p], capture_output=True, timeout=240)
+            self.assertEqual(r.returncode, 0, r.stderr)
+            self.assertTrue(os.path.getsize(os.path.join(d, "shapes.pdf")) > 1000)
 
 
 if __name__ == "__main__":

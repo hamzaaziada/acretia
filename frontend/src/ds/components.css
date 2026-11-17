@@ -300,8 +300,7 @@
 .acr-table tbody tr:hover td {
   background: var(--acr-surface-hover);
 }
-.acr-tablewrap:focus-visible .acr-table tr.is-active td,
-.acr-table tr.is-active td {
+.acr-tablewrap:focus-visible .acr-table tr.is-active td {
   background: var(--acr-accent-subtle);
 }
 .acr-tablewrap:focus-visible tr.is-active td:first-child {
@@ -818,6 +817,7 @@
 /* ---------- Layout: sidebar, page header, panel, stat ---------- */
 .acr-wordmark {
   display: block;
+  direction: ltr;
   color: var(--acr-chrome-active);
 }
 .acr-sidebar {

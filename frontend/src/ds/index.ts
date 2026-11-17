@@ -11,3 +11,4 @@ export * from './Stepper';
 export * from './Layout';
 export * from './CommandPalette';
 export { lightTokens, darkTokens, contrast } from './tokens';
+export * from './Menu';
