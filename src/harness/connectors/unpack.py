@@ -183,11 +183,8 @@ def _commit(tmp: Path, dest: Path):
         os.replace(tmp, dest)
         return
     clash = [k.name for k in kids if (dest / k.name).exists() or (dest / k.name).is_symlink()]
-<<<<<<< Updated upstream
     if any((dest / c).is_symlink() for c in clash):
         raise UnsafePathError("symlink in the destination collides with an output name; refusing to follow it")
-=======
->>>>>>> Stashed changes
     if clash:
         raise UnpackError(f"destination already contains {sorted(clash)[:5]}")
     for k in kids:

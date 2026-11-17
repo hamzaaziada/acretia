@@ -194,126 +194,184 @@ Evidence: BankerToolBench [24] (Handshake AI and McGill, bankers from several bu
 
 Scoring: each persona returns per-criterion scores 0 to the weight, a total out of 10, blocking issues with locators (sheet!cell, slide number, memo section), and a **non-scored** comment "would pay $10K+/seat? yes/no + why" (recorded, never scored, see 4-13). Below 8.5 = blocked.
 
-### 5.0 Scoring formula [HOUSE RULE]
+### 5.0 Scoring formula, Z register and Q list [HOUSE RULE]
 
-1. **Every check is classed zero-defect (Z) or quality (Q).** A Z check is a defect a buyer rejects on sight; a Q check is polish.
-2. **Row score** = `weight x passed_checks / total_checks` (n in the tables below). A row marked **HARD** or **AON** is all-or-nothing: `weight` if every check passes, else 0.
-3. **Zero-defect cap:** **any Z failure anywhere caps the persona total at 6.0**, whatever the row weight, so partial credit can never lift a deliverable with a Z defect to 8.5. Total = min(sum of row scores, caps).
-4. **Further caps:** IB binary gates G1 (error values or indicators), G2 (unbalanced BS) and G3 (untied cash) cap at 5.0; PE base case that clears the hurdle only with multiple expansion caps at 7.0 (3-9); PE roadmap-only SOC 2 caps at 8.0 (3-18). The lowest applicable cap wins.
-5. **Z register.** IB: rows 1, 2, 3, 7, 8, 9, 10 in full (all-or-nothing); rows 4, 5, 6 are Q. MBB: row 1 and 2 in full; row 3 duplicate-claim and title-exhibit checks; row 4 chart-type mapping, axis baseline and value tie-out; row 5 orphan-number and cross-slide reconciliation checks; row 6 in full (overlap, margins, grid, size floors, whitespace, overflow); row 7 archetype-share, consecutive-run and pHash checks; row 8 in full (gradients, shadows/3D, off-theme colour and accent cover, em dashes, emojis, exclamation marks, banned words, typography caps, eyebrows, footer/page number, contrast, number format), each its own separate Z check; row 9 in full (picture charts, text in images, chart-like shape groups, table objects, native chart workbook), each separate. PE: row 1 in full (including the value-in-quote check); row 2 length and thesis-evidence checks; rows 3, 4, 7 and 9 in full (HARD); row 11 in full (verdict link, size and price).
-6. **Fail closed.** A (G) check runs as a replay (pinned model id, prompt sha256, fixtures keyed by (model id, prompt sha256, input hash); no live calls in tests or gates, CLAUDE.md; live grading only in eval runs). **A missing replay fixture, or a failed calibration (5.4), scores that row 0.** It never falls back to the (D) checks alone.
-7. The calibration and self-test in 5.4 prove the formula: every FAIL anchor scores below 8.5 and every PASS anchor at or above 8.5.
+1. **Default: every check is zero-defect (Z).** A check is quality (Q) only if it is on the Q list below. Anything that tests correctness, completeness, traceability, integrity, risk or security is Z.
+2. **Row score** = `weight x passed_checks / n` (n = number of checks in the row). A row marked **HARD** or **AON** is all-or-nothing: `weight` if every check passes, else 0; HARD and AON rows contain only Z checks.
+3. **Zero-defect cap: any Z failure anywhere caps the persona total at 4.0**, whatever the row weight. Total = min(sum of row scores, applicable caps). Q failures only reduce their row score and are allowed to pass (5.4 shows the worst case stays at or above 8.5). Other caps: PE base case that clears the hurdle only with multiple expansion caps at 7.0 (3-9); PE roadmap-only SOC 2 caps at 8.0 (3-18). The lowest cap wins.
+4. **Fail closed.** A (G) check runs as a replay (pinned model id, prompt sha256, fixtures keyed by (model id, prompt sha256, input hash); no live calls in tests or gates, CLAUDE.md; live grading only in eval runs). A missing replay fixture or a failed calibration (5.4) scores that row 0; it never falls back to the (D) checks alone.
+5. **HARD rows test outcomes computed from the deliverable, not declarations** (a declared floor, flag or "N/A" never counts).
+
+**The Q list (complete).** Only these checks are quality checks:
+- Q1 storyline quality: the replayed grader's storyline score of at least 8.5 beyond zero topic titles (MBB row 3);
+- Q2 ordering-principle judgement (MBB row 3);
+- Q3 visual polish: the grader's polish score (MBB row 7);
+- Q4 memo prose quality and memo length 10-25 pages (PE row 2);
+- Q5 navigability niceties: freeze panes, print area, fit-to-width, named-range count of at most 25 (IB row 6);
+- Q6 typography beyond the hard floors: size-hierarchy step of at least 2 pt (MBB row 8) and font-histogram dominance of at least 95% per role (IB row 9).
+
+**The Z register (everything else), by persona.**
+- **IB:** G1 error values and indicators; G2 balance and plug detection; G3 cash tie; masking test; allowlist literals; forecasts all formulas; flex test with the fixed direction table and stale-total test; input-once; sign convention; units; R1C1 consistency; circularity breaker and scenario toggle; hidden sheets, rows and columns; version and change-log sheet; colour code and external-link colour; volatile functions; external links = 0; historical tie-out and historical citations; DCF mid-year column, TV cross-check, TV share flag, EV bridge and TSM, IQR rule, declared DCF range and centred formula grids, WACC build, TGR < WACC, calendarisation, LTM/NTM, NM rule, comps criteria; valuation date and stub; LBO, accretion/dilution, deck-to-model resolution; cross-page agreement, citation schema and content check, consistency and spelling, typography floors, footers and legend; native charts, raster rule.
+- **MBB:** SCQA, ghost-deck diff, decision-ask slide, calibration, title conclusion test and word, line and verb rules, one-message counts and word caps, duplicate claims, title-exhibit match, chart-message mapping with slice count, sort order, axis baseline, label collisions, value tie-out, labels and units, no 3D; source records and orphan numbers; geometry, margins, grid, floors, whitespace, overflow; visual-range minimums (archetype share, consecutive run, at least 4 archetypes per 10, at least 3 masters, pHash); gradients, shadows, 3D, theme colours, accent cover, em dash, emoji, exclamation, banned words, family and size caps, line length, eyebrows, footer and page number, contrast, number format; picture charts, text in images, chart-like shape groups, table objects, native chart workbooks.
+- **PE:** all of row 1; every memo section and its element test, template conformance, appendix links, thesis-pillar evidence; every returns, downside, haircut and convention check; add-back flags, recurrence, NWC peg, revenue quality and data-gap flag, cash conversion; leverage ceiling, interest cover, covenant headroom, covenant-lite; VDR matching, coverage recomputation and override approval; risk taxonomy (13 categories), concentration flag, hockey-stick link; model integrity; every security artifact; entry valuation and S&U; recommendation, size, price and verdict link.
 
 ### 5.1 IB analyst (Goldman / Morgan Stanley style)
 
-| # | Criterion | Wt | n / Z | Pass descriptor (full marks) | Check |
+| # | Criterion | Wt | n / Q | Pass descriptor (full marks) | Check |
 |---|---|---|---|---|---|
-| 1 | **HARD** Integrity gates G1-G3: zero error values and indicators, BS balances and cash ties within 0.001 declared units, no plugs, checks tab green, IFERROR/IFNA only around lookups and no masked non-lookup error (1a-9, 11, 12) | 2.0 | 4 / 4 | No error cells or indicators; diffs at most 0.001 in all periods; no plug; master check = 0; masking test passes | D: LibreOffice recalc, `om.modelcheck` |
-| 2 | **HARD** Live model: allowlist-only literals, forecasts all formulas, flex test with the fixed direction table and stale-total test, no volatile functions, external links = 0, historical tie-out exact (1a-2, 3, 16; 1d-35, 36, 42) | 1.75 | 6 / 6 | Zero non-allowlist literals; every input has dependents; flex passes with expected signs; historicals equal filed values or a declared restatement | D |
-| 3 | **AON** Colour code incl. green cross-sheet, distinct external colour, legend (1a-1) | 0.75 | 3 / 3 | 100% conformance | D |
+| 1 | **HARD** Integrity gates G1-G3: zero error values and indicators, BS balances and cash ties within 0.001 declared units, no plugs, checks tab green, IFERROR/IFNA only around lookups and no masked non-lookup error (1a-9, 11, 12) | 2.0 | 4 / 0 | No error cells or indicators; diffs at most 0.001 in all periods; no plug; master check = 0; masking test passes | D: LibreOffice recalc, `om.modelcheck` |
+| 2 | **HARD** Live model: allowlist-only literals, forecasts all formulas, flex test with the fixed direction table and stale-total test, no volatile functions, external links = 0, historical tie-out exact with citations (1a-2, 3, 16; 1d-35, 36, 42) | 1.75 | 6 / 0 | Zero non-allowlist literals; every input has dependents; flex passes with expected signs; historicals equal filed values (or a declared restatement) and are cited | D |
+| 3 | **AON** Colour code incl. green cross-sheet, distinct external colour, legend (1a-1) | 0.75 | 3 / 0 | 100% conformance | D |
 | 4 | Row consistency, sign convention, units on cover and headers (1a-4, 6, 7) | 0.75 | 4 / 0 | R1C1 inconsistencies = 0; cover units declared | D |
-| 5 | Circularity switch and scenario toggle (1a-10, 17) | 0.75 | 3 / 0 | Both work and balance in every state | D |
-| 6 | Navigability: freeze panes [HOUSE RULE], print area, fit to 1 page wide, 0 hidden sheets/rows/columns in outputs, at most 25 named ranges, version and change-log sheet (1a-13, 14; 1d-45) | 0.5 | 5 / 0 | All present on all model tabs | D |
-| 7 | **HARD** Valuation mechanics: valuation date and stub, DCF mid-year column, TV cross-check and share flag, EV bridge with tranche TSM, IQR rule, declared DCF range, grid centred on base, WACC build, TGR < WACC guard, calendarisation, LTM/NTM, "NM" for negative EBITDA, comps criteria with at least 4 comps (1b-18 to 25; 1d-38, 43) | 1.0 | 9 / 9 | All checks pass; every exception resolves (manifest cell, approver different from preparer, DealMemory artifact) with a valid code and quantified justification; no deduction, no partial credit | D only |
-| 8 | **AON** Transaction mechanics and deck-to-model resolution: LBO, accretion/dilution where included, every shown return/IRR/EPS/accretion figure resolves to a model cell (1d-39, 40, 41) | 1.0 | 5 / 5 | All items pass; "N/A" never hides a shown figure | D |
-| 9 | **AON** Pitchbook hygiene: cross-page agreement and label matching, citation schema plus content check (token match), consistency and spelling (1d-44), typography numerics (at most 5 sizes, chart text counted), font histogram, draft/confidentiality legend, footers (1c-26 to 33; 1d-37, 44) | 1.0 | 9 / 9 | Zero mismatches; schema 100%; typography within limits; legend on 100% of pages | D |
-| 10 | **AON** Editable deliverable and raster rule: native charts and tables, chart values tie to workbook and manifest, no chart-like or text pictures (1c-34) | 0.5 | 4 / 4 | Zero offending pictures; cached values equal workbook | D |
+| 5 | Circularity breaker and scenario toggle (1a-10, 17) | 0.75 | 3 / 0 | Both work and balance in every state | D |
+| 6 | Navigability: hidden sheets/rows/columns = 0 and version/change-log sheet (Z); freeze panes, print area, fit to 1 page wide, at most 25 named ranges (Q) (1a-13, 14; 1d-45) | 0.5 | 6 / 4 | All present on all model tabs | D |
+| 7 | **HARD** Valuation mechanics: valuation date and stub, DCF mid-year column, TV cross-check and share flag, EV bridge with tranche TSM, IQR rule, declared DCF range, centred formula-grid sensitivities, WACC build, TGR < WACC guard, calendarisation, LTM/NTM, "NM", comps criteria with at least 4 comps (1b-18 to 25; 1d-38, 43) | 1.0 | 10 / 0 | All checks pass; every exception resolves (manifest cell, approver different from preparer, DealMemory artifact) with a valid code and quantified justification | D only |
+| 8 | **AON** Transaction mechanics and deck-to-model resolution: LBO, accretion/dilution where included, every shown return/IRR/EPS/accretion figure resolves to a model cell (1d-39, 40, 41) | 1.0 | 5 / 0 | All items pass; "N/A" never hides a shown figure | D |
+| 9 | Pitchbook hygiene: cross-page agreement and label matching, citation schema plus token content check, consistency and spelling (1d-44), typography floors and size cap of 5 (chart text counted), draft/confidentiality legend, footers (Z); font-histogram dominance (Q) (1c-26 to 33; 1d-37, 44) | 1.0 | 9 / 1 | Zero mismatches; schema 100%; typography within limits; legend on 100% of pages | D |
+| 10 | **AON** Editable deliverable and raster rule: native charts and tables, chart values tie to workbook and manifest, no chart-like or text pictures (1c-34) | 0.5 | 4 / 0 | Zero offending pictures; cached values equal workbook | D |
 
-Weights: 2.0 + 1.75 + 0.75 + 0.75 + 0.75 + 0.5 + 1.0 + 1.0 + 1.0 + 0.5 = **10.0**. IB has no G-graded rows, so it needs no grader anchors; its self-test is the formula in 5.0 (a clean deliverable scores 10.0; any single Z failure scores at most 6.0, a gate failure at most 5.0).
+Weights: 2.0 + 1.75 + 0.75 + 0.75 + 0.75 + 0.5 + 1.0 + 1.0 + 1.0 + 0.5 = **10.0**. IB has no G-graded rows and so needs no grader anchors; its self-test is in 5.4.
 
 ### 5.2 MBB engagement manager
 
-| # | Criterion | Wt | n / Z | Pass descriptor | Check |
+| # | Criterion | Wt | n / Q | Pass descriptor | Check |
 |---|---|---|---|---|---|
-| 1 | **HARD** Storyline: SCQA executive summary, ghost-deck diff equal or logged (DealMemory record, approver different from generator), replayed grader passes the ten-anchor calibration then reconstructs the recommendation from titles alone, closing decision-ask slide (2a-2, 6, 7; 2f-20, 25) | 1.75 | 4 / 4 | Calibration passed; grader: 0 topic titles, 0 gaps, 0 overlaps, score at least 8.5; unlogged ghost diffs = 0 | G + D |
-| 2 | **HARD** Action titles (at most 15 words, at most 2 lines, deterministic conclusion test, verb with -ing and -ed guards, number where data exists) and the deterministic one-message rule including table text (2a-1, 3) | 1.5 | 5 / 5 | 100% of content slides comply; topic titles fail even without grader calibration | D + G |
-| 3 | Horizontal and vertical logic: no duplicate claims, title matches exhibit, ordering principle (2a-4, 5) | 0.5 | 3 / 2 | Ordering principle identified; no overlaps or gaps | G |
-| 4 | Chart fit: chart-message mapping from the declared message type, axis baselines, sort order, labels and units, chart values tie to workbook and manifest, no 3D (2e-17; 2f-21) | 1.0 | 6 / 3 | Every chart passes mapping, title-exhibit match and tie-out | D + G |
-| 5 | Sources and traceability: source/date line, zero orphan numbers with resolving records or manifest ids, cross-slide reconciliation (2a-9, 10) | 0.75 | 4 / 2 | Zero orphan numbers; "team analysis" only for owned assumption records | D |
-| 6 | **Z** Geometry: 0 EMU overlap (decorative only per theme or master), margins at least 0.4 in, 12-column grid, size floors, whitespace at least 15% per slide except full-bleed and section dividers, no overflow, LibreOffice/fontTools metrics (2b-13; 2f-23) | 1.0 | 6 / 6 | `om.spacing`/validate_pptx zero violations | D |
-| 7 | Visual range: at most 40% one archetype, none over 2 consecutive, pHash at least 10 of 64 (Z); at least 4 archetypes per 10 and at least 3 layout masters per 10 (Q) (2c-15) | 1.0 | 5 / 3 | All thresholds met | D + G |
-| 8 | **Z** Anti-slop, typography and house rules, each a separate check: gradients, shadows/3D, off-theme colour and one accent at most 15% cover, em dash (U+2014; U+2013 only in numeric ranges), emoji, exclamation marks, banned words, at most 2 families and 4 sizes with line length at most 90, eyebrow rule, footer and page number, WCAG contrast, deck-wide number format (2a-9, 11; 2b-14; 2d-16; 2f-22, 24) | 1.5 | 12 / 12 | Zero violations | D |
-| 9 | **Z** Image hygiene, each a separate check: no picture charts, no text in images (OCR at most 5 characters), no chart-like shape groups (any shapes incl. freeforms and arrows, 3 or more aligned within 0.02 in with numerals), tables are table objects, native charts with workbooks (2f-18, 19) | 1.0 | 5 / 5 | Zero offending pictures or shape groups | D |
+| 1 | **HARD** Storyline: SCQA executive summary, ghost-deck diff equal or logged (DealMemory record, approver different from generator), replayed grader passes the ten-anchor calibration, grader reconstructs the recommendation from titles alone with 0 topic titles, gaps and overlaps, closing decision-ask slide (2a-2, 6, 7; 2f-20, 25) | 1.75 | 5 / 0 | Calibration passed; reconstruction correct; unlogged ghost diffs = 0 | G + D |
+| 2 | **HARD** Action titles (at most 15 words, at most 2 lines, deterministic conclusion test, verb with -ing and -ed guards, number where data exists) and the deterministic one-message rule including table text (2a-1, 3) | 1.5 | 5 / 0 | 100% of content slides comply; topic titles fail even without grader calibration | D + G |
+| 3 | Logic: no duplicate claims and title matches exhibit (Z); ordering principle judgement and the grader's storyline score of at least 8.5 (Q) (2a-4, 5) | 0.5 | 4 / 2 | No overlaps or gaps; ordering principle identified | G |
+| 4 | Chart fit: chart-message mapping from the declared message type, pie slice count at most 3, sort order, axis baseline at 0, label collisions, labels and units, value tie-out, no 3D (2e-17; 2f-21) | 1.0 | 8 / 0 | Every chart passes all eight checks | D + G |
+| 5 | Sources and traceability: source/date line, zero orphan numbers with resolving records or manifest ids, cross-slide reconciliation (2a-9, 10) | 0.75 | 4 / 0 | Zero orphan numbers; "team analysis" only for owned assumption records | D |
+| 6 | Geometry: 0 EMU overlap (decorative only per theme or master), margins at least 0.4 in, 12-column grid, size floors, whitespace at least 15% except full-bleed and section dividers, no overflow, LibreOffice/fontTools metrics (2b-13; 2f-23) | 1.0 | 6 / 0 | `om.spacing`/validate_pptx zero violations | D |
+| 7 | Visual range: at most 40% one archetype, none over 2 consecutive, at least 4 archetypes per 10, at least 3 layout masters per 10, pHash at least 10 of 64 (Z); the grader's polish score of at least 8.5 (Q) (2c-15) | 1.0 | 6 / 1 | All thresholds met | D + G |
+| 8 | Anti-slop, typography and house rules, each a separate check: gradients, shadows/3D, off-theme colour and one accent at most 15% cover, em dash (U+2014; U+2013 only in numeric ranges), emoji, exclamation marks, banned words, at most 2 families and 4 sizes, line length at most 90, eyebrow rule, footer and page number, WCAG contrast, deck-wide number format (Z); size-hierarchy step of at least 2 pt (Q) (2a-9, 11; 2b-14; 2d-16; 2f-22, 24) | 1.5 | 13 / 1 | Zero violations | D |
+| 9 | Image hygiene, each a separate check: no picture charts, no text in images (OCR at most 5 characters), no chart-like shape groups (any shapes incl. freeforms and arrows, 3 or more aligned within 0.02 in with numerals), tables are table objects, native charts with workbooks (2f-18, 19) | 1.0 | 5 / 0 | Zero offending pictures or shape groups | D |
 
 Weights: 1.75 + 1.5 + 0.5 + 1.0 + 0.75 + 1.0 + 1.0 + 1.5 + 1.0 = **10.0**.
 
 ### 5.3 PE principal / IC member
 
-| # | Criterion | Wt | n / Z | Pass descriptor | Check |
+| # | Criterion | Wt | n / Q | Pass descriptor | Check |
 |---|---|---|---|---|---|
-| 1 | **HARD** Traceability: 100% of numeric claims cited (source records and assumption/model records through the manifest); value-in-quote token check; page + bbox_norm + text span; derived figures trace to all inputs; memo-to-model tie-out (3-3, 4, 5) | 2.0 | 6 / 6 | 100% of numeric claims linked and resolving; quote found on page and value found as a token in the quote; orphan memo numbers = 0 | D |
-| 2 | Memo structure and substance: one check per section for the 14 enumerated sections (each with its content test), fund-template conformance, appendix links, thesis pillars with at least 2 cited figures and a counter-evidence item, management references and MIP, length 10-25 pages reviewed by the replayed grader (3-1, 2, 6, 20, 24) | 1.0 | 18 / 2 | All 14 sections present with required elements; template map complete; length in range; pillar evidence present | D + G |
-| 3 | **HARD** Returns and case thresholds: downside at least 20% below base with IRR floor at or above 0% and liquidity (revolver headroom at least 10% of commitment), haircut table, conventions (5y, 20% IRR / 2.5x, fee rule, XIRR at 0.01 pp, grid steps), base clears the hurdle at exit = entry (else cap 7.0 and no-expansion IRR beside base IRR), bridge (3-7, 8, 9) | 1.5 | 9 / 9 | All thresholds met; grids centred on base | D + G |
-| 4 | **HARD** QoE, NWC peg, revenue quality and cash conversion: add-backs sourced and recurrence-tested over 3 years, info above 20% and flag above 30% of adjusted EBITDA, large add-back above 5%, 12-month peg, recurring %, concentration, [UNKNOWN] data-gap flag, cash conversion below 50% always flagged (3-11, 12, 13, 25) | 0.75 | 8 / 8 | Every adjustment sourced; all flags present on page one; peg from 12 months | D + G |
+| 1 | **HARD** Traceability: 100% of numeric claims cited (source records and assumption/model records through the manifest); value-in-quote token check; page + bbox_norm + text span; derived figures trace to all inputs; memo-to-model tie-out (3-3, 4, 5) | 2.0 | 6 / 0 | 100% of numeric claims linked and resolving; quote found on page and value found as a token in the quote; orphan memo numbers = 0 | D |
+| 2 | Memo structure and substance: one check per section for the 14 enumerated sections (each with its content test), fund-template conformance, appendix links, thesis pillars with at least 2 cited figures and a counter-evidence item, management references and MIP (Z); memo length 10-25 pages and prose quality via the replayed grader (Q) (3-1, 2, 6, 20, 24) | 1.0 | 19 / 2 | All 14 sections present with required elements; template map complete | D + G |
+| 3 | **HARD** Returns and case thresholds: downside at least 20% below base with computed downside IRR at or above 0% and liquidity (revolver headroom at least 10% of commitment), haircut table, conventions (5y, 20% IRR / 2.5x, fee rule, XIRR at 0.01 pp, grid steps as formula grids), base clears the hurdle at exit = entry (else cap 7.0 and no-expansion IRR beside base IRR), bridge (3-7, 8, 9) | 1.5 | 9 / 0 | All thresholds met; grids centred on base | D + G |
+| 4 | **HARD** QoE, NWC peg, revenue quality and cash conversion: add-backs sourced and recurrence-tested over 3 years, info above 20% and flag above 30% of adjusted EBITDA, large add-back above 5%, 12-month peg, recurring %, concentration, [UNKNOWN] data-gap flag, cash conversion at least 50% or mitigated with a cited mitigation (3-11, 12, 13, 25) | 0.75 | 8 / 0 | Every adjustment sourced; all flags present on page one; peg from 12 months | D + G |
 | 5 | Leverage, covenant headroom and debt capacity: base ceilings 6.0x and 2.0x, headroom at least 20%, covenant-lite case defined (3-10) | 0.5 | 5 / 0 | Ceilings and headroom met; downside reported | D |
-| 6 | VDR matching: same section + BM25 fulfilled at 1.5 x tau, partial between tau and 1.5 x tau, tau calibrated to F1 of at least 0.8 with precision and recall reported, coverage = fulfilled / total with partials separate and recomputed from the match log, overrides with a second approver, superseded and unreadable flagged, owners on unaddressed (3-17; Appendix A) | 0.75 | 6 / 0 | Displayed coverage equals coverage recomputed from the match log; every unaddressed item has an owner | D |
-| 7 | **HARD** Risk taxonomy (12 categories, n/a reasons from the enum with evidence), concentration flag, hockey sticks tagged and discussed (CAGR rule with fallback), diligence status (3-14, 15, 16) | 0.5 | 6 / 6 | All categories present or n/a with enum code and evidence; table complete; flags raised | D + G |
-| 8 | Model integrity behind the memo (3-19) | 0.5 | 3 / 0 | `om.formula` and `om.modelcheck` green | D |
-| 9 | **HARD** Data security and confidentiality: SSO/SAML + RBAC with deal-level permissions; no training on client data as a contract term; configurable residency (US, EU, MENA at least); AES-256 and TLS 1.2+; SOC 2 Type II or dated roadmap plus pen test (roadmap route caps the total at 8.0); audit-log export; deletion within 30 days with certificate; subprocessor list incl. LLM providers (3-18) | 1.0 | 9 / 9 | All artifacts present and dated | D + G |
+| 6 | VDR matching: same section + BM25, fulfilled at 1.5 x tau and partial between tau and 1.5 x tau, tau calibrated to F1 of at least 0.8 with precision and recall reported, coverage = fulfilled / total with partials separate and recomputed from the match log, overrides with a second approver, superseded and unreadable flagged, owners on unaddressed (3-17; Appendix A) | 0.75 | 6 / 0 | Displayed coverage equals coverage recomputed from the match log; every unaddressed item has an owner | D |
+| 7 | **HARD** Risk taxonomy (13 categories, n/a reasons from the enum with evidence), concentration flag, hockey sticks tagged and linked to a memo paragraph id (CAGR rule with fallback), diligence status (3-14, 15, 16) | 0.5 | 6 / 0 | All categories present or n/a with enum code and evidence; table complete; flags raised; links resolve | D + G |
+| 8 | Model integrity behind the memo: `om.formula`, `om.modelcheck`, scenarios reconcile (3-19) | 0.5 | 3 / 0 | All green | D |
+| 9 | **HARD** Data security and confidentiality: SSO/SAML + RBAC with deal-level permissions; no training on client data as a contract term; configurable residency (US, EU, MENA at least); AES-256 and TLS 1.2+; SOC 2 Type II dated within 12 months, or dated roadmap plus pen test (roadmap route caps the total at 8.0); audit-log export; deletion within 30 days with certificate; subprocessor list incl. LLM providers (3-18) | 1.0 | 9 / 0 | All artifacts present and dated | D + G |
 | 10 | Entry valuation and sources and uses (3-21, 22) | 1.0 | 4 / 0 | EV recomputed; multiples in range or coded; S = U | D |
-| 11 | Recommendation with size and price and verdict link: approve only with base IRR at or above the hurdle and no-expansion IRR at or above the hurdle minus 5 pp, else approve with conditions or decline stating the gap (3-23) | 0.5 | 5 / 5 | Decision, cheque, EV and multiple, maximum price, conditions all present, tied to the model, verdict consistent | D |
+| 11 | Recommendation with size and price and the verdict link: approve only when base IRR at or above the hurdle, no-expansion IRR at or above the hurdle minus 5 pp, downside IRR at or above 0%, leverage within ceilings, no open covenant-headroom or cash-conversion flag; else approve with conditions or decline stating the gap (3-23) | 0.5 | 5 / 0 | Decision, cheque, EV and multiple, maximum price, conditions all present, tied to the model, verdict consistent | D |
 
 Weights: 2.0 + 1.0 + 1.5 + 0.75 + 0.5 + 0.75 + 0.5 + 0.5 + 1.0 + 1.0 + 0.5 = **10.0**.
 
 ### 5.4 Grader calibration and rubric self-test
 
-**Calibration sets (G-graded rows).** A pass anchor must score at least 8.5 and a fail anchor at most 4.0 from the grader; otherwise the row scores 0 (5.0 item 6).
+**Calibration sets (G-graded rows).** A pass anchor must score at least 8.5 and a fail anchor at most 4.0 from the grader, and the same on the computed totals below; otherwise the row scores 0 (5.0 item 4).
 
-- **MBB-1 (storyline):** the ten title sequences in section 2a (five good scoring at least 8.5, five bad at most 4.0). The deterministic conclusion test of 2a-1 also classifies all 20 good titles as conclusions and all 20 bad titles as topics.
-- **MBB-2, 3, 4, 7 and PE-2, 3, 4, 7, 9:** the two pass and two (PE-9: three) fail anchors in the self-test below, each described inline in its first column.
+- **MBB-1 (storyline):** the ten title sequences in section 2a (five good at least 8.5, five bad at most 4.0). The deterministic conclusion test of 2a-1 classifies all 20 good titles as conclusions and all 20 bad titles as topics.
+- **MBB-2, 3, 4, 5, 6, 7, 8, 9 and PE-2, 3, 4, 7, 9:** the anchors in the self-test table, each described inline in its first column.
 - **IB-7** is deterministic only and needs no anchors.
 
-**Rubric self-test.** Formula: pass anchor = all checks pass = 10.0 (no cap); fail anchor with one Z failure = raw `10 - weight x 1/n`, then the 6.0 Z cap; the roadmap anchor passes every check but the 8.0 roadmap cap applies. Row weight w and check count n come from 5.1-5.3. Every FAIL is below 8.5 and every PASS at or above 8.5.
+**Rubric self-test.** Computed by a script from the weights and n in 5.1-5.3. PASS anchor: all checks pass, 10.0. Z-FAIL anchor: one Z check fails; raw = 10 - weight / n (HARD or AON row: 10 - weight, since the row scores 0), then the 4.0 Z cap. Q-ONLY anchor: one Q check fails; raw = 10 - weight / n, no cap, and the result must stay at or above 8.5. CAPPED anchor: every check passes but the 8.0 roadmap cap applies, so it cannot reach 8.5. Expected: PASS at least 8.5; Z-FAIL at most 4.0; Q-ONLY at least 8.5; CAPPED below 8.5.
 
-| Anchor | Row scored | Defect | Arithmetic | Score | Expected |
+| Anchor | Row | Defect | Arithmetic | Score | Class |
 |---|---|---|---|---|---|
-| MBB-1 good a | MBB-1 | none | all 4 checks pass: 10.0 | **10.00** | PASS |
-| MBB-1 good b | MBB-1 | none | all 4 checks pass: 10.0 | **10.00** | PASS |
-| MBB-1 good c | MBB-1 | none | all 4 checks pass: 10.0 | **10.00** | PASS |
-| MBB-1 good d | MBB-1 | none | all 4 checks pass: 10.0 | **10.00** | PASS |
-| MBB-1 good e | MBB-1 | none | all 4 checks pass: 10.0 | **10.00** | PASS |
-| MBB-1 bad a | MBB-2 | topic title: conclusion test fails (2a-1, Z) | row = 1.5 x (5-1)/5 = 1.200; raw = 10 - 1.5 x 1/5 = 9.70; Z cap 6.0 | **6.00** | FAIL |
-| MBB-1 bad b | MBB-2 | topic title: conclusion test fails (2a-1, Z) | row = 1.5 x (5-1)/5 = 1.200; raw = 10 - 1.5 x 1/5 = 9.70; Z cap 6.0 | **6.00** | FAIL |
-| MBB-1 bad c | MBB-2 | topic title: conclusion test fails (2a-1, Z) | row = 1.5 x (5-1)/5 = 1.200; raw = 10 - 1.5 x 1/5 = 9.70; Z cap 6.0 | **6.00** | FAIL |
-| MBB-1 bad d | MBB-2 | topic title: conclusion test fails (2a-1, Z) | row = 1.5 x (5-1)/5 = 1.200; raw = 10 - 1.5 x 1/5 = 9.70; Z cap 6.0 | **6.00** | FAIL |
-| MBB-1 bad e | MBB-2 | topic title: conclusion test fails (2a-1, Z) | row = 1.5 x (5-1)/5 = 1.200; raw = 10 - 1.5 x 1/5 = 9.70; Z cap 6.0 | **6.00** | FAIL |
-| MBB-2 pass 1: 'Cost-to-serve is 18% above peers because of last-mile routing', 1 chart, 1 callout | MBB-2 | none | all 5 checks pass: 10.0 | **10.00** | PASS |
-| MBB-2 pass 2: comparison archetype, 2 exhibits, 12-word action title | MBB-2 | none | all 5 checks pass: 10.0 | **10.00** | PASS |
-| MBB-2 fail 1: 'Market overview' over three charts | MBB-2 | conclusion test and exhibit count (Z) | row = 1.5 x (5-1)/5 = 1.200; raw = 10 - 1.5 x 1/5 = 9.70; Z cap 6.0 | **6.00** | FAIL |
-| MBB-2 fail 2: 22-word title, five text blocks | MBB-2 | word cap and text-block count (Z) | row = 1.5 x (5-1)/5 = 1.200; raw = 10 - 1.5 x 1/5 = 9.70; Z cap 6.0 | **6.00** | FAIL |
-| MBB-3 pass 1: importance-ordered section, bodies prove titles | MBB-3 | none | all 3 checks pass: 10.0 | **10.00** | PASS |
-| MBB-3 pass 2: chronological section, no gaps | MBB-3 | none | all 3 checks pass: 10.0 | **10.00** | PASS |
-| MBB-3 fail 1: two slides make the same claim | MBB-3 | duplicate claim (Z) | row = 0.5 x (3-1)/3 = 0.333; raw = 10 - 0.5 x 1/3 = 9.83; Z cap 6.0 | **6.00** | FAIL |
-| MBB-3 fail 2: title says margin rose, exhibit shows revenue | MBB-3 | title-exhibit mismatch (Z) | row = 0.5 x (3-1)/3 = 0.333; raw = 10 - 0.5 x 1/3 = 9.83; Z cap 6.0 | **6.00** | FAIL |
-| MBB-4 pass 1: sorted horizontal bar, named bar highlighted | MBB-4 | none | all 6 checks pass: 10.0 | **10.00** | PASS |
-| MBB-4 pass 2: waterfall, steps reconcile | MBB-4 | none | all 6 checks pass: 10.0 | **10.00** | PASS |
-| MBB-4 fail 1: pie with seven slices (declared ranking) | MBB-4 | chart-type mapping (Z) | row = 1.0 x (6-1)/6 = 0.833; raw = 10 - 1.0 x 1/6 = 9.83; Z cap 6.0 | **6.00** | FAIL |
-| MBB-4 fail 2: bar chart with truncated value axis | MBB-4 | axis baseline (Z) | row = 1.0 x (6-1)/6 = 0.833; raw = 10 - 1.0 x 1/6 = 9.83; Z cap 6.0 | **6.00** | FAIL |
-| MBB-7 pass 1: ten slides, five archetypes, none over 3, no repeats in a row, pHash at least 10, 4 masters | MBB-7 | none | all 5 checks pass: 10.0 | **10.00** | PASS |
-| MBB-7 pass 2: ten slides, four archetypes, full-bleed divider, split layout, 3 masters | MBB-7 | none | all 5 checks pass: 10.0 | **10.00** | PASS |
-| MBB-7 fail 1: eight of ten slides title-plus-bullets | MBB-7 | over 40% one archetype (Z) | row = 1.0 x (5-1)/5 = 0.800; raw = 10 - 1.0 x 1/5 = 9.80; Z cap 6.0 | **6.00** | FAIL |
-| MBB-7 fail 2: three consecutive same-archetype slides, near-identical generated images | MBB-7 | consecutive run and pHash (Z) | row = 1.0 x (5-1)/5 = 0.800; raw = 10 - 1.0 x 1/5 = 9.80; Z cap 6.0 | **6.00** | FAIL |
-| PE-2 pass 1: 12-page memo, one-page exec summary, 14 sections with content | PE-2 | none | all 18 checks pass: 10.0 | **10.00** | PASS |
-| PE-2 pass 2: 22-page memo, all sections, pillars with 2 figures and counter-evidence | PE-2 | none | all 18 checks pass: 10.0 | **10.00** | PASS |
-| PE-2 fail 1: 38-page memo | PE-2 | length outside 10-25 (Z) | row = 1.0 x (18-1)/18 = 0.944; raw = 10 - 1.0 x 1/18 = 9.94; Z cap 6.0 | **6.00** | FAIL |
-| PE-2 fail 2: thesis pillar with one figure and no counter-evidence | PE-2 | pillar evidence (Z) | row = 1.0 x (18-1)/18 = 0.944; raw = 10 - 1.0 x 1/18 = 9.94; Z cap 6.0 | **6.00** | FAIL |
-| PE-3 pass 1: downside EBITDA -27%, IRR 4%, liquidity ok; base IRR 23%, no-expansion 21%, verdict approve | PE-3 | none | all 9 checks pass: 10.0 | **10.00** | PASS |
-| PE-3 pass 2: base 25%, no-expansion 22%, grids centred, bridge sums | PE-3 | none | all 9 checks pass: 10.0 | **10.00** | PASS |
-| PE-3 fail 1: downside only 8% below base EBITDA | PE-3 | downside threshold (Z) | row = 1.5 x (9-1)/9 = 1.333; raw = 10 - 1.5 x 1/9 = 9.83; Z cap 6.0 | **6.00** | FAIL |
-| PE-3 fail 2: base 22%, no-expansion 12%, recommendation approve | PE-3 | verdict link (Z) | row = 1.5 x (9-1)/9 = 1.333; raw = 10 - 1.5 x 1/9 = 9.83; Z cap 6.0 | **6.00** | FAIL |
-| PE-4 pass 1: add-backs 14%, each sourced, 3-year recurrence tested, 12-month peg, recurring revenue defined | PE-4 | none | all 8 checks pass: 10.0 | **10.00** | PASS |
-| PE-4 pass 2: add-backs 33% flagged on page one, each add-back above 5% re-evidenced | PE-4 | none | all 8 checks pass: 10.0 | **10.00** | PASS |
-| PE-4 fail 1: add-backs 33% unflagged | PE-4 | add-back flag (Z) | row = 0.75 x (8-1)/8 = 0.656; raw = 10 - 0.75 x 1/8 = 9.91; Z cap 6.0 | **6.00** | FAIL |
-| PE-4 fail 2: recurring revenue [UNKNOWN] with no page-one data-gap flag | PE-4 | data-gap flag (Z) | row = 0.75 x (8-1)/8 = 0.656; raw = 10 - 0.75 x 1/8 = 9.91; Z cap 6.0 | **6.00** | FAIL |
-| PE-7 pass 1: 12 categories with probability, impact, mitigant, owner | PE-7 | none | all 6 checks pass: 10.0 | **10.00** | PASS |
-| PE-7 pass 2: two categories n/a with enum code and cited scope reason | PE-7 | none | all 6 checks pass: 10.0 | **10.00** | PASS |
-| PE-7 fail 1: risks in prose, no table | PE-7 | risk table (Z) | row = 0.5 x (6-1)/6 = 0.417; raw = 10 - 0.5 x 1/6 = 9.92; Z cap 6.0 | **6.00** | FAIL |
-| PE-7 fail 2: 40% customer not flagged | PE-7 | concentration flag (Z) | row = 0.5 x (6-1)/6 = 0.417; raw = 10 - 0.5 x 1/6 = 9.92; Z cap 6.0 | **6.00** | FAIL |
-| PE-9 pass 1: all artifacts dated, SOC 2 Type II report | PE-9 | none | all 9 checks pass: 10.0 | **10.00** | PASS |
-| PE-9 pass 2: all artifacts dated, SOC 2 Type II, subprocessors incl. LLM provider with zero-retention | PE-9 | none | all 9 checks pass: 10.0 | **10.00** | PASS |
-| PE-9 fail 1: policy statement, no artifacts | PE-9 | artifact missing (Z) | row = 1.0 x (9-1)/9 = 0.889; raw = 10 - 1.0 x 1/9 = 9.89; Z cap 6.0 | **6.00** | FAIL |
-| PE-9 fail 2: subprocessor list omits the LLM provider | PE-9 | subprocessor list (Z) | row = 1.0 x (9-1)/9 = 0.889; raw = 10 - 1.0 x 1/9 = 9.89; Z cap 6.0 | **6.00** | FAIL |
-| PE-9 fail 3: SOC 2 roadmap + pen test, all else present | PE-9 | roadmap route (cap 8.0, no Z failure) | all 9 checks pass: raw 10.0; roadmap cap 8.0 | **8.00** | FAIL |
+| MBB-1 good sequence Cost-to-serve ... (a) | MBB-1 | none | all 5 checks pass | **10.00** | PASS |
+| MBB-1 good sequence Demand for the segment ... (b) | MBB-1 | none | all 5 checks pass | **10.00** | PASS |
+| MBB-1 good sequence Churn doubled ... (c) | MBB-1 | none | all 5 checks pass | **10.00** | PASS |
+| MBB-1 good sequence Plant utilisation ... (d) | MBB-1 | none | all 5 checks pass | **10.00** | PASS |
+| MBB-1 good sequence Regulation will open ... (e) | MBB-1 | none | all 5 checks pass | **10.00** | PASS |
+| MBB-1 bad sequence Market overview ... (a) | MBB-2 | topic titles fail the conclusion test (2a-1) | HARD row = 0: raw = 10 - 1.5 = 8.50; Z cap 4.0 | **4.00** | Z-FAIL |
+| MBB-1 bad sequence Exciting opportunities ... (b) | MBB-2 | topic titles fail the conclusion test (2a-1) | HARD row = 0: raw = 10 - 1.5 = 8.50; Z cap 4.0 | **4.00** | Z-FAIL |
+| MBB-1 bad sequence Background ... (c) | MBB-2 | topic titles fail the conclusion test (2a-1) | HARD row = 0: raw = 10 - 1.5 = 8.50; Z cap 4.0 | **4.00** | Z-FAIL |
+| MBB-1 bad sequence Customers are important ... (d) | MBB-2 | topic titles fail the conclusion test (2a-1) | HARD row = 0: raw = 10 - 1.5 = 8.50; Z cap 4.0 | **4.00** | Z-FAIL |
+| MBB-1 bad sequence Overview of the industry ... (e) | MBB-2 | topic titles fail the conclusion test (2a-1) | HARD row = 0: raw = 10 - 1.5 = 8.50; Z cap 4.0 | **4.00** | Z-FAIL |
+| MBB-2 pass: 'Cost-to-serve is 18% above peers because of last-mile routing', 1 chart, 1 callout | MBB-2 | none | all 5 checks pass | **10.00** | PASS |
+| MBB-2 pass: comparison archetype, 2 exhibits, 12-word action title | MBB-2 | none | all 5 checks pass | **10.00** | PASS |
+| MBB-2 fail: 'Market overview' over three charts | MBB-2 | conclusion test and exhibit count | HARD row = 0: raw = 10 - 1.5 = 8.50; Z cap 4.0 | **4.00** | Z-FAIL |
+| MBB-2 fail: 22-word title with five text blocks | MBB-2 | word cap and text-block count | HARD row = 0: raw = 10 - 1.5 = 8.50; Z cap 4.0 | **4.00** | Z-FAIL |
+| MBB-3 pass: importance-ordered section, bodies prove titles, grader storyline 9.0 | MBB-3 | none | all 4 checks pass | **10.00** | PASS |
+| MBB-3 pass: chronological section, no gaps | MBB-3 | none | all 4 checks pass | **10.00** | PASS |
+| MBB-3 fail: two slides make the same claim | MBB-3 | duplicate claim | raw = 10 - 0.5/4 = 9.88; Z cap 4.0 | **4.00** | Z-FAIL |
+| MBB-3 fail: title says margin rose, exhibit shows revenue | MBB-3 | title-exhibit mismatch | raw = 10 - 0.5/4 = 9.88; Z cap 4.0 | **4.00** | Z-FAIL |
+| MBB-3 weak: sections ordered by an unclear principle, grader storyline 7.0 | MBB-3 | ordering-principle quality (Q) | raw = 10 - 0.5/4 = 9.88; no cap | **9.88** | Q-ONLY |
+| MBB-4 pass: sorted horizontal bar, 0 baseline, named bar highlighted | MBB-4 | none | all 8 checks pass | **10.00** | PASS |
+| MBB-4 pass: waterfall, steps reconcile, no label overlap | MBB-4 | none | all 8 checks pass | **10.00** | PASS |
+| MBB-4 fail: pie with seven slices | MBB-4 | slice count above 3 | raw = 10 - 1.0/8 = 9.88; Z cap 4.0 | **4.00** | Z-FAIL |
+| MBB-4 fail: bar chart with truncated value axis | MBB-4 | axis baseline | raw = 10 - 1.0/8 = 9.88; Z cap 4.0 | **4.00** | Z-FAIL |
+| MBB-4 fail: ranking bars unsorted | MBB-4 | sort order | raw = 10 - 1.0/8 = 9.88; Z cap 4.0 | **4.00** | Z-FAIL |
+| MBB-4 fail: overlapping data labels in the render | MBB-4 | label collision | raw = 10 - 1.0/8 = 9.88; Z cap 4.0 | **4.00** | Z-FAIL |
+| MBB-5 pass: every number has {file, page, as_of} | MBB-5 | none | all 4 checks pass | **10.00** | PASS |
+| MBB-5 pass: 'Source: team analysis' on an assumption record with owner and rationale | MBB-5 | none | all 4 checks pass | **10.00** | PASS |
+| MBB-5 fail: a number with no source record | MBB-5 | orphan number | raw = 10 - 0.75/4 = 9.81; Z cap 4.0 | **4.00** | Z-FAIL |
+| MBB-5 fail: 'Source: team analysis' on a data number with no assumption record | MBB-5 | invalid team-analysis source | raw = 10 - 0.75/4 = 9.81; Z cap 4.0 | **4.00** | Z-FAIL |
+| MBB-6 pass: margins 0.45 in, 12-column grid, 0 EMU overlap, 22% whitespace | MBB-6 | none | all 6 checks pass | **10.00** | PASS |
+| MBB-6 pass: full-bleed slide with 5% whitespace (exempt) | MBB-6 | none | all 6 checks pass | **10.00** | PASS |
+| MBB-6 fail: two non-decorative shapes overlap by 0.03 in | MBB-6 | overlap above 0 EMU | raw = 10 - 1.0/6 = 9.83; Z cap 4.0 | **4.00** | Z-FAIL |
+| MBB-6 fail: content slide with 9% whitespace | MBB-6 | whitespace below 15% | raw = 10 - 1.0/6 = 9.83; Z cap 4.0 | **4.00** | Z-FAIL |
+| MBB-7 pass: ten slides, five archetypes, none over 3, no repeat run over 2, pHash at least 10, 4 masters, polish 9.0 | MBB-7 | none | all 6 checks pass | **10.00** | PASS |
+| MBB-7 pass: ten slides, four archetypes, full-bleed divider, split layout, 3 masters | MBB-7 | none | all 6 checks pass | **10.00** | PASS |
+| MBB-7 fail: eight of ten slides title-plus-bullets | MBB-7 | archetype share above 40% | raw = 10 - 1.0/6 = 9.83; Z cap 4.0 | **4.00** | Z-FAIL |
+| MBB-7 fail: three consecutive same-archetype slides, near-identical images | MBB-7 | consecutive run and pHash | raw = 10 - 1.0/6 = 9.83; Z cap 4.0 | **4.00** | Z-FAIL |
+| MBB-7 weak: visual polish scored 7.0 by the grader, all minimums met | MBB-7 | visual polish (Q) | raw = 10 - 1.0/6 = 9.83; no cap | **9.83** | Q-ONLY |
+| MBB-8 pass: one accent at 9% cover, en dash only in '2024–2026', contrast 5.1:1, sizes 4 | MBB-8 | none | all 13 checks pass | **10.00** | PASS |
+| MBB-8 pass: dark theme, same rules, accent 12% of non-background area | MBB-8 | none | all 13 checks pass | **10.00** | PASS |
+| MBB-8 fail: gradient fill on a title band | MBB-8 | gradient | raw = 10 - 1.5/13 = 9.88; Z cap 4.0 | **4.00** | Z-FAIL |
+| MBB-8 fail: body text contains 'seamless' | MBB-8 | banned word | raw = 10 - 1.5/13 = 9.88; Z cap 4.0 | **4.00** | Z-FAIL |
+| MBB-8 fail: text box 0.6 in above the title (eyebrow) | MBB-8 | eyebrow | raw = 10 - 1.5/13 = 9.88; Z cap 4.0 | **4.00** | Z-FAIL |
+| MBB-8 weak: size-hierarchy step of 1 pt between body and footnote | MBB-8 | typography beyond floors (Q) | raw = 10 - 1.5/13 = 9.88; no cap | **9.88** | Q-ONLY |
+| MBB-9 pass: native charts with embedded workbooks, table objects | MBB-9 | none | all 5 checks pass | **10.00** | PASS |
+| MBB-9 pass: generated image with 0 OCR characters and no gridlines | MBB-9 | none | all 5 checks pass | **10.00** | PASS |
+| MBB-9 fail: PNG of a bar chart | MBB-9 | picture chart | raw = 10 - 1.0/5 = 9.80; Z cap 4.0 | **4.00** | Z-FAIL |
+| MBB-9 fail: six aligned rectangles with numerals standing in for a chart | MBB-9 | chart-like shape group | raw = 10 - 1.0/5 = 9.80; Z cap 4.0 | **4.00** | Z-FAIL |
+| PE-2 pass: 12-page memo, one-page exec summary, 14 sections with content, pillars with 2 figures and counter-evidence | PE-2 | none | all 19 checks pass | **10.00** | PASS |
+| PE-2 pass: 22-page memo, all sections, fund-template map complete | PE-2 | none | all 19 checks pass | **10.00** | PASS |
+| PE-2 fail: no tax section | PE-2 | missing section | raw = 10 - 1.0/19 = 9.95; Z cap 4.0 | **4.00** | Z-FAIL |
+| PE-2 fail: thesis pillar with one figure and no counter-evidence | PE-2 | pillar evidence | raw = 10 - 1.0/19 = 9.95; Z cap 4.0 | **4.00** | Z-FAIL |
+| PE-2 weak: 38-page memo | PE-2 | memo length (Q) | raw = 10 - 1.0/19 = 9.95; no cap | **9.95** | Q-ONLY |
+| PE-3 pass: downside EBITDA -27%, downside IRR 4%, base 23%, no-expansion 21%, verdict approve | PE-3 | none | all 9 checks pass | **10.00** | PASS |
+| PE-3 pass: base 25%, no-expansion 22%, grids centred, bridge sums | PE-3 | none | all 9 checks pass | **10.00** | PASS |
+| PE-3 fail: downside only 8% below base EBITDA | PE-3 | downside threshold | HARD row = 0: raw = 10 - 1.5 = 8.50; Z cap 4.0 | **4.00** | Z-FAIL |
+| PE-3 fail: base 22%, no-expansion 12%, recommendation approve | PE-3 | verdict link | HARD row = 0: raw = 10 - 1.5 = 8.50; Z cap 4.0 | **4.00** | Z-FAIL |
+| PE-3 fail: downside IRR computes to -6% with a declared 0% floor | PE-3 | computed downside IRR below 0% | HARD row = 0: raw = 10 - 1.5 = 8.50; Z cap 4.0 | **4.00** | Z-FAIL |
+| PE-4 pass: add-backs 14%, each sourced, 3-year recurrence tested, 12-month peg, recurring revenue defined, cash conversion 62% | PE-4 | none | all 8 checks pass | **10.00** | PASS |
+| PE-4 pass: add-backs 33% flagged on page one, each add-back above 5% re-evidenced | PE-4 | none | all 8 checks pass | **10.00** | PASS |
+| PE-4 fail: add-backs 33% unflagged | PE-4 | add-back flag | HARD row = 0: raw = 10 - 0.75 = 9.25; Z cap 4.0 | **4.00** | Z-FAIL |
+| PE-4 fail: recurring revenue [UNKNOWN] with no page-one data-gap flag | PE-4 | data-gap flag | HARD row = 0: raw = 10 - 0.75 = 9.25; Z cap 4.0 | **4.00** | Z-FAIL |
+| PE-4 fail: cash conversion 41% with no cited mitigation | PE-4 | cash conversion | HARD row = 0: raw = 10 - 0.75 = 9.25; Z cap 4.0 | **4.00** | Z-FAIL |
+| PE-7 pass: 13 categories with probability, impact, mitigant, owner, hockey stick linked to para_id | PE-7 | none | all 6 checks pass | **10.00** | PASS |
+| PE-7 pass: two categories n/a with enum code and cited scope reason | PE-7 | none | all 6 checks pass | **10.00** | PASS |
+| PE-7 fail: risks in prose, no table | PE-7 | risk table | HARD row = 0: raw = 10 - 0.5 = 9.50; Z cap 4.0 | **4.00** | Z-FAIL |
+| PE-7 fail: 40% customer not flagged | PE-7 | concentration flag | HARD row = 0: raw = 10 - 0.5 = 9.50; Z cap 4.0 | **4.00** | Z-FAIL |
+| PE-7 fail: hockey-stick tag with no memo paragraph link | PE-7 | hockey-stick link | HARD row = 0: raw = 10 - 0.5 = 9.50; Z cap 4.0 | **4.00** | Z-FAIL |
+| PE-9 pass: all artifacts dated, SOC 2 Type II dated 6 months ago | PE-9 | none | all 9 checks pass | **10.00** | PASS |
+| PE-9 pass: all artifacts dated, subprocessors incl. LLM provider with zero-retention | PE-9 | none | all 9 checks pass | **10.00** | PASS |
+| PE-9 fail: policy statement, no artifacts | PE-9 | artifacts missing | HARD row = 0: raw = 10 - 1.0 = 9.00; Z cap 4.0 | **4.00** | Z-FAIL |
+| PE-9 fail: subprocessor list omits the LLM provider | PE-9 | subprocessor list | HARD row = 0: raw = 10 - 1.0 = 9.00; Z cap 4.0 | **4.00** | Z-FAIL |
+| PE-9 fail: SOC 2 report dated 20 months ago | PE-9 | SOC 2 older than 12 months | HARD row = 0: raw = 10 - 1.0 = 9.00; Z cap 4.0 | **4.00** | Z-FAIL |
+| PE-9 capped: SOC 2 roadmap + pen test, all else present | PE-9 | roadmap route | all 9 checks pass; roadmap cap 8.0 | **8.00** | CAPPED |
+
+**Worst case with only Q failures.** Every Q check fails and no Z check fails; the total must stay at or above 8.5 (Q failures are allowed to pass):
+
+| Persona | Q row losses (weight x Q / n) | Total |
+|---|---|---|
+| IB | row 6 0.5 x 4/6 = 0.333; row 9 1.0 x 1/9 = 0.111 | **9.56** |
+| MBB | row 3 0.5 x 2/4 = 0.250; row 7 1.0 x 1/6 = 0.167; row 8 1.5 x 1/13 = 0.115 | **9.47** |
+| PE | row 2 1.0 x 2/19 = 0.105 | **9.89** |
+
+### 5.5 Artifacts this spec requires
+
+The gates in this document cannot run until these exist (each is versioned and committed under `tests/fixtures/` or `docs/`, except DealMemory records):
+
+1. **VDR matcher fixture**: 40 labelled request-document pairs (20 positive, 20 negative, at least 10 hard negatives in the same section), labelled by two reviewers with disagreements logged; thresholds tau and 1.5 x tau calibrated to F1, precision and recall of at least 0.8 (3-17).
+2. **Acretia buyer request list v1** (Appendix A, 85 items).
+3. **Fixed flex direction table** (1a-16) and the **banned-phrase pattern list** (2d-16).
+4. **Grader replay fixtures** and calibration anchors: the ten storyline sequences (2a) and the self-test anchors (5.4), with the pinned model id and prompt sha256 for each.
+5. **Fund IC template section map** (3-2) when the fund supplies a template.
+6. **DealMemory records**: ghost-deck approval, exception sign-offs, VDR override approvals (each with approver id different from the requester, and timestamp).
+7. **Reference examples** for the 5.4 anchors (a model, deck and memo that pass, and one with each Z defect) so the self-test can be run end to end.
 
 ---
 
