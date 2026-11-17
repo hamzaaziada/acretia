@@ -31,13 +31,16 @@ One row per active claim. Claim a packet before you touch its files, commit the 
 | SF.3 e2e journeys + product gate (session F) | session F gate worker | main | 2026-11-16 | e2e/**, scripts/verify_product.py |
 | SF.4 TSB + reliability harness (session F, D-032) | session F workers | main | 2026-11-16 | eval/tsb/**, eval/reliability/** |
 | S6.2 figure verifier | worker (session A) | claude/dreamy-ramanujan-k8p2xt | 2026-11-16 | src/harness/research/verify.py, tests/test_research_verify.py |
-| S4.6c reliability-100 + timing | worker (session C) | claude/busy-knuth-i3ewp5 | 2026-11-16 | om/reliability.py, tests/test_reliability.py |
-| S4 gate script | gate worker (session C) | claude/busy-knuth-i3ewp5 | 2026-11-16 | scripts/verify_s4.py |
 | FP-S1c buyer-research rubric thresholds | worker (session A) | claude/dreamy-ramanujan-k8p2xt | 2026-11-17 | docs/buyer-research.md |
 | S4.fix2 formula engine coverage (SpreadsheetBench) | worker (session C) | claude/busy-knuth-i3ewp5 | 2026-11-17 | om/formula.py, tests/test_formula_ext2.py |
 | FP-S2b adapter/ledger/PII/router | worker (session A) | claude/dreamy-ramanujan-k8p2xt | 2026-11-17 | src/harness/adapter.py, src/harness/ledger.py, src/harness/router.py, src/harness/profiles/*, om/pii.py, om/replay.py, tests/test_adapter.py, tests/test_harness_router.py, tests/test_llm_router.py |
-| S4.10 rendered samples | worker (session C) | claude/busy-knuth-i3ewp5 | 2026-11-17 | docs/samples/s4/**, scripts/render_samples_s4.py |
 | S6.1c awaiting_review + quarterly data | worker (session A) | claude/dreamy-ramanujan-k8p2xt | 2026-11-17 | om/contracts.py (Job.status enum only), src/harness/research/jobs.py, src/harness/research/workflows/review.py, src/harness/research/tools.py, tests/test_research_api.py, tests/test_research_tools.py, tests/test_research_workflows.py |
+| FP-S4-A data fidelity (statements/concepts/facts) | worker (session C) | claude/busy-knuth-i3ewp5 | 2026-11-17 | om/statements.py, om/concepts.py, om/facts.py, tests/test_statements_fix.py |
+| FP-S4-B model3 valuation + robustness | worker (session C) | claude/busy-knuth-i3ewp5 | 2026-11-17 | om/model3.py, tests/test_model3_fix.py, license-and-repo-ledger.csv (one row) |
+| FP-S4-C print/polish + manifest | worker (session C) | claude/busy-knuth-i3ewp5 | 2026-11-17 | om/polish.py, om/xlsx.py, om/manifest.py, tests/test_polish_fix.py |
+| FP-S4-D LBO + merger | worker (session C) | claude/busy-knuth-i3ewp5 | 2026-11-17 | om/lbo.py, om/merger.py, tests/test_lbo_merger_fix.py |
+| FP-S4-E comps + market | worker (session C) | claude/busy-knuth-i3ewp5 | 2026-11-17 | om/comps.py, om/market.py, tests/test_comps_fix.py |
+| FP-S4-F validator 3-column rows | worker (session C) | claude/busy-knuth-i3ewp5 | 2026-11-17 | om/validate_xlsx.py, tests/test_validate_fix.py |
 
 ## Log
 - 2026-11-16: created; no active claims.
@@ -84,3 +87,4 @@ One row per active claim. Claim a packet before you touch its files, commit the 
 - 2026-11-16: session A: FP-S2a done (pending S2 re-review).
 - 2026-11-16: session A: FP-S2c done (pending S2 re-review).
 - 2026-11-16: session A: S6.1, S6.4, S6.5a, S6.5b done; S6.1c claimed.
+- 2026-11-17: S4.6c, S4 gate, S4.10 merged and released. Fix Packets FP-S4-A..F claimed (IB VP review 6.2/10, gate FAILs, reliability 52%).
