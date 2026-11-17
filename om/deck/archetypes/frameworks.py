@@ -383,6 +383,13 @@ def build_tombstones(slide: dict, ctx: BuildContext):
     body = _strip(ctx, meta, els, b, box)
     deals = b["deals"]
     rows = math.ceil(len(deals) / 3)
+    for k in ("multiple", "ev"):          # statistics a takeaway may quote (median, mean, range) are computed from the deals
+        vals = sorted(float(d[k]) for d in deals)
+        mid = len(vals) // 2
+        med = vals[mid] if len(vals) % 2 else (vals[mid - 1] + vals[mid]) / 2
+        src = [f"blocks.deals[{i}].{k}" for i in range(len(deals))]
+        for v in (med, sum(vals) / len(vals), vals[0], vals[-1]):
+            base.declare(meta, round(v, 1), *src)
     ph = round(min(1.3, (body - (rows - 1) * ctx.gap) / rows), 2)
     for i, d in enumerate(deals):
         r, c = divmod(i, 3)
@@ -666,7 +673,7 @@ EXAMPLES = {
             "values": [[58.10, 61.40, 65.30, 70.10, 76.20], [53.20, 55.90, 59.00, 62.80, 67.50],
                        [49.00, 51.20, 53.80, 56.90, 60.60], [45.40, 47.30, 49.50, 52.10, 55.20],
                        [42.30, 43.90, 45.80, 48.00, 50.60]],
-            "takeaway": "Base case: $53.80 per share, 14.3% above the current price [1]."}},
+            "takeaway": "Base case: $53.80 per share at 9.0% WACC and 3.0% terminal growth [1]."}},
     "matrix_2x2": {
         "title": "Two of six targets combine high attractiveness with a credible path to win",
         "blocks": {
@@ -728,7 +735,7 @@ EXAMPLES = {
                       {"label": "Integration cost overrun of $40m", "likelihood": 3, "impact": 3},
                       {"label": "FX loss on EGP exposure", "likelihood": 2, "impact": 4},
                       {"label": "Financing terms widen by 75 bps", "likelihood": 2, "impact": 2}],
-            "takeaway": "Regulatory delay is the largest exposure: likelihood 4 of 5 and a $120m impact."}},
+            "takeaway": "Regulatory delay is the largest exposure: likelihood 4 of 5 and impact 5 of 5."}},
     "deal_structure": {
         "title": "The deal runs through a Cayman holdco that owns 100% of the target",
         "source": "Draft term sheet v3", "as_of": "2026-10-31",

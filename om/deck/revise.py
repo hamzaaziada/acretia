@@ -19,7 +19,6 @@ import json
 import posixpath
 import re
 import zipfile
-from unittest import mock
 
 from lxml import etree
 
@@ -259,19 +258,13 @@ def _splice(orig: bytes, new: bytes, idx: int) -> tuple[bytes, dict]:
 
 # ---------------------------------------------------------------- rebuild
 def _rebuild(spec: dict, **build_kw):
-    from om.deck import engine, render as render_mod
+    from om.deck import engine
     build_kw.setdefault("critic", False)
-    cap: dict = {}
-    real = render_mod.render
-
-    def spy(slides, theme, *, title, template=None):
-        cap.update(slides=slides, theme=theme, title=title, template=template)
-        return real(slides, theme, title=title, template=template)
-
-    with mock.patch.object(render_mod, "render", spy):
-        rep = engine.build(spec, **build_kw)
-    if rep.error or rep.data is None or "slides" not in cap:
+    build_kw["return_slides"] = True
+    rep = engine.build(spec, **build_kw)
+    if rep.error or rep.data is None or not rep.solved:
         raise ReviseError(rep.error or "deck build produced no output")
+    cap = {"slides": rep.solved, "theme": rep.theme, "title": rep.title, "template": build_kw.get("template")}
     return rep, cap
 
 
