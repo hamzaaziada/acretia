@@ -55,7 +55,7 @@ MAX_ATTACH = 50 * 1024 * 1024
 MAX_ATTACH_TOTAL = 100 * 1024 * 1024
 MAX_ATTACH_COUNT = 25
 PER_POLL = 50
-EMAIL_RX = re.compile(r"^[^@\s<>\"',;]+@[^@\s<>\"',;]+\.[^@\s<>\"',;]+$")
+EMAIL_RX = re.compile(r"^[A-Za-z0-9._%+\-]+@[A-Za-z0-9\-]+(\.[A-Za-z0-9\-]+)*\.[A-Za-z]{2,}$")
 DEAL_TAG = re.compile(r"\[\s*deal\s*:\s*([^\]\r\n]{1,120}?)\s*\]", re.I)
 _CTRL = re.compile(r"[\x00-\x08\x0b\x0c\x0e-\x1f\x7f]")
 

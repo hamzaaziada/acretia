@@ -82,14 +82,28 @@ def _need_deal(conn, org_id, deal_id):
     return r
 
 
-def latest_model(store, deal_id):
-    """(name, version) of the deal's newest xlsx deliverable, or None."""
-    best = None
+def _models(store, deal_id) -> list:
+    """[(created_at, name, version)] of every xlsx deliverable's newest version."""
+    out = []
     for n in store.deliverables(deal_id):
         h = store.history(deal_id, n)
         if h and h[-1]["kind"] == "xlsx":
-            best = (n, h[-1]["version"])
-    return best
+            out.append((h[-1]["created_at"], n, h[-1]["version"]))
+    return out
+
+
+def latest_model(store, deal_id):
+    """(name, version) of the deal's most recently saved xlsx deliverable, or None."""
+    ms = _models(store, deal_id)
+    if not ms:
+        return None
+    best = max(ms)
+    return best[1], best[2]
+
+
+def _prefix_ticker(name: str) -> str | None:
+    t = re.match(r"^([A-Z]{1,5})[_\- .]", name)
+    return t.group(1) if t else None
 
 
 def resolve_ticker(conn, store, org_id, deal_id, given=None) -> str | None:
@@ -98,11 +112,11 @@ def resolve_ticker(conn, store, org_id, deal_id, given=None) -> str | None:
     w = conn.execute("SELECT ticker FROM deal_watch WHERE org_id=? AND deal_id=?", (org_id, deal_id)).fetchone()
     if w and w["ticker"]:
         return w["ticker"]
-    m = latest_model(store, deal_id)
-    if m:
-        t = re.match(r"^([A-Za-z]{1,5})[_\- .]", m[0])
-        if t and t.group(1).isupper():
-            return t.group(1).upper()
+    ms = sorted(_models(store, deal_id), reverse=True)
+    for _ts, name, _v in ms:
+        t = _prefix_ticker(name)
+        if t:
+            return t
     r = conn.execute("SELECT target FROM deal_meta WHERE org_id=? AND deal_id=?", (org_id, deal_id)).fetchone()
     tgt = (r["target"] if r else "") or ""
     return tgt.upper() if re.fullmatch(r"[A-Z]{1,5}", tgt) else None

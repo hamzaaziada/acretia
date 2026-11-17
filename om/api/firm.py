@@ -710,7 +710,7 @@ def get_mailbox(ctx):
     return _mailbox_view(_mailbox_row(ctx.conn, ctx.org_id))
 
 
-EMAIL_RX = re.compile(r"^[^@\s<>\"',;]+@[^@\s<>\"',;]+\.[^@\s<>\"',;]+$")
+EMAIL_RX = re.compile(r"^[A-Za-z0-9._%+\-]+@[A-Za-z0-9\-]+(\.[A-Za-z0-9\-]+)*\.[A-Za-z]{2,}$")
 
 
 def put_mailbox(ctx):
