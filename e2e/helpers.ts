@@ -10,8 +10,8 @@ export type { Page } from '@playwright/test';
 export const DEMO_PW = process.env.ACRETIA_DEMO_PASSWORD || 'demo-password-123';
 export const USERS = {
   owner: 'owner@meridian.example',
-  member: 'member@meridian.example',
-  viewer: 'viewer@meridian.example',
+  member: 'analyst@meridian.example',
+  viewer: 'lp@meridian.example',
 } as const;
 export type Role = keyof typeof USERS;
 export const API = '/api/v1';
