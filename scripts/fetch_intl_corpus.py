@@ -152,6 +152,8 @@ def manifest_items():
     for p in sorted((ROOT / "evals/intl/anchors").glob("*/sources.json")):
         tk = p.parent.name
         for d in json.loads(p.read_text()):
+            if d.get("status") or not d.get("url"):  # none_published / not_found records have nothing to fetch
+                continue
             yield d["url"], d["local_path"], d.get("sha256"), f"anchor {tk}"
     mp = ROOT / "evals/intl/corpus/mena.json"
     if mp.exists():

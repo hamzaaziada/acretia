@@ -60,5 +60,9 @@ Flags: `--offline` (synthetic fixtures only, for CI), default (synthetic + SEC).
 27. OM-Bench report written (`data/out/s4/bench.md`) with the 10 companies, scores, three-engine status, audit table.
 28. SpreadsheetBench verified-400 (CC BY-SA 4.0; data fetched to `data/raw/spreadsheetbench/` at pinned commit 49b73a94, never committed): engine-fidelity eval — for every golden answer workbook, recompute formula cells with `om.formula` and compare with the values Excel saved; report the share of workbooks and of formula cells reproduced, plus the top missing functions. Gate threshold: ≥ 95% of formula cells reproduced on workbooks whose functions are all supported, and the coverage numbers recorded in `scorecard.csv` rows `S4.6`. The LLM-solving harness runs in replay mode only (D-021) and is recorded as "not run live".
 
+### K. Scenario and input switches (added 2026-11-17)
+30. For one three-statement model and one LBO: set each scenario/switch input (Scenario 1/2/3; Circ 1/0; LBO entry-pricing switch; merger target-debt refinance switch) to each allowed value via `om.wbedit.edit` (recalc on). Every variant keeps the master check OK, `validate_xlsx` passed, and the om.formula values of the edited file equal a LibreOffice recalculation of the same file (circularity off). Upside > Base > Downside on revenue in the last forecast year.
+31. `om.modelapi.set_inputs` on a blue input changes the dependent outputs, leaves every untouched zip part byte-identical, and a non-input cell is refused with code `not_an_input`.
+
 ### J. Suite
 29. `python3 -m unittest discover -s tests -q` is green (the gate runs it as a subprocess and parses the result).

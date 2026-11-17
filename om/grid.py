@@ -71,7 +71,7 @@ try:  # DuckDB is optional (MIT, D-018); SQLite is the graceful fallback
 except Exception:  # pragma: no cover
     _duckdb = None
 
-ENGINE_VERSION = "grid-1"
+ENGINE_VERSION = "grid-2"        # grid-2: precise, abstaining extractive engine (typed extractors, statement line items)
 DONE = ("ok", "extracted", "not_found", "skipped")   # statuses that count as filled
 USED = ("ok", "extracted")                      # statuses whose answer is shown (always carry a located quote)
 NOT_FOUND_TEXT = "Not found in document"
@@ -263,9 +263,10 @@ def _snap(s: str, start: int, end: int) -> str:
 def _candidates(doc, terms: list[str], max_len: int = 450):
     """(page, order, kind, text) for every sentence / table line of every page. Never crosses pages."""
     n = 0
+    running = _running_headers(doc)
     for pg in doc.pages:
         for b in pg.blocks:
-            if b.kind in ("header", "footer"):
+            if b.kind in ("header", "footer") and _norm_hdr(b.text) in running:
                 continue
             if b.kind == "table":
                 pieces = [ln.strip() for ln in b.text.split("\n")]
@@ -323,8 +324,958 @@ def rank_candidates(doc, question: dict) -> list[tuple]:
     return out
 
 
+# =========================================================================== extractive engine v2 (grid-2)
+# Precise, abstaining. Every answer is a typed extraction with a confidence from its evidence; below ANSWER_MIN the cell is
+# `not_found` + flag `low_evidence` and the best candidate stays a non-presented `suggestion`.
+ANSWER_MIN = 0.6          # confidence needed to present an answer
+SUGGEST_MIN = 0.25        # confidence needed to keep a non-presented suggestion
+
+_MONTHS = {m: i + 1 for i, m in enumerate(("january", "february", "march", "april", "may", "june", "july", "august",
+                                           "september", "october", "november", "december"))}
+_MON = "|".join(list(_MONTHS) + ["jan", "feb", "mar", "apr", "jun", "jul", "aug", "sep", "sept", "oct", "nov", "dec"])
+_DATE_ANY = re.compile(rf"(?i)\b(?:({_MON})\.?\s+(\d{{1,2}})(?:st|nd|rd|th)?,?\s+(\d{{4}})|(\d{{1,2}})(?:st|nd|rd|th)?\s+({_MON})\.?,?\s+(\d{{4}})"
+                       r"|(\d{4})-(\d{2})-(\d{2}))\b")
+
+
+def _month_no(s: str):
+    s = s.lower().rstrip(".")
+    if s in _MONTHS:
+        return _MONTHS[s]
+    for name, n in _MONTHS.items():
+        if name.startswith(s[:3]):
+            return n
+    return None
+
+
+def _iso_dates(text: str) -> list[tuple[int, int, str, str]]:
+    """(start, end, iso, as-printed) for every date in text, in order."""
+    out = []
+    for m in _DATE_ANY.finditer(text):
+        try:
+            if m.group(1):
+                y, mo, d = int(m.group(3)), _month_no(m.group(1)), int(m.group(2))
+            elif m.group(4):
+                y, mo, d = int(m.group(6)), _month_no(m.group(5)), int(m.group(4))
+            else:
+                y, mo, d = int(m.group(7)), int(m.group(8)), int(m.group(9))
+            datetime(y, mo, d)
+        except (TypeError, ValueError):
+            continue
+        out.append((m.start(), m.end(), f"{y:04d}-{mo:02d}-{d:02d}", m.group(0)))
+    return out
+
+
+def _word_end(text: str, e: int) -> int:
+    """Extend a cut at e to the end of its word, so the quote ends on a token boundary (locate is token-exact)."""
+    while e < len(text) and not text[e].isspace():
+        e += 1
+    return e
+
+
+def _norm_hdr(t: str) -> str:
+    return re.sub(r"\d+", "#", " ".join(str(t).lower().split()))
+
+
+def _running_headers(doc) -> set:
+    """Header / footer texts that repeat on >= 3 pages. Only those are running headers; a line the parser merely
+    classed ``header`` because it sits in the top 7% of one page is real content and stays."""
+    cnt = Counter()
+    for pg in doc.pages:
+        cnt.update({_norm_hdr(b.text) for b in pg.blocks if b.kind in ("header", "footer") and b.text.strip()})
+    return {t for t, n in cnt.items() if n >= 3}
+
+
+# ------------------------------------------------------------------ statement rows
+_TOK_POS = re.compile(r"^\$?-?\d[\d,]*(?:\.\d+)?%?$")
+_TOK_NEG = re.compile(r"^\$?\(\$?\d[\d,]*(?:\.\d+)?\)%?$")
+_DASHES = {"—", "–", "−", "-", "--"}
+_SYMS = {"$", "%", "€", "£", ")", "(", "¥"}
+_YEAR = re.compile(r"(?:19|20)\d\d")
+_UNIT_RE = re.compile(r"(?i)\b(?:in|\$ in|dollars in|amounts in|usd in|stated in|expressed in)\s+(millions|thousands|billions)\b|\((?:\$\s*)?(millions|thousands|billions)\b[^)]{0,40}\)")
+_SCALE = {"millions": 1e6, "thousands": 1e3, "billions": 1e9}
+_TITLES = (
+    ("oci", re.compile(r"(?i)\bstatements? of (?:consolidated )?comprehensive (?:income|loss|earnings)\b")),
+    ("income", re.compile(r"(?i)\b(?:statements? of (?:consolidated )?(?:operations|income|earnings|profit or loss)|income statements?)\b")),
+    ("balance", re.compile(r"(?i)\b(?:balance sheets?|statements? of (?:consolidated )?financial (?:position|condition))\b")),
+    ("cashflow", re.compile(r"(?i)\bstatements? of (?:consolidated )?cash flows?\b")),
+    ("equity", re.compile(r"(?i)\bstatements? of (?:consolidated )?(?:(?:shareholders|stockholders|shareowners|members|owners)['’]?\s*)?(?:equity|deficit)\b|\bstatements? of changes in\b")),
+)
+_TITLE_PREFIX_OK = {"and", "of", "the", "&", "subsidiaries", "company", "companies", "inc", "inc.", "corp", "corp.", "corporation", "its", "consolidated", "condensed"}
+_NOTES_BREAK = re.compile(r"(?i)^(?:note \d+\b|notes to (?:the )?(?:consolidated )?financial statements|item \d+[a-c]?\.)")
+
+
+def _nl(label: str) -> str:
+    s = unicodedata_norm(label).lower()
+    s = re.sub(r"\((?:notes?|see)\b[^)]*\)", " ", s)
+    s = re.sub(r"\s*\(\d{1,2}\)\s*$", "", s)
+    s = re.sub(r"[$:*†‡]", " ", s)
+    s = re.sub(r"[–—−]", "-", s)
+    return " ".join(s.split()).strip(" .,;-")
+
+
+def unicodedata_norm(s: str) -> str:
+    return str(s).replace("’", "'").replace("‘", "'").replace("“", '"').replace("”", '"').replace(" ", " ")
+
+
+def _parse_tail(toks: list[str]):
+    """Numeric tail tokens -> (values [(float, raw)], pct_count, footnote_only)."""
+    vals, pcts = [], 0
+    core = [t for t in toks if t not in _SYMS]
+    if len(core) == 1 and re.fullmatch(r"\(?\d\)?", core[0]):
+        return [], 0, True                                  # a lone footnote marker, not a value
+    if len(core) >= 2 and re.fullmatch(r"\(\d\)", core[0]):
+        toks = list(toks)
+        toks.remove(core[0])                                # leading (1) footnote before real columns
+    k = 0
+    while k < len(toks):
+        t = toks[k]
+        nxt = toks[k + 1] if k + 1 < len(toks) else ""
+        k += 1
+        if t in _DASHES:
+            vals.append((0.0, t))
+            continue
+        if t in _SYMS:
+            continue
+        pct = t.endswith("%") or nxt == "%"
+        neg = bool(_TOK_NEG.match(t))
+        body = re.sub(r"[^\d.]", "", t.replace("%", ""))
+        if not body or body.count(".") > 1:
+            continue
+        v = float(body)
+        if pct:
+            pcts += 1
+            if nxt == "%":
+                k += 1
+            continue
+        vals.append((-v if neg or t.startswith("-") else v, t))
+    return vals, pcts, False
+
+
+class _Row:
+    __slots__ = ("page", "idx", "kind", "label", "norm", "vals", "raw", "lines", "text", "region", "scale", "section",
+                 "years", "dense", "ambig")
+
+    def __init__(self, **kw):
+        self.ambig = 0
+        for k, v in kw.items():
+            setattr(self, k, v)
+
+    @property
+    def quote(self) -> str:
+        return " ".join(self.text.split())
+
+
+def _classify_line(text: str):
+    toks = text.split()
+    j = len(toks)
+    while j > 0 and (toks[j - 1] in _SYMS or toks[j - 1] in _DASHES or _TOK_POS.match(toks[j - 1]) or _TOK_NEG.match(toks[j - 1])):
+        j -= 1
+    label = " ".join(toks[:j])
+    vals, pcts, foot = _parse_tail(toks[j:])
+    has_alpha = bool(re.search(r"[A-Za-z]{2}", label))
+    if vals and all(_YEAR.fullmatch(r) for _v, r in vals):
+        return "yr", label, [], 0
+    if vals and not has_alpha and not label.strip(" $"):
+        return "nums", "", vals, pcts
+    if vals and has_alpha:
+        return "row", label, vals, pcts
+    if has_alpha:
+        return "label", label, [], 0
+    return "other", label, [], 0
+
+
+class _Analysis:
+    """Statement rows of one document: label, current-period values, region (income / balance / ...), unit, column years."""
+
+    def __init__(self, doc):
+        self.doc = doc
+        self.rows: list[_Row] = []
+        self.pages_dense: dict[int, float] = {}
+        self._build()
+
+    def _build(self):
+        region, scale, scale_age, years, years_age, section = None, None, 10 ** 9, None, 10 ** 9, None
+        for pg in self.doc.pages:
+            lines = [ln.text for ln in pg.lines]
+            info = [_classify_line(t) for t in lines]
+            nrow = sum(1 for k, _l, v, _p in info if k in ("row", "nums") and len(v) >= 2)
+            dense = nrow / max(1, len(lines))
+            self.pages_dense[pg.number] = dense
+            if dense < 0.2:
+                region, section = None, None
+            # pair label-only lines with number-only lines (numbers before label wins, scanning right to left)
+            used, pair = set(), {}
+            for j in range(len(lines) - 1, 0, -1):
+                if j in used:
+                    continue
+                if info[j][0] == "label" and info[j - 1][0] == "nums" and (j - 1) not in used:
+                    pair[j] = (j - 1, "B")
+                    used.update((j, j - 1))
+                elif info[j][0] == "nums" and info[j - 1][0] == "label" and (j - 1) not in used:
+                    pair[j] = (j - 1, "A")
+                    used.update((j, j - 1))
+            logical = {}
+            for j, (o, how) in pair.items():
+                lo, hi = min(j, o), max(j, o)
+                lab_i = j if how == "B" else o
+                num_i = o if how == "B" else j
+                label, lines_ix = info[lab_i][1], [lo, hi]
+                if how == "B" and lo - 1 >= 0 and info[lo - 1][0] == "label" and (lo - 1) not in used:
+                    lines_ix = [lo - 1, lo, hi]                         # wrapped label: prefix . numbers . tail
+                    label = info[lo - 1][1] + " " + info[lab_i][1]
+                logical[hi] = (label, info[num_i][2], lines_ix, 1)
+            for i, text in enumerate(lines):
+                kind, label, vals, _p = info[i]
+                title = self._title(lines, i, kind)
+                if title:
+                    region, scale, scale_age, years, years_age, section = title, None, 10 ** 9, None, 10 ** 9, None
+                if _NOTES_BREAK.match(text.strip()) and kind != "row":
+                    region, section = None, None
+                um = _UNIT_RE.search(text) if len(text) <= 160 else None
+                if um:
+                    scale, scale_age = _SCALE[(um.group(1) or um.group(2)).lower()], 0
+                ys = _year_header(text)
+                if ys:
+                    years, years_age = ys, 0
+                scale_age += 1
+                years_age += 1
+                ln = _norm_label_for_section(label)
+                if kind in ("label", "row") and region == "balance":
+                    if re.match(r"(?:total )?non-?current liabilities|long-term liabilities|liabilities, non-?current", ln) and kind == "label":
+                        section = "noncurrent"
+                    elif re.match(r"current liabilities|current assets", ln) and kind == "label":
+                        section = "current" if ln.startswith("current liabilities") else section
+                    elif ln.startswith("total current liabilities"):
+                        section = "noncurrent"
+                cur = None
+                if kind == "row":
+                    cur = (label, vals, [i], 0)
+                elif i in logical:
+                    cur = logical[i]
+                if cur is None:
+                    continue
+                label, vals, ixs, amb = cur
+                self.rows.append(_Row(page=pg.number, idx=i, kind="row", label=label, norm=_nl(label), vals=[v for v, _r in vals],
+                                      raw=[r for _v, r in vals], lines=ixs, text=" ".join(lines[x] for x in sorted(ixs)),
+                                      region=region, scale=scale if scale_age < 150 else None, section=section,
+                                      years=years if years_age < 40 else None, dense=dense, ambig=amb))
+
+    @staticmethod
+    def _title(lines, i, kind):
+        """Statement type of a heading line (also across a wrapped two-line heading), else None."""
+        t = lines[i].strip()
+        if kind in ("row", "nums", "yr") or len(t) > 110 or t.endswith(".") or re.search(r"\s\d{1,3}$", t):
+            return None                                           # prose, a table-of-contents entry or a data row
+        for cand in (t, (t + " " + lines[i + 1].strip()) if i + 1 < len(lines) else None):
+            if not cand or len(cand) > 150:
+                continue
+            for name, rx in _TITLES:
+                m = rx.search(cand)
+                if not m:
+                    continue
+                prefix = cand[:m.start()].split()
+                if any(w.lower().strip(",") not in _TITLE_PREFIX_OK and not (w.isupper() or w[:1].isupper() or w in "&-")
+                       for w in prefix):
+                    continue
+                tail = cand[m.end():].strip()
+                if tail and not (tail[0] in "(-–—:" or re.match(r"(?i)(?:as of|at|for the|years? ended|\d)", tail)):
+                    continue
+                return name
+        return None
+
+
+def _year_header(text: str):
+    """[2026, 2025, 2024] for a column-header line (years / dates and a few heading words only), else None."""
+    m = re.search(r"(?:\b(?:19|20)\d\d\b[\s,]*){2,}$", text.strip())
+    if m and not re.search(r"\d{1,3},\d{3}", text):
+        tail = [int(y) for y in _YEAR.findall(m.group(0))]
+        if len(set(tail)) >= 2:
+            return tail
+    ys = _YEAR.findall(text)
+    if len(set(ys)) < 2 or len(ys) > 6 or re.search(r"\d{1,3},\d{3}", text):
+        return None
+    rest = re.sub(rf"(?i)\b(?:{_MON})\b\.?|\d+|[,$()/-]", " ", text)
+    words = [w.lower() for w in rest.split() if w.lower() not in ("years", "year", "ended", "fiscal", "as", "of", "and", "the", "for", "at")]
+    return [int(y) for y in ys] if len(words) <= 3 else None
+
+
+def _norm_label_for_section(label: str) -> str:
+    return _nl(label)
+
+
+def _analysis(doc) -> _Analysis:
+    a = getattr(doc, "_ext_an", None)
+    if a is None:
+        a = _Analysis(doc)
+        try:
+            doc._ext_an = a
+        except Exception:
+            pass
+    return a
+
+
+# ------------------------------------------------------------------ canonical line items
+_ATTR = r"(?:consolidated )?(?:net (?:income|earnings|profit)(?: \(loss\))?|net loss) attributable to (?!non-?controlling|redeemable non|minority)(?!.*(?:non-?controlling|minority))[\w&.,' -]+"
+_FIN = {
+    "revenue": dict(stmt="income", also=(), pats=[
+        (0, r"total (?:net )?(?:operating )?(?:revenues?|sales)(?:, net)?(?: and other income)?"),
+        (0, r"total net revenues?"),
+        (1, r"(?:net |operating )?(?:revenues?|sales)(?:, net)?(?: for the (?:month|quarter|year|period|fiscal year))?"), (1, r"net operating revenues?"), (1, r"sales to customers"),
+        (1, r"net sales and (?:other )?revenues?"), (1, r"revenues?, net of [\w ]+"), (1, r"revenues? from contracts? with customers")]),
+    "net_income": dict(stmt="income", also=("cashflow", "oci"), pats=[
+        (0, _ATTR), (0, r"net (?:income|earnings) \(loss\) attributable to [\w&.,' -]+"),
+        (1, r"(?:consolidated )?net (?:income|earnings|profit)(?: \(loss\))?"), (1, r"net loss"), (1, r"(?:profit|income|earnings) for the (?:year|period)"),
+        (1, r"net (?:income|earnings) including non-?controlling interests?")]),
+    "eps_diluted": dict(stmt="income", also=(), eps=True, pats=[
+        (0, r"total (?:net )?(?:income|earnings)(?: \(loss\))? per (?:common )?share\s*[-–]?\s*diluted"),
+        (0, r"diluted (?:net )?(?:income|earnings)(?: \(loss\))? per (?:common |ordinary )?share[\w&.,' -]*"),
+        (0, r"(?:net )?(?:income|earnings)(?: \(loss\))? per (?:common |ordinary )?share\s*[-–:,]?\s*diluted"),
+        (1, r"(?:net )?(?:income|earnings)(?: \(loss\))? per (?:common |ordinary )?share\s*[-–:,(]*\s*assuming dilution\)?"),
+        (2, r"diluted(?: \(\w+\))?")]),
+    "eps_basic": dict(stmt="income", also=(), eps=True, pats=[
+        (0, r"total (?:net )?(?:income|earnings)(?: \(loss\))? per (?:common )?share\s*[-–]?\s*basic"),
+        (0, r"basic (?:net )?(?:income|earnings)(?: \(loss\))? per (?:common |ordinary )?share[\w&.,' -]*"),
+        (0, r"(?:net )?(?:income|earnings)(?: \(loss\))? per (?:common |ordinary )?share\s*[-–:,]?\s*basic"),
+        (2, r"basic(?: \(\w+\))?")]),
+    "total_assets": dict(stmt="balance", also=(), pats=[(0, r"total assets")]),
+    "total_liabilities": dict(stmt="balance", also=(), pats=[(0, r"total liabilities")]),
+    "total_equity": dict(stmt="balance", also=(), pats=[
+        (0, r"total (?:stockholders|shareholders|shareowners|members|owners)'? ?(?:equity|deficit)(?: \(deficit\))?"),
+        (0, r"total (?:stockholders|shareholders|shareowners)'? equity \(deficit\)"), (1, r"total equity")]),
+    "cash": dict(stmt="balance", also=("cashflow",), pats=[
+        (0, r"cash and (?:cash )?equivalents"), (0, r"cash, cash equivalents(?:,)? and (?:restricted cash|short-term investments)"), (0, r"cash and bank balances"),
+        (1, r"cash and cash equivalents,? (?:at )?end of (?:the )?(?:year|period)"), (1, r"cash and equivalents at end of (?:year|period)")]),
+    "long_term_debt": dict(stmt="balance", also=(), debt=True, pats=[
+        (0, r"long-term debt,? (?:excluding|less|net of|exclusive of) (?:the )?current (?:portion|maturities|installments)(?: of long-term debt)?"),
+        (0, r"long-term debt,? net of current (?:portion|maturities|installments)"),
+        (0, r"long-term debt, (?:net|non-?current)"), (0, r"non-?current (?:portion of )?(?:long-term )?debt"),
+        (1, r"long-term debt"), (1, r"term debt"), (1, r"long-term borrowings"), (1, r"notes payable, non-?current")]),
+    "operating_income": dict(stmt="income", also=(), pats=[
+        (0, r"(?:total )?operating (?:income|profit)(?: \(loss\))?"), (0, r"income from operations"), (0, r"operating (?:income|profit) \(loss\)")]),
+    "gross_profit": dict(stmt="income", also=(), pats=[(0, r"gross (?:profit|margin)")]),
+    "cost_of_revenue": dict(stmt="income", also=(), pats=[(0, r"total cost of (?:revenues?|sales|goods sold)"), (1, r"cost of (?:revenues?|sales|goods sold|products sold)")]),
+    "rnd": dict(stmt="income", also=(), pats=[(0, r"research and development(?: expenses?)?")]),
+    "sga": dict(stmt="income", also=(), pats=[(0, r"selling, general (?:and|&) administrative(?: expenses?)?")]),
+    "op_cash_flow": dict(stmt="cashflow", also=(), pats=[(0, r"net cash (?:provided by|from|generated by|provided by \(used in\)|from \(used in\)|\(used in\) provided by)(?: \(used in\))? operating activities"),
+                                                        (0, r"cash generated by operating activities"), (0, r"cash flows? from operating activities")]),
+    "capex": dict(stmt="cashflow", also=(), pats=[(0, r"(?:purchases?|payments?|additions?) (?:of|for|to)(?: the)? (?:acquisition of )?property(?:, plant)?(?: and equipment)?(?:, net)?"),
+                                                  (0, r"capital expenditures")]),
+}
+_FIN_ROUTE = (
+    ("eps_diluted", r"\bdiluted\b.*(?:per share|eps|earnings per)|\bdiluted eps\b|\bdiluted\b.*(?:earnings|income)"),
+    ("eps_basic", r"\bbasic\b.*(?:per share|eps|earnings per)|\bbasic eps\b"),
+    ("eps_diluted", r"\b(?:earnings|income) per (?:common )?share\b|\beps\b"),
+    ("net_income", r"\bnet (?:income|earnings|profit|loss)\b|\bprofit for the (?:year|period)\b|\bbottom line\b"),
+    ("total_assets", r"\btotal assets\b"),
+    ("total_liabilities", r"\btotal liabilities\b"),
+    ("total_equity", r"\b(?:stockholders|shareholders|shareowners)['’]? ?equity\b|\btotal equity\b|\bbook value of equity\b"),
+    ("cash", r"\bcash and (?:cash )?equivalents\b|\bcash balance\b|\bcash on hand\b"),
+    ("long_term_debt", r"\blong[- ]term debt\b|\bnon-?current debt\b"),
+    ("operating_income", r"\boperating (?:income|profit)\b|\bincome from operations\b"),
+    ("gross_profit", r"\bgross (?:profit|margin)\b"),
+    ("op_cash_flow", r"\b(?:operating activities|operating cash flow|cash flow from operations)\b"),
+    ("capex", r"\bcapital expenditures?\b|\bcapex\b"),
+    ("rnd", r"\bresearch and development\b|\br&d\b"),
+    ("sga", r"\bselling, general\b|\bsg&a\b"),
+    ("cost_of_revenue", r"\bcost of (?:revenues?|sales|goods sold)\b"),
+    ("revenue", r"\b(?:revenues?|net sales|total sales|turnover)\b"),
+)
+_FIN_NOT = re.compile(r"(?i)\b(?:segments?|region|geograph\w*|product line|comparable|same[- ]store|growth|increase|decrease|change|percent|percentage|backlog|"
+                      r"deferred|unearned|remaining performance|forecast|guidance|expected|projected|per employee|per customer|ratio)\b|%")
+
+
+def _fin_item(question: dict):
+    t = (question.get("text") or "").lower()
+    if (question.get("type") or "text") == "percent" or _FIN_NOT.search(t):
+        return None
+    for item, rx in _FIN_ROUTE:
+        if re.search(rx, t):
+            return item
+    return None
+
+
+def _first_val(row: _Row, item: dict):
+    """(value, flags, column_ok) = the current-period figure of a row, checking the column header years when known."""
+    vals = row.vals
+    if not vals:
+        return None, None
+    if item.get("eps"):
+        if not re.fullmatch(r"\$?\(?\d{1,3}\.\d{2,3}\)?", row.raw[0]):
+            return None, None
+    ys = row.years
+    if ys and len(ys) >= 2 and ys[0] < ys[1]:                      # ascending header: the last column is current
+        if len(vals) == len(ys):
+            return vals[-1], True
+        return vals[0], False
+    return vals[0], bool(ys)
+
+
+def _fin_candidates(doc, key: str) -> list[dict]:
+    item = _FIN[key]
+    an = _analysis(doc)
+    out = []
+    for r in an.rows:
+        tier = None
+        for p, rx in item["pats"]:
+            if re.fullmatch(rx, r.norm):
+                tier = p
+                break
+        if tier is None:
+            continue
+        if tier == 2 and item.get("eps") and not _eps_context(an, r):
+            continue
+        reg = r.region
+        if reg == item["stmt"]:
+            rank = 0
+        elif reg in item["also"]:
+            rank = 1
+        elif reg is None and r.dense >= 0.35 and len(r.vals) >= 2:
+            rank = 2
+        else:
+            continue
+        if item.get("debt") and r.section == "current":
+            continue
+        if re.match(r"(?:less|plus|add)\b", r.norm):
+            continue
+        v, col_ok = _first_val(r, item)
+        if v is None:
+            continue
+        per_share = bool(item.get("eps"))
+        unit_ok = per_share or r.scale is not None
+        conf = 0.35 + (0.30, 0.20, 0.05)[rank] + (0.15 if unit_ok else 0.0) + (0.10 if col_ok else 0.0) - 0.05 * r.ambig
+        if len(r.vals) < 2:
+            conf -= 0.2                                            # primary statements print two or more periods
+        if r.section is None and item.get("debt") and reg == "balance" and r.norm == "term debt":
+            conf -= 0.15                                           # an unsectioned "Term debt" may be the current portion
+        scale = None if per_share else r.scale
+        if per_share:
+            unit, ans = "USD per share", f"${v:,.2f} per share"
+        elif scale == 1e6:
+            unit, ans = "USD millions", f"${v:,.0f} million" if abs(v) >= 100 or float(v).is_integer() else f"${v:,.2f} million"
+        elif scale == 1e3:
+            unit, ans = "USD thousands", f"${v:,.0f} thousand"
+        elif scale == 1e9:
+            unit, ans = "USD billions", f"${v:,.2f} billion"
+        else:
+            unit, ans = "USD", f"{v:,.0f}" if float(v).is_integer() else f"{v:,.2f}"
+        out.append({"answer": ans, "value": float(v), "unit": unit, "quote": r.quote, "page": r.page, "conf": round(min(0.95, conf), 2),
+                    "rank": rank, "tier": tier, "pos": (r.page, r.idx), "flags": []})
+    out.sort(key=lambda c: (c["rank"], c["tier"], c["pos"]))
+    if out:
+        top = out[0]
+        rival = [c for c in out[1:] if (c["rank"], c["tier"]) == (top["rank"], top["tier"]) and c["conf"] >= top["conf"] - 0.1
+                 and abs(c["value"] - top["value"]) > 0.005 * max(abs(top["value"]), 1e-9)]
+        if rival:
+            top["conf"] = round(top["conf"] - 0.3, 2)
+            top["flags"] = ["conflicting_candidates"]
+    return out
+
+
+def _eps_context(an: _Analysis, row: _Row) -> bool:
+    """A bare 'Diluted' / 'Basic' row is an EPS row only right under an earnings-per-share heading."""
+    pg = an.doc.page(row.page)
+    lo = max(0, row.idx - 6)
+    ctx = " ".join(ln.text.lower() for ln in pg.lines[lo:row.idx])
+    if row.idx < 6:
+        prev = [p for p in an.doc.pages if p.number == row.page - 1]
+        ctx = " ".join(ln.text.lower() for ln in prev[0].lines[-6:]) + " " + ctx if prev else ctx
+    return bool(re.search(r"per (?:common )?share|earnings per|eps", ctx)) and row.region == "income"
+
+
+# ------------------------------------------------------------------ typed prose extraction
+def _prose(doc, max_len: int = 900):
+    """(page, text) sentences (non-running-header blocks), long ones truncated at a word boundary."""
+    running = _running_headers(doc)
+    for pg in doc.pages:
+        for b in pg.blocks:
+            if b.kind in ("header", "footer") and _norm_hdr(b.text) in running:
+                continue
+            if b.kind == "table":
+                pieces = [ln.strip() for ln in b.text.split("\n")]
+            else:
+                pieces = [s.strip() for s in SENT_RE.split(" ".join(b.text.split()))]
+            for s in pieces:
+                if len(s) > max_len:
+                    s = _snap(s, 0, max_len)
+                if len(s) >= 8:
+                    yield pg.number, s
+
+
+def _lines(doc, pages=None):
+    for pg in doc.pages:
+        if pages is not None and pg.number not in pages:
+            continue
+        for i, ln in enumerate(pg.lines):
+            yield pg.number, i, ln.text
+
+
+_NUM = r"\d{1,3}(?:,\d{3})+|\d+(?:\.\d+)?"
+_HC_NOUN = r"(?:employees|associates|team members|people|workers|colleagues|staff|personnel|partners)"
+_HC = re.compile(rf"(?i)(?<![\w$.,])((?:approximately|about|around|over|more than|nearly|roughly|up to)\s+)?({_NUM})(?:\s*(?:,|and)\s*(?:{_NUM}))*\s*(million|thousand)?"
+                 rf"\s+(?:(?:full[- ]time(?:[- ]equivalent)?|part[- ]time|regular|permanent|total|global|worldwide)\s+)*{_HC_NOUN}\b")
+
+
+def _headcount(doc) -> list[dict]:
+    out = []
+    for page, s in _prose(doc):
+        if not re.search(r"(?i)employ|workforce|headcount|associates|team members|staff", s):
+            continue
+        for m in _HC.finditer(s):
+            raw = m.group(2)
+            v = float(raw.replace(",", ""))
+            if m.group(3):
+                v *= 1e6 if m.group(3).lower() == "million" else 1e3
+            if v < 10 or (re.fullmatch(r"(?:19|20)\d\d", raw)) or s[m.end():m.end() + 1] == "%":
+                continue
+            ctx = s[max(0, m.start() - 90):m.start()].lower()
+            conf = 0.55
+            conf += 0.15 if m.group(1) or re.match(r"(?i)\s*over\b", s[m.start():]) else 0.0
+            conf += 0.10 if re.search(r"employ(?:ed|s|ing)?\b|had\b|have\b|workforce", ctx + s[m.end():m.end() + 40].lower()) else 0.0
+            conf += 0.05 if "full-time" not in m.group(0).lower() or "equivalent" in m.group(0).lower() else 0.0
+            if re.search(r"(?i)subsidiar|joint venture|franchis|union|collective|located in|outside|segment|in the u\.s\.", ctx):
+                conf -= 0.2
+            if re.search(r"(?i)stock|option|shares?\b|restricted", ctx[-40:]):
+                conf -= 0.3
+            ans = f"approximately {v:,.0f}" if m.group(1) else f"{v:,.0f}"
+            quote = s if len(s) <= 260 else _snap(s, max(0, m.start() - 60), m.end() + 60)
+            out.append({"answer": f"{v:,.0f} employees", "value": float(v), "unit": "employees", "quote": quote, "page": page,
+                        "conf": round(min(conf, 0.9), 2), "pos": (page, m.start()), "flags": []})
+            break
+    out.sort(key=lambda c: (-c["conf"], c["pos"]))
+    return out
+
+
+def _fye(doc) -> list[dict]:
+    out = []
+    rx = re.compile(r"(?i)(?:fiscal )?(?:year|period) ended:?\s*")
+    lines = list(_lines(doc, {p.number for p in doc.pages[:3]}))
+    for k, (page, i, text) in enumerate(lines):
+        if not rx.search(text):
+            continue
+        nxt = lines[k + 1][2] if k + 1 < len(lines) and lines[k + 1][0] == page else ""
+        for span in (text, text + " " + nxt):
+            m = rx.search(span)
+            ds = [d for d in _iso_dates(span) if d[0] >= m.start()]
+            if ds:
+                s_, e, iso, raw = ds[0]
+                e = _word_end(span, e)
+                out.append({"answer": raw, "value": iso, "unit": "date", "quote": " ".join(span[:e].split()), "page": page,
+                            "conf": 0.92 if page <= 2 else 0.8, "pos": (page, i), "flags": []})
+                break
+    out.sort(key=lambda c: (-c["conf"], c["pos"]))
+    return out
+
+
+_JURIS = ("Alabama|Alaska|Arizona|Arkansas|California|Colorado|Connecticut|Delaware|Florida|Georgia|Hawaii|Idaho|Illinois|Indiana|Iowa|Kansas|Kentucky|Louisiana|Maine|Maryland|"
+          "Massachusetts|Michigan|Minnesota|Mississippi|Missouri|Montana|Nebraska|Nevada|New Hampshire|New Jersey|New Mexico|New York|North Carolina|North Dakota|Ohio|Oklahoma|Oregon|"
+          "Pennsylvania|Rhode Island|South Carolina|South Dakota|Tennessee|Texas|Utah|Vermont|Virginia|Washington|West Virginia|Wisconsin|Wyoming|District of Columbia|Puerto Rico|"
+          "Cayman Islands|Bermuda|Ireland|England and Wales|England|Scotland|Netherlands|Jersey|Guernsey|Canada|Ontario|British Columbia|Alberta|Quebec|British Virgin Islands|Switzerland|"
+          "Luxembourg|Israel|Marshall Islands|Liberia|Panama|Singapore|Hong Kong|Germany|France|Japan|Australia|Isle of Man|Gibraltar|United Kingdom|Norway|Sweden|Denmark|Finland|Belgium|Spain|Italy")
+_JURIS_RX = re.compile(rf"(?i)^\W*({_JURIS})\b")
+
+
+def _incorporation(doc) -> list[dict]:
+    out = []
+    pages = {p.number for p in doc.pages[:3]}
+    lines = list(_lines(doc, pages))
+    for k, (page, i, text) in enumerate(lines):
+        if re.search(r"(?i)state of incorporation\s*:\s*(?=\w)", text):
+            m = re.search(rf"(?i)state of incorporation\s*:\s*({_JURIS})\b", text)
+            if m:
+                out.append({"answer": m.group(1), "value": None, "unit": None, "quote": " ".join(text.split()), "page": page, "conf": 0.9, "pos": (page, i), "flags": []})
+        if re.search(r"(?i)\((?:state|jurisdiction)\b.*(?:incorporat|jurisdiction)|state or other jurisdiction|jurisdiction of incorporation\)|^of incorporation or organi|^incorporation\)|^\(state of incorporation", text.strip()) \
+                or re.search(r"(?i)\(state or other", text):
+            for back in range(0, 5):
+                kk = k - back
+                if kk < 0 or lines[kk][0] != page:
+                    break
+                tx = lines[kk][2]
+                m = _JURIS_RX.match(tx)
+                if m:
+                    out.append({"answer": m.group(1).strip(), "value": None, "unit": None, "quote": " ".join(tx.split()), "page": page,
+                                "conf": 0.9 - 0.02 * back, "pos": (page, lines[kk][1]), "flags": []})
+                    break
+    if not out:
+        for page, s in _prose(doc):
+            m = re.search(rf"(?i)\b(?:is|was|are|were)\s+(?:a\s+\w+\s+)?(?:incorporated|organi[sz]ed|formed|registered)\s+(?:in|under the laws of)\s+(?:the\s+)?(?:state of\s+|province of\s+)?({_JURIS})\b", s)
+            if m:
+                out.append({"answer": m.group(1), "value": None, "unit": None, "quote": s, "page": page, "conf": 0.78, "pos": (page, 0), "flags": []})
+    out.sort(key=lambda c: (-c["conf"], c["pos"]))
+    return out
+
+
+_FIRM_SUFFIX = r"(?:LLP|L\.L\.P\.|LLC|PLLC|PLC|Ltd\.?|Limited|P\.C\.|GmbH|AG|S\.A\.|Chartered Accountants)"
+_FIRM = re.compile(rf"((?:[A-Z][\w’'.-]*|&)(?:\s+(?:[A-Z][\w’'.-]*|&|and)){{0,5}}\s+{_FIRM_SUFFIX})")
+_FIRM_STOP = {"The", "However", "Our", "We", "By", "Also", "In", "Of", "And", "For", "As", "This", "That", "Report", "Audit"}
+
+
+def _firm_in(text: str):
+    for m in _FIRM.finditer(text):
+        name = m.group(1).strip(" ,")
+        parts = name.split()
+        while parts and parts[0] in _FIRM_STOP:
+            parts = parts[1:]
+        if len(parts) >= 2:
+            joined = " ".join(parts)
+            name = re.sub(r"\b([A-Z]) ([A-Z]{2,})\b", r"\1\2", joined)        # small-caps heading: "D ELOITTE" -> "DELOITTE"
+            if name != joined and name.isupper():
+                name = " ".join(w if w in ("LLP", "LLC", "PLLC", "PLC", "&", "AG", "P.C.") else w.capitalize() for w in name.split())
+            return name, m
+    return None, None
+
+
+def _auditor(doc) -> list[dict]:
+    out = []
+    audit_pages = {pg.number for pg in doc.pages if re.search(r"(?i)report of independent registered public accounting firm|independent auditor'?s'? report", " ".join(l.text for l in pg.lines[:80]))}
+    for page, i, text in _lines(doc):
+        t = text.strip()
+        m = re.match(rf"(?i)^/s/\s+(.+)", t)
+        if m:
+            name, mm = _firm_in(re.sub(r"(?i)^/s/\s+", "", t))
+            if name:
+                end = _word_end(t, t.lower().find(name.lower().replace("  ", " ")) + len(name)) if name.lower() in t.lower() else len(t)
+                q = " ".join(t[:end].split())
+                out.append({"answer": name, "value": None, "unit": None, "quote": q, "page": page,
+                            "conf": 0.92 if page in audit_pages else 0.8, "pos": (page, i), "flags": []})
+    for page, s in _prose(doc):
+        if not re.search(r"(?i)audit|accounting firm", s):
+            continue
+        if re.search(r"(?i)\b(?:resolved|resolve|propos\w+|recommend\w*|to appoint|appoint\w*|ratif\w+|engage\w*|selection of)\b", s):
+            continue
+        name, m = _firm_in(s)
+        if not name:
+            continue
+        near = re.search(r"(?i)independent (?:registered public )?(?:accounting firm|auditors?)|\bauditors?\b|has audited|audited our|audit(?:ed)? (?:of )?the", s)
+        if not near:
+            continue
+        strong = re.search(r"(?i)auditors?\s*(?:of [\w ]+? )?(?:is|are|was|were|:)|has audited|have audited|,\s*independent (?:registered public )?accounting firm|auditors?,\s*"
+                           r"|(?:our|the company's|the group's) (?:independent )?auditors?", s)
+        conf = 0.8 if strong else 0.6
+        out.append({"answer": name, "value": None, "unit": None, "quote": s if len(s) <= 300 else _snap(s, max(0, m.start() - 100), m.end() + 150),
+                    "page": page, "conf": conf, "pos": (page, 0), "flags": []})
+    out.sort(key=lambda c: (-c["conf"], c["pos"]))
+    return out
+
+
+def _governing_law(doc) -> list[dict]:
+    out = []
+    rx = re.compile(r"(?i)\b(?:governed by|construed in accordance with|subject to)\s+(?:and construed in accordance with\s+)?the laws? of\s+(?:the\s+)?(?:state of\s+|province of\s+|commonwealth of\s+)?([A-Z][A-Za-z]+(?:\s+(?:and|of)?\s*[A-Z][A-Za-z]+){0,3})")
+    for page, s in _prose(doc):
+        m = rx.search(s)
+        if not m:
+            continue
+        name = m.group(1).strip()
+        name = re.sub(r"\s+(?:Without|And|The|Each|Any|Where|If|Or|Shall|Subject)$", "", name)
+        out.append({"answer": name, "value": None, "unit": None, "quote": s, "page": page,
+                    "conf": 0.85 if re.search(r"(?i)governed by", s) else 0.7, "pos": (page, 0), "flags": []})
+    out.sort(key=lambda c: (-c["conf"], c["pos"]))
+    return out
+
+
+def _parties(doc) -> list[dict]:
+    out = []
+    for pg in doc.pages[:2]:
+        text = " ".join(" ".join(ln.text for ln in pg.lines).split())
+        m = re.search(r"(?i)\b(?:is |are )?(?:made|entered into|dated|concluded)\b[^.]{0,60}?\bbetween\s+(.+?\((?:the )?[^)]{2,30}\))\s+and\s+(.+?\((?:the )?[^)]{2,30}\))", text)
+        if not m:
+            m = re.search(r"(?i)\b(?:made|entered into)\b[^.]{0,60}?\bbetween\s+([A-Z][\w&.,' -]{2,80}?)\s+and\s+([A-Z][\w&.,' -]{2,80}?)(?:\s*[.;(]|\s+(?:dated|on|with|for)\b)", text)
+        if m:
+            ws = text.rfind(". ", 0, m.start())
+            end = _word_end(text, m.end())
+            quote = " ".join(text[ws + 2 if ws >= 0 else 0:end].split())
+            if len(quote) > 320:
+                quote = " ".join(text[m.start():end].split())
+            out.append({"answer": f"{m.group(1).strip()} and {m.group(2).strip()}", "value": None, "unit": None, "quote": quote, "page": pg.number,
+                        "conf": 0.88, "pos": (pg.number, m.start()), "flags": []})
+            break
+    return out
+
+
+_AMT = r"(?:one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|fifteen|twenty|thirty|forty|sixty|ninety|one hundred(?: (?:and )?(?:eighty|twenty|fifty))?)(?:[- ]\w+)?\s*\(\d+\)|\d+"
+
+
+def _notice(doc) -> list[dict]:
+    out = []
+    rx = re.compile(rf"(?i)({_AMT})\s+(days?|weeks?|months?|years?)(?:['’]s?)?\s+(?:prior |advance )?(?:written )?notice|notice (?:period )?of\s+(?:not less than |at least )?({_AMT})\s+(days?|weeks?|months?)")
+    for page, s in _prose(doc):
+        if not re.search(r"(?i)terminat|end this|break|expire|cancel|determine", s):
+            continue
+        m = rx.search(s)
+        if not m:
+            continue
+        amt, unit = (m.group(1), m.group(2)) if m.group(1) else (m.group(3), m.group(4))
+        conf = 0.85 if re.search(r"(?i)terminate this|terminat\w+ (?:this|the) (?:agreement|lease)|end this lease|for convenience|break", s) else 0.7
+        out.append({"answer": f"{amt.strip()} {unit}", "value": None, "unit": None, "quote": s, "page": page, "conf": conf, "pos": (page, 0), "flags": []})
+    out.sort(key=lambda c: (-c["conf"], c["pos"]))
+    return out
+
+
+def _fee(doc, question: dict) -> list[dict]:
+    out = []
+    rx = re.compile(r"\$\s?(\d{1,3}(?:,\d{3})+(?:\.\d+)?|\d+(?:\.\d+)?)\s*(million|billion|thousand)?", re.I)
+    for page, s in _prose(doc):
+        if not re.search(r"(?i)\b(?:annual|yearly|monthly|base)\b.{0,30}\b(?:rent|fees?|charges?|salary)\b.{0,50}\b(?:is|are|of|payable|shall be)\b|\b(?:rent|fee|salary)\b.{0,20}\bpayable\b", s):
+            continue
+        m = rx.search(s)
+        if not m:
+            continue
+        v = float(m.group(1).replace(",", "")) * ({"million": 1e6, "billion": 1e9, "thousand": 1e3}.get((m.group(2) or "").lower(), 1))
+        out.append({"answer": f"${v:,.0f}", "value": v, "unit": "USD", "quote": s, "page": page,
+                    "conf": 0.85 if re.search(r"(?i)annual|base", s) else 0.7, "pos": (page, 0), "flags": []})
+    out.sort(key=lambda c: (-c["conf"], c["pos"]))
+    return out
+
+
+def _covenant(doc, question: dict) -> list[dict]:
+    out = []
+    t = (question.get("text") or "").lower()
+    m = re.search(r"((?:total |senior |net |secured |interest |fixed[- ]charge |debt[- ]service |cash )?(?:leverage|coverage)(?: ratio)?|fixed[- ]charge coverage|debt service coverage)", t)
+    name = (m.group(1) if m else "").replace(" ratio", "").strip()
+    if not name:
+        return out
+    maxq = bool(re.search(r"max|exceed|no more|not more|ceiling|highest", t))
+    minq = bool(re.search(r"min|at least|not less|floor|lowest", t))
+    nm = re.compile(re.escape(name).replace(r"\ ", r"[\s-]+") + r"\s+ratio", re.I)
+    ratio = re.compile(r"(\d+(?:\.\d+)?)\s*(?:x|:\s*1|to\s*1(?:\.0+)?)\b", re.I)
+    for page, s in _prose(doc):
+        if not nm.search(s):
+            continue
+        if re.search(r"(?i)\bmeans\b", s) and not re.search(r"(?i)exceed|less than|not permit", s):
+            continue
+        r = ratio.search(s)
+        if not r or not re.search(r"(?i)exceed|less than|at least|not permit|maximum|minimum|no (?:greater|more|less)|greater than|covenant|amended", s):
+            continue
+        is_max = bool(re.search(r"(?i)exceed|greater than|no more|maximum|above", s))
+        is_min = bool(re.search(r"(?i)less than|at least|minimum|below|no less", s))
+        if (maxq and is_min and not is_max) or (minq and is_max and not is_min):
+            continue
+        v = float(r.group(1))
+        out.append({"answer": f"{v:g}x", "value": v, "unit": "x", "quote": s, "page": page, "conf": 0.85, "pos": (page, 0), "flags": []})
+    out.sort(key=lambda c: (-c["conf"], c["pos"]))
+    return out
+
+
+def _expiry(doc, question: dict) -> list[dict]:
+    out = []
+    trig = re.compile(r"(?i)\b(?:expires?|expiry|expiration|expiring|shall terminate|terminates?|ends? on|ending on|maturity date|term (?:ends|expires|shall end)|continue (?:in force |in full force )?until|remain in (?:full )?force until|until)\b")
+    for page, s in _prose(doc):
+        if not re.search(r"(?i)agreement|lease|term|contract|licen[cs]e|maturity|facility|policy|loan", s):
+            continue
+        ds = _iso_dates(s)
+        if not ds:
+            continue
+        for tm in trig.finditer(s):
+            after = [d for d in ds if d[0] >= tm.start()]
+            if not after:
+                continue
+            d = after[0]
+            if d[0] - tm.end() > 40:
+                continue
+            word = tm.group(0).lower()
+            conf = 0.88 if re.search(r"expire|expiry|expiration|maturity|ends|ending", word) else (0.7 if "until" in word else 0.65)
+            out.append({"answer": d[3], "value": d[2], "unit": "date", "quote": s, "page": page, "conf": conf, "pos": (page, tm.start()), "flags": []})
+            break
+    out.sort(key=lambda c: (-c["conf"], c["pos"]))
+    return out
+
+
+def _effective(doc, question: dict) -> list[dict]:
+    out = []
+    for page, s in _prose(doc):
+        m = re.search(r"(?i)\b(?:dated|effective(?: date)?(?: is| of| as of)?|commenc\w+ on|made on|entered into on)\b[^.]{0,30}", s)
+        if not m:
+            continue
+        ds = [d for d in _iso_dates(s) if d[0] >= m.start()]
+        if ds:
+            out.append({"answer": ds[0][3], "value": ds[0][2], "unit": "date", "quote": s, "page": page, "conf": 0.8, "pos": (page, m.start()), "flags": []})
+    out.sort(key=lambda c: (-c["conf"], c["pos"]))
+    return out
+
+
+_CLAUSES = {
+    "change_of_control": (r"change[- ](?:of|in)[- ]control", r"\bmeans\b|\bdefin"),
+    "mfn": (r"most[- ]favou?red[- ](?:nation|customer|supplier|pricing|licensee|terms)|\bMFN\b", None),
+    "exclusivity": (r"(?<!non-)(?<!non )\bexclusiv(?:e(?!\s+(?:of|jurisdiction|remedy|licen))|ely|ity)\b|non-?compet|shall not (?:directly or indirectly )?compete|shall not (?:supply|sell|provide|engage)[^.]{0,80}compet|shall not (?:supply|sell|provide)[^.]{0,100}\bother (?:manufacturer|customer|supplier|party|person)", None),
+    "assignment": (r"\bassign(?:ed|ment|s)?\b[^.]{0,80}\b(?:consent|approval)|\b(?:consent|approval)\b[^.]{0,80}\bassign|may not (?:assign|transfer)|not (?:assign|transfer)", None),
+}
+
+
+def _clause(doc, key: str) -> list[dict]:
+    rx, neg = _CLAUSES[key]
+    out = []
+    for page, s in _prose(doc):
+        if not re.search(rx, s, re.I):
+            continue
+        conf = 0.78
+        if neg and re.search(neg, s, re.I) and not re.search(r"(?i)\bshall be an event of default|may terminate|requires|upon|if\b", s):
+            conf -= 0.25                                         # a definition, not the operative clause
+        elif neg and re.search(neg, s, re.I):
+            conf -= 0.12
+        if re.search(r"(?i)\b(?:shall|may|must|requires?|will|agrees?|entitled|terminate|default|accelerat)\b", s):
+            conf += 0.07
+        if len(s) > 500:
+            conf -= 0.1
+        out.append({"answer": s, "value": None, "unit": None, "quote": s, "page": page, "conf": round(conf, 2), "pos": (page, 0), "flags": []})
+    out.sort(key=lambda c: (-c["conf"], c["pos"]))
+    return out
+
+
+_PROSE_LABEL = {
+    "revenue": r"(?:total )?(?:net )?(?:revenues?|sales)", "net_income": r"net (?:income|earnings|profit)",
+    "eps_diluted": r"diluted (?:earnings|net income) per (?:common )?share", "eps_basic": r"basic (?:earnings|net income) per (?:common )?share",
+    "total_assets": r"total assets", "total_liabilities": r"total liabilities", "cash": r"cash and cash equivalents",
+    "long_term_debt": r"long-term debt", "operating_income": r"operating income", "gross_profit": r"gross profit",
+}
+
+
+def _prose_fin(doc, key: str, question: dict) -> list[dict]:
+    """A sentence that states the line item itself: "<label> [for/in <period>] was|were|of $X million". Strict on purpose:
+    anything with extra words between the label and the verb (a segment, a region) is not a statement of the total."""
+    lab = _PROSE_LABEL.get(key)
+    if not lab:
+        return []
+    qyears = set(re.findall(r"(?:19|20)\d\d", question.get("text") or ""))
+    rx = re.compile(rf"(?i)\b{lab}(?:\s+(?:for|in|during)\s+(?:the\s+)?(?:fiscal\s+|full\s+)?(?:year\s+|quarter\s+)?(?:(?:19|20)\d\d|year|quarter)(?:\s+(?:ended|ending)\s+[\w ,]{{3,25}})?)?"
+                    r"\s+(?:was|were|is|are|totaled|totalled|reached|of|amounted to)\s+(?:approximately\s+)?\$\s?(\d[\d,]*(?:\.\d+)?)\s*(million|billion|thousand)?")
+    out = []
+    for page, s in _prose(doc):
+        m = rx.search(s)
+        if not m:
+            continue
+        v = float(m.group(1).replace(",", ""))
+        unit_w = (m.group(2) or "").lower()
+        conf = 0.66 + (0.04 if m.group(0).lower().startswith("total") else 0.0)
+        after = s[m.end():m.end() + 60]
+        if qyears and not (qyears & set(re.findall(r"(?:19|20)\d\d", s[m.start():m.end() + 40]))):
+            conf -= 0.2                                          # the question names a period this sentence does not
+        if re.search(r"(?i)\b(?:compared|versus|from)\b", s[m.start():m.start() + 4]):
+            continue
+        unit = {"million": "USD millions", "billion": "USD billions", "thousand": "USD thousands"}.get(unit_w, "USD")
+        if key.startswith("eps"):
+            unit = "USD per share"
+        out.append({"answer": f"${v:,.2f}" + (f" {unit_w}" if unit_w else ""), "value": v, "unit": unit, "quote": s, "page": page,
+                    "conf": round(min(conf, 0.7), 2), "rank": 3, "tier": 0, "pos": (page, m.start()), "flags": []})
+    return out
+
+
+def _headquarters(doc) -> list[dict]:
+    out = []
+    for page, s in _prose(doc):
+        m = re.search(r"(?i)\b(?:headquartered|based|domiciled)\s+(?:in|at)\s+([A-Z][\w.,' -]{1,60}?)(?=[.;]|$|\s+and\b|\s+with\b)", s)
+        if m:
+            out.append({"answer": m.group(1).strip(" ,"), "value": None, "unit": None, "quote": s, "page": page, "conf": 0.82, "pos": (page, m.start()), "flags": []})
+    for pg in doc.pages[:3]:
+        lines = [ln.text for ln in pg.lines]
+        for i, t in enumerate(lines):
+            if re.search(r"(?i)address of principal executive offices", t) and i >= 1:
+                prev = [x for x in lines[max(0, i - 2):i] if re.search(r"\d|,", x)]
+                if prev:
+                    out.append({"answer": " ".join(prev), "value": None, "unit": None, "quote": " ".join(prev), "page": pg.number, "conf": 0.78,
+                                "pos": (pg.number, i), "flags": []})
+    out.sort(key=lambda c: (-c["conf"], c["pos"]))
+    return out
+
+
+# ------------------------------------------------------------------ routing
+def _route(question: dict):
+    t = (question.get("text") or "").lower()
+    typ = question.get("type") or "text"
+    if re.search(r"(?:leverage|coverage|fixed[- ]charge|debt[- ]service)[a-z ]*ratio|ratio[a-z ]*covenant|covenant[a-z ]*ratio", t):
+        return "covenant", None
+    if re.search(r"\bhow many\b.{0,40}(?:employees|associates|staff|team members|workers|people)|\bheadcount\b|\bfull[- ]time equivalent\b|\bnumber of (?:employees|associates|team members)\b|\bemployees does\b|\bworkforce size\b", t):
+        return "headcount", None
+    if typ in ("date", "text") and re.search(r"fiscal year[- ]end|year[- ]end date|period end|reporting (?:period|date)|fiscal year ended|balance sheet date", t) \
+            and "expir" not in t and not re.search(r"\bat (?:the )?(?:fiscal )?(?:year|period)[- ]end\b", t):
+        return "fye", None
+    if re.search(r"expir|term end|end date|maturity date|termination date|end of the term|term of the agreement ends", t):
+        return "expiry", None
+    if re.search(r"effective date|commencement date|date of the agreement|agreement date|dated", t) and typ in ("date", "text"):
+        return "effective", None
+    if re.search(r"headquarter|principal executive offices?|head office|where is the (?:company|group)\b.*\b(?:based|located)", t):
+        return "hq", None
+    if re.search(r"\bauditors?\b|independent registered public accounting|accounting firm|audit firm", t):
+        return "auditor", None
+    if re.search(r"incorporat|jurisdiction of (?:organi[sz]ation|incorporation)|domicile|organi[sz]ed under", t):
+        return "incorporation", None
+    if re.search(r"governing law|governed by|which law|applicable law", t):
+        return "governing_law", None
+    if re.search(r"\bparties\b|between whom|counterpart(?:y|ies)|who (?:is|are) the (?:supplier|customer|landlord|tenant|lender|borrower|employer|employee)", t):
+        return "parties", None
+    if re.search(r"notice period|notice (?:of|for) termination|termination notice|how much notice|days.? notice", t):
+        return "notice", None
+    if re.search(r"(?:annual|yearly|monthly|base) (?:base )?(?:rent|fees?|charges?)|rent payable|fee payable", t):
+        return "fee", None
+    for key, (rx, _neg) in _CLAUSES.items():
+        if re.search(rx, t, re.I) or (key == "assignment" and re.search(r"assign", t)) or (key == "exclusivity" and re.search(r"exclusiv|non-?compete", t)) \
+                or (key == "mfn" and re.search(r"most favou?red|\bmfn\b", t)):
+            return "clause", key
+    fin = _fin_item(question)
+    if fin:
+        return "fin", fin
+    return "free", None
+
+
+def _extract(doc, question: dict) -> list[dict]:
+    kind, arg = _route(question)
+    if kind == "fin":
+        return _fin_candidates(doc, arg) + _prose_fin(doc, arg, question)
+    if kind == "hq":
+        return _headquarters(doc)
+    if kind == "headcount":
+        return _headcount(doc)
+    if kind == "fye":
+        return _fye(doc)
+    if kind == "expiry":
+        return _expiry(doc, question)
+    if kind == "effective":
+        return _effective(doc, question)
+    if kind == "auditor":
+        return _auditor(doc)
+    if kind == "incorporation":
+        return _incorporation(doc)
+    if kind == "governing_law":
+        return _governing_law(doc)
+    if kind == "parties":
+        return _parties(doc)
+    if kind == "notice":
+        return _notice(doc)
+    if kind == "fee":
+        return _fee(doc, question)
+    if kind == "covenant":
+        return _covenant(doc, question)
+    if kind == "clause":
+        return _clause(doc, arg)
+    return _free(doc, question)
+
+
+def _free(doc, question: dict) -> list[dict]:
+    """Free-text / unknown questions: keyword retrieval, answered only when the sentence carries (nearly) all the question's
+    key concepts; anything weaker stays a suggestion."""
+    typ = question.get("type") or "text"
+    out = []
+    for score, page, order, kind, s, hits, nterms, has_value in rank_candidates(doc, question)[:8]:
+        if score < 0.9:
+            break
+        miss = nterms - hits
+        cov = hits / max(1, nterms)
+        conf = 0.30 + 0.40 * cov + (0.05 if has_value else 0.0)
+        if miss > nterms // 4 or nterms < 2:
+            conf = min(conf, 0.5)
+        if typ in ("currency", "number", "percent", "date") and not has_value:
+            conf = min(conf, 0.5)
+        value, unit = _typed_value(s, typ, kind)
+        out.append({"answer": s, "value": value, "unit": unit, "quote": s, "page": page, "conf": round(min(conf, 0.7), 2),
+                    "pos": (page, order), "flags": []})
+    out.sort(key=lambda c: (-c["conf"], c["pos"]))
+    return out
+
+
+
 class ExtractiveEngine:
-    """Deterministic, offline: the best-scoring sentence / statement line, quoted verbatim. Confidence 0.3-0.6."""
+    """Deterministic, offline, precise. A question is routed to a typed extractor (statement line item, headcount, date, named
+    party, clause); every candidate carries a confidence from its evidence (exact canonical label on a primary statement with a
+    parsed unit and current-period column = high; prose keyword match = low). Below ANSWER_MIN the cell abstains
+    (``not_found`` + flag ``low_evidence``) and the best candidate is returned only as a non-presented ``suggestion``."""
     id = "extractive"
     model = "extractive"
     verified_status = "extracted"
@@ -333,19 +1284,29 @@ class ExtractiveEngine:
         return {"input_tokens": 0, "output_tokens": 0, "cost_usd": 0.0}
 
     def answer(self, doc, question: dict) -> dict:
-        typ = question.get("type") or "text"
-        for score, page, _o, kind, s, hits, nterms, has_value in rank_candidates(doc, question)[:8]:
-            if score < 0.9:
-                break
-            if docparse.locate(doc, page, s) is None:     # propose only what can be located (docling text vs word geometry)
+        suggestion = None
+        for c in _extract(doc, dict(question)):
+            if c["conf"] < SUGGEST_MIN or not c.get("quote"):
                 continue
-            value, unit = _typed_value(s, typ, kind)
-            conf = 0.3 + 0.2 * min(1.0, hits / max(1, nterms)) + (0.1 if has_value else 0.0)
-            return {"answer": s, "value": value, "unit": unit, "exact_quote": s, "page": page,
-                    "confidence": round(min(conf, 0.6), 2), "not_found": False,
-                    "tokens_in": 0, "tokens_out": 0, "cost_usd": 0.0}
-        return {"answer": NOT_FOUND_TEXT, "value": None, "unit": None, "exact_quote": "", "page": None,
-                "confidence": None, "not_found": True, "tokens_in": 0, "tokens_out": 0, "cost_usd": 0.0}
+            for v in _variants(c["quote"]):                                    # propose only what can be located
+                if docparse.locate(doc, c["page"], v) is not None:
+                    c["quote"] = v
+                    break
+            else:
+                continue
+            if c["conf"] >= ANSWER_MIN:
+                return {"answer": c["answer"], "value": c["value"], "unit": c["unit"], "exact_quote": c["quote"], "page": c["page"],
+                        "confidence": c["conf"], "not_found": False, "flags": list(c.get("flags") or []),
+                        "tokens_in": 0, "tokens_out": 0, "cost_usd": 0.0}
+            if suggestion is None:
+                suggestion = c
+        out = {"answer": NOT_FOUND_TEXT, "value": None, "unit": None, "exact_quote": "", "page": None,
+               "confidence": None, "not_found": True, "tokens_in": 0, "tokens_out": 0, "cost_usd": 0.0}
+        if suggestion is not None:
+            out["flags"] = ["low_evidence"] + [f for f in suggestion.get("flags") or [] if f != "low_evidence"]
+            out["suggestion"] = {"answer": suggestion["answer"], "page": suggestion["page"], "quote": suggestion["quote"],
+                                 "confidence": suggestion["conf"]}
+        return out
 
 
 # =========================================================================== LLM engine (through the one adapter)
@@ -393,8 +1354,9 @@ class LLMEngine:
 
     # ---- retrieval: page-labelled passages
     def passages(self, doc, question: dict) -> list[tuple[int, str]]:
+        running = _running_headers(doc)        # a line is a running header only when the same text repeats on >= 3 pages
         blocks = [(pg.number, i, b.text[:self.block_chars]) for pg in doc.pages for i, b in enumerate(pg.blocks)
-                  if b.kind not in ("header", "footer") and b.text.strip()]
+                  if not (b.kind in ("header", "footer") and _norm_hdr(b.text) in running) and b.text.strip()]
         if sum(len(t) for _p, _i, t in blocks) <= self.budget_chars:
             return [(p, t) for p, _i, t in blocks]
         terms, pairs = _question_terms(question)
@@ -1315,12 +2277,23 @@ class GridStore:
                 "bbox": None, "rects": [], "sha256_span_hash": None, "confidence": _conf(out.get("confidence")),
                 "cost_usd": float(out.get("cost_usd") or 0.0), "tokens_in": int(out.get("tokens_in") or 0),
                 "tokens_out": int(out.get("tokens_out") or 0), "flags": [], "extra": []}
+        flags0 = [str(f) for f in out.get("flags") or []]
         if out.get("not_found"):
-            return {**base, "status": "not_found", "answer": NOT_FOUND_TEXT}
+            extra = []
+            sg = out.get("suggestion") or {}
+            if sg.get("quote") and sg.get("page") is not None:       # a located, never-presented suggestion
+                loc = docparse.locate(doc, int(sg["page"]), sg["quote"])
+                if loc is not None:
+                    extra = [{"suggestion": True, "answer": str(sg.get("answer") or ""), "page": loc.page, "quote": sg["quote"],
+                              "confidence": sg.get("confidence"), "sha256_span_hash": loc.sha256_span_hash,
+                              "bbox_norm": [_clamp01(v) for v in loc.bbox_norm]}]
+                else:
+                    flags0 = [f for f in flags0 if f != "low_evidence"]
+            return {**base, "status": "not_found", "answer": NOT_FOUND_TEXT, "flags": flags0, "extra": extra}
         quote = str(out.get("exact_quote") or out.get("quote") or "").strip()
         raw = str(out.get("answer") or "")
         page = _int(out.get("page"))
-        loc, flags = None, []
+        loc, flags = None, list(flags0)
         if quote:
             variants = _variants(quote)
             if page is not None and any(p.number == page for p in doc.pages):
@@ -1478,7 +2451,9 @@ class GridStore:
                 "confidence": r["confidence"], "cost_usd": r["cost_usd"] or 0.0, "tokens_in": r["tokens_in"] or 0,
                 "tokens_out": r["tokens_out"] or 0, "engine": r["engine"], "status": r["status"],
                 "content_hash": r["content_hash"], "run_id": r["run_id"], "updated_at": r["updated_at"],
-                "flags": json.loads(r["flags"] or "[]"), "extra_citations": json.loads(r["extra"] or "[]")}
+                "flags": json.loads(r["flags"] or "[]"),
+                "extra_citations": [x for x in json.loads(r["extra"] or "[]") if not x.get("suggestion")],
+                "suggestion": next((x for x in json.loads(r["extra"] or "[]") if x.get("suggestion")), None)}
 
     def _read_cell(self, gid: str, doc_id: str, qid: str) -> dict:
         return self._cell_from_row(self.db.rows("SELECT * FROM grid_cells WHERE grid_id=? AND doc_id=? AND question_id=?",

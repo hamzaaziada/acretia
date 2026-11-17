@@ -1,0 +1,1164 @@
+{
+  "generated_by": "scripts/eval_s3.py",
+  "offline": true,
+  "critic": "not run live",
+  "live_models": "not run live (D-021)",
+  "corpus": {
+    "n": 20,
+    "arabic": 3,
+    "ten_slide": 17,
+    "zero_critical": 20,
+    "zero_critical_share": 1.0,
+    "major_total": 1,
+    "max_major": 1,
+    "variety_total": 0,
+    "unsourced_total": 0,
+    "distinct_archetypes": 35,
+    "distinct_art_directions": 8,
+    "art_directions": [
+      "annotated_map",
+      "bold_typographic",
+      "data_art",
+      "duotone_hero",
+      "editorial_illustration",
+      "iconographic_system",
+      "isometric_system",
+      "line_art_schematic"
+    ],
+    "decks": [
+      {
+        "name": "01-lbo-ic-update",
+        "lang": "en",
+        "slides": 10,
+        "critical": 0,
+        "major": 0,
+        "variety": 0,
+        "unsourced": 0,
+        "art_direction": "annotated_map",
+        "build_seconds": 2.231,
+        "numbers_digest": "c2e1e3eab9ce71984cb99d81c9bd36d110fa7fe62749e440f6e773335e74ab08",
+        "visual_candidates_min": 3,
+        "findings": []
+      },
+      {
+        "name": "02-public-comps-football-field",
+        "lang": "en",
+        "slides": 10,
+        "critical": 0,
+        "major": 0,
+        "variety": 0,
+        "unsourced": 0,
+        "art_direction": "duotone_hero",
+        "build_seconds": 1.999,
+        "numbers_digest": "7a117291e11033ed2cd87e3380458fe65f95b9391c05b4e7caf2b371d1bc9319",
+        "visual_candidates_min": 3,
+        "findings": []
+      },
+      {
+        "name": "03-gulf-market-entry",
+        "lang": "en",
+        "slides": 10,
+        "critical": 0,
+        "major": 0,
+        "variety": 0,
+        "unsourced": 0,
+        "art_direction": "annotated_map",
+        "build_seconds": 2.262,
+        "numbers_digest": "c825aeedcbee2a45cfc5a804c514846e3177ea075f4e506c7252aecd50f4244c",
+        "visual_candidates_min": 3,
+        "findings": []
+      },
+      {
+        "name": "04-sell-side-pitchbook",
+        "lang": "en",
+        "slides": 10,
+        "critical": 0,
+        "major": 0,
+        "variety": 0,
+        "unsourced": 0,
+        "art_direction": "editorial_illustration",
+        "build_seconds": 2.488,
+        "numbers_digest": "11904e9c734e354ae4e23baa17eb4a55f06ed2da14caeafbefcda2e0a7a7d721",
+        "visual_candidates_min": 3,
+        "findings": []
+      },
+      {
+        "name": "05-ic-dental-platform",
+        "lang": "en",
+        "slides": 10,
+        "critical": 0,
+        "major": 0,
+        "variety": 0,
+        "unsourced": 0,
+        "art_direction": "data_art",
+        "build_seconds": 2.177,
+        "numbers_digest": "798fdac4f9fbf047108da75d3ef15744a14d4551d492fb0bbbb0e1fc82298b77",
+        "visual_candidates_min": 3,
+        "findings": []
+      },
+      {
+        "name": "06-carve-out",
+        "lang": "en",
+        "slides": 10,
+        "critical": 0,
+        "major": 0,
+        "variety": 0,
+        "unsourced": 0,
+        "art_direction": "isometric_system",
+        "build_seconds": 1.964,
+        "numbers_digest": "b2f91f90b2f7b824f7ca63012516d254866ce65249fc1b187a60d41a31bac24c",
+        "visual_candidates_min": 3,
+        "findings": []
+      },
+      {
+        "name": "07-buy-side-diligence",
+        "lang": "en",
+        "slides": 10,
+        "critical": 0,
+        "major": 0,
+        "variety": 0,
+        "unsourced": 0,
+        "art_direction": "iconographic_system",
+        "build_seconds": 1.76,
+        "numbers_digest": "102e25f1ea1f1b1f45f2ea2840b821a610c2ed2dd3d3cc6558ecc8b05d78330e",
+        "visual_candidates_min": 3,
+        "findings": []
+      },
+      {
+        "name": "08-earnings-recap",
+        "lang": "en",
+        "slides": 8,
+        "critical": 0,
+        "major": 0,
+        "variety": 0,
+        "unsourced": 0,
+        "art_direction": "duotone_hero",
+        "build_seconds": 2.084,
+        "numbers_digest": "3057266e88115a60ded11275881f09236fa89d45305ae8a70e169818a0bd19da",
+        "visual_candidates_min": 3,
+        "findings": []
+      },
+      {
+        "name": "09-sector-update-banks",
+        "lang": "en",
+        "slides": 9,
+        "critical": 0,
+        "major": 0,
+        "variety": 0,
+        "unsourced": 0,
+        "art_direction": "data_art",
+        "build_seconds": 1.995,
+        "numbers_digest": "e8e893f1c42be45efde3a718748e235bb288293e892a9de58935e93977e00b18",
+        "visual_candidates_min": 3,
+        "findings": []
+      },
+      {
+        "name": "10-restructuring-options",
+        "lang": "en",
+        "slides": 10,
+        "critical": 0,
+        "major": 0,
+        "variety": 0,
+        "unsourced": 0,
+        "art_direction": "duotone_hero",
+        "build_seconds": 2.057,
+        "numbers_digest": "54e9307f9211e99e7123d84dc87ddc74dfcd080bc3ec85e99d71c4f1f95340bd",
+        "visual_candidates_min": 3,
+        "findings": []
+      },
+      {
+        "name": "11-fairness-valuation",
+        "lang": "en",
+        "slides": 10,
+        "critical": 0,
+        "major": 0,
+        "variety": 0,
+        "unsourced": 0,
+        "art_direction": "bold_typographic",
+        "build_seconds": 1.795,
+        "numbers_digest": "819ea68b5f8a77448dfa2ac84b35937c99407b64dee8166974d621411604e960",
+        "visual_candidates_min": 3,
+        "findings": []
+      },
+      {
+        "name": "12-board-update",
+        "lang": "en",
+        "slides": 9,
+        "critical": 0,
+        "major": 0,
+        "variety": 0,
+        "unsourced": 0,
+        "art_direction": "data_art",
+        "build_seconds": 2.109,
+        "numbers_digest": "4a99aaf439c4a7093d020ab86729a74d48f8c41000192e4764ecb352bfbd7f0d",
+        "visual_candidates_min": 3,
+        "findings": []
+      },
+      {
+        "name": "13-debt-financing",
+        "lang": "en",
+        "slides": 10,
+        "critical": 0,
+        "major": 0,
+        "variety": 0,
+        "unsourced": 0,
+        "art_direction": "line_art_schematic",
+        "build_seconds": 2.2,
+        "numbers_digest": "bddd531a1ca68530e42bd3bee481ed94e0f395ac404e712c112d08b4fedcaaef",
+        "visual_candidates_min": 3,
+        "findings": []
+      },
+      {
+        "name": "14-ar-saudi-ipo-readiness",
+        "lang": "ar",
+        "slides": 10,
+        "critical": 0,
+        "major": 1,
+        "variety": 0,
+        "unsourced": 0,
+        "art_direction": "duotone_hero",
+        "build_seconds": 2.324,
+        "numbers_digest": "cf3019691309bdd53649dc17b2a2fc994b1585e9e41c3cea95c9ffe399aa8134",
+        "visual_candidates_min": 3,
+        "findings": [
+          "major type_sizes s3: 5 distinct type sizes (10, 13, 14, 24, 40), maximum 4"
+        ]
+      },
+      {
+        "name": "15-ar-uae-bank-merger",
+        "lang": "ar",
+        "slides": 10,
+        "critical": 0,
+        "major": 0,
+        "variety": 0,
+        "unsourced": 0,
+        "art_direction": "editorial_illustration",
+        "build_seconds": 2.209,
+        "numbers_digest": "6d4c82c5b4595bd5f9f8a353b9f8ec74ded1905dd73b70c237a8ff43764d5614",
+        "visual_candidates_min": 3,
+        "findings": []
+      },
+      {
+        "name": "16-gcc-infrastructure",
+        "lang": "en",
+        "slides": 10,
+        "critical": 0,
+        "major": 0,
+        "variety": 0,
+        "unsourced": 0,
+        "art_direction": "duotone_hero",
+        "build_seconds": 2.065,
+        "numbers_digest": "49964b0fd29d33ab42d285d1939ead5134656929b1dd491e278708e7f8891fce",
+        "visual_candidates_min": 3,
+        "findings": []
+      },
+      {
+        "name": "17-us-software-take-private",
+        "lang": "en",
+        "slides": 10,
+        "critical": 0,
+        "major": 0,
+        "variety": 0,
+        "unsourced": 0,
+        "art_direction": "iconographic_system",
+        "build_seconds": 1.784,
+        "numbers_digest": "2174e83df4707b99b909e99b95f4192884865e3f8f19fc9e0b060bfeab3c5e66",
+        "visual_candidates_min": 3,
+        "findings": []
+      },
+      {
+        "name": "18-ifrs-european-industrial",
+        "lang": "en",
+        "slides": 10,
+        "critical": 0,
+        "major": 0,
+        "variety": 0,
+        "unsourced": 0,
+        "art_direction": "line_art_schematic",
+        "build_seconds": 2.156,
+        "numbers_digest": "c67c2aa51ead20d3049dd9c7b7e3acac2a5ba1416956c002d48dde8a89f20371",
+        "visual_candidates_min": 3,
+        "findings": []
+      },
+      {
+        "name": "19-ar-egypt-market-entry",
+        "lang": "ar",
+        "slides": 10,
+        "critical": 0,
+        "major": 0,
+        "variety": 0,
+        "unsourced": 0,
+        "art_direction": "isometric_system",
+        "build_seconds": 2.073,
+        "numbers_digest": "c30425075daada16518564d6216122061914c7df6a8a40cf5b0ca24d2fb49a0c",
+        "visual_candidates_min": 3,
+        "findings": []
+      },
+      {
+        "name": "20-mena-bank-ma",
+        "lang": "en",
+        "slides": 10,
+        "critical": 0,
+        "major": 0,
+        "variety": 0,
+        "unsourced": 0,
+        "art_direction": "isometric_system",
+        "build_seconds": 1.963,
+        "numbers_digest": "4f35f28b5ead92736599cb7c3cc242e71a762a8d249380d2fa9f2df8da53fd04",
+        "visual_candidates_min": 3,
+        "findings": []
+      }
+    ]
+  },
+  "reliability": {
+    "n": 100,
+    "seed": 7,
+    "success": 100,
+    "success_rate": 1.0,
+    "arabic": 6,
+    "ten_slide": 42,
+    "ten_slide_share": 0.42,
+    "p50_10_slide_s": 2.049,
+    "p90_10_slide_s": 2.386,
+    "unsourced": 0,
+    "critical_total": 0,
+    "major_total": 0,
+    "variety_total": 0,
+    "determinism": {
+      "checked": 5,
+      "same_numbers": 5,
+      "different_visuals": 5,
+      "rows": [
+        {
+          "deck_id": "rel-000-pitchbook-us-gaap",
+          "same_numbers": true,
+          "different_visuals": true
+        },
+        {
+          "deck_id": "rel-001-pitchbook-ifrs",
+          "same_numbers": true,
+          "different_visuals": true
+        },
+        {
+          "deck_id": "rel-002-pitchbook-mena",
+          "same_numbers": true,
+          "different_visuals": true
+        },
+        {
+          "deck_id": "rel-003-ic-deck-us-gaap",
+          "same_numbers": true,
+          "different_visuals": true
+        },
+        {
+          "deck_id": "rel-004-ic-deck-ifrs",
+          "same_numbers": true,
+          "different_visuals": true
+        }
+      ],
+      "ok": true
+    },
+    "failures": [],
+    "decks": [
+      {
+        "deck_id": "rel-000-pitchbook-us-gaap",
+        "lang": "en",
+        "slides": 8,
+        "critical": 0,
+        "major": 0,
+        "build_seconds": 2.175
+      },
+      {
+        "deck_id": "rel-001-pitchbook-ifrs",
+        "lang": "en",
+        "slides": 12,
+        "critical": 0,
+        "major": 0,
+        "build_seconds": 1.988
+      },
+      {
+        "deck_id": "rel-002-pitchbook-mena",
+        "lang": "en",
+        "slides": 10,
+        "critical": 0,
+        "major": 0,
+        "build_seconds": 2.049
+      },
+      {
+        "deck_id": "rel-003-ic-deck-us-gaap",
+        "lang": "en",
+        "slides": 6,
+        "critical": 0,
+        "major": 0,
+        "build_seconds": 1.994
+      },
+      {
+        "deck_id": "rel-004-ic-deck-ifrs",
+        "lang": "en",
+        "slides": 8,
+        "critical": 0,
+        "major": 0,
+        "build_seconds": 1.911
+      },
+      {
+        "deck_id": "rel-005-market-entry-mena",
+        "lang": "ar",
+        "slides": 10,
+        "critical": 0,
+        "major": 0,
+        "build_seconds": 2.214
+      },
+      {
+        "deck_id": "rel-006-earnings-us-gaap",
+        "lang": "en",
+        "slides": 6,
+        "critical": 0,
+        "major": 0,
+        "build_seconds": 1.872
+      },
+      {
+        "deck_id": "rel-007-earnings-ifrs",
+        "lang": "en",
+        "slides": 10,
+        "critical": 0,
+        "major": 0,
+        "build_seconds": 2.139
+      },
+      {
+        "deck_id": "rel-008-earnings-mena",
+        "lang": "en",
+        "slides": 11,
+        "critical": 0,
+        "major": 0,
+        "build_seconds": 2.366
+      },
+      {
+        "deck_id": "rel-009-market-entry-us-gaap",
+        "lang": "en",
+        "slides": 7,
+        "critical": 0,
+        "major": 0,
+        "build_seconds": 1.579
+      },
+      {
+        "deck_id": "rel-010-market-entry-ifrs",
+        "lang": "en",
+        "slides": 10,
+        "critical": 0,
+        "major": 0,
+        "build_seconds": 2.185
+      },
+      {
+        "deck_id": "rel-011-market-entry-mena",
+        "lang": "en",
+        "slides": 6,
+        "critical": 0,
+        "major": 0,
+        "build_seconds": 1.999
+      },
+      {
+        "deck_id": "rel-012-carve-out-us-gaap",
+        "lang": "en",
+        "slides": 10,
+        "critical": 0,
+        "major": 0,
+        "build_seconds": 2.138
+      },
+      {
+        "deck_id": "rel-013-carve-out-ifrs",
+        "lang": "en",
+        "slides": 9,
+        "critical": 0,
+        "major": 0,
+        "build_seconds": 1.873
+      },
+      {
+        "deck_id": "rel-014-carve-out-mena",
+        "lang": "en",
+        "slides": 12,
+        "critical": 0,
+        "major": 0,
+        "build_seconds": 1.946
+      },
+      {
+        "deck_id": "rel-015-pitchbook-us-gaap",
+        "lang": "en",
+        "slides": 10,
+        "critical": 0,
+        "major": 0,
+        "build_seconds": 1.77
+      },
+      {
+        "deck_id": "rel-016-pitchbook-ifrs",
+        "lang": "en",
+        "slides": 8,
+        "critical": 0,
+        "major": 0,
+        "build_seconds": 1.871
+      },
+      {
+        "deck_id": "rel-017-pitchbook-mena",
+        "lang": "en",
+        "slides": 9,
+        "critical": 0,
+        "major": 0,
+        "build_seconds": 1.96
+      },
+      {
+        "deck_id": "rel-018-ic-deck-us-gaap",
+        "lang": "en",
+        "slides": 8,
+        "critical": 0,
+        "major": 0,
+        "build_seconds": 1.997
+      },
+      {
+        "deck_id": "rel-019-ic-deck-ifrs",
+        "lang": "en",
+        "slides": 10,
+        "critical": 0,
+        "major": 0,
+        "build_seconds": 2.061
+      },
+      {
+        "deck_id": "rel-020-ic-deck-mena",
+        "lang": "en",
+        "slides": 6,
+        "critical": 0,
+        "major": 0,
+        "build_seconds": 2.119
+      },
+      {
+        "deck_id": "rel-021-ic-deck-mena",
+        "lang": "ar",
+        "slides": 7,
+        "critical": 0,
+        "major": 0,
+        "build_seconds": 2.428
+      },
+      {
+        "deck_id": "rel-022-earnings-ifrs",
+        "lang": "en",
+        "slides": 6,
+        "critical": 0,
+        "major": 0,
+        "build_seconds": 1.837
+      },
+      {
+        "deck_id": "rel-023-earnings-mena",
+        "lang": "en",
+        "slides": 10,
+        "critical": 0,
+        "major": 0,
+        "build_seconds": 2.133
+      },
+      {
+        "deck_id": "rel-024-market-entry-us-gaap",
+        "lang": "en",
+        "slides": 10,
+        "critical": 0,
+        "major": 0,
+        "build_seconds": 1.684
+      },
+      {
+        "deck_id": "rel-025-market-entry-ifrs",
+        "lang": "en",
+        "slides": 8,
+        "critical": 0,
+        "major": 0,
+        "build_seconds": 2.407
+      },
+      {
+        "deck_id": "rel-026-market-entry-mena",
+        "lang": "en",
+        "slides": 7,
+        "critical": 0,
+        "major": 0,
+        "build_seconds": 1.933
+      },
+      {
+        "deck_id": "rel-027-carve-out-us-gaap",
+        "lang": "en",
+        "slides": 7,
+        "critical": 0,
+        "major": 0,
+        "build_seconds": 2.131
+      },
+      {
+        "deck_id": "rel-028-carve-out-ifrs",
+        "lang": "en",
+        "slides": 9,
+        "critical": 0,
+        "major": 0,
+        "build_seconds": 1.67
+      },
+      {
+        "deck_id": "rel-029-carve-out-mena",
+        "lang": "en",
+        "slides": 10,
+        "critical": 0,
+        "major": 0,
+        "build_seconds": 1.828
+      },
+      {
+        "deck_id": "rel-030-pitchbook-us-gaap",
+        "lang": "en",
+        "slides": 11,
+        "critical": 0,
+        "major": 0,
+        "build_seconds": 1.865
+      },
+      {
+        "deck_id": "rel-031-pitchbook-ifrs",
+        "lang": "en",
+        "slides": 10,
+        "critical": 0,
+        "major": 0,
+        "build_seconds": 1.955
+      },
+      {
+        "deck_id": "rel-032-pitchbook-mena",
+        "lang": "en",
+        "slides": 12,
+        "critical": 0,
+        "major": 0,
+        "build_seconds": 2.279
+      },
+      {
+        "deck_id": "rel-033-ic-deck-us-gaap",
+        "lang": "en",
+        "slides": 7,
+        "critical": 0,
+        "major": 0,
+        "build_seconds": 2.093
+      },
+      {
+        "deck_id": "rel-034-ic-deck-ifrs",
+        "lang": "en",
+        "slides": 6,
+        "critical": 0,
+        "major": 0,
+        "build_seconds": 2.289
+      },
+      {
+        "deck_id": "rel-035-ic-deck-mena",
+        "lang": "en",
+        "slides": 11,
+        "critical": 0,
+        "major": 0,
+        "build_seconds": 2.032
+      },
+      {
+        "deck_id": "rel-036-earnings-us-gaap",
+        "lang": "en",
+        "slides": 8,
+        "critical": 0,
+        "major": 0,
+        "build_seconds": 1.865
+      },
+      {
+        "deck_id": "rel-037-carve-out-mena",
+        "lang": "ar",
+        "slides": 9,
+        "critical": 0,
+        "major": 0,
+        "build_seconds": 2.29
+      },
+      {
+        "deck_id": "rel-038-earnings-mena",
+        "lang": "en",
+        "slides": 6,
+        "critical": 0,
+        "major": 0,
+        "build_seconds": 1.886
+      },
+      {
+        "deck_id": "rel-039-market-entry-us-gaap",
+        "lang": "en",
+        "slides": 10,
+        "critical": 0,
+        "major": 0,
+        "build_seconds": 1.898
+      },
+      {
+        "deck_id": "rel-040-market-entry-ifrs",
+        "lang": "en",
+        "slides": 10,
+        "critical": 0,
+        "major": 0,
+        "build_seconds": 2.587
+      },
+      {
+        "deck_id": "rel-041-market-entry-mena",
+        "lang": "en",
+        "slides": 10,
+        "critical": 0,
+        "major": 0,
+        "build_seconds": 1.895
+      },
+      {
+        "deck_id": "rel-042-carve-out-us-gaap",
+        "lang": "en",
+        "slides": 12,
+        "critical": 0,
+        "major": 0,
+        "build_seconds": 2.318
+      },
+      {
+        "deck_id": "rel-043-carve-out-ifrs",
+        "lang": "en",
+        "slides": 10,
+        "critical": 0,
+        "major": 0,
+        "build_seconds": 2.127
+      },
+      {
+        "deck_id": "rel-044-carve-out-mena",
+        "lang": "en",
+        "slides": 10,
+        "critical": 0,
+        "major": 0,
+        "build_seconds": 2.038
+      },
+      {
+        "deck_id": "rel-045-pitchbook-us-gaap",
+        "lang": "en",
+        "slides": 6,
+        "critical": 0,
+        "major": 0,
+        "build_seconds": 1.546
+      },
+      {
+        "deck_id": "rel-046-pitchbook-ifrs",
+        "lang": "en",
+        "slides": 10,
+        "critical": 0,
+        "major": 0,
+        "build_seconds": 2.009
+      },
+      {
+        "deck_id": "rel-047-pitchbook-mena",
+        "lang": "en",
+        "slides": 7,
+        "critical": 0,
+        "major": 0,
+        "build_seconds": 1.804
+      },
+      {
+        "deck_id": "rel-048-ic-deck-us-gaap",
+        "lang": "en",
+        "slides": 6,
+        "critical": 0,
+        "major": 0,
+        "build_seconds": 1.898
+      },
+      {
+        "deck_id": "rel-049-ic-deck-ifrs",
+        "lang": "en",
+        "slides": 10,
+        "critical": 0,
+        "major": 0,
+        "build_seconds": 1.808
+      },
+      {
+        "deck_id": "rel-050-ic-deck-mena",
+        "lang": "en",
+        "slides": 10,
+        "critical": 0,
+        "major": 0,
+        "build_seconds": 2.44
+      },
+      {
+        "deck_id": "rel-051-earnings-us-gaap",
+        "lang": "en",
+        "slides": 10,
+        "critical": 0,
+        "major": 0,
+        "build_seconds": 2.064
+      },
+      {
+        "deck_id": "rel-052-earnings-ifrs",
+        "lang": "en",
+        "slides": 6,
+        "critical": 0,
+        "major": 0,
+        "build_seconds": 1.776
+      },
+      {
+        "deck_id": "rel-053-market-entry-mena",
+        "lang": "ar",
+        "slides": 10,
+        "critical": 0,
+        "major": 0,
+        "build_seconds": 1.976
+      },
+      {
+        "deck_id": "rel-054-market-entry-us-gaap",
+        "lang": "en",
+        "slides": 9,
+        "critical": 0,
+        "major": 0,
+        "build_seconds": 1.916
+      },
+      {
+        "deck_id": "rel-055-market-entry-ifrs",
+        "lang": "en",
+        "slides": 6,
+        "critical": 0,
+        "major": 0,
+        "build_seconds": 1.541
+      },
+      {
+        "deck_id": "rel-056-market-entry-mena",
+        "lang": "en",
+        "slides": 9,
+        "critical": 0,
+        "major": 0,
+        "build_seconds": 1.722
+      },
+      {
+        "deck_id": "rel-057-carve-out-us-gaap",
+        "lang": "en",
+        "slides": 6,
+        "critical": 0,
+        "major": 0,
+        "build_seconds": 1.869
+      },
+      {
+        "deck_id": "rel-058-carve-out-ifrs",
+        "lang": "en",
+        "slides": 8,
+        "critical": 0,
+        "major": 0,
+        "build_seconds": 1.692
+      },
+      {
+        "deck_id": "rel-059-carve-out-mena",
+        "lang": "en",
+        "slides": 10,
+        "critical": 0,
+        "major": 0,
+        "build_seconds": 2.488
+      },
+      {
+        "deck_id": "rel-060-pitchbook-us-gaap",
+        "lang": "en",
+        "slides": 10,
+        "critical": 0,
+        "major": 0,
+        "build_seconds": 2.055
+      },
+      {
+        "deck_id": "rel-061-pitchbook-ifrs",
+        "lang": "en",
+        "slides": 6,
+        "critical": 0,
+        "major": 0,
+        "build_seconds": 2.087
+      },
+      {
+        "deck_id": "rel-062-pitchbook-mena",
+        "lang": "en",
+        "slides": 12,
+        "critical": 0,
+        "major": 0,
+        "build_seconds": 2.094
+      },
+      {
+        "deck_id": "rel-063-ic-deck-us-gaap",
+        "lang": "en",
+        "slides": 10,
+        "critical": 0,
+        "major": 0,
+        "build_seconds": 1.747
+      },
+      {
+        "deck_id": "rel-064-ic-deck-ifrs",
+        "lang": "en",
+        "slides": 10,
+        "critical": 0,
+        "major": 0,
+        "build_seconds": 2.386
+      },
+      {
+        "deck_id": "rel-065-ic-deck-mena",
+        "lang": "en",
+        "slides": 10,
+        "critical": 0,
+        "major": 0,
+        "build_seconds": 2.271
+      },
+      {
+        "deck_id": "rel-066-earnings-us-gaap",
+        "lang": "en",
+        "slides": 11,
+        "critical": 0,
+        "major": 0,
+        "build_seconds": 1.962
+      },
+      {
+        "deck_id": "rel-067-earnings-ifrs",
+        "lang": "en",
+        "slides": 8,
+        "critical": 0,
+        "major": 0,
+        "build_seconds": 1.717
+      },
+      {
+        "deck_id": "rel-068-earnings-mena",
+        "lang": "en",
+        "slides": 11,
+        "critical": 0,
+        "major": 0,
+        "build_seconds": 2.274
+      },
+      {
+        "deck_id": "rel-069-ic-deck-mena",
+        "lang": "ar",
+        "slides": 9,
+        "critical": 0,
+        "major": 0,
+        "build_seconds": 2.099
+      },
+      {
+        "deck_id": "rel-070-market-entry-ifrs",
+        "lang": "en",
+        "slides": 10,
+        "critical": 0,
+        "major": 0,
+        "build_seconds": 2.083
+      },
+      {
+        "deck_id": "rel-071-market-entry-mena",
+        "lang": "en",
+        "slides": 10,
+        "critical": 0,
+        "major": 0,
+        "build_seconds": 2.163
+      },
+      {
+        "deck_id": "rel-072-carve-out-us-gaap",
+        "lang": "en",
+        "slides": 10,
+        "critical": 0,
+        "major": 0,
+        "build_seconds": 2.412
+      },
+      {
+        "deck_id": "rel-073-carve-out-ifrs",
+        "lang": "en",
+        "slides": 7,
+        "critical": 0,
+        "major": 0,
+        "build_seconds": 1.8
+      },
+      {
+        "deck_id": "rel-074-carve-out-mena",
+        "lang": "en",
+        "slides": 8,
+        "critical": 0,
+        "major": 0,
+        "build_seconds": 2.044
+      },
+      {
+        "deck_id": "rel-075-pitchbook-us-gaap",
+        "lang": "en",
+        "slides": 10,
+        "critical": 0,
+        "major": 0,
+        "build_seconds": 2.244
+      },
+      {
+        "deck_id": "rel-076-pitchbook-ifrs",
+        "lang": "en",
+        "slides": 12,
+        "critical": 0,
+        "major": 0,
+        "build_seconds": 2.208
+      },
+      {
+        "deck_id": "rel-077-pitchbook-mena",
+        "lang": "en",
+        "slides": 9,
+        "critical": 0,
+        "major": 0,
+        "build_seconds": 2.1
+      },
+      {
+        "deck_id": "rel-078-ic-deck-us-gaap",
+        "lang": "en",
+        "slides": 10,
+        "critical": 0,
+        "major": 0,
+        "build_seconds": 1.958
+      },
+      {
+        "deck_id": "rel-079-ic-deck-ifrs",
+        "lang": "en",
+        "slides": 8,
+        "critical": 0,
+        "major": 0,
+        "build_seconds": 1.91
+      },
+      {
+        "deck_id": "rel-080-ic-deck-mena",
+        "lang": "en",
+        "slides": 12,
+        "critical": 0,
+        "major": 0,
+        "build_seconds": 1.934
+      },
+      {
+        "deck_id": "rel-081-earnings-us-gaap",
+        "lang": "en",
+        "slides": 9,
+        "critical": 0,
+        "major": 0,
+        "build_seconds": 2.454
+      },
+      {
+        "deck_id": "rel-082-earnings-ifrs",
+        "lang": "en",
+        "slides": 11,
+        "critical": 0,
+        "major": 0,
+        "build_seconds": 2.543
+      },
+      {
+        "deck_id": "rel-083-earnings-mena",
+        "lang": "en",
+        "slides": 8,
+        "critical": 0,
+        "major": 0,
+        "build_seconds": 1.838
+      },
+      {
+        "deck_id": "rel-084-market-entry-us-gaap",
+        "lang": "en",
+        "slides": 10,
+        "critical": 0,
+        "major": 0,
+        "build_seconds": 2.04
+      },
+      {
+        "deck_id": "rel-085-carve-out-mena",
+        "lang": "ar",
+        "slides": 10,
+        "critical": 0,
+        "major": 0,
+        "build_seconds": 2.04
+      },
+      {
+        "deck_id": "rel-086-market-entry-mena",
+        "lang": "en",
+        "slides": 10,
+        "critical": 0,
+        "major": 0,
+        "build_seconds": 1.77
+      },
+      {
+        "deck_id": "rel-087-carve-out-us-gaap",
+        "lang": "en",
+        "slides": 8,
+        "critical": 0,
+        "major": 0,
+        "build_seconds": 2.164
+      },
+      {
+        "deck_id": "rel-088-carve-out-ifrs",
+        "lang": "en",
+        "slides": 11,
+        "critical": 0,
+        "major": 0,
+        "build_seconds": 1.753
+      },
+      {
+        "deck_id": "rel-089-carve-out-mena",
+        "lang": "en",
+        "slides": 10,
+        "critical": 0,
+        "major": 0,
+        "build_seconds": 2.208
+      },
+      {
+        "deck_id": "rel-090-pitchbook-us-gaap",
+        "lang": "en",
+        "slides": 10,
+        "critical": 0,
+        "major": 0,
+        "build_seconds": 2.016
+      },
+      {
+        "deck_id": "rel-091-pitchbook-ifrs",
+        "lang": "en",
+        "slides": 10,
+        "critical": 0,
+        "major": 0,
+        "build_seconds": 2.273
+      },
+      {
+        "deck_id": "rel-092-pitchbook-mena",
+        "lang": "en",
+        "slides": 11,
+        "critical": 0,
+        "major": 0,
+        "build_seconds": 1.899
+      },
+      {
+        "deck_id": "rel-093-ic-deck-us-gaap",
+        "lang": "en",
+        "slides": 10,
+        "critical": 0,
+        "major": 0,
+        "build_seconds": 1.869
+      },
+      {
+        "deck_id": "rel-094-ic-deck-ifrs",
+        "lang": "en",
+        "slides": 10,
+        "critical": 0,
+        "major": 0,
+        "build_seconds": 1.941
+      },
+      {
+        "deck_id": "rel-095-ic-deck-mena",
+        "lang": "en",
+        "slides": 12,
+        "critical": 0,
+        "major": 0,
+        "build_seconds": 2.126
+      },
+      {
+        "deck_id": "rel-096-earnings-us-gaap",
+        "lang": "en",
+        "slides": 10,
+        "critical": 0,
+        "major": 0,
+        "build_seconds": 2.155
+      },
+      {
+        "deck_id": "rel-097-earnings-ifrs",
+        "lang": "en",
+        "slides": 10,
+        "critical": 0,
+        "major": 0,
+        "build_seconds": 1.766
+      },
+      {
+        "deck_id": "rel-098-earnings-mena",
+        "lang": "en",
+        "slides": 10,
+        "critical": 0,
+        "major": 0,
+        "build_seconds": 1.727
+      },
+      {
+        "deck_id": "rel-099-market-entry-us-gaap",
+        "lang": "en",
+        "slides": 11,
+        "critical": 0,
+        "major": 0,
+        "build_seconds": 1.935
+      }
+    ]
+  }
+}

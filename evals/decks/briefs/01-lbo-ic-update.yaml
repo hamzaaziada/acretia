@@ -1,0 +1,342 @@
+brief: 'Draft a 10-slide Investment Committee update for Project Harbor, a mid-market LBO. Answer first: we want
+  approval to submit a final bid of up to $1,090m EV. Cover LTM performance, the EBITDA bridge, an IRR sensitivity,
+  deleveraging, value creation sources, the risk register and the timetable to the 6 November final bid. Synthetic
+  data.'
+ghost:
+  deck_id: d01-lbo-ic-update
+  brief: 'Draft a 10-slide Investment Committee update for Project Harbor, a mid-market LBO. Answer first: we want
+    approval to submit a final bid of up to $1,090m EV. Cover LTM performance, the EBITDA bridge, an IRR sensitivity,
+    deleveraging, value creation sources, the risk register and the timetable to the 6 November final bid. Synthetic
+    data.'
+  lang: en
+  slides:
+  - id: s1
+    title: 'Project Harbor: investment committee update'
+    section: Answer
+    archetype_hint: cover
+    purpose: 'Evidence slide 1: Project Harbor: investment committee update'
+  - id: s2
+    title: Harbor clears our 20% IRR hurdle at 11.0x entry, with a 22.4% base case
+    section: Answer
+    archetype_hint: exec_summary
+    purpose: 'Evidence slide 2: Harbor clears our 20% IRR hurdle at 11.0x entry, with a 22.4'
+  - id: s3
+    title: 'LTM performance supports the plan: revenue up 11%, EBITDA margin up 150 bps to 17.1%'
+    section: Performance
+    archetype_hint: kpi_row
+    purpose: 'Evidence slide 3: LTM performance supports the plan: revenue up 11%, EBITDA ma'
+  - id: s4
+    title: EBITDA rises 17% to $96.0m as price and savings outweigh input-cost inflation
+    section: Performance
+    archetype_hint: waterfall
+    purpose: 'Evidence slide 4: EBITDA rises 17% to $96.0m as price and savings outweigh inp'
+  - id: s5
+    title: Returns hold above 20% IRR at 11.0x entry across all three exit multiples
+    section: Returns
+    archetype_hint: sensitivity_table
+    purpose: 'Evidence slide 5: Returns hold above 20% IRR at 11.0x entry across all three e'
+  - id: s6
+    title: Net leverage falls from 6.5x at close to 3.1x by FY30E on free cash flow
+    section: Returns
+    archetype_hint: annotated_line
+    purpose: 'Evidence slide 6: Net leverage falls from 6.5x at close to 3.1x by FY30E on fr'
+  - id: s7
+    title: EBITDA growth drives 61% of value creation, deleveraging 27% and multiple 12%
+    section: Returns
+    archetype_hint: doughnut_split
+    purpose: 'Evidence slide 7: EBITDA growth drives 61% of value creation, deleveraging 27%'
+  - id: s8
+    title: Two of five risks need confirmatory diligence before the 6 November final bid
+    section: Risks
+    archetype_hint: risk_heatmap
+    purpose: 'Evidence slide 8: Two of five risks need confirmatory diligence before the 6 N'
+  - id: s9
+    title: We need IC approval today to hold the 6 November final-bid date
+    section: Next steps
+    archetype_hint: timeline_milestones
+    purpose: 'Evidence slide 9: We need IC approval today to hold the 6 November final-bid d'
+  - id: s10
+    title: We ask IC to approve a final bid of up to $1,090m EV today
+    section: Next steps
+    archetype_hint: takeaway_box
+    purpose: 'Evidence slide 10: We ask IC to approve a final bid of up to $1,090m EV today'
+  sections:
+  - Answer
+  - Performance
+  - Returns
+  - Risks
+  - Next steps
+  approved: true
+  approved_by: eval-corpus
+  approved_at: '2026-11-17T00:00:00+00:00'
+  lint: []
+spec:
+  deck_id: d01-lbo-ic-update
+  title: 'Project Harbor: investment committee update'
+  lang: en
+  client: Investment Committee, Fund IV
+  as_of: '2026-09-30'
+  art_direction: auto
+  theme: house
+  slides:
+  - id: s1
+    archetype: cover
+    title: 'Project Harbor: investment committee update'
+    blocks:
+      client: Investment Committee, Fund IV
+      date: 7 October 2026
+    visual:
+      concept: stacked container cranes over a calm harbour, abstract and flat
+      kind: hero
+    notes: 'Evidence slide 1: Project Harbor: investment committee update'
+  - id: s2
+    archetype: exec_summary
+    title: Harbor clears our 20% IRR hurdle at 11.0x entry, with a 22.4% base case
+    source: Sponsor model v14 (synthetic); Management case, Aug 2026 (synthetic)
+    sources:
+    - Sponsor model v14 (synthetic)
+    - Management case, Aug 2026 (synthetic)
+    as_of: '2026-09-30'
+    blocks:
+      subtitle: Recommendation and key terms, $ million
+      insights:
+      - lead: Price
+        text: Entry at 11.0x FY25E EBITDA of $96.0m sets the enterprise value
+        figure: $1,056m
+      - lead: Returns
+        text: Gross IRR in the base case clears the 20% fund hurdle over a five-year hold
+        figure: 22.4%
+      - lead: Growth
+        text: EBITDA rises on price and cost savings, ahead of input-cost inflation
+        figure: +17%
+      - lead: Risk
+        text: Top-3 customer renewals are the open diligence item before the bid
+        figure: 31%
+      so_what:
+        text: Approve a final bid of up to $1,090m EV at the 6 November deadline.
+    notes: 'Evidence slide 2: Harbor clears our 20% IRR hurdle at 11.0x entry, with a 22.4'
+  - id: s3
+    archetype: kpi_row
+    title: 'LTM performance supports the plan: revenue up 11%, EBITDA margin up 150 bps to 17.1%'
+    source: Company financials and QoE draft, Sep 2026 (synthetic)
+    as_of: '2026-09-30'
+    blocks:
+      subtitle: LTM to 30 September 2026, $ million
+      highlight: 1
+      kpis:
+      - label: LTM revenue
+        value: $561m
+        context: +11% YoY, price led
+        change:
+          text: up on FY24
+          direction: up
+      - label: LTM EBITDA
+        value: $96.0m
+        context: +17% YoY, volume $9.5m
+        change:
+          text: up on FY24
+          direction: up
+      - label: EBITDA margin
+        value: 17.1%
+        context: +150 bps, savings 70% done
+        change:
+          text: up on FY24
+          direction: up
+      - label: Net leverage at close
+        value: 6.5x
+        context: Peers at 7.2x
+        change:
+          text: -0.7x
+          direction: up
+      so_what: 'Growth is price-led: volume adds $9.5m, below the three-year average of $11.2m.'
+    notes: 'Evidence slide 3: LTM performance supports the plan: revenue up 11%, EBITDA ma'
+  - id: s4
+    archetype: waterfall
+    title: EBITDA rises 17% to $96.0m as price and savings outweigh input-cost inflation
+    source: Sponsor model v14 (synthetic); Management EBITDA bridge (synthetic)
+    sources:
+    - Sponsor model v14 (synthetic)
+    - Management EBITDA bridge (synthetic)
+    as_of: '2026-09-30'
+    blocks:
+      subtitle: EBITDA bridge, FY24 to FY25E, $ million
+      number_format: '0.0'
+      prefix: $
+      suffix: m
+      steps:
+      - label: FY24 EBITDA
+        value: 82.0
+      - label: Volume
+        value: 9.5
+      - label: Price
+        value: 6.0
+      - label: Input costs
+        value: -4.5
+      - label: Cost savings
+        value: 5.0
+      - label: Opex inflation
+        value: -2.0
+      - label: FY25E EBITDA
+        value: 96.0
+      takeaway: Volume adds $9.5m and price $6.0m; input costs take back $4.5m [1]
+    notes: 'Evidence slide 4: EBITDA rises 17% to $96.0m as price and savings outweigh inp'
+  - id: s5
+    archetype: sensitivity_table
+    title: Returns hold above 20% IRR at 11.0x entry across all three exit multiples
+    source: Sponsor model v14, base operating case (synthetic)
+    sources:
+    - Sponsor model v14, base operating case (synthetic)
+    as_of: '2026-09-30'
+    blocks:
+      subtitle: Gross IRR by entry and exit multiple, %
+      row_label: Entry multiple, x
+      col_label: Exit multiple, hurdle 20%
+      row_values:
+      - 10.5
+      - 11.0
+      - 11.5
+      col_values:
+      - 10.0
+      - 11.0
+      - 12.0
+      values:
+      - - 22.9
+        - 25.1
+        - 27.0
+      - - 20.4
+        - 22.4
+        - 24.3
+      - - 18.2
+        - 20.1
+        - 21.9
+      base:
+      - 1
+      - 1
+      takeaway: Only the 11.5x entry with a 10.0x exit falls below the hurdle [1]
+    notes: 'Evidence slide 5: Returns hold above 20% IRR at 11.0x entry across all three e'
+  - id: s6
+    archetype: annotated_line
+    title: Net leverage falls from 6.5x at close to 3.1x by FY30E on free cash flow
+    source: Sponsor model v14, debt schedule (synthetic)
+    sources:
+    - Sponsor model v14, debt schedule (synthetic)
+    as_of: '2026-09-30'
+    blocks:
+      subtitle: Net debt to EBITDA, x
+      number_format: '0.0'
+      change_unit: x
+      categories:
+      - Close
+      - FY26E
+      - FY27E
+      - FY28E
+      - FY29E
+      - FY30E
+      series:
+      - name: Total net leverage
+        values:
+        - 6.5
+        - 5.7
+        - 4.9
+        - 4.1
+        - 3.5
+        - 3.1
+      - name: Senior only
+        values:
+        - 5.5
+        - 4.8
+        - 4.1
+        - 3.4
+        - 2.9
+        - 2.5
+      annotation:
+        at: 2
+        text: Second lien refinanced in FY27E
+      takeaway: Total leverage reaches 3.1x by FY30E from 6.5x at close [1]
+    notes: 'Evidence slide 6: Net leverage falls from 6.5x at close to 3.1x by FY30E on fr'
+  - id: s7
+    archetype: doughnut_split
+    title: EBITDA growth drives 61% of value creation, deleveraging 27% and multiple 12%
+    source: Sponsor model v14, returns attribution (synthetic)
+    sources:
+    - Sponsor model v14, returns attribution (synthetic)
+    as_of: '2026-09-30'
+    blocks:
+      subtitle: Sources of equity value creation, % of total gain
+      centre: $832m
+      slices:
+      - label: EBITDA growth
+        value: 61
+        key: true
+      - label: Deleveraging
+        value: 27
+      - label: Multiple
+        value: 12
+      takeaway: Multiple expansion is only 12% of the gain, so returns do not rely on re-rating [1]
+    notes: 'Evidence slide 7: EBITDA growth drives 61% of value creation, deleveraging 27%'
+  - id: s8
+    archetype: risk_heatmap
+    title: Two of five risks need confirmatory diligence before the 6 November final bid
+    source: Diligence tracker, 28 Sep 2026 (synthetic)
+    sources:
+    - Diligence tracker, 28 Sep 2026 (synthetic)
+    as_of: '2026-09-30'
+    blocks:
+      subtitle: Risk register, likelihood by impact, five-point scale
+      risks:
+      - label: Top-3 renewals, 31% of revenue, $11m EBITDA
+        likelihood: 3
+        impact: 5
+      - label: Q4 price pass-through, $3m EBITDA
+        likelihood: 3
+        impact: 3
+      - label: Input costs above 4% inflation
+        likelihood: 4
+        impact: 3
+      - label: Management retention
+        likelihood: 2
+        impact: 4
+      - label: Second-lien refinancing in FY27E
+        likelihood: 2
+        impact: 3
+      takeaway: Customer renewals carry the largest exposure at $11m of EBITDA if lost [1]
+    notes: 'Evidence slide 8: Two of five risks need confirmatory diligence before the 6 N'
+  - id: s9
+    archetype: timeline_milestones
+    title: We need IC approval today to hold the 6 November final-bid date
+    source: Process letter, 12 Sep 2026 (synthetic)
+    sources:
+    - Process letter, 12 Sep 2026 (synthetic)
+    as_of: '2026-09-30'
+    blocks:
+      subtitle: Process timetable to signing, 2026
+      milestones:
+      - date: 7 Oct
+        label: IC approval
+        highlight: true
+      - date: 16 Oct
+        label: Top-3 customer calls
+      - date: 30 Oct
+        label: Confirmatory QoE
+      - date: 6 Nov
+        label: Final bid up to $1,090m EV
+        highlight: true
+      - date: Dec
+        label: Signing
+      takeaway: Final bid of up to $1,090m EV follows IC approval on 7 Oct [1]
+    notes: 'Evidence slide 9: We need IC approval today to hold the 6 November final-bid d'
+  - id: s10
+    archetype: takeaway_box
+    title: We ask IC to approve a final bid of up to $1,090m EV today
+    source: Sponsor model v14 (synthetic)
+    as_of: '2026-09-30'
+    blocks:
+      decision: Approve a final bid of up to $1,090m EV, with a base case of 2.8x MOIC and 22.4% gross IRR
+      rationale:
+      - 'Returns: base case clears the 20% hurdle at 11.0x entry'
+      - 'Plan: EBITDA of $96.0m is 70% savings and price led'
+      - 'Structure: 5.5x senior plus 1.0x second lien'
+      risks:
+      - 'Concentration: 31% of revenue from three customers'
+      - 'Pass-through: $3m of EBITDA at risk in Q4'
+    notes: 'Evidence slide 10: We ask IC to approve a final bid of up to $1,090m EV today'

@@ -1,0 +1,405 @@
+brief: 'Build a 10-slide valuation summary for the board of Northwind Industrial: public comps, precedents, DCF
+  and a football field, with the answer first. Peers are eight US and European industrial manufacturers. All figures
+  synthetic, as of 30 October 2026.'
+ghost:
+  deck_id: d02-public-comps-football-field
+  brief: 'Build a 10-slide valuation summary for the board of Northwind Industrial: public comps, precedents, DCF
+    and a football field, with the answer first. Peers are eight US and European industrial manufacturers. All figures
+    synthetic, as of 30 October 2026.'
+  lang: en
+  slides:
+  - id: s1
+    title: 'Northwind Industrial: public comps and valuation summary'
+    section: Answer
+    archetype_hint: cover
+    purpose: 'Evidence slide 1: Northwind Industrial: public comps and valuation summary'
+  - id: s2
+    title: Triangulated enterprise value is $912m to $980m, or 9.5x to 10.2x FY26E EBITDA
+    section: Answer
+    archetype_hint: exec_summary
+    purpose: 'Evidence slide 2: Triangulated enterprise value is $912m to $980m, or 9.5x to '
+  - id: s3
+    title: Peers trade at a median 9.5x EV/EBITDA, and Northwind sits at 9.1x
+    section: Trading comps
+    archetype_hint: comps_table
+    purpose: 'Evidence slide 3: Peers trade at a median 9.5x EV/EBITDA, and Northwind sits a'
+  - id: s4
+    title: Northwind trades at 9.1x, sixth of nine peers and level with Ember
+    section: Trading comps
+    archetype_hint: ranked_bar
+    purpose: 'Evidence slide 4: Northwind trades at 9.1x, sixth of nine peers and level with'
+  - id: s5
+    title: Northwind's 2.4-point margin gap, not growth, explains its discount to peers
+    section: Trading comps
+    archetype_hint: scatter_quadrant
+    purpose: 'Evidence slide 5: Northwind''s 2.4-point margin gap, not growth, explains its d'
+  - id: s6
+    title: Precedents cleared 9.5x to 11.4x LTM EBITDA, with strategic buyers at the top
+    section: Precedents
+    archetype_hint: tombstones
+    purpose: 'Evidence slide 6: Precedents cleared 9.5x to 11.4x LTM EBITDA, with strategic '
+  - id: s7
+    title: DCF value spans $880m to $1,090m across a 9.0% to 10.0% WACC at 2.0% growth
+    section: DCF
+    archetype_hint: sensitivity_table
+    purpose: 'Evidence slide 7: DCF value spans $880m to $1,090m across a 9.0% to 10.0% WACC'
+  - id: s8
+    title: All four methods overlap between $912m and $980m, a midpoint of $946m
+    section: Conclusion
+    archetype_hint: football_field
+    purpose: 'Evidence slide 8: All four methods overlap between $912m and $980m, a midpoint'
+  - id: s9
+    title: Each 100 bps of margin adds $53m of enterprise value at the peer median multiple
+    section: Conclusion
+    archetype_hint: numbered_insights
+    purpose: 'Evidence slide 9: Each 100 bps of margin adds $53m of enterprise value at the '
+  - id: s10
+    title: We recommend anchoring the board on $912m to $980m of enterprise value
+    section: Conclusion
+    archetype_hint: takeaway_box
+    purpose: 'Evidence slide 10: We recommend anchoring the board on $912m to $980m of enterp'
+  sections:
+  - Answer
+  - Trading comps
+  - Precedents
+  - DCF
+  - Conclusion
+  approved: true
+  approved_by: eval-corpus
+  approved_at: '2026-11-17T00:00:00+00:00'
+  lint: []
+spec:
+  deck_id: d02-public-comps-football-field
+  title: 'Northwind Industrial: public comps and valuation summary'
+  lang: en
+  client: Board of Directors
+  as_of: '2026-10-30'
+  art_direction: auto
+  theme: house
+  slides:
+  - id: s1
+    archetype: cover
+    title: 'Northwind Industrial: public comps and valuation summary'
+    blocks:
+      client: Board of Directors
+      date: 30 October 2026
+    visual:
+      concept: overlapping gear forms in muted blues, flat editorial
+      kind: hero
+    notes: 'Evidence slide 1: Northwind Industrial: public comps and valuation summary'
+  - id: s2
+    archetype: exec_summary
+    title: Triangulated enterprise value is $912m to $980m, or 9.5x to 10.2x FY26E EBITDA
+    source: FactSet consensus, 30 Oct 2026 (synthetic); Sponsor valuation model (synthetic)
+    sources:
+    - FactSet consensus, 30 Oct 2026 (synthetic)
+    - Sponsor valuation model (synthetic)
+    as_of: '2026-10-30'
+    blocks:
+      subtitle: Valuation summary, $ million
+      insights:
+      - lead: Range
+        text: Four methods overlap in one enterprise value band
+        figure: $912m to $980m
+      - lead: Multiple
+        text: The band equals this multiple of FY26E EBITDA of $96.0m
+        figure: 9.5x to 10.2x
+      - lead: Discount
+        text: Northwind trades below the peer median multiple of 9.5x
+        figure: 9.1x
+      - lead: Cause
+        text: The gap reflects a lower EBITDA margin, not lower growth
+        figure: 17.1%
+      so_what:
+        text: Anchor the board discussion on the overlap of the four methods.
+    notes: 'Evidence slide 2: Triangulated enterprise value is $912m to $980m, or 9.5x to '
+  - id: s3
+    archetype: comps_table
+    title: Peers trade at a median 9.5x EV/EBITDA, and Northwind sits at 9.1x
+    source: FactSet consensus, 30 Oct 2026 (synthetic); Company filings (synthetic)
+    sources:
+    - FactSet consensus, 30 Oct 2026 (synthetic)
+    - Company filings (synthetic)
+    as_of: '2026-10-30'
+    blocks:
+      subtitle: Trading comparables, FY26E multiples, EV in $ billion
+      compute_stats: true
+      dense: true
+      rows:
+      - company: Alder Machinery
+        ev: 4.82
+        ev_ebitda: 9.9
+        pe: 15.8
+        growth: 6.1
+        margin: 21.2
+      - company: Brightwater Systems
+        ev: 3.15
+        ev_ebitda: 9.6
+        pe: 14.9
+        growth: 4.8
+        margin: 19.8
+      - company: Cobalt Controls
+        ev: 5.94
+        ev_ebitda: 10.7
+        pe: 17.2
+        growth: 7.4
+        margin: 22.5
+      - company: Delta Fluid Power
+        ev: 2.21
+        ev_ebitda: 8.9
+        pe: 13.4
+        growth: 3.2
+        margin: 17.9
+      - company: Ember Components
+        ev: 1.76
+        ev_ebitda: 9.1
+        pe: 14.1
+        growth: 5.5
+        margin: 18.6
+      - company: Fulcrum Industrial
+        ev: 3.88
+        ev_ebitda: 10.8
+        pe: 16.5
+        growth: 6.9
+        margin: 20.4
+      - company: Granite Automation
+        ev: 2.64
+        ev_ebitda: 8.3
+        pe: 12.7
+        growth: 2.9
+        margin: 16.8
+      - company: Halyard Tooling
+        ev: 1.31
+        ev_ebitda: 9.4
+        pe: 13.8
+        growth: 4.1
+        margin: 19.1
+      takeaway: Median EV/EBITDA is 9.5x across eight industrial peers [1]
+    notes: 'Evidence slide 3: Peers trade at a median 9.5x EV/EBITDA, and Northwind sits a'
+  - id: s4
+    archetype: ranked_bar
+    title: Northwind trades at 9.1x, sixth of nine peers and level with Ember
+    source: FactSet consensus, 30 Oct 2026 (synthetic)
+    sources:
+    - FactSet consensus, 30 Oct 2026 (synthetic)
+    as_of: '2026-10-30'
+    blocks:
+      subtitle: EV/EBITDA, FY26E, x
+      number_format: 0.0"x"
+      series_name: EV/EBITDA
+      items:
+      - label: Fulcrum Industrial
+        value: 10.8
+      - label: Cobalt Controls
+        value: 10.7
+      - label: Alder Machinery
+        value: 9.9
+      - label: Brightwater Systems
+        value: 9.6
+      - label: Halyard Tooling
+        value: 9.4
+      - label: Northwind
+        value: 9.1
+        key: true
+      - label: Ember Components
+        value: 9.1
+      - label: Delta Fluid Power
+        value: 8.9
+      - label: Granite Automation
+        value: 8.3
+      stat:
+        value: -0.4x
+        label: discount to the peer median of 9.5x
+      takeaway: Closing the gap to the median is worth 0.4x of EBITDA [1]
+    notes: 'Evidence slide 4: Northwind trades at 9.1x, sixth of nine peers and level with'
+  - id: s5
+    archetype: scatter_quadrant
+    title: Northwind's 2.4-point margin gap, not growth, explains its discount to peers
+    source: FactSet consensus, 30 Oct 2026 (synthetic)
+    sources:
+    - FactSet consensus, 30 Oct 2026 (synthetic)
+    as_of: '2026-10-30'
+    blocks:
+      subtitle: EBITDA margin versus revenue growth, FY26E, %
+      x_title: Revenue growth, FY26E, %
+      y_title: EBITDA margin, FY26E, %
+      x_format: '0.0'
+      y_format: '0.0'
+      points:
+      - label: Northwind
+        xv: 5.0
+        yv: 17.1
+        subject: true
+      - label: Alder
+        xv: 6.1
+        yv: 21.2
+      - label: Brightwater
+        xv: 4.8
+        yv: 19.8
+      - label: Cobalt
+        xv: 7.4
+        yv: 22.5
+      - label: Delta
+        xv: 3.2
+        yv: 17.9
+      - label: Ember
+        xv: 5.5
+        yv: 18.6
+      - label: Fulcrum
+        xv: 6.9
+        yv: 20.4
+      - label: Granite
+        xv: 2.9
+        yv: 16.8
+      - label: Halyard
+        xv: 4.1
+        yv: 19.1
+      stat:
+        value: -2.4pp
+        label: EBITDA margin gap to the peer median of 19.5%
+      takeaway: Growth of 5.0% is in line with peers, so margin is the lever [1]
+    notes: 'Evidence slide 5: Northwind''s 2.4-point margin gap, not growth, explains its d'
+  - id: s6
+    archetype: tombstones
+    title: Precedents cleared 9.5x to 11.4x LTM EBITDA, with strategic buyers at the top
+    source: Company announcements (synthetic); Deal database extract (synthetic)
+    sources:
+    - Company announcements (synthetic)
+    - Deal database extract (synthetic)
+    as_of: '2026-10-30'
+    blocks:
+      subtitle: Precedent transactions, EV in $ billion, EV/EBITDA LTM
+      deals:
+      - acquirer: Alder Machinery
+        target: Kestrel Valves
+        date: Mar 2026
+        ev: 1.24
+        multiple: 11.2
+      - acquirer: Sponsor consortium
+        target: Larch Pumps
+        date: Jan 2026
+        ev: 0.88
+        multiple: 9.6
+      - acquirer: Cobalt Controls
+        target: Maple Drives
+        date: Nov 2025
+        ev: 1.51
+        multiple: 11.4
+      - acquirer: Sponsor consortium
+        target: Nettle Sensors
+        date: Aug 2025
+        ev: 0.72
+        multiple: 9.5
+      - acquirer: Fulcrum Industrial
+        target: Oak Gears
+        date: May 2025
+        ev: 0.96
+        multiple: 10.4
+      - acquirer: Sponsor consortium
+        target: Pine Hydraulics
+        date: Feb 2025
+        ev: 0.64
+        multiple: 9.9
+      takeaway: Strategic buyers paid 10.4x to 11.4x; financial buyers paid 9.5x to 9.9x [1]
+    notes: 'Evidence slide 6: Precedents cleared 9.5x to 11.4x LTM EBITDA, with strategic '
+  - id: s7
+    archetype: sensitivity_table
+    title: DCF value spans $880m to $1,090m across a 9.0% to 10.0% WACC at 2.0% growth
+    source: Sponsor DCF model, five-year explicit period (synthetic)
+    sources:
+    - Sponsor DCF model, five-year explicit period (synthetic)
+    as_of: '2026-10-30'
+    blocks:
+      subtitle: Enterprise value, WACC by terminal growth, $ million
+      row_label: WACC, %
+      col_label: Terminal growth, %
+      row_values:
+      - 9.0
+      - 9.5
+      - 10.0
+      col_values:
+      - 1.5
+      - 2.0
+      - 2.5
+      values:
+      - - 1040
+        - 1090
+        - 1148
+      - - 940
+        - 980
+        - 1022
+      - - 840
+        - 880
+        - 922
+      base:
+      - 1
+      - 1
+      value_format: '#,##0'
+      takeaway: Value falls from $1,090m to $880m as WACC rises from 9.0% to 10.0% [1]
+    notes: 'Evidence slide 7: DCF value spans $880m to $1,090m across a 9.0% to 10.0% WACC'
+  - id: s8
+    archetype: football_field
+    title: All four methods overlap between $912m and $980m, a midpoint of $946m
+    source: Sponsor valuation model (synthetic); FactSet and deal database (synthetic)
+    sources:
+    - Sponsor valuation model (synthetic)
+    - FactSet and deal database (synthetic)
+    as_of: '2026-10-30'
+    blocks:
+      subtitle: Enterprise value by method, $ million
+      prefix: $
+      number_format: '#,##0'
+      current_price: 874
+      implied: 946
+      methods:
+      - label: Trading comps, 8.5x to 10.5x
+        low: 816
+        high: 1008
+      - label: Precedents, 9.5x to 11.5x
+        low: 912
+        high: 1104
+      - label: DCF, WACC 9.0% to 10.0%
+        low: 880
+        high: 1090
+        key: true
+      - label: LBO, 20% to 25% IRR
+        low: 840
+        high: 980
+      takeaway: The overlap sits above the current enterprise value of $874m [1]
+    notes: 'Evidence slide 8: All four methods overlap between $912m and $980m, a midpoint'
+  - id: s9
+    archetype: numbered_insights
+    title: Each 100 bps of margin adds $53m of enterprise value at the peer median multiple
+    source: Management plan (synthetic)
+    as_of: '2026-10-30'
+    blocks:
+      subtitle: Why the margin gap matters
+      insights:
+      - title: Margin
+        text: One point of margin on revenue, at the 9.5x peer median multiple
+        figure: $53m per 100 bps
+      - title: Programme
+        text: The cost programme targets this gain by FY28, nearly closing the gap
+        figure: 230 bps
+      - title: Mix
+        text: Aftermarket share of sales rises, supporting the top half of the range
+        figure: 28% to 35%
+      - title: Revenue base
+        text: LTM revenue is the base for the margin sensitivity
+        figure: $561m
+    notes: 'Evidence slide 9: Each 100 bps of margin adds $53m of enterprise value at the '
+  - id: s10
+    archetype: takeaway_box
+    title: We recommend anchoring the board on $912m to $980m of enterprise value
+    source: Sponsor valuation model (synthetic)
+    as_of: '2026-10-30'
+    blocks:
+      decision: Anchor the valuation range at $912m to $980m, or 9.5x to 10.2x FY26E EBITDA of $96.0m
+      rationale:
+      - 'Overlap: all four methods agree inside the band'
+      - 'Peers: median of 9.5x supports the midpoint'
+      - 'Upside: margin programme adds $53m per 100 bps'
+      risks:
+      - 'Peer set: eight industrial manufacturers only'
+      - 'DCF: sensitive to the WACC choice'
+    notes: 'Evidence slide 10: We recommend anchoring the board on $912m to $980m of enterp'

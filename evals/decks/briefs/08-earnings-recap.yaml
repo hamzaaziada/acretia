@@ -1,0 +1,321 @@
+brief: 'Write an 8-slide third-quarter earnings recap for Atlas Foods, a US consumer staples company: the beat,
+  bridge, margin trend, segments, guidance changes and our rating. Synthetic figures.'
+ghost:
+  deck_id: d08-earnings-recap
+  brief: 'Write an 8-slide third-quarter earnings recap for Atlas Foods, a US consumer staples company: the beat,
+    bridge, margin trend, segments, guidance changes and our rating. Synthetic figures.'
+  lang: en
+  slides:
+  - id: s1
+    title: 'Atlas Foods: third quarter FY26 earnings recap'
+    section: Answer
+    archetype_hint: cover
+    purpose: 'Evidence slide 1: Atlas Foods: third quarter FY26 earnings recap'
+  - id: s2
+    title: Atlas beat on EPS by 6% and raised full-year guidance to $4.05 to $4.15
+    section: Answer
+    archetype_hint: exec_summary
+    purpose: 'Evidence slide 2: Atlas beat on EPS by 6% and raised full-year guidance to $4.'
+  - id: s3
+    title: Third quarter EPS of $1.06 beat consensus of $1.00 on 4.8% organic growth
+    section: Results
+    archetype_hint: kpi_row
+    purpose: 'Evidence slide 3: Third quarter EPS of $1.06 beat consensus of $1.00 on 4.8% o'
+  - id: s4
+    title: EPS rose $0.12 to $1.06 as price and cost savings outweighed higher marketing
+    section: Results
+    archetype_hint: waterfall
+    purpose: 'Evidence slide 4: EPS rose $0.12 to $1.06 as price and cost savings outweighed'
+  - id: s5
+    title: Gross margin reaches 34.2%, 110 bps above last year, as input costs ease
+    section: Results
+    archetype_hint: annotated_line
+    purpose: 'Evidence slide 5: Gross margin reaches 34.2%, 110 bps above last year, as inpu'
+  - id: s6
+    title: Three of four segments grew sales, with Snacks up 7% and Beverages down 2%
+    section: Results
+    archetype_hint: small_multiples
+    purpose: 'Evidence slide 6: Three of four segments grew sales, with Snacks up 7% and Bev'
+  - id: s7
+    title: Guidance for FY26 EPS rose by $0.10 to $4.05 to $4.15, above consensus of $4.02
+    section: Outlook
+    archetype_hint: comparison_table
+    purpose: 'Evidence slide 7: Guidance for FY26 EPS rose by $0.10 to $4.05 to $4.15, above'
+  - id: s8
+    title: We raise our price target to $78 and keep the overweight rating
+    section: Outlook
+    archetype_hint: takeaway_box
+    purpose: 'Evidence slide 8: We raise our price target to $78 and keep the overweight rat'
+  sections:
+  - Answer
+  - Results
+  - Outlook
+  approved: true
+  approved_by: eval-corpus
+  approved_at: '2026-11-17T00:00:00+00:00'
+  lint: []
+spec:
+  deck_id: d08-earnings-recap
+  title: 'Atlas Foods: third quarter FY26 earnings recap'
+  lang: en
+  client: Equity research
+  as_of: '2026-11-04'
+  art_direction: auto
+  theme: house
+  slides:
+  - id: s1
+    archetype: cover
+    title: 'Atlas Foods: third quarter FY26 earnings recap'
+    blocks:
+      client: Equity research, consumer staples
+      date: 4 November 2026
+    visual:
+      concept: abstract grain and bar shapes, warm greys
+      kind: hero
+    notes: 'Evidence slide 1: Atlas Foods: third quarter FY26 earnings recap'
+  - id: s2
+    archetype: exec_summary
+    title: Atlas beat on EPS by 6% and raised full-year guidance to $4.05 to $4.15
+    source: Company earnings release, 3 Nov 2026 (synthetic); Consensus survey (synthetic)
+    sources:
+    - Company earnings release, 3 Nov 2026 (synthetic)
+    - Consensus survey (synthetic)
+    as_of: '2026-11-04'
+    blocks:
+      subtitle: Third quarter FY26, per share unless stated
+      insights:
+      - lead: EPS
+        text: Adjusted EPS beat the consensus estimate of $1.00
+        figure: $1.06
+      - lead: Sales
+        text: Organic sales growth beat on pricing and mix
+        figure: +4.8%
+      - lead: Margin
+        text: Gross margin expanded as input costs eased
+        figure: 34.2%
+      - lead: Guide
+        text: Full-year EPS guidance was raised from $3.95 to $4.05
+        figure: $4.05 to $4.15
+      so_what:
+        text: We raise our price target and keep an overweight rating.
+    notes: 'Evidence slide 2: Atlas beat on EPS by 6% and raised full-year guidance to $4.'
+  - id: s3
+    archetype: kpi_row
+    title: Third quarter EPS of $1.06 beat consensus of $1.00 on 4.8% organic growth
+    source: Company earnings release, 3 Nov 2026 (synthetic)
+    as_of: '2026-11-04'
+    blocks:
+      subtitle: Third quarter FY26 versus consensus
+      highlight: 0
+      kpis:
+      - label: Adjusted EPS
+        value: $1.06
+        context: Consensus $1.00
+        change:
+          text: +6.0% beat
+          direction: up
+      - label: Net sales
+        value: $3.42bn
+        context: Consensus $3.38bn
+        change:
+          text: +4.8% org.
+          direction: up
+      - label: Gross margin
+        value: 34.2%
+        context: +110 bps on 33.1%
+        change:
+          text: up
+          direction: up
+      - label: Free cash flow
+        value: $410m
+        context: Prior year $355m
+        change:
+          text: +15.5%
+          direction: up
+      so_what: Margin, not volume, drove the beat.
+    notes: 'Evidence slide 3: Third quarter EPS of $1.06 beat consensus of $1.00 on 4.8% o'
+  - id: s4
+    archetype: waterfall
+    title: EPS rose $0.12 to $1.06 as price and cost savings outweighed higher marketing
+    source: Company earnings release, 3 Nov 2026 (synthetic)
+    sources:
+    - Company earnings release, 3 Nov 2026 (synthetic)
+    as_of: '2026-11-04'
+    blocks:
+      subtitle: Adjusted EPS bridge, Q3 FY25 to Q3 FY26, $ per share
+      number_format: '0.00'
+      prefix: $
+      suffix: ''
+      steps:
+      - label: Q3 FY25
+        value: 0.94
+      - label: Price and mix
+        value: 0.11
+      - label: Volume
+        value: 0.02
+      - label: Input costs
+        value: 0.06
+      - label: Marketing
+        value: -0.05
+      - label: Tax and other
+        value: -0.02
+      - label: Q3 FY26
+        value: 1.06
+      takeaway: Price and mix add $0.11 and input costs add $0.06 [1]
+    notes: 'Evidence slide 4: EPS rose $0.12 to $1.06 as price and cost savings outweighed'
+  - id: s5
+    archetype: annotated_line
+    title: Gross margin reaches 34.2%, 110 bps above last year, as input costs ease
+    source: Company filings (synthetic); Peer filings, median of six (synthetic)
+    sources:
+    - Company filings (synthetic)
+    - Peer filings, median of six (synthetic)
+    as_of: '2026-11-04'
+    blocks:
+      subtitle: Gross margin, quarterly, %
+      number_format: '0.0'
+      change_unit: pp
+      categories:
+      - Q4 FY24
+      - Q1 FY25
+      - Q2 FY25
+      - Q3 FY25
+      - Q4 FY25
+      - Q1 FY26
+      - Q2 FY26
+      - Q3 FY26
+      series:
+      - name: Atlas gross margin
+        values:
+        - 32.4
+        - 32.8
+        - 32.9
+        - 33.1
+        - 33.4
+        - 33.6
+        - 33.9
+        - 34.2
+      - name: Peer median
+        values:
+        - 33.0
+        - 33.1
+        - 33.2
+        - 33.3
+        - 33.4
+        - 33.5
+        - 33.6
+        - 33.7
+      annotation:
+        at: 4
+        text: Commodity costs peak in Q4 FY25
+      takeaway: Atlas now earns 0.5 points more than the peer median of 33.7% [1]
+    notes: 'Evidence slide 5: Gross margin reaches 34.2%, 110 bps above last year, as inpu'
+  - id: s6
+    archetype: small_multiples
+    title: Three of four segments grew sales, with Snacks up 7% and Beverages down 2%
+    source: Company segment disclosure (synthetic)
+    sources:
+    - Company segment disclosure (synthetic)
+    as_of: '2026-11-04'
+    blocks:
+      subtitle: Net sales growth by segment, last four quarters, %
+      number_format: '0'
+      panels:
+      - title: Snacks
+        categories:
+        - Q4
+        - Q1
+        - Q2
+        - Q3
+        values:
+        - 4
+        - 5
+        - 6
+        - 7
+      - title: Frozen
+        categories:
+        - Q4
+        - Q1
+        - Q2
+        - Q3
+        values:
+        - 2
+        - 3
+        - 3
+        - 4
+      - title: Beverages
+        categories:
+        - Q4
+        - Q1
+        - Q2
+        - Q3
+        values:
+        - 1
+        - 0
+        - -1
+        - -2
+      - title: Pet food
+        categories:
+        - Q4
+        - Q1
+        - Q2
+        - Q3
+        values:
+        - 3
+        - 4
+        - 4
+        - 5
+      takeaway: Beverages has declined for three quarters, by 2% in Q3 [1]
+    notes: 'Evidence slide 6: Three of four segments grew sales, with Snacks up 7% and Bev'
+  - id: s7
+    archetype: comparison_table
+    title: Guidance for FY26 EPS rose by $0.10 to $4.05 to $4.15, above consensus of $4.02
+    source: Company earnings release (synthetic); Consensus survey (synthetic)
+    sources:
+    - Company earnings release (synthetic)
+    - Consensus survey (synthetic)
+    as_of: '2026-11-04'
+    blocks:
+      subtitle: Full-year FY26 guidance, per share unless stated
+      options:
+      - Prior guide
+      - New guide
+      - Consensus
+      highlight: 1
+      rows:
+      - criterion: Adjusted EPS
+        values:
+        - $3.95 to $4.05
+        - $4.05 to $4.15
+        - $4.02
+      - criterion: Organic growth
+        values:
+        - 3% to 4%
+        - 4% to 5%
+        - 4.1%
+      - criterion: Gross margin
+        values:
+        - 33.5%
+        - 34.0%
+        - 33.8%
+      verdict:
+      - Superseded
+      - Raised
+      - Below
+      takeaway: The new guide is $0.03 above consensus at the low end [1]
+    notes: 'Evidence slide 7: Guidance for FY26 EPS rose by $0.10 to $4.05 to $4.15, above'
+  - id: s8
+    archetype: takeaway_box
+    title: We raise our price target to $78 and keep the overweight rating
+    source: Research model (synthetic)
+    as_of: '2026-11-04'
+    blocks:
+      decision: Raise the price target to $78 from $72, 18.4x FY27E EPS, and keep the overweight rating
+      rationale:
+      - 'Earnings: FY26E EPS rises to $4.10'
+      - 'Margin: input costs support 34.0% gross margin'
+      - 'Cash: free cash flow up 15.5%'
+      risks:
+      - 'Beverages: sales decline of 2% may spread'
+      - 'Marketing: spend rose in Q3'
+    notes: 'Evidence slide 8: We raise our price target to $78 and keep the overweight rat'

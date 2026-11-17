@@ -1,0 +1,314 @@
+brief: 'Write a 10-slide investment committee memo for Project Dune, a GCC district cooling platform: market, competitive
+  position, contracted capacity, revenue quality, financials, the three investment tests, risks and the recommendation.
+  IFRS, USD, synthetic data.'
+ghost:
+  deck_id: d16-gcc-infrastructure
+  brief: 'Write a 10-slide investment committee memo for Project Dune, a GCC district cooling platform: market,
+    competitive position, contracted capacity, revenue quality, financials, the three investment tests, risks and
+    the recommendation. IFRS, USD, synthetic data.'
+  lang: en
+  slides:
+  - id: s1
+    title: 'Project Dune: GCC district cooling platform'
+    section: Answer
+    archetype_hint: cover
+    purpose: 'Evidence slide 1: Project Dune: GCC district cooling platform'
+  - id: s2
+    title: A 40% stake in Dune at $1,380m EV returns 14.0% IRR on 94% contracted revenue
+    section: Answer
+    archetype_hint: exec_summary
+    purpose: 'Evidence slide 2: A 40% stake in Dune at $1,380m EV returns 14.0% IRR on 94% c'
+  - id: s3
+    title: GCC district cooling grows to $9.6bn by 2030 and Dune holds 22% of independent capacity
+    section: Market
+    archetype_hint: stat_hero
+    purpose: 'Evidence slide 3: GCC district cooling grows to $9.6bn by 2030 and Dune holds '
+  - id: s4
+    title: Dune leads UAE capacity at 410 kRT, ahead of four listed rivals
+    section: Market
+    archetype_hint: market_map
+    purpose: 'Evidence slide 4: Dune leads UAE capacity at 410 kRT, ahead of four listed riv'
+  - id: s5
+    title: Contracted capacity grows from 310 to 455 kRT, a 10% CAGR through FY27E
+    section: Platform
+    archetype_hint: column_kpi
+    purpose: 'Evidence slide 5: Contracted capacity grows from 310 to 455 kRT, a 10% CAGR th'
+  - id: s6
+    title: Capacity charges are 62% of revenue, so earnings do not depend on weather
+    section: Platform
+    archetype_hint: doughnut_split
+    purpose: 'Evidence slide 6: Capacity charges are 62% of revenue, so earnings do not depe'
+  - id: s7
+    title: Revenue reaches $231m in FY26E at a 55% EBITDA margin
+    section: Financials
+    archetype_hint: combo_margin
+    purpose: 'Evidence slide 7: Revenue reaches $231m in FY26E at a 55% EBITDA margin'
+  - id: s8
+    title: 'Investment works if three tests hold: 94% contracted, 8.5% WACC and 14% IRR'
+    section: Risks
+    archetype_hint: issue_tree
+    purpose: 'Evidence slide 8: Investment works if three tests hold: 94% contracted, 8.5% W'
+  - id: s9
+    title: '3 of 5 risks need mitigation: counterparty, power cost and refinancing'
+    section: Risks
+    archetype_hint: risk_heatmap
+    purpose: 'Evidence slide 9: 3 of 5 risks need mitigation: counterparty, power cost and r'
+  - id: s10
+    title: We recommend a 40% stake at $1,380m EV for a 14.0% equity IRR
+    section: Decision
+    archetype_hint: takeaway_box
+    purpose: 'Evidence slide 10: We recommend a 40% stake at $1,380m EV for a 14.0% equity IR'
+  sections:
+  - Answer
+  - Market
+  - Platform
+  - Financials
+  - Risks
+  - Decision
+  approved: true
+  approved_by: eval-corpus
+  approved_at: '2026-11-17T00:00:00+00:00'
+  lint: []
+spec:
+  deck_id: d16-gcc-infrastructure
+  title: 'Project Dune: GCC district cooling platform'
+  lang: en
+  client: Infrastructure Investment Committee
+  as_of: '2026-10-28'
+  art_direction: duotone_hero
+  theme: house
+  slides:
+  - id: s1
+    archetype: cover
+    title: 'Project Dune: GCC district cooling platform'
+    blocks:
+      client: Infrastructure Investment Committee
+      date: 28 October 2026
+    visual:
+      concept: two-tone arches and pipes in a desert palette, duotone
+      kind: hero
+    notes: 'Evidence slide 1: Project Dune: GCC district cooling platform'
+  - id: s2
+    archetype: exec_summary
+    title: A 40% stake in Dune at $1,380m EV returns 14.0% IRR on 94% contracted revenue
+    source: Platform model v7 (synthetic); Seller information memorandum (synthetic)
+    sources:
+    - Platform model v7 (synthetic)
+    - Seller information memorandum (synthetic)
+    as_of: '2026-10-28'
+    blocks:
+      subtitle: Investment case, IFRS, $ million
+      insights:
+      - lead: Price
+        text: Enterprise value for the whole platform
+        figure: $1,380m
+      - lead: Cheque
+        text: Our 40% share of the equity value
+        figure: $552m
+      - lead: Contracts
+        text: Revenue is secured by 25-year capacity contracts
+        figure: 94%
+      - lead: Returns
+        text: Base case equity IRR against a 12% hurdle
+        figure: 14.0%
+      so_what:
+        text: Approve the 40% stake and exclusivity with the seller.
+    notes: 'Evidence slide 2: A 40% stake in Dune at $1,380m EV returns 14.0% IRR on 94% c'
+  - id: s3
+    archetype: stat_hero
+    title: GCC district cooling grows to $9.6bn by 2030 and Dune holds 22% of independent capacity
+    source: Industry reports (synthetic); Operator disclosures (synthetic)
+    sources:
+    - Industry reports (synthetic)
+    - Operator disclosures (synthetic)
+    as_of: '2026-10-28'
+    blocks:
+      subtitle: GCC district cooling market
+      stats:
+      - value: $9.6bn
+        label: market size in 2030E
+        context: CAGR of 7.4% from $6.4bn in 2025
+      - value: 22%
+        label: Dune share of independent capacity
+        context: Largest of five operators
+      so_what: Demand follows new developments in the UAE and Saudi Arabia [1]
+    notes: 'Evidence slide 3: GCC district cooling grows to $9.6bn by 2030 and Dune holds '
+  - id: s4
+    archetype: market_map
+    title: Dune leads UAE capacity at 410 kRT, ahead of four listed rivals
+    source: Operator disclosures (synthetic)
+    sources:
+    - Operator disclosures (synthetic)
+    as_of: '2026-10-28'
+    blocks:
+      subtitle: District cooling players by segment
+      segments:
+      - name: Master developments
+        players:
+        - name: Dune
+          client: true
+        - name: Falcon Cooling
+        - name: Palm Energy
+      - name: Commercial towers
+        players:
+        - name: Dune
+          client: true
+        - name: Crescent Cool
+        - name: Oasis Utilities
+        - name: Falcon Cooling
+      - name: Government sites
+        players:
+        - name: Dune
+          client: true
+        - name: State Utility Co
+      takeaway: Dune is the only independent present in all segments; capacity 410 kRT in 2026E [1]
+    notes: 'Evidence slide 4: Dune leads UAE capacity at 410 kRT, ahead of four listed riv'
+  - id: s5
+    archetype: column_kpi
+    title: Contracted capacity grows from 310 to 455 kRT, a 10% CAGR through FY27E
+    source: Platform model v7 (synthetic)
+    sources:
+    - Platform model v7 (synthetic)
+    as_of: '2026-10-28'
+    blocks:
+      subtitle: Contracted capacity, thousand refrigeration tons
+      number_format: '0'
+      series_name: Capacity
+      categories:
+      - FY23
+      - FY24
+      - FY25
+      - FY26E
+      - FY27E
+      values:
+      - 310
+      - 340
+      - 372
+      - 410
+      - 455
+      stats:
+      - value: 455 kRT
+        label: contracted capacity in FY27E
+      - value: 10%
+        label: capacity CAGR, FY23 to FY27E
+      takeaway: Every year adds at least 30 kRT of new contracts [1]
+    notes: 'Evidence slide 5: Contracted capacity grows from 310 to 455 kRT, a 10% CAGR th'
+  - id: s6
+    archetype: doughnut_split
+    title: Capacity charges are 62% of revenue, so earnings do not depend on weather
+    source: Platform model v7 (synthetic)
+    sources:
+    - Platform model v7 (synthetic)
+    as_of: '2026-10-28'
+    blocks:
+      subtitle: Revenue by charge type, FY25, % of total
+      centre: $212m
+      slices:
+      - label: Capacity charges
+        value: 62
+        key: true
+      - label: Consumption
+        value: 31
+      - label: Connection fees
+        value: 7
+      takeaway: Only 31% of revenue varies with consumption [1]
+    notes: 'Evidence slide 6: Capacity charges are 62% of revenue, so earnings do not depe'
+  - id: s7
+    archetype: combo_margin
+    title: Revenue reaches $231m in FY26E at a 55% EBITDA margin
+    source: Platform model v7 (synthetic)
+    sources:
+    - Platform model v7 (synthetic)
+    as_of: '2026-10-28'
+    blocks:
+      subtitle: Revenue, $ million, and EBITDA margin, %
+      number_format: '#,##0'
+      line_format: 0%
+      categories:
+      - FY22
+      - FY23
+      - FY24
+      - FY25
+      - FY26E
+      bars:
+        name: Revenue, $m
+        values:
+        - 168
+        - 181
+        - 196
+        - 212
+        - 231
+      line:
+        name: EBITDA margin
+        values:
+        - 0.51
+        - 0.52
+        - 0.53
+        - 0.54
+        - 0.55
+      takeaway: Margin has risen one point a year as fixed assets fill [1]
+    notes: 'Evidence slide 7: Revenue reaches $231m in FY26E at a 55% EBITDA margin'
+  - id: s8
+    archetype: issue_tree
+    title: 'Investment works if three tests hold: 94% contracted, 8.5% WACC and 14% IRR'
+    source: Platform model v7 (synthetic)
+    as_of: '2026-10-28'
+    blocks:
+      subtitle: Investment tests
+      root: Should we buy a 40% stake in Dune at $1,380m EV?
+      branches:
+      - name: Is the revenue secure?
+        leaves:
+        - 94% under contracts of 25 years
+        - Top customer below 15% of revenue
+      - name: Is the price right?
+        leaves:
+        - Discount rate of 8.5% WACC
+        - EV of $1,380m is within the DCF range
+      - name: Do returns clear the hurdle?
+        leaves:
+        - Base case IRR of 14.0%
+        - Hurdle of 12% holds at 10% lower volume
+    notes: 'Evidence slide 8: Investment works if three tests hold: 94% contracted, 8.5% W'
+  - id: s9
+    archetype: risk_heatmap
+    title: '3 of 5 risks need mitigation: counterparty, power cost and refinancing'
+    source: Deal team risk workshop (synthetic)
+    sources:
+    - Deal team risk workshop (synthetic)
+    as_of: '2026-10-28'
+    blocks:
+      subtitle: Risk register, likelihood by impact, five-point scale
+      risks:
+      - label: Developer default on 94% contracted
+        likelihood: 2
+        impact: 5
+      - label: Power cost up 20%
+        likelihood: 3
+        impact: 4
+      - label: Refinancing at 8.5% WACC or higher
+        likelihood: 3
+        impact: 3
+      - label: Regulatory tariff cap
+        likelihood: 2
+        impact: 3
+      - label: Construction delay of 6 months
+        likelihood: 3
+        impact: 2
+      takeaway: Developer default is the largest exposure, at impact 5 [1]
+    notes: 'Evidence slide 9: 3 of 5 risks need mitigation: counterparty, power cost and r'
+  - id: s10
+    archetype: takeaway_box
+    title: We recommend a 40% stake at $1,380m EV for a 14.0% equity IRR
+    source: Platform model v7 (synthetic)
+    as_of: '2026-10-28'
+    blocks:
+      decision: Approve a 40% stake at $1,380m EV, a $552m equity cheque, with exclusivity until 30 November
+      rationale:
+      - 'Contracts: 94% of revenue is secured for 25 years'
+      - 'Returns: 14.0% IRR clears the 12% hurdle'
+      - 'Market: 22% share and a 10% capacity CAGR'
+      risks:
+      - 'Counterparty: developer default is mitigated by escrow'
+      - 'Power: a 20% cost rise is passed through in 80% of contracts'
+    notes: 'Evidence slide 10: We recommend a 40% stake at $1,380m EV for a 14.0% equity IR'

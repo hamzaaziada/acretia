@@ -1,0 +1,397 @@
+brief: 'Prepare a 10-slide take-private recommendation for Project Beacon, a US SaaS company: the offer, operating
+  metrics, peers, precedents, LBO returns sensitivity, value creation bridge and next steps. US GAAP, synthetic
+  data.'
+ghost:
+  deck_id: d17-us-software-take-private
+  brief: 'Prepare a 10-slide take-private recommendation for Project Beacon, a US SaaS company: the offer, operating
+    metrics, peers, precedents, LBO returns sensitivity, value creation bridge and next steps. US GAAP, synthetic
+    data.'
+  lang: en
+  slides:
+  - id: s1
+    title: 'Project Beacon: US software take-private'
+    section: Answer
+    archetype_hint: cover
+    purpose: 'Evidence slide 1: Project Beacon: US software take-private'
+  - id: s2
+    title: A $41.50 offer takes Beacon private at 7.3x ARR and returns 3.0x to the sponsor
+    section: Answer
+    archetype_hint: exec_summary
+    purpose: 'Evidence slide 2: A $41.50 offer takes Beacon private at 7.3x ARR and returns '
+  - id: s3
+    title: Beacon has $520m of ARR growing 19%, with 112% net retention
+    section: Company
+    archetype_hint: kpi_row
+    purpose: 'Evidence slide 3: Beacon has $520m of ARR growing 19%, with 112% net retention'
+  - id: s4
+    title: Beacon grows faster than 5 of 7 peers but earns a margin below the median
+    section: Valuation
+    archetype_hint: scatter_quadrant
+    purpose: 'Evidence slide 4: Beacon grows faster than 5 of 7 peers but earns a margin bel'
+  - id: s5
+    title: Software peers trade at a median 17.5x NTM EBITDA, and Beacon's offer implies 21.0x
+    section: Valuation
+    archetype_hint: comps_table
+    purpose: 'Evidence slide 5: Software peers trade at a median 17.5x NTM EBITDA, and Beaco'
+  - id: s6
+    title: US software take-privates cleared 6.4x to 9.2x ARR, and Beacon is at 7.3x
+    section: Valuation
+    archetype_hint: tombstones
+    purpose: 'Evidence slide 6: US software take-privates cleared 6.4x to 9.2x ARR, and Beac'
+  - id: s7
+    title: Sponsor IRR stays at or above 20.5% across all nine premium and exit cases
+    section: Returns
+    archetype_hint: sensitivity_table
+    purpose: 'Evidence slide 7: Sponsor IRR stays at or above 20.5% across all nine premium '
+  - id: s8
+    title: ARR growth adds $1,540m and margin expansion $640m to equity worth $3,636m at exit
+    section: Returns
+    archetype_hint: waterfall
+    purpose: 'Evidence slide 8: ARR growth adds $1,540m and margin expansion $640m to equity'
+  - id: s9
+    title: The offer of $41.50 beats the standalone value of $36.80 per share by 12.8%
+    section: Decision
+    archetype_hint: two_column_compare
+    purpose: 'Evidence slide 9: The offer of $41.50 beats the standalone value of $36.80 per'
+  - id: s10
+    title: Submit the $41.50 offer on 16 November with a 30-day go-shop
+    section: Decision
+    archetype_hint: recommendation
+    purpose: 'Evidence slide 10: Submit the $41.50 offer on 16 November with a 30-day go-shop'
+  sections:
+  - Answer
+  - Company
+  - Valuation
+  - Returns
+  - Decision
+  approved: true
+  approved_by: eval-corpus
+  approved_at: '2026-11-17T00:00:00+00:00'
+  lint: []
+spec:
+  deck_id: d17-us-software-take-private
+  title: 'Project Beacon: US software take-private'
+  lang: en
+  client: Sponsor deal team
+  as_of: '2026-11-09'
+  art_direction: iconographic_system
+  theme: house
+  slides:
+  - id: s1
+    archetype: cover
+    title: 'Project Beacon: US software take-private'
+    blocks:
+      client: Sponsor deal team
+      date: 9 November 2026
+    visual:
+      concept: a grid of geometric icons on tiles
+      kind: icon_system
+    notes: 'Evidence slide 1: Project Beacon: US software take-private'
+  - id: s2
+    archetype: exec_summary
+    title: A $41.50 offer takes Beacon private at 7.3x ARR and returns 3.0x to the sponsor
+    source: Market data, 6 Nov 2026 (synthetic); Sponsor model v6 (synthetic)
+    sources:
+    - Market data, 6 Nov 2026 (synthetic)
+    - Sponsor model v6 (synthetic)
+    as_of: '2026-11-09'
+    blocks:
+      subtitle: Take-private summary, $
+      insights:
+      - lead: Offer
+        text: All-cash offer per share for the public shareholders
+        figure: $41.50
+      - lead: Premium
+        text: Premium to the unaffected price of $31.20
+        figure: 33.0%
+      - lead: Value
+        text: Enterprise value as a multiple of ARR of $520m
+        figure: 7.3x
+      - lead: Returns
+        text: Base case sponsor money multiple over five years
+        figure: 3.0x
+      so_what:
+        text: Submit the offer on 16 November and seek a go-shop of 30 days.
+    notes: 'Evidence slide 2: A $41.50 offer takes Beacon private at 7.3x ARR and returns '
+  - id: s3
+    archetype: kpi_row
+    title: Beacon has $520m of ARR growing 19%, with 112% net retention
+    source: Company filings, LTM Sep 2026 (synthetic)
+    as_of: '2026-11-09'
+    blocks:
+      subtitle: LTM operating metrics
+      highlight: 0
+      kpis:
+      - label: ARR
+        value: $520m
+        context: +19% YoY
+        change:
+          text: up
+          direction: up
+      - label: Net retention
+        value: 112%
+        context: Mid-market cohorts
+        change:
+          text: flat
+          direction: flat
+      - label: Free cash flow margin
+        value: 19%
+        context: Rule of 38
+        change:
+          text: up
+          direction: up
+      - label: Gross margin
+        value: 76%
+        context: Hosting costs fall
+        change:
+          text: up
+          direction: up
+      so_what: Growth and cash flow already meet the public-to-private bar.
+    notes: 'Evidence slide 3: Beacon has $520m of ARR growing 19%, with 112% net retention'
+  - id: s4
+    archetype: scatter_quadrant
+    title: Beacon grows faster than 5 of 7 peers but earns a margin below the median
+    source: Company filings (synthetic)
+    sources:
+    - Company filings (synthetic)
+    as_of: '2026-11-09'
+    blocks:
+      subtitle: ARR growth versus free cash flow margin, %
+      x_title: ARR growth, %
+      y_title: FCF margin, %
+      x_format: '0'
+      y_format: '0'
+      points:
+      - label: Beacon
+        xv: 19
+        yv: 19
+        subject: true
+      - label: Cirrus
+        xv: 22
+        yv: 27
+      - label: Nimbus
+        xv: 17
+        yv: 24
+      - label: Quanta
+        xv: 15
+        yv: 26
+      - label: Vertex
+        xv: 13
+        yv: 22
+      - label: Lumen
+        xv: 11
+        yv: 21
+      - label: Prism
+        xv: 9
+        yv: 18
+      - label: Helm
+        xv: 8
+        yv: 16
+      stat:
+        value: -5pp
+        label: FCF margin gap to the peer median of 24%
+      takeaway: A margin plan from 19% to 28% is the core of the value creation case [1]
+    notes: 'Evidence slide 4: Beacon grows faster than 5 of 7 peers but earns a margin bel'
+  - id: s5
+    archetype: comps_table
+    title: Software peers trade at a median 17.5x NTM EBITDA, and Beacon's offer implies 21.0x
+    source: Market data, 6 Nov 2026 (synthetic)
+    sources:
+    - Market data, 6 Nov 2026 (synthetic)
+    as_of: '2026-11-09'
+    blocks:
+      subtitle: Software comparables, NTM, EV in $ billion
+      compute_stats: true
+      dense: true
+      rows:
+      - company: Cirrus
+        ev: 12.4
+        ev_ebitda: 23.4
+        pe: 36.0
+        growth: 22
+        margin: 27
+      - company: Nimbus
+        ev: 8.9
+        ev_ebitda: 20.6
+        pe: 31.2
+        growth: 17
+        margin: 24
+      - company: Quanta
+        ev: 6.7
+        ev_ebitda: 18.4
+        pe: 28.5
+        growth: 15
+        margin: 26
+      - company: Vertex
+        ev: 5.3
+        ev_ebitda: 16.6
+        pe: 25.1
+        growth: 13
+        margin: 22
+      - company: Lumen
+        ev: 3.8
+        ev_ebitda: 14.9
+        pe: 22.7
+        growth: 11
+        margin: 21
+      - company: Prism
+        ev: 2.9
+        ev_ebitda: 12.8
+        pe: 19.4
+        growth: 9
+        margin: 18
+      takeaway: The offer multiple of 21.0x is above the peer median of 17.5x [1]
+    notes: 'Evidence slide 5: Software peers trade at a median 17.5x NTM EBITDA, and Beaco'
+  - id: s6
+    archetype: tombstones
+    title: US software take-privates cleared 6.4x to 9.2x ARR, and Beacon is at 7.3x
+    source: Company announcements (synthetic)
+    sources:
+    - Company announcements (synthetic)
+    as_of: '2026-11-09'
+    blocks:
+      subtitle: Take-private precedents, EV in $ billion, EV/ARR
+      deals:
+      - acquirer: Sponsor A
+        target: Ledgerly
+        date: Feb 2026
+        ev: 3.4
+        multiple: 8.1
+      - acquirer: Sponsor B
+        target: Pathfinder
+        date: Apr 2026
+        ev: 2.1
+        multiple: 6.4
+      - acquirer: Sponsor C
+        target: Skyline Data
+        date: Jun 2026
+        ev: 4.8
+        multiple: 9.2
+      - acquirer: Sponsor D
+        target: Tangent
+        date: Aug 2026
+        ev: 2.7
+        multiple: 7.0
+      - acquirer: Beacon bid
+        target: Beacon
+        date: Nov 2026
+        ev: 3.8
+        multiple: 7.3
+        highlight: true
+      takeaway: The Beacon multiple of 7.3x sits inside the 6.4x to 9.2x range [1]
+    notes: 'Evidence slide 6: US software take-privates cleared 6.4x to 9.2x ARR, and Beac'
+  - id: s7
+    archetype: sensitivity_table
+    title: Sponsor IRR stays at or above 20.5% across all nine premium and exit cases
+    source: Sponsor model v6 (synthetic)
+    sources:
+    - Sponsor model v6 (synthetic)
+    as_of: '2026-11-09'
+    blocks:
+      subtitle: Sponsor IRR, offer premium by exit EV/ARR, %
+      row_label: Offer premium, %
+      col_label: Exit EV/ARR, x
+      row_values:
+      - 30
+      - 33
+      - 36
+      col_values:
+      - 6.5
+      - 7.5
+      - 8.5
+      value_format: '0.0'
+      values:
+      - - 24.8
+        - 27.1
+        - 29.2
+      - - 22.6
+        - 24.8
+        - 26.9
+      - - 20.5
+        - 22.6
+        - 24.7
+      base:
+      - 1
+      - 1
+      takeaway: Base case IRR is 24.8% at a 33% premium and 7.5x exit [1]
+    notes: 'Evidence slide 7: Sponsor IRR stays at or above 20.5% across all nine premium '
+  - id: s8
+    archetype: waterfall
+    title: ARR growth adds $1,540m and margin expansion $640m to equity worth $3,636m at exit
+    source: Sponsor model v6 (synthetic)
+    sources:
+    - Sponsor model v6 (synthetic)
+    as_of: '2026-11-09'
+    blocks:
+      subtitle: Equity value bridge, entry to exit, $ million
+      number_format: '#,##0'
+      prefix: $
+      suffix: m
+      steps:
+      - label: Entry equity
+        value: 1200
+      - label: ARR growth
+        value: 1540
+      - label: Margin expansion
+        value: 640
+      - label: Deleveraging
+        value: 256
+      - label: Exit equity
+        value: 3636
+      takeaway: Entry equity of $1,200m grows 3.0x to $3,636m [1]
+    notes: 'Evidence slide 8: ARR growth adds $1,540m and margin expansion $640m to equity'
+  - id: s9
+    archetype: two_column_compare
+    title: The offer of $41.50 beats the standalone value of $36.80 per share by 12.8%
+    source: Sponsor model v6 (synthetic)
+    sources:
+    - Sponsor model v6 (synthetic)
+    as_of: '2026-11-09'
+    blocks:
+      emphasis: a
+      a:
+        heading: Accept the take-private
+        metric: $41.50
+        points:
+        - 'Value: cash at a 33.0% premium'
+        - 'Timing: close in 5 months'
+        - 'Risk: shareholder vote at 50%'
+      b:
+        heading: Remain public
+        metric: $36.80
+        points:
+        - 'Value: standalone DCF at 12.8% below the offer'
+        - 'Timing: no deal risk'
+        - 'Risk: growth slows below 19%'
+      verdict: The offer exceeds the standalone value by $4.70 per share.
+    notes: 'Evidence slide 9: The offer of $41.50 beats the standalone value of $36.80 per'
+  - id: s10
+    archetype: recommendation
+    title: Submit the $41.50 offer on 16 November with a 30-day go-shop
+    source: Sponsor deal plan (synthetic)
+    as_of: '2026-11-09'
+    blocks:
+      subtitle: Next steps
+      phases:
+      - label: Now
+        window: this week
+        owner: Deal lead
+        date: 16 Nov 2026
+        actions:
+        - Submit the $41.50 offer letter
+        - Sign the financing commitment
+      - label: Next
+        window: 30-day go-shop
+        owner: Counsel
+        date: Dec 2026
+        actions:
+        - Run the 30-day go-shop
+        - Prepare the proxy statement
+      - label: Later
+        window: months 2 to 5
+        owner: CFO
+        date: Apr 2027
+        actions:
+        - Hold the shareholder vote
+        - Close within 5 months
+    notes: 'Evidence slide 10: Submit the $41.50 offer on 16 November with a 30-day go-shop'

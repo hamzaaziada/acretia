@@ -1,0 +1,370 @@
+brief: 'Summarise buy-side due diligence for Project Orion, a logistics acquisition, in 10 slides for the deal team:
+  quality of earnings, KPIs, customer concentration, commercial position, findings with price protection and the
+  path to signing. Synthetic data.'
+ghost:
+  deck_id: d07-buy-side-diligence
+  brief: 'Summarise buy-side due diligence for Project Orion, a logistics acquisition, in 10 slides for the deal
+    team: quality of earnings, KPIs, customer concentration, commercial position, findings with price protection
+    and the path to signing. Synthetic data.'
+  lang: en
+  slides:
+  - id: s1
+    title: 'Project Orion: buy-side diligence summary'
+    section: Answer
+    archetype_hint: cover
+    purpose: 'Evidence slide 1: Project Orion: buy-side diligence summary'
+  - id: s2
+    title: Diligence supports $79.3m of adjusted EBITDA and a price of up to $872m
+    section: Answer
+    archetype_hint: exec_summary
+    purpose: 'Evidence slide 2: Diligence supports $79.3m of adjusted EBITDA and a price of '
+  - id: s3
+    title: Adjusted EBITDA is $79.3m after $4.5m of one-offs and $3.6m of contract run-rate
+    section: Financial
+    archetype_hint: waterfall
+    purpose: 'Evidence slide 3: Adjusted EBITDA is $79.3m after $4.5m of one-offs and $3.6m '
+  - id: s4
+    title: Margins improved while growth slowed, and cash conversion fell to 78% in the latest quarter
+    section: Financial
+    archetype_hint: scorecard
+    purpose: 'Evidence slide 4: Margins improved while growth slowed, and cash conversion fe'
+  - id: s5
+    title: The top-5 customers are 46% of revenue and their contracts run to 2028
+    section: Commercial
+    archetype_hint: stacked_bar
+    purpose: 'Evidence slide 5: The top-5 customers are 46% of revenue and their contracts r'
+  - id: s6
+    title: Orion beats the market on network density and trails on digital booking at 0.5
+    section: Commercial
+    archetype_hint: harvey_table
+    purpose: 'Evidence slide 6: Orion beats the market on network density and trails on digi'
+  - id: s7
+    title: '3 findings carry price protection: renewals, tax and the working capital peg'
+    section: Risks
+    archetype_hint: risk_heatmap
+    purpose: 'Evidence slide 7: 3 findings carry price protection: renewals, tax and the wor'
+  - id: s8
+    title: Three price protections move $31m of risk back to the seller
+    section: Price
+    archetype_hint: comparison_table
+    purpose: 'Evidence slide 8: Three price protections move $31m of risk back to the seller'
+  - id: s9
+    title: Signing by 4 December needs the three protections agreed by 20 November
+    section: Price
+    archetype_hint: timeline_milestones
+    purpose: 'Evidence slide 9: Signing by 4 December needs the three protections agreed by '
+  - id: s10
+    title: We recommend signing at up to $872m with the three protections in place
+    section: Decision
+    archetype_hint: takeaway_box
+    purpose: 'Evidence slide 10: We recommend signing at up to $872m with the three protectio'
+  sections:
+  - Answer
+  - Financial
+  - Commercial
+  - Risks
+  - Price
+  - Decision
+  approved: true
+  approved_by: eval-corpus
+  approved_at: '2026-11-17T00:00:00+00:00'
+  lint: []
+spec:
+  deck_id: d07-buy-side-diligence
+  title: 'Project Orion: buy-side diligence summary'
+  lang: en
+  client: Orion Holdings
+  as_of: '2026-11-05'
+  art_direction: auto
+  theme: house
+  slides:
+  - id: s1
+    archetype: cover
+    title: 'Project Orion: buy-side diligence summary'
+    blocks:
+      client: Orion Holdings, deal team
+      date: 5 November 2026
+    visual:
+      concept: clean line schematic of a freight network
+      kind: diagram
+    notes: 'Evidence slide 1: Project Orion: buy-side diligence summary'
+  - id: s2
+    archetype: exec_summary
+    title: Diligence supports $79.3m of adjusted EBITDA and a price of up to $872m
+    source: Quality of earnings report (synthetic); Commercial diligence (synthetic)
+    sources:
+    - Quality of earnings report (synthetic)
+    - Commercial diligence (synthetic)
+    as_of: '2026-11-05'
+    blocks:
+      subtitle: Diligence conclusions, $ million
+      insights:
+      - lead: Earnings
+        text: Quality of earnings adjustments lift reported EBITDA of $74.0m
+        figure: $79.3m
+      - lead: Price
+        text: At 11.0x the adjusted EBITDA implies this enterprise value
+        figure: $872m
+      - lead: Concentration
+        text: The top-5 customers account for this share of revenue
+        figure: 46%
+      - lead: Working capital
+        text: A normalised peg is set above the seller proposal
+        figure: $38m
+      so_what:
+        text: Proceed to signing with three price protections.
+    notes: 'Evidence slide 2: Diligence supports $79.3m of adjusted EBITDA and a price of '
+  - id: s3
+    archetype: waterfall
+    title: Adjusted EBITDA is $79.3m after $4.5m of one-offs and $3.6m of contract run-rate
+    source: Quality of earnings report (synthetic)
+    sources:
+    - Quality of earnings report (synthetic)
+    as_of: '2026-11-05'
+    blocks:
+      subtitle: Quality of earnings bridge, LTM, $ million
+      number_format: '0.0'
+      prefix: $
+      suffix: m
+      steps:
+      - label: Reported EBITDA
+        value: 74.0
+      - label: One-off costs
+        value: 4.5
+      - label: Out-of-period
+        value: -2.8
+      - label: Contract run-rate
+        value: 3.6
+      - label: Adjusted EBITDA
+        value: 79.3
+      takeaway: Out-of-period items reduce EBITDA by $2.8m [1]
+    notes: 'Evidence slide 3: Adjusted EBITDA is $79.3m after $4.5m of one-offs and $3.6m '
+  - id: s4
+    archetype: scorecard
+    title: Margins improved while growth slowed, and cash conversion fell to 78% in the latest quarter
+    source: Management accounts (synthetic)
+    sources:
+    - Management accounts (synthetic)
+    as_of: '2026-11-05'
+    blocks:
+      subtitle: KPI scorecard, last five quarters
+      periods:
+      - Q3 25
+      - Q4 25
+      - Q1 26
+      - Q2 26
+      - Q3 26
+      kpis:
+      - name: Revenue ($m)
+        format: usd_m
+        values:
+        - 168
+        - 172
+        - 175
+        - 181
+        - 184
+      - name: EBITDA margin
+        format: pct
+        values:
+        - 12.9
+        - 13.1
+        - 13.2
+        - 13.4
+        - 13.6
+      - name: Cash conversion
+        format: pct
+        values:
+        - 86
+        - 84
+        - 83
+        - 80
+        - 78
+        good_up: true
+      - name: Utilisation
+        format: pct
+        values:
+        - 81
+        - 82
+        - 82
+        - 80
+        - 79
+      takeaway: Cash conversion fell 8 points in four quarters to 78% [1]
+    notes: 'Evidence slide 4: Margins improved while growth slowed, and cash conversion fe'
+  - id: s5
+    archetype: stacked_bar
+    title: The top-5 customers are 46% of revenue and their contracts run to 2028
+    source: Commercial diligence (synthetic)
+    sources:
+    - Commercial diligence (synthetic)
+    as_of: '2026-11-05'
+    blocks:
+      subtitle: Revenue by customer group, % of total
+      mode: percent
+      categories:
+      - FY24
+      - FY25
+      - LTM
+      parts:
+      - name: Top 5
+        values:
+        - 41
+        - 44
+        - 46
+        key: true
+      - name: Next 15
+        values:
+        - 27
+        - 26
+        - 25
+      - name: Others
+        values:
+        - 32
+        - 30
+        - 29
+      takeaway: Concentration rose 5 points in two years, to 46% [1]
+    notes: 'Evidence slide 5: The top-5 customers are 46% of revenue and their contracts r'
+  - id: s6
+    archetype: harvey_table
+    title: Orion beats the market on network density and trails on digital booking at 0.5
+    source: Customer interviews (synthetic)
+    sources:
+    - Customer interviews (synthetic)
+    as_of: '2026-11-05'
+    blocks:
+      subtitle: Capability coverage versus the market, harvey balls from none to full
+      peers:
+      - Target
+      - Peer A
+      - Peer B
+      - Peer C
+      highlight: 0
+      capabilities:
+      - name: Network density
+        values:
+        - 1
+        - 0.75
+        - 0.5
+        - 0.5
+      - name: Fleet age
+        values:
+        - 0.75
+        - 0.5
+        - 0.5
+        - 0.25
+      - name: Digital booking
+        values:
+        - 0.5
+        - 1
+        - 0.75
+        - 0.75
+      - name: Customer service
+        values:
+        - 0.75
+        - 0.75
+        - 0.5
+        - 0.5
+      - name: Pricing power
+        values:
+        - 0.75
+        - 0.5
+        - 0.75
+        - 0.25
+      takeaway: 'Digital booking is the gap: 0.5 against 1.0 for Peer A [1]'
+    notes: 'Evidence slide 6: Orion beats the market on network density and trails on digi'
+  - id: s7
+    archetype: risk_heatmap
+    title: '3 findings carry price protection: renewals, tax and the working capital peg'
+    source: Diligence workstream leads (synthetic)
+    sources:
+    - Diligence workstream leads (synthetic)
+    as_of: '2026-11-05'
+    blocks:
+      subtitle: Findings, likelihood by impact, five-point scale
+      risks:
+      - label: Top-5 contract renewals in 2028
+        likelihood: 3
+        impact: 5
+      - label: Transfer pricing exposure of $9m
+        likelihood: 3
+        impact: 3
+      - label: Working capital peg gap of $38m
+        likelihood: 4
+        impact: 3
+      - label: Fleet capex backlog of $22m
+        likelihood: 2
+        impact: 3
+      - label: Driver retention
+        likelihood: 2
+        impact: 2
+      takeaway: Renewal risk is the largest exposure and an earn-out of 5% covers it [1]
+    notes: 'Evidence slide 7: 3 findings carry price protection: renewals, tax and the wor'
+  - id: s8
+    archetype: comparison_table
+    title: Three price protections move $31m of risk back to the seller
+    source: SPA term sheet, draft 3 (synthetic)
+    sources:
+    - SPA term sheet, draft 3 (synthetic)
+    as_of: '2026-11-05'
+    blocks:
+      subtitle: Proposed protections, $ million
+      options:
+      - Seller offer
+      - Our counter
+      highlight: 1
+      rows:
+      - criterion: Working capital peg
+        values:
+        - $31m
+        - $38m
+      - criterion: Tax indemnity cap
+        values:
+        - $5m
+        - $9m
+      - criterion: Earn-out on renewals
+        values:
+        - None
+        - 5%
+      verdict:
+      - Insufficient
+      - Recommended
+      takeaway: Our counter lifts the peg by $7m and the tax cap by $4m [1]
+    notes: 'Evidence slide 8: Three price protections move $31m of risk back to the seller'
+  - id: s9
+    archetype: timeline_milestones
+    title: Signing by 4 December needs the three protections agreed by 20 November
+    source: Deal timetable (synthetic)
+    sources:
+    - Deal timetable (synthetic)
+    as_of: '2026-11-05'
+    blocks:
+      subtitle: Path to signing, 2026
+      milestones:
+      - date: 5 Nov
+        label: Diligence summary
+      - date: 12 Nov
+        label: Counter sent
+      - date: 20 Nov
+        label: Protections agreed
+        highlight: true
+      - date: 27 Nov
+        label: SPA final form
+      - date: 4 Dec
+        label: Signing
+        highlight: true
+      takeaway: Signing needs agreement on 20 Nov [1]
+    notes: 'Evidence slide 9: Signing by 4 December needs the three protections agreed by '
+  - id: s10
+    archetype: takeaway_box
+    title: We recommend signing at up to $872m with the three protections in place
+    source: Quality of earnings report (synthetic)
+    as_of: '2026-11-05'
+    blocks:
+      decision: Sign at up to $872m EV, or 11.0x adjusted EBITDA of $79.3m, with the three protections
+      rationale:
+      - 'Earnings: adjusted EBITDA is $79.3m after $4.5m of one-offs'
+      - 'Price: 11.0x is in line with precedents'
+      - 'Protection: peg of $38m and tax cap of $9m'
+      risks:
+      - 'Concentration: top-5 customers are 46% of revenue'
+      - 'Renewals: 2028 expiries covered by a 5% earn-out'
+    notes: 'Evidence slide 10: We recommend signing at up to $872m with the three protectio'

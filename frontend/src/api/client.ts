@@ -15,6 +15,29 @@ export class ApiError extends Error {
   }
 }
 
+/**
+ * Fallback message and next step when the server sent none (e.g. an unknown-route 404 or a proxy error).
+ * The shell registers a translating resolver so that every catch path shows message + hint, in the user's language.
+ */
+export function networkError(): ApiError {
+  const f = filled(0, undefined, undefined);
+  return new ApiError(0, 'network_error', f.message, f.hint);
+}
+
+export type FallbackResolver = (status: number) => { message: string; hint: string } | null;
+let fallback: FallbackResolver = () => null;
+export function setFallbackResolver(fn: FallbackResolver) {
+  fallback = fn;
+}
+
+function filled(status: number, message: string | undefined, hint: string | null | undefined): { message: string; hint: string | null } {
+  const fb = !message || !hint ? fallback(status) : null;
+  return { message: message || fb?.message || '', hint: hint || fb?.hint || null };
+}
+
+/** Public routes (no session, no CSRF token): calling `/auth/me` first would only add a pointless 401. */
+const NO_CSRF = new Set(['/auth/login', '/auth/signup', '/auth/invites/accept']);
+
 let csrfToken: string | null = null;
 let csrfInflight: Promise<string | null> | null = null;
 
@@ -46,7 +69,8 @@ async function toError(res: Response): Promise<ApiError> {
     body = null;
   }
   const e = body?.error;
-  return new ApiError(res.status, e?.code ?? `http_${res.status}`, e?.message ?? '', e?.hint ?? null);
+  const f = filled(res.status, e?.message, e?.hint);
+  return new ApiError(res.status, e?.code ?? `http_${res.status}`, f.message, f.hint);
 }
 
 export interface RequestOptions {
@@ -65,7 +89,7 @@ function withQuery(path: string, query?: RequestOptions['query']): string {
 export async function request<T>(method: string, path: string, body?: unknown, opts: RequestOptions = {}): Promise<T> {
   const headers: Record<string, string> = { Accept: 'application/json' };
   if (body !== undefined) headers['Content-Type'] = 'application/json';
-  if (UNSAFE.has(method)) {
+  if (UNSAFE.has(method) && !NO_CSRF.has(path)) {
     const tok = await ensureCsrf();
     if (tok) headers['X-CSRF-Token'] = tok;
   }
@@ -80,7 +104,8 @@ export async function request<T>(method: string, path: string, body?: unknown, o
     });
   } catch (err) {
     if (err instanceof DOMException && err.name === 'AbortError') throw err;
-    throw new ApiError(0, 'network_error', '', null);
+    const f = filled(0, undefined, undefined);
+    throw new ApiError(0, 'network_error', f.message, f.hint);
   }
   if (!res.ok) throw await toError(res);
   if (res.status === 204) return undefined as T;
@@ -110,7 +135,10 @@ export async function uploadFile<T>(path: string, file: File, onProgress: (pct: 
     xhr.upload.onprogress = (e) => {
       if (e.lengthComputable) onProgress((e.loaded / e.total) * 100);
     };
-    xhr.onerror = () => reject(new ApiError(0, 'network_error', '', null));
+    xhr.onerror = () => {
+      const f = filled(0, undefined, undefined);
+      reject(new ApiError(0, 'network_error', f.message, f.hint));
+    };
     xhr.onload = () => {
       let parsed: unknown = null;
       try {
@@ -123,7 +151,8 @@ export async function uploadFile<T>(path: string, file: File, onProgress: (pct: 
         resolve(parsed as T);
       } else {
         const e = (parsed as Partial<ApiErrorBody> | null)?.error;
-        reject(new ApiError(xhr.status, e?.code ?? `http_${xhr.status}`, e?.message ?? '', e?.hint ?? null));
+        const f = filled(xhr.status, e?.message, e?.hint);
+        reject(new ApiError(xhr.status, e?.code ?? `http_${xhr.status}`, f.message, f.hint));
       }
     };
     xhr.send(file);

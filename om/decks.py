@@ -411,7 +411,7 @@ def answer_deck(question: str, result: dict, brand: str = "Research") -> Deck:
 
 # --------------------------------------------------------------------------- shared
 def _methodology(deck: Deck):
-    s = deck.content("Methodology and sources", "", "Prepared with OpenMultiples. For discussion purposes only; not investment advice.")
+    s = deck.content("Methodology and sources", "", "Prepared with Acretia. For discussion purposes only; not investment advice.")
     s.text(MARGIN, CONTENT_TOP, FULL_W, emu(5.0), bullets([
         "Financials: company 10-K / 10-Q filings via SEC EDGAR XBRL company facts; each figure links to its filing in the source model.",
         "LTM = latest fiscal year + current year-to-date − prior year-to-date, using one consistent XBRL concept where possible.",

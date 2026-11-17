@@ -1,0 +1,401 @@
+brief: 'Prepare a 10-slide board paper for Gulf Union Bank on acquiring Delta Bank Egypt (Project Oasis): target
+  quality, valuation versus peers, consideration structures, accretion sensitivity, regulatory and currency risks
+  and the closing plan. IFRS 9, USD, synthetic data.'
+ghost:
+  deck_id: d20-mena-bank-ma
+  brief: 'Prepare a 10-slide board paper for Gulf Union Bank on acquiring Delta Bank Egypt (Project Oasis): target
+    quality, valuation versus peers, consideration structures, accretion sensitivity, regulatory and currency risks
+    and the closing plan. IFRS 9, USD, synthetic data.'
+  lang: en
+  slides:
+  - id: s1
+    title: 'Project Oasis: acquisition of an Egyptian bank'
+    section: Answer
+    archetype_hint: cover
+    purpose: 'Evidence slide 1: Project Oasis: acquisition of an Egyptian bank'
+  - id: s2
+    title: Acquiring Delta Bank at 1.35x book is 6.8% accretive and keeps CET1 at 13.9%
+    section: Answer
+    archetype_hint: exec_summary
+    purpose: 'Evidence slide 2: Acquiring Delta Bank at 1.35x book is 6.8% accretive and kee'
+  - id: s3
+    title: Delta earns a 17.8% ROE with 3.9% NPLs, and NPL coverage rose to 142%
+    section: Target
+    archetype_hint: scorecard
+    purpose: 'Evidence slide 3: Delta earns a 17.8% ROE with 3.9% NPLs, and NPL coverage ros'
+  - id: s4
+    title: Delta's cost-to-income ratio improves by 1.8 points on average, led by retail
+    section: Target
+    archetype_hint: paired_bars
+    purpose: 'Evidence slide 4: Delta''s cost-to-income ratio improves by 1.8 points on avera'
+  - id: s5
+    title: The 1.35x offer is the third highest of 8 Egyptian bank multiples
+    section: Valuation
+    archetype_hint: ranked_bar
+    purpose: 'Evidence slide 5: The 1.35x offer is the third highest of 8 Egyptian bank mult'
+  - id: s6
+    title: A share swap keeps CET1 at 14.4%, against 13.9% for an all-cash deal
+    section: Valuation
+    archetype_hint: comparison_table
+    purpose: 'Evidence slide 6: A share swap keeps CET1 at 14.4%, against 13.9% for an all-c'
+  - id: s7
+    title: Accretion stays positive from 4.2% to 9.4% across price and cost savings cases
+    section: Valuation
+    archetype_hint: sensitivity_table
+    purpose: 'Evidence slide 7: Accretion stays positive from 4.2% to 9.4% across price and '
+  - id: s8
+    title: 3 of 4 regulatory and currency risks need conditions before a binding offer
+    section: Risks
+    archetype_hint: risk_heatmap
+    purpose: 'Evidence slide 8: 3 of 4 regulatory and currency risks need conditions before '
+  - id: s9
+    title: Closing takes 9 months, led by central bank approval and systems integration
+    section: Next steps
+    archetype_hint: gantt
+    purpose: 'Evidence slide 9: Closing takes 9 months, led by central bank approval and sys'
+  - id: s10
+    title: We recommend a non-binding offer at 1.35x book, or $1,296m
+    section: Next steps
+    archetype_hint: takeaway_box
+    purpose: 'Evidence slide 10: We recommend a non-binding offer at 1.35x book, or $1,296m'
+  sections:
+  - Answer
+  - Target
+  - Valuation
+  - Risks
+  - Next steps
+  approved: true
+  approved_by: eval-corpus
+  approved_at: '2026-11-17T00:00:00+00:00'
+  lint: []
+spec:
+  deck_id: d20-mena-bank-ma
+  title: 'Project Oasis: acquisition of an Egyptian bank'
+  lang: en
+  client: Board of Gulf Union Bank
+  as_of: '2026-11-02'
+  art_direction: auto
+  theme: house
+  slides:
+  - id: s1
+    archetype: cover
+    title: 'Project Oasis: acquisition of an Egyptian bank'
+    blocks:
+      client: Board of Gulf Union Bank
+      date: 2 November 2026
+    visual:
+      concept: abstract map tiles with a dashed route between two regions
+      kind: diagram
+    notes: 'Evidence slide 1: Project Oasis: acquisition of an Egyptian bank'
+  - id: s2
+    archetype: exec_summary
+    title: Acquiring Delta Bank at 1.35x book is 6.8% accretive and keeps CET1 at 13.9%
+    source: Delta Bank accounts, IFRS 9 (synthetic); Acquirer model v5 (synthetic)
+    sources:
+    - Delta Bank accounts, IFRS 9 (synthetic)
+    - Acquirer model v5 (synthetic)
+    as_of: '2026-11-02'
+    blocks:
+      subtitle: Transaction summary, IFRS 9, $ million
+      insights:
+      - lead: Price
+        text: Equity value at 1.35x price to book of $960m
+        figure: $1,296m
+      - lead: Accretion
+        text: EPS accretion in the first full year
+        figure: 6.8%
+      - lead: Capital
+        text: Pro forma CET1 ratio against 15.1% today
+        figure: 13.9%
+      - lead: Quality
+        text: Delta's NPL ratio with provision coverage of 142%
+        figure: 3.9%
+      so_what:
+        text: Approve a non-binding offer and start confirmatory diligence.
+    notes: 'Evidence slide 2: Acquiring Delta Bank at 1.35x book is 6.8% accretive and kee'
+  - id: s3
+    archetype: scorecard
+    title: Delta earns a 17.8% ROE with 3.9% NPLs, and NPL coverage rose to 142%
+    source: Delta Bank accounts, IFRS 9 (synthetic)
+    sources:
+    - Delta Bank accounts, IFRS 9 (synthetic)
+    as_of: '2026-11-02'
+    blocks:
+      subtitle: Delta Bank KPI scorecard, last five periods
+      periods:
+      - H1 24
+      - H2 24
+      - H1 25
+      - H2 25
+      - H1 26
+      kpis:
+      - name: ROE
+        format: pct
+        values:
+        - 15.2
+        - 16.1
+        - 16.9
+        - 17.4
+        - 17.8
+      - name: NPL ratio
+        format: pct
+        values:
+        - 5.1
+        - 4.8
+        - 4.4
+        - 4.1
+        - 3.9
+        good_up: false
+      - name: NPL coverage
+        format: pct
+        values:
+        - 118
+        - 124
+        - 130
+        - 137
+        - 142
+      - name: CET1 ratio
+        format: pct
+        values:
+        - 15.1
+        - 15.4
+        - 15.8
+        - 16.0
+        - 16.2
+      takeaway: Coverage of 142% against NPLs of 3.9% is above the sector norm [1]
+    notes: 'Evidence slide 3: Delta earns a 17.8% ROE with 3.9% NPLs, and NPL coverage ros'
+  - id: s4
+    archetype: paired_bars
+    title: Delta's cost-to-income ratio improves by 1.8 points on average, led by retail
+    source: Delta Bank accounts, IFRS 9 (synthetic)
+    sources:
+    - Delta Bank accounts, IFRS 9 (synthetic)
+    as_of: '2026-11-02'
+    blocks:
+      subtitle: Cost-to-income by business line, FY24 versus FY25, %
+      number_format: '0.0'
+      categories:
+      - Retail
+      - Corporate
+      - SME
+      - Treasury
+      - Cards
+      before:
+        name: FY24
+        values:
+        - 58.2
+        - 41.5
+        - 52.4
+        - 31.0
+        - 49.8
+      after:
+        name: FY25
+        values:
+        - 53.9
+        - 40.2
+        - 50.1
+        - 30.6
+        - 50.3
+      stat:
+        value: -1.8pp
+        label: average change across the five lines
+      takeaway: Cards is the one line that worsened, to 50.3% [1]
+    notes: 'Evidence slide 4: Delta''s cost-to-income ratio improves by 1.8 points on avera'
+  - id: s5
+    archetype: ranked_bar
+    title: The 1.35x offer is the third highest of 8 Egyptian bank multiples
+    source: Market data, 30 Oct 2026 (synthetic)
+    sources:
+    - Market data, 30 Oct 2026 (synthetic)
+    as_of: '2026-11-02'
+    blocks:
+      subtitle: Price to book, Egyptian banks, x
+      number_format: 0.00"x"
+      series_name: P/B
+      items:
+      - label: Nile Commercial
+        value: 1.62
+      - label: Pyramid Bank
+        value: 1.48
+      - label: Offer for Delta
+        value: 1.35
+        key: true
+      - label: Cairo Merchant
+        value: 1.31
+      - label: Delta Bank, unaffected
+        value: 1.08
+      - label: Alex Trust
+        value: 1.04
+      - label: Suez Finance
+        value: 0.97
+      - label: Delta Valley
+        value: 0.91
+      stat:
+        value: +25%
+        label: premium to the unaffected 1.08x multiple
+      takeaway: The offer is above the peer median of 1.19x [1]
+    notes: 'Evidence slide 5: The 1.35x offer is the third highest of 8 Egyptian bank mult'
+  - id: s6
+    archetype: comparison_table
+    title: A share swap keeps CET1 at 14.4%, against 13.9% for an all-cash deal
+    source: Acquirer model v5 (synthetic)
+    sources:
+    - Acquirer model v5 (synthetic)
+    as_of: '2026-11-02'
+    blocks:
+      subtitle: Consideration structures
+      options:
+      - All cash
+      - Share swap
+      - Mixed 50/50
+      highlight: 2
+      rows:
+      - criterion: Pro forma CET1
+        values:
+        - 13.9%
+        - 14.4%
+        - 14.1%
+      - criterion: EPS accretion
+        values:
+        - 6.8%
+        - 4.9%
+        - 5.9%
+      - criterion: New shares issued
+        values:
+        - 0m
+        - 212m
+        - 106m
+      - criterion: Seller preference
+        values:
+        - High
+        - Low
+        - Medium
+      verdict:
+      - CET1 cost
+      - Dilutive
+      - Recommended
+      takeaway: The mixed structure gives 5.9% accretion at 14.1% CET1 [1]
+    notes: 'Evidence slide 6: A share swap keeps CET1 at 14.4%, against 13.9% for an all-c'
+  - id: s7
+    archetype: sensitivity_table
+    title: Accretion stays positive from 4.2% to 9.4% across price and cost savings cases
+    source: Acquirer model v5 (synthetic)
+    sources:
+    - Acquirer model v5 (synthetic)
+    as_of: '2026-11-02'
+    blocks:
+      subtitle: EPS accretion, price to book by cost savings, %
+      row_label: Price to book, x
+      col_label: Cost savings, $m
+      row_values:
+      - 1.25
+      - 1.35
+      - 1.45
+      col_values:
+      - 20
+      - 35
+      - 50
+      value_format: '0.0'
+      values:
+      - - 5.1
+        - 7.3
+        - 9.4
+      - - 4.6
+        - 6.8
+        - 8.9
+      - - 4.2
+        - 6.4
+        - 8.5
+      base:
+      - 1
+      - 1
+      takeaway: The base case of 6.8% needs cost savings of $35m [1]
+    notes: 'Evidence slide 7: Accretion stays positive from 4.2% to 9.4% across price and '
+  - id: s8
+    archetype: risk_heatmap
+    title: 3 of 4 regulatory and currency risks need conditions before a binding offer
+    source: Deal team workshop (synthetic)
+    sources:
+    - Deal team workshop (synthetic)
+    as_of: '2026-11-02'
+    blocks:
+      subtitle: Risk register, likelihood by impact, five-point scale
+      risks:
+      - label: Central bank approval beyond 6 months
+        likelihood: 3
+        impact: 5
+      - label: EGP devaluation of 20%
+        likelihood: 3
+        impact: 4
+      - label: NPL coverage drops below 120%
+        likelihood: 2
+        impact: 4
+      - label: Key banker attrition of 15%
+        likelihood: 3
+        impact: 3
+      takeaway: Central bank approval is the largest exposure, at impact 5 [1]
+    notes: 'Evidence slide 8: 3 of 4 regulatory and currency risks need conditions before '
+  - id: s9
+    archetype: gantt
+    title: Closing takes 9 months, led by central bank approval and systems integration
+    source: Closing plan (synthetic)
+    as_of: '2026-11-02'
+    blocks:
+      subtitle: Closing and integration plan, 2027
+      today: 0.5
+      months:
+      - Jan
+      - Feb
+      - Mar
+      - Apr
+      - May
+      - Jun
+      - Jul
+      - Aug
+      - Sep
+      workstreams:
+      - name: Diligence
+        bars:
+        - start: 0
+          end: 2
+          label: Confirmatory
+        milestones:
+        - month: 2.4
+          label: SPA signed
+      - name: Approvals
+        bars:
+        - start: 2
+          end: 7
+          label: Central bank review
+          highlight: true
+        milestones:
+        - month: 7.4
+          label: Approval
+      - name: Financing
+        bars:
+        - start: 1
+          end: 4
+          label: Capital plan
+        milestones: []
+      - name: Integration
+        bars:
+        - start: 4
+          end: 8.5
+          label: Systems and brand
+        milestones: []
+    notes: 'Evidence slide 9: Closing takes 9 months, led by central bank approval and sys'
+  - id: s10
+    archetype: takeaway_box
+    title: We recommend a non-binding offer at 1.35x book, or $1,296m
+    source: Acquirer model v5 (synthetic)
+    as_of: '2026-11-02'
+    blocks:
+      decision: Approve a non-binding offer of 1.35x book, $1,296m, in a mixed structure with 14.1% pro forma CET1
+      rationale:
+      - 'Accretion: 5.9% in the mixed structure'
+      - 'Quality: ROE of 17.8% and NPLs of 3.9%'
+      - 'Capital: CET1 stays above 14.1%'
+      risks:
+      - 'Approval: central bank review may exceed 6 months'
+      - 'Currency: EGP devaluation of 20% cuts earnings'
+    notes: 'Evidence slide 10: We recommend a non-binding offer at 1.35x book, or $1,296m'

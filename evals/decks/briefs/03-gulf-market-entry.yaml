@@ -1,0 +1,396 @@
+brief: 'Write a 10-slide market-entry strategy for Aurora Pay, a B2B payments company: should it enter the Gulf,
+  which country first, how (partnership versus licence versus acquisition), the plan, risks and the funding ask.
+  Synthetic figures.'
+ghost:
+  deck_id: d03-gulf-market-entry
+  brief: 'Write a 10-slide market-entry strategy for Aurora Pay, a B2B payments company: should it enter the Gulf,
+    which country first, how (partnership versus licence versus acquisition), the plan, risks and the funding ask.
+    Synthetic figures.'
+  lang: en
+  slides:
+  - id: s1
+    title: Entering the Gulf B2B payments market
+    section: Answer
+    archetype_hint: cover
+    purpose: 'Evidence slide 1: Entering the Gulf B2B payments market'
+  - id: s2
+    title: Enter the UAE with a bank partner in 2027 and Saudi Arabia in 2029
+    section: Answer
+    archetype_hint: exec_summary
+    purpose: 'Evidence slide 2: Enter the UAE with a bank partner in 2027 and Saudi Arabia i'
+  - id: s3
+    title: The Gulf B2B payments pool grows 12% a year, from $4.2bn to $7.4bn by 2030
+    section: Market
+    archetype_hint: column_kpi
+    purpose: 'Evidence slide 3: The Gulf B2B payments pool grows 12% a year, from $4.2bn to '
+  - id: s4
+    title: Saudi Arabia overtakes the UAE as the largest pool, reaching $2.9bn by 2030
+    section: Market
+    archetype_hint: stacked_bar
+    purpose: 'Evidence slide 4: Saudi Arabia overtakes the UAE as the largest pool, reaching'
+  - id: s5
+    title: Only 2 of 6 Gulf markets combine attractive size with a credible path to win
+    section: Market
+    archetype_hint: matrix_2x2
+    purpose: 'Evidence slide 5: Only 2 of 6 Gulf markets combine attractive size with a cred'
+  - id: s6
+    title: Aurora leads on cash-flow tools and risk but scores 0.5 on bank distribution
+    section: Entry options
+    archetype_hint: harvey_table
+    purpose: 'Evidence slide 6: Aurora leads on cash-flow tools and risk but scores 0.5 on b'
+  - id: s7
+    title: A bank partnership breaks even in month 26, against month 38 for a direct licence
+    section: Entry options
+    archetype_hint: comparison_table
+    purpose: 'Evidence slide 7: A bank partnership breaks even in month 26, against month 38'
+  - id: s8
+    title: A four-phase entry takes Aurora from partner signing to a Saudi licence by month 30
+    section: Plan
+    archetype_hint: process_flow
+    purpose: 'Evidence slide 8: A four-phase entry takes Aurora from partner signing to a Sa'
+  - id: s9
+    title: Staged funding of $38m contains the three main risks of the entry plan
+    section: Plan
+    archetype_hint: risk_heatmap
+    purpose: 'Evidence slide 9: Staged funding of $38m contains the three main risks of the '
+  - id: s10
+    title: Approve $38m in three tranches and hire the regional lead in Q1 2027
+    section: Plan
+    archetype_hint: recommendation
+    purpose: 'Evidence slide 10: Approve $38m in three tranches and hire the regional lead in'
+  sections:
+  - Answer
+  - Market
+  - Entry options
+  - Plan
+  approved: true
+  approved_by: eval-corpus
+  approved_at: '2026-11-17T00:00:00+00:00'
+  lint: []
+spec:
+  deck_id: d03-gulf-market-entry
+  title: Entering the Gulf B2B payments market
+  lang: en
+  client: Aurora Pay
+  as_of: '2026-10-15'
+  art_direction: annotated_map
+  theme: house
+  slides:
+  - id: s1
+    archetype: cover
+    title: Entering the Gulf B2B payments market
+    blocks:
+      client: Aurora Pay, strategy team
+      date: 15 October 2026
+    visual:
+      concept: abstract map tiles with a dashed route across the Gulf
+      kind: diagram
+    notes: 'Evidence slide 1: Entering the Gulf B2B payments market'
+  - id: s2
+    archetype: exec_summary
+    title: Enter the UAE with a bank partner in 2027 and Saudi Arabia in 2029
+    source: Aurora Pay strategy team (synthetic); Market sizing model v3 (synthetic)
+    sources:
+    - Aurora Pay strategy team (synthetic)
+    - Market sizing model v3 (synthetic)
+    as_of: '2026-10-15'
+    blocks:
+      subtitle: Market-entry recommendation, $ billion
+      insights:
+      - lead: Market
+        text: The Gulf B2B payments revenue pool grows by 12% a year to 2030
+        figure: $4.2bn
+      - lead: Focus
+        text: The UAE and Saudi Arabia hold this share of the 2025 pool
+        figure: 71%
+      - lead: Economics
+        text: A bank partnership breaks even earlier than a direct licence
+        figure: Month 26
+      - lead: Ask
+        text: Funding over three years and a regional lead hired in Q1 2027
+        figure: $38m
+      so_what:
+        text: Approve the staged funding in the November board vote.
+    notes: 'Evidence slide 2: Enter the UAE with a bank partner in 2027 and Saudi Arabia i'
+  - id: s3
+    archetype: column_kpi
+    title: The Gulf B2B payments pool grows 12% a year, from $4.2bn to $7.4bn by 2030
+    source: Central bank data (synthetic); Industry interviews (synthetic)
+    sources:
+    - Central bank data (synthetic)
+    - Industry interviews (synthetic)
+    as_of: '2026-10-15'
+    blocks:
+      subtitle: Revenue pool, 2025 to 2030E, $ billion
+      number_format: '0.0'
+      series_name: Revenue pool
+      categories:
+      - '2025'
+      - 2026E
+      - 2027E
+      - 2028E
+      - 2029E
+      - 2030E
+      values:
+      - 4.2
+      - 4.7
+      - 5.3
+      - 6.0
+      - 6.7
+      - 7.4
+      stats:
+      - value: $7.4bn
+        label: pool in 2030E, up from $4.2bn in 2025
+      - value: 12%
+        label: revenue CAGR, 2025 to 2030E
+      takeaway: Growth is steady, with no year below 10% [1]
+    notes: 'Evidence slide 3: The Gulf B2B payments pool grows 12% a year, from $4.2bn to '
+  - id: s4
+    archetype: stacked_bar
+    title: Saudi Arabia overtakes the UAE as the largest pool, reaching $2.9bn by 2030
+    source: Central bank data (synthetic); Team analysis (synthetic)
+    sources:
+    - Central bank data (synthetic)
+    - Team analysis (synthetic)
+    as_of: '2026-10-15'
+    blocks:
+      subtitle: Revenue pool by country, $ billion
+      mode: absolute
+      number_format: '0.0'
+      categories:
+      - '2025'
+      - 2027E
+      - 2030E
+      parts:
+      - name: UAE
+        values:
+        - 1.6
+        - 2.0
+        - 2.6
+      - name: Saudi Arabia
+        values:
+        - 1.4
+        - 1.9
+        - 2.9
+        key: true
+      - name: Rest of GCC
+        values:
+        - 1.2
+        - 1.4
+        - 1.9
+      takeaway: Saudi Arabia grows from $1.4bn to $2.9bn, the fastest of the three [1]
+    notes: 'Evidence slide 4: Saudi Arabia overtakes the UAE as the largest pool, reaching'
+  - id: s5
+    archetype: matrix_2x2
+    title: Only 2 of 6 Gulf markets combine attractive size with a credible path to win
+    source: Team scoring on 8 criteria, weighted (synthetic)
+    sources:
+    - Team scoring on 8 criteria, weighted (synthetic)
+    as_of: '2026-10-15'
+    blocks:
+      subtitle: Market screen, attractiveness by ability to win
+      x_axis:
+        label: Ability to win
+        low: Low
+        high: High
+      y_axis:
+        label: Market attractiveness
+        low: Low
+        high: High
+      quadrants:
+      - Build capability
+      - Prioritise
+      - Deprioritise
+      - Opportunistic
+      target: 1
+      items:
+      - label: UAE
+        xv: 0.8
+        yv: 0.78
+        highlight: true
+      - label: Saudi Arabia
+        xv: 0.62
+        yv: 0.9
+        highlight: true
+      - label: Qatar
+        xv: 0.55
+        yv: 0.35
+      - label: Kuwait
+        xv: 0.3
+        yv: 0.4
+      - label: Oman
+        xv: 0.7
+        yv: 0.22
+      - label: Bahrain
+        xv: 0.35
+        yv: 0.15
+      takeaway: UAE and Saudi Arabia score above 0.6 on both axes [1]
+    notes: 'Evidence slide 5: Only 2 of 6 Gulf markets combine attractive size with a cred'
+  - id: s6
+    archetype: harvey_table
+    title: Aurora leads on cash-flow tools and risk but scores 0.5 on bank distribution
+    source: Expert interviews (synthetic)
+    sources:
+    - Expert interviews (synthetic)
+    as_of: '2026-10-15'
+    blocks:
+      subtitle: Capability coverage by player, harvey balls from none to full
+      peers:
+      - Aurora Pay
+      - Peer A
+      - Peer B
+      - Peer C
+      highlight: 0
+      capabilities:
+      - name: Cash-flow tools
+        values:
+        - 1
+        - 0.5
+        - 0.5
+        - 0.25
+      - name: Risk management
+        values:
+        - 1
+        - 0.75
+        - 0.5
+        - 0.5
+      - name: Platform and API
+        values:
+        - 0.75
+        - 0.75
+        - 1
+        - 0.5
+      - name: Regional licences
+        values:
+        - 0.5
+        - 1
+        - 0.75
+        - 0.75
+      - name: Bank distribution
+        values:
+        - 0.5
+        - 1
+        - 0.75
+        - 0.75
+      - name: Pricing
+        values:
+        - 0.75
+        - 0.5
+        - 0.5
+        - 0.25
+      takeaway: 'Bank distribution is the gap: 0.5 against 1.0 for Peer A [1]'
+    notes: 'Evidence slide 6: Aurora leads on cash-flow tools and risk but scores 0.5 on b'
+  - id: s7
+    archetype: comparison_table
+    title: A bank partnership breaks even in month 26, against month 38 for a direct licence
+    source: Aurora Pay entry model v2 (synthetic)
+    sources:
+    - Aurora Pay entry model v2 (synthetic)
+    as_of: '2026-10-15'
+    blocks:
+      subtitle: Entry options, UAE, three-year view
+      options:
+      - Bank partnership
+      - Direct licence
+      - Acquire a player
+      highlight: 0
+      rows:
+      - criterion: Funding need
+        values:
+        - $38m
+        - $61m
+        - $104m
+      - criterion: Break-even
+        values:
+        - Month 26
+        - Month 38
+        - Month 31
+      - criterion: First revenue
+        values:
+        - 9 months
+        - 18 months
+        - 3 months
+      - criterion: Execution risk
+        values:
+        - Medium
+        - High
+        - Medium
+      verdict:
+      - Recommended
+      - Slower
+      - Costly
+      takeaway: 'Partnership needs the least capital: $38m against $61m for a licence [1]'
+    notes: 'Evidence slide 7: A bank partnership breaks even in month 26, against month 38'
+  - id: s8
+    archetype: process_flow
+    title: A four-phase entry takes Aurora from partner signing to a Saudi licence by month 30
+    source: Aurora Pay entry plan v2 (synthetic)
+    as_of: '2026-10-15'
+    blocks:
+      highlight: 1
+      output_label: Output
+      steps:
+      - name: Partner
+        output: 'Q1 2027: sponsor bank signed'
+      - name: Pilot
+        output: 'Q2 2027: 20 SME clients live'
+      - name: Scale UAE
+        output: '2028: 400 clients, 12 sales staff'
+      - name: Saudi launch
+        output: 'Month 30: licence filed'
+      subtitle: Entry plan, UAE first
+    notes: 'Evidence slide 8: A four-phase entry takes Aurora from partner signing to a Sa'
+  - id: s9
+    archetype: risk_heatmap
+    title: Staged funding of $38m contains the three main risks of the entry plan
+    source: Aurora Pay strategy team (synthetic)
+    sources:
+    - Aurora Pay strategy team (synthetic)
+    as_of: '2026-10-15'
+    blocks:
+      subtitle: Risk register, likelihood by impact, five-point scale
+      risks:
+      - label: 'Partner dependence: one bank'
+        likelihood: 3
+        impact: 4
+      - label: Saudi licensing delay beyond 12 months
+        likelihood: 3
+        impact: 3
+      - label: Price competition from incumbents
+        likelihood: 4
+        impact: 2
+      - label: Hiring the regional lead by Q1 2027
+        likelihood: 2
+        impact: 3
+      takeaway: Partner dependence is the largest exposure and the pilot adds a second bank [1]
+    notes: 'Evidence slide 9: Staged funding of $38m contains the three main risks of the '
+  - id: s10
+    archetype: recommendation
+    title: Approve $38m in three tranches and hire the regional lead in Q1 2027
+    source: Aurora Pay entry plan v2 (synthetic)
+    as_of: '2026-10-15'
+    blocks:
+      subtitle: Next steps
+      phases:
+      - label: Now
+        window: November 2026
+        owner: CFO
+        date: Nov 2026
+        actions:
+        - Board vote on $38m staged funding
+        - Open talks with two sponsor banks
+      - label: Next
+        window: Q1 2027
+        owner: CEO
+        date: Mar 2027
+        actions:
+        - Hire the Dubai-based regional lead
+        - Sign the sponsor bank agreement
+      - label: Later
+        window: H2 2027
+        owner: COO
+        date: Sep 2027
+        actions:
+        - Run the pilot with 20 SME clients
+        - Start the Saudi licence application
+    notes: 'Evidence slide 10: Approve $38m in three tranches and hire the regional lead in'

@@ -177,24 +177,24 @@ class LifecycleTests(Base):
         jid = self.run_job("DCF for $ZZZZ")
         r = self.svc._row(jid)
         self.assertEqual(r["status"], "failed")
-        self.assertIn("open_multiples.py", r["hint"])
+        self.assertIn("acretia.py", r["hint"])
 
 
 class SseTests(Base):
     def test_replay_from_last_event_id_has_no_duplicates(self):
         jid = self.run_job("DCF for Apple")
-        full = list(jobs._events(ctx_for(self.st, params={"job_id": jid})).iterator)
+        full = [(e, d) for _i, e, d in jobs._events(ctx_for(self.st, params={"job_id": jid})).iterator]   # (seq, event, data): SSE id = seq
         seqs = [d["seq"] for _, d in full]
         self.assertEqual(seqs, list(range(1, len(seqs) + 1)))
         half = seqs[len(seqs) // 2]
-        part = list(jobs._events(ctx_for(self.st, params={"job_id": jid}, headers={"Last-Event-ID": str(half)})).iterator)
+        part = [(e, d) for _i, e, d in jobs._events(ctx_for(self.st, params={"job_id": jid}, headers={"Last-Event-ID": str(half)})).iterator]
         self.assertEqual([d["seq"] for _, d in part], [s for s in seqs if s > half])
         self.assertEqual(set(seqs[:half]) & {d["seq"] for _, d in part}, set())
         self.assertEqual(part[-1][0], "status")
 
     def test_tail_a_live_job(self):
         j = self.svc.submit("org_a", "usr_1", "DCF for Apple", inputs={"source_review": False})
-        got = [(e, d["seq"]) for e, d in jobs._events(ctx_for(self.st, params={"job_id": j["id"]})).iterator]
+        got = [(e, d["seq"]) for _i, e, d in jobs._events(ctx_for(self.st, params={"job_id": j["id"]})).iterator]
         seqs = [s for _, s in got]
         self.assertEqual(seqs, sorted(set(seqs)))
         self.assertEqual(got[-1][0], "status")
@@ -397,7 +397,7 @@ class TelemetryTests(Base):
         self.assertEqual(ts["task_id"], "dcf")
         self.assertEqual(ts["basis"], "estimate")
         self.assertAlmostEqual(ts["t_h_minutes"]["mid"], 90, delta=1)
-        self.assertGreater(ts["t_a_minutes"], 15)                         # wall time plus the 15-minute review estimate
+        self.assertGreaterEqual(ts["t_a_minutes"], 15)                    # wall time plus the 15-minute review estimate (a fast run rounds to 15.0)
         self.assertLess(ts["t_a_minutes"], 30)
         done = self.evs(jid)[-1]["data"]
         self.assertEqual(done["time_saved"]["task_id"], "dcf")

@@ -1459,7 +1459,7 @@ def g6_5_release_only_path():
     tie, _ = _tie_mods()
     bad = []
     allowed = os.path.join("om", "intl", "tieout.py")
-    scan = [p for p in pyfiles("om", "src", "scripts", "open_multiples.py") if not p.endswith("verify_s8.py")]
+    scan = [p for p in pyfiles("om", "src", "scripts", "acretia.py") if not p.endswith("verify_s8.py")]
     for p in scan:
         try:
             tree = parse_py(p)
@@ -2469,7 +2469,7 @@ def g11_3_review_minutes():
 
 
 def _intl_model_cli(pdf, out):
-    return run([sys.executable, os.path.join(ROOT, "open_multiples.py"), "intl-model", pdf, "--out", out], cwd=ROOT, timeout=900)
+    return run([sys.executable, os.path.join(ROOT, "acretia.py"), "intl-model", pdf, "--out", out], cwd=ROOT, timeout=900)
 
 
 def _check_handoff(xlsx_path):
@@ -2506,7 +2506,7 @@ def g11_4_handoff_synthetic():
         if r.returncode != 0:
             msg = (r.stderr or r.stdout)[-200:]
             if "invalid choice" in msg or "unknown" in msg.lower() or "usage" in msg.lower():
-                raise NotBuilt("not built yet: open_multiples.py intl-model")
+                raise NotBuilt("not built yet: acretia.py intl-model")
             fail("intl-model failed: " + msg)
         bad, n = _check_handoff(out)
     if bad:

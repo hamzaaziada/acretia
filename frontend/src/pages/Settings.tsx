@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import type { FormEvent } from 'react';
+import { Suspense, lazy, useMemo, useState } from 'react';
+import type { ComponentType, FormEvent } from 'react';
 import { NavLink, useNavigate, useParams } from 'react-router-dom';
 import { Badge, Button, Dialog, EmptyState, IconCheck, IconCopy, IconDownload, IconLock, IconPlus, IconSettings, Input, PageHeader, Panel, Segmented, Select, SkeletonRows, Table, useToast, cx } from '../ds';
 import type { Column } from '../ds';
@@ -13,6 +13,26 @@ import { useTheme } from '../app/theme';
 
 const SECTIONS = ['firm', 'definitions', 'templates', 'users', 'connectors', 'mailbox', 'audit', 'preferences'] as const;
 type Section = (typeof SECTIONS)[number];
+
+/**
+ * Firm-setup sub-sections live in `src/firm/*.tsx` (default-exported components, built independently).
+ * They are discovered at build time; a section whose file is absent falls back to the placeholder below.
+ */
+const FIRM_MODULES = import.meta.glob<{ default: ComponentType }>('../firm/*.tsx');
+const FIRM_FILE: Partial<Record<Section, string>> = { definitions: 'Definitions', templates: 'Templates', connectors: 'Connectors', mailbox: 'Mailbox' };
+
+function FirmSection({ section }: { section: Exclude<Section, 'users' | 'audit' | 'preferences'> }) {
+  const { t } = useI18n();
+  const file = FIRM_FILE[section];
+  const loader = file ? FIRM_MODULES[`../firm/${file}.tsx`] : undefined;
+  const Lazy = useMemo(() => (loader ? lazy(loader) : null), [loader]);
+  if (!Lazy) return <Placeholder section={section} />;
+  return (
+    <Suspense fallback={<SkeletonRows rows={5} label={t('common.loading')} />}>
+      <Lazy />
+    </Suspense>
+  );
+}
 const OWNER_ONLY: Section[] = ['users', 'audit'];
 
 export default function Settings() {
@@ -36,7 +56,7 @@ export default function Settings() {
           {sec === 'users' && <Users />}
           {sec === 'audit' && <Audit />}
           {sec === 'preferences' && <Preferences />}
-          {(sec === 'firm' || sec === 'definitions' || sec === 'templates' || sec === 'connectors' || sec === 'mailbox') && <Placeholder section={sec} />}
+          {(sec === 'firm' || sec === 'definitions' || sec === 'templates' || sec === 'connectors' || sec === 'mailbox') && <FirmSection section={sec} />}
         </div>
       </div>
     </div>

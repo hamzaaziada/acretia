@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import type { FormEvent } from 'react';
 import { Button, Dialog, Input, useToast } from '../ds';
+import { normalizeDeal } from '../api/hooks';
 import { api } from '../api/client';
 import type { Deal, DealInput } from '../api/types';
 import { useT } from '../i18n';
@@ -36,7 +37,7 @@ export function NewDealDialog({ open, onClose, onCreated, initial }: { open: boo
     setBusy(true);
     try {
       const r = await api.post<{ deal: Deal } | Deal>('/deals', { name: name.trim(), target: target.trim() || undefined, sector: sector.trim() || undefined });
-      const deal = 'deal' in r ? r.deal : r;
+      const deal = normalizeDeal('deal' in r ? r.deal : r);
       onClose();
       onCreated(deal);
     } catch (x) {

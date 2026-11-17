@@ -1,0 +1,381 @@
+brief: 'Prepare a 10-slide restructuring options paper for Project Anchor, an over-levered retail group: liquidity
+  runway, debt stack, options compared on recovery and time, and the recommended path with timetable. Synthetic
+  data.'
+ghost:
+  deck_id: d10-restructuring-options
+  brief: 'Prepare a 10-slide restructuring options paper for Project Anchor, an over-levered retail group: liquidity
+    runway, debt stack, options compared on recovery and time, and the recommended path with timetable. Synthetic
+    data.'
+  lang: en
+  slides:
+  - id: s1
+    title: 'Project Anchor: liquidity and restructuring options'
+    section: Answer
+    archetype_hint: cover
+    purpose: 'Evidence slide 1: Project Anchor: liquidity and restructuring options'
+  - id: s2
+    title: Amend and extend closes the liquidity gap and returns 78% to term lenders
+    section: Answer
+    archetype_hint: exec_summary
+    purpose: 'Evidence slide 2: Amend and extend closes the liquidity gap and returns 78% to'
+  - id: s3
+    title: Debt of $870m is 11.2x EBITDA and cash of $42m covers 6 weeks of outflows
+    section: Situation
+    archetype_hint: kpi_row
+    purpose: 'Evidence slide 3: Debt of $870m is 11.2x EBITDA and cash of $42m covers 6 week'
+  - id: s4
+    title: Liquidity turns negative in week 10 and bottoms at a $9m shortfall
+    section: Situation
+    archetype_hint: annotated_line
+    purpose: 'Evidence slide 4: Liquidity turns negative in week 10 and bottoms at a $9m sho'
+  - id: s5
+    title: Interest of $29m and capex of $16m outweigh $11m of operating cash flow
+    section: Situation
+    archetype_hint: waterfall
+    purpose: 'Evidence slide 5: Interest of $29m and capex of $16m outweigh $11m of operatin'
+  - id: s6
+    title: Debt of $870m is 11.2x EBITDA, and the $450m term loan matures in 2027
+    section: Options
+    archetype_hint: ranked_bar
+    purpose: 'Evidence slide 6: Debt of $870m is 11.2x EBITDA, and the $450m term loan matur'
+  - id: s7
+    title: Amend and extend returns 78% to term lenders in 4 months, the best option
+    section: Options
+    archetype_hint: comparison_table
+    purpose: 'Evidence slide 7: Amend and extend returns 78% to term lenders in 4 months, th'
+  - id: s8
+    title: Senior notes recover 48% in debt-for-equity against 35% under amend and extend
+    section: Options
+    archetype_hint: paired_bars
+    purpose: 'Evidence slide 8: Senior notes recover 48% in debt-for-equity against 35% unde'
+  - id: s9
+    title: A 30-day standstill leads to lender votes by 15 January
+    section: Plan
+    archetype_hint: timeline_milestones
+    purpose: 'Evidence slide 9: A 30-day standstill leads to lender votes by 15 January'
+  - id: s10
+    title: Open the 30-day standstill and inject $60m of new money in 4 months
+    section: Plan
+    archetype_hint: recommendation
+    purpose: 'Evidence slide 10: Open the 30-day standstill and inject $60m of new money in 4'
+  sections:
+  - Answer
+  - Situation
+  - Options
+  - Plan
+  approved: true
+  approved_by: eval-corpus
+  approved_at: '2026-11-17T00:00:00+00:00'
+  lint: []
+spec:
+  deck_id: d10-restructuring-options
+  title: 'Project Anchor: liquidity and restructuring options'
+  lang: en
+  client: Board and lender steering group
+  as_of: '2026-11-09'
+  art_direction: auto
+  theme: house
+  slides:
+  - id: s1
+    archetype: cover
+    title: 'Project Anchor: liquidity and restructuring options'
+    blocks:
+      client: Board and lender steering group
+      date: 9 November 2026
+    visual:
+      concept: an anchor line cutting across stacked flat shapes
+      kind: illustration
+    notes: 'Evidence slide 1: Project Anchor: liquidity and restructuring options'
+  - id: s2
+    archetype: exec_summary
+    title: Amend and extend closes the liquidity gap and returns 78% to term lenders
+    source: 13-week cash flow forecast (synthetic); Lender recovery model (synthetic)
+    sources:
+    - 13-week cash flow forecast (synthetic)
+    - Lender recovery model (synthetic)
+    as_of: '2026-11-09'
+    blocks:
+      subtitle: Restructuring summary, $ million
+      insights:
+      - lead: Gap
+        text: Liquidity turns negative in week 10 and reaches this low point
+        figure: $9m
+      - lead: Leverage
+        text: Total debt is this multiple of LTM EBITDA of $78m
+        figure: 11.2x
+      - lead: Option
+        text: Amend and extend returns this share to term loan lenders
+        figure: 78%
+      - lead: New money
+        text: Sponsor and lenders inject liquidity at signing
+        figure: $60m
+      so_what:
+        text: Open a 30-day standstill and agree term sheets with lenders.
+    notes: 'Evidence slide 2: Amend and extend closes the liquidity gap and returns 78% to'
+  - id: s3
+    archetype: kpi_row
+    title: Debt of $870m is 11.2x EBITDA and cash of $42m covers 6 weeks of outflows
+    source: Management accounts, Oct 2026 (synthetic)
+    as_of: '2026-11-09'
+    blocks:
+      subtitle: Capital structure and liquidity, $ million
+      highlight: 2
+      kpis:
+      - label: Total debt
+        value: $870m
+        context: Three tranches
+        change:
+          text: flat
+          direction: flat
+      - label: LTM EBITDA
+        value: $78m
+        context: Down from $96m
+        change:
+          text: -19%
+          direction: down
+      - label: Debt / EBITDA
+        value: 11.2x
+        context: Covenant at 6.0x
+        change:
+          text: +3.2x
+          direction: down
+      - label: Cash
+        value: $42m
+        context: 6 weeks of outflows
+        change:
+          text: -$30m
+          direction: down
+      so_what: Covenant breach is certain at the December test date.
+    notes: 'Evidence slide 3: Debt of $870m is 11.2x EBITDA and cash of $42m covers 6 week'
+  - id: s4
+    archetype: annotated_line
+    title: Liquidity turns negative in week 10 and bottoms at a $9m shortfall
+    source: 13-week cash flow forecast (synthetic)
+    sources:
+    - 13-week cash flow forecast (synthetic)
+    as_of: '2026-11-09'
+    blocks:
+      subtitle: Weekly liquidity, 13-week forecast, $ million
+      number_format: '0'
+      change_unit: m
+      categories:
+      - Wk 1
+      - Wk 2
+      - Wk 3
+      - Wk 4
+      - Wk 5
+      - Wk 6
+      - Wk 7
+      - Wk 8
+      - Wk 9
+      - Wk 10
+      - Wk 11
+      - Wk 12
+      - Wk 13
+      series:
+      - name: Liquidity
+        values:
+        - 42
+        - 38
+        - 33
+        - 27
+        - 21
+        - 16
+        - 12
+        - 8
+        - 3
+        - -2
+        - -9
+        - -4
+        - 6
+      annotation:
+        at: 10
+        text: Shortfall of $9m in week 11
+      takeaway: Cash falls from $42m to a low of -$9m before inventory sales help [1]
+    notes: 'Evidence slide 4: Liquidity turns negative in week 10 and bottoms at a $9m sho'
+  - id: s5
+    archetype: waterfall
+    title: Interest of $29m and capex of $16m outweigh $11m of operating cash flow
+    source: 13-week cash flow forecast (synthetic)
+    sources:
+    - 13-week cash flow forecast (synthetic)
+    as_of: '2026-11-09'
+    blocks:
+      subtitle: 13-week cash bridge, $ million
+      number_format: '0'
+      prefix: $
+      suffix: m
+      steps:
+      - label: Opening cash
+        value: 42
+      - label: Inventory sale
+        value: 12
+      - label: Operations
+        value: 11
+      - label: Capex
+        value: -16
+      - label: Interest
+        value: -29
+      - label: Rent and tax
+        value: -14
+      - label: Week 13 cash
+        value: 6
+      takeaway: Inventory sales of $12m are needed to end week 13 at $6m [1]
+    notes: 'Evidence slide 5: Interest of $29m and capex of $16m outweigh $11m of operatin'
+  - id: s6
+    archetype: ranked_bar
+    title: Debt of $870m is 11.2x EBITDA, and the $450m term loan matures in 2027
+    source: Facility agreements (synthetic)
+    sources:
+    - Facility agreements (synthetic)
+    as_of: '2026-11-09'
+    blocks:
+      subtitle: Debt by tranche, $ million
+      number_format: '0'
+      series_name: Debt
+      items:
+      - label: Term loan, due 2027
+        value: 450
+        key: true
+      - label: Senior notes, due 2028
+        value: 300
+      - label: Revolver, due 2026
+        value: 120
+      stat:
+        value: 11.2x
+        label: total debt of $870m to LTM EBITDA of $78m
+      takeaway: The revolver of $120m matures first, in 2026 [1]
+    notes: 'Evidence slide 6: Debt of $870m is 11.2x EBITDA, and the $450m term loan matur'
+  - id: s7
+    archetype: comparison_table
+    title: Amend and extend returns 78% to term lenders in 4 months, the best option
+    source: Lender recovery model (synthetic); Advisor analysis (synthetic)
+    sources:
+    - Lender recovery model (synthetic)
+    - Advisor analysis (synthetic)
+    as_of: '2026-11-09'
+    blocks:
+      subtitle: Restructuring options, term lender view
+      options:
+      - Amend and extend
+      - Debt-for-equity
+      - Sale of group
+      - Court process
+      highlight: 0
+      rows:
+      - criterion: Term lender recovery
+        values:
+        - 78%
+        - 64%
+        - 71%
+        - 52%
+      - criterion: Time to complete
+        values:
+        - 4 months
+        - 6 months
+        - 8 months
+        - 10 months
+      - criterion: New money
+        values:
+        - $60m
+        - $90m
+        - $0m
+        - $40m
+      - criterion: Execution risk
+        values:
+        - Medium
+        - Medium
+        - High
+        - High
+      verdict:
+      - Recommended
+      - Fallback
+      - Slow
+      - Last resort
+      takeaway: Debt-for-equity adds $30m of new money but recovers 64% [1]
+    notes: 'Evidence slide 7: Amend and extend returns 78% to term lenders in 4 months, th'
+  - id: s8
+    archetype: paired_bars
+    title: Senior notes recover 48% in debt-for-equity against 35% under amend and extend
+    source: Lender recovery model (synthetic)
+    sources:
+    - Lender recovery model (synthetic)
+    as_of: '2026-11-09'
+    blocks:
+      subtitle: Recovery by tranche, % of claim
+      number_format: '0'
+      categories:
+      - Revolver
+      - Term loan
+      - Senior notes
+      before:
+        name: Amend and extend
+        values:
+        - 100
+        - 78
+        - 35
+      after:
+        name: Debt-for-equity
+        values:
+        - 100
+        - 64
+        - 48
+      stat:
+        value: +13pp
+        label: gain for senior notes under debt-for-equity
+      takeaway: Noteholders prefer debt-for-equity; term lenders prefer amend and extend [1]
+    notes: 'Evidence slide 8: Senior notes recover 48% in debt-for-equity against 35% unde'
+  - id: s9
+    archetype: timeline_milestones
+    title: A 30-day standstill leads to lender votes by 15 January
+    source: Process timetable (synthetic)
+    sources:
+    - Process timetable (synthetic)
+    as_of: '2026-11-09'
+    blocks:
+      subtitle: Restructuring timetable, 2026 to 2027
+      milestones:
+      - date: 16 Nov
+        label: Standstill signed
+        highlight: true
+      - date: 30 Nov
+        label: Term sheets exchanged
+      - date: 15 Dec
+        label: Covenant test date
+      - date: 15 Jan
+        label: Lender votes
+        highlight: true
+      - date: 28 Feb
+        label: Effective date
+      takeaway: Votes on 15 Jan precede the effective date of 28 Feb [1]
+    notes: 'Evidence slide 9: A 30-day standstill leads to lender votes by 15 January'
+  - id: s10
+    archetype: recommendation
+    title: Open the 30-day standstill and inject $60m of new money in 4 months
+    source: Process timetable (synthetic)
+    as_of: '2026-11-09'
+    blocks:
+      subtitle: Next steps
+      phases:
+      - label: Now
+        window: next 30 days
+        owner: CFO
+        date: Nov 2026
+        actions:
+        - Sign the standstill with lenders
+        - Draw the interim facility
+      - label: Next
+        window: 30 to 60 days
+        owner: CEO
+        date: Jan 2027
+        actions:
+        - Agree the amend-and-extend terms
+        - Run the lender vote on 15 Jan
+      - label: Later
+        window: 60 to 120 days
+        owner: CRO
+        date: Feb 2027
+        actions:
+        - Inject $60m of new money
+        - Reset covenants at 6.0x
+    notes: 'Evidence slide 10: Open the 30-day standstill and inject $60m of new money in 4'

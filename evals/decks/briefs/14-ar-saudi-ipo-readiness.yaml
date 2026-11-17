@@ -1,0 +1,397 @@
+brief: 'أعدّ عرضا من 10 شرائح لمجلس إدارة شركة النخبة للرعاية الصحية عن جاهزية الطرح العام الأولي في السوق المالية
+  السعودية: الأداء المالي، المقارنة مع الشركات المدرجة، استخدام المتحصلات، الجاهزية، الجدول الزمني والمخاطر. بيانات
+  توضيحية.'
+ghost:
+  deck_id: d14-ar-saudi-ipo-readiness
+  brief: 'أعدّ عرضا من 10 شرائح لمجلس إدارة شركة النخبة للرعاية الصحية عن جاهزية الطرح العام الأولي في السوق المالية
+    السعودية: الأداء المالي، المقارنة مع الشركات المدرجة، استخدام المتحصلات، الجاهزية، الجدول الزمني والمخاطر. بيانات
+    توضيحية.'
+  lang: ar
+  slides:
+  - id: s1
+    title: 'مشروع النخبة: جاهزية الطرح العام الأولي في السوق المالية السعودية'
+    section: الخلاصة
+    archetype_hint: cover
+    purpose: 'Evidence slide 1: مشروع النخبة: جاهزية الطرح العام الأولي في السوق المالية الس'
+  - id: s2
+    title: طرح 30% من النخبة بقيمة منشأة من 4.9 إلى 5.7 مليار ريال
+    section: الخلاصة
+    archetype_hint: exec_summary
+    purpose: 'Evidence slide 2: طرح 30% من النخبة بقيمة منشأة من 4.9 إلى 5.7 مليار ريال'
+  - id: s3
+    title: إيرادات 1,480 مليون ريال وأرباح تشغيلية 312 مليونا في السنة المالية 2025
+    section: الأداء
+    archetype_hint: kpi_row
+    purpose: 'Evidence slide 3: إيرادات 1,480 مليون ريال وأرباح تشغيلية 312 مليونا في السنة '
+  - id: s4
+    title: نمت الإيرادات إلى 1,480 مليون ريال وارتفع الهامش إلى 21.1%
+    section: الأداء
+    archetype_hint: combo_margin
+    purpose: 'Evidence slide 4: نمت الإيرادات إلى 1,480 مليون ريال وارتفع الهامش إلى 21.1%'
+  - id: s5
+    title: الشركات المماثلة عند وسيط 15.9x، ونطاق النخبة من 15.7x إلى 18.3x
+    section: التقييم
+    archetype_hint: comps_table
+    purpose: 'Evidence slide 5: الشركات المماثلة عند وسيط 15.9x، ونطاق النخبة من 15.7x إلى 1'
+  - id: s6
+    title: 55% من متحصلات الطرح لتمويل التوسع و25% لسداد الديون
+    section: الطرح
+    archetype_hint: doughnut_split
+    purpose: 'Evidence slide 6: 55% من متحصلات الطرح لتمويل التوسع و25% لسداد الديون'
+  - id: s7
+    title: النخبة مكتملة في التقارير المالية 1.0 وتتأخر في الحوكمة عند 0.5
+    section: الجاهزية
+    archetype_hint: harvey_table
+    purpose: 'Evidence slide 7: النخبة مكتملة في التقارير المالية 1.0 وتتأخر في الحوكمة عند '
+  - id: s8
+    title: الإدراج في الربع الثاني من 2027 يتطلب اعتماد الحوكمة في الشهر 4
+    section: الجاهزية
+    archetype_hint: gantt
+    purpose: 'Evidence slide 8: الإدراج في الربع الثاني من 2027 يتطلب اعتماد الحوكمة في الشه'
+  - id: s9
+    title: 3 من 5 مخاطر تتطلب خطة معالجة قبل تقديم الطلب
+    section: المخاطر
+    archetype_hint: risk_heatmap
+    purpose: 'Evidence slide 9: 3 من 5 مخاطر تتطلب خطة معالجة قبل تقديم الطلب'
+  - id: s10
+    title: نوصي بطرح 30% من الأسهم في الربع الثاني من 2027
+    section: القرار
+    archetype_hint: recommendation
+    purpose: 'Evidence slide 10: نوصي بطرح 30% من الأسهم في الربع الثاني من 2027'
+  sections:
+  - الخلاصة
+  - الأداء
+  - التقييم
+  - الطرح
+  - الجاهزية
+  - المخاطر
+  - القرار
+  approved: true
+  approved_by: eval-corpus
+  approved_at: '2026-11-17T00:00:00+00:00'
+  lint: []
+spec:
+  deck_id: d14-ar-saudi-ipo-readiness
+  title: 'مشروع النخبة: جاهزية الطرح العام الأولي في السوق المالية السعودية'
+  lang: ar
+  client: شركة النخبة للرعاية الصحية
+  as_of: '2026-11-10'
+  art_direction: auto
+  theme: house
+  slides:
+  - id: s1
+    archetype: cover
+    title: 'مشروع النخبة: جاهزية الطرح العام الأولي في السوق المالية السعودية'
+    blocks:
+      client: مجلس إدارة شركة النخبة للرعاية الصحية
+      date: '2026-11-10'
+    visual:
+      concept: abstract arches and skyline forms in muted blue and sand
+      kind: hero
+    notes: 'Evidence slide 1: مشروع النخبة: جاهزية الطرح العام الأولي في السوق المالية الس'
+  - id: s2
+    archetype: exec_summary
+    title: طرح 30% من النخبة بقيمة منشأة من 4.9 إلى 5.7 مليار ريال
+    source: Company model (synthetic); Peer filings, Tadawul (synthetic)
+    sources:
+    - Company model (synthetic)
+    - Peer filings, Tadawul (synthetic)
+    as_of: '2026-11-10'
+    blocks:
+      subtitle: ملخص الطرح، بالريال السعودي
+      insights:
+      - lead: القيمة
+        text: نطاق قيمة المنشأة المقترح بالمليار ريال
+        figure: 4.9 إلى 5.7
+      - lead: المضاعف
+        text: مضاعف قيمة المنشأة إلى الأرباح التشغيلية لهذا النطاق
+        figure: 15.7x إلى 18.3x
+      - lead: النمو
+        text: النمو السنوي المركب للإيرادات خلال أربع سنوات
+        figure: 13%
+      - lead: الحصة
+        text: نسبة الأسهم المطروحة للاكتتاب العام
+        figure: 30%
+      so_what:
+        text: نوصي بإطلاق الطرح في الربع الثاني من 2027.
+    notes: 'Evidence slide 2: طرح 30% من النخبة بقيمة منشأة من 4.9 إلى 5.7 مليار ريال'
+  - id: s3
+    archetype: kpi_row
+    title: إيرادات 1,480 مليون ريال وأرباح تشغيلية 312 مليونا في السنة المالية 2025
+    source: Company accounts FY25 (synthetic)
+    as_of: '2026-11-10'
+    blocks:
+      subtitle: الأداء المالي للسنة المالية 2025
+      highlight: 1
+      kpis:
+      - label: الإيرادات، مليون ريال
+        value: 1,480
+        context: نمو 13% سنويا
+        change:
+          text: ارتفاع
+          direction: up
+      - label: الأرباح التشغيلية، مليون ريال
+        value: '312'
+        context: هامش 21.1%
+        change:
+          text: ارتفاع
+          direction: up
+      - label: هامش الأرباح التشغيلية
+        value: 21.1%
+        context: الوسيط 21.0%
+        change:
+          text: ارتفاع
+          direction: up
+      - label: صافي الربح، مليون ريال
+        value: '198'
+        context: هامش 13.4%
+        change:
+          text: ارتفاع
+          direction: up
+      so_what: الهامش أعلى من وسيط الشركات المدرجة عند 21.0%.
+    notes: 'Evidence slide 3: إيرادات 1,480 مليون ريال وأرباح تشغيلية 312 مليونا في السنة '
+  - id: s4
+    archetype: combo_margin
+    title: نمت الإيرادات إلى 1,480 مليون ريال وارتفع الهامش إلى 21.1%
+    source: Company accounts FY21 to FY25 (synthetic)
+    sources:
+    - Company accounts FY21 to FY25 (synthetic)
+    as_of: '2026-11-10'
+    blocks:
+      subtitle: الإيرادات بالمليون ريال وهامش الأرباح التشغيلية
+      number_format: '#,##0'
+      line_format: 0.0%
+      categories:
+      - '2021'
+      - '2022'
+      - '2023'
+      - '2024'
+      - '2025'
+      bars:
+        name: الإيرادات، مليون ريال
+        values:
+        - 920
+        - 1085
+        - 1210
+        - 1342
+        - 1480
+      line:
+        name: هامش الأرباح التشغيلية
+        values:
+        - 0.188
+        - 0.194
+        - 0.201
+        - 0.206
+        - 0.211
+      takeaway: ارتفع الهامش من 18.8% إلى 21.1% خلال أربع سنوات [1]
+    notes: 'Evidence slide 4: نمت الإيرادات إلى 1,480 مليون ريال وارتفع الهامش إلى 21.1%'
+  - id: s5
+    archetype: comps_table
+    title: الشركات المماثلة عند وسيط 15.9x، ونطاق النخبة من 15.7x إلى 18.3x
+    source: Peer filings, Tadawul (synthetic)
+    sources:
+    - Peer filings, Tadawul (synthetic)
+    as_of: '2026-11-10'
+    blocks:
+      subtitle: الشركات المدرجة المماثلة، قيمة المنشأة بالمليار ريال
+      compute_stats: true
+      dense: true
+      rows:
+      - company: الدار الصحية
+        ev: 11.8
+        ev_ebitda: 17.6
+        pe: 31.5
+        growth: 11
+        margin: 22.5
+      - company: مجموعة الأفق الطبية
+        ev: 8.6
+        ev_ebitda: 16.8
+        pe: 29.8
+        growth: 10
+        margin: 21.8
+      - company: رعاية الخليج
+        ev: 6.1
+        ev_ebitda: 15.9
+        pe: 27.4
+        growth: 9
+        margin: 21.0
+      - company: مستشفيات الريادة
+        ev: 4.4
+        ev_ebitda: 14.7
+        pe: 25.1
+        growth: 8
+        margin: 19.9
+      - company: الوفاء للرعاية
+        ev: 3.2
+        ev_ebitda: 13.9
+        pe: 22.9
+        growth: 7
+        margin: 18.7
+      takeaway: النطاق المقترح يتوافق مع الشريحة العليا من الشركات المماثلة [1]
+    notes: 'Evidence slide 5: الشركات المماثلة عند وسيط 15.9x، ونطاق النخبة من 15.7x إلى 1'
+  - id: s6
+    archetype: doughnut_split
+    title: 55% من متحصلات الطرح لتمويل التوسع و25% لسداد الديون
+    source: Company model (synthetic)
+    sources:
+    - Company model (synthetic)
+    as_of: '2026-11-10'
+    blocks:
+      subtitle: استخدام المتحصلات، نسبة من الإجمالي
+      centre: 1.6bn
+      slices:
+      - label: تمويل التوسع
+        value: 55
+        key: true
+      - label: سداد الديون
+        value: 25
+      - label: رأس المال العامل
+        value: 12
+      - label: أخرى
+        value: 8
+      takeaway: أكثر من نصف المتحصلات موجه لافتتاح مستشفيات جديدة [1]
+    notes: 'Evidence slide 6: 55% من متحصلات الطرح لتمويل التوسع و25% لسداد الديون'
+  - id: s7
+    archetype: harvey_table
+    title: النخبة مكتملة في التقارير المالية 1.0 وتتأخر في الحوكمة عند 0.5
+    source: Readiness assessment (synthetic)
+    sources:
+    - Readiness assessment (synthetic)
+    as_of: '2026-11-10'
+    blocks:
+      subtitle: جاهزية الإدراج حسب المسار
+      peers:
+      - النخبة
+      - متوسط المدرجة
+      highlight: 0
+      capabilities:
+      - name: التقارير المالية
+        values:
+        - 1
+        - 1
+      - name: الحوكمة
+        values:
+        - 0.5
+        - 1
+      - name: الامتثال
+        values:
+        - 0.75
+        - 0.75
+      - name: علاقات المستثمرين
+        values:
+        - 0.5
+        - 0.75
+      - name: إدارة المخاطر
+        values:
+        - 0.75
+        - 0.75
+      - name: الرقابة الداخلية
+        values:
+        - 0.75
+        - 1
+      takeaway: 'الحوكمة هي الفجوة الأكبر: 0.5 مقابل 1.0 للشركات المدرجة [1]'
+    notes: 'Evidence slide 7: النخبة مكتملة في التقارير المالية 1.0 وتتأخر في الحوكمة عند '
+  - id: s8
+    archetype: gantt
+    title: الإدراج في الربع الثاني من 2027 يتطلب اعتماد الحوكمة في الشهر 4
+    source: Listing plan (synthetic)
+    as_of: '2026-11-10'
+    blocks:
+      subtitle: خطة الإدراج، 2027
+      today: 0.5
+      months:
+      - يناير
+      - فبراير
+      - مارس
+      - أبريل
+      - مايو
+      - يونيو
+      - يوليو
+      - أغسطس
+      - سبتمبر
+      workstreams:
+      - name: الحوكمة
+        bars:
+        - start: 0
+          end: 4
+          label: إعادة تشكيل المجلس
+          highlight: true
+        milestones:
+        - month: 4.5
+          label: 'الشهر 4: الحوكمة'
+      - name: المراجعة المالية
+        bars:
+        - start: 1
+          end: 5
+          label: قوائم مدققة
+        milestones: []
+      - name: نشرة الإصدار
+        bars:
+        - start: 4
+          end: 7
+          label: إعداد النشرة
+        milestones: []
+      - name: هيئة السوق
+        bars:
+        - start: 6
+          end: 8
+          label: مراجعة الطلب
+        milestones: []
+    notes: 'Evidence slide 8: الإدراج في الربع الثاني من 2027 يتطلب اعتماد الحوكمة في الشه'
+  - id: s9
+    archetype: risk_heatmap
+    title: 3 من 5 مخاطر تتطلب خطة معالجة قبل تقديم الطلب
+    source: Deal team workshop (synthetic)
+    sources:
+    - Deal team workshop (synthetic)
+    as_of: '2026-11-10'
+    blocks:
+      subtitle: سجل المخاطر، احتمال مقابل أثر على مقياس من خمس درجات
+      risks:
+      - label: تأخر اعتماد الحوكمة عن الشهر 4
+        likelihood: 3
+        impact: 4
+      - label: تذبذب السوق بنسبة 15%
+        likelihood: 3
+        impact: 3
+      - label: أكبر 5 عملاء يمثلون 28% من الإيرادات
+        likelihood: 2
+        impact: 5
+      - label: اعتماد على الأطباء الرئيسيين
+        likelihood: 3
+        impact: 3
+      - label: ارتفاع تكاليف الإدراج
+        likelihood: 2
+        impact: 2
+      takeaway: تركز العملاء هو أكبر أثر عند الدرجة 5 [1]
+    notes: 'Evidence slide 9: 3 من 5 مخاطر تتطلب خطة معالجة قبل تقديم الطلب'
+  - id: s10
+    archetype: recommendation
+    title: نوصي بطرح 30% من الأسهم في الربع الثاني من 2027
+    source: Listing plan (synthetic)
+    as_of: '2026-11-10'
+    blocks:
+      subtitle: الخطوات التالية
+      phases:
+      - label: الآن
+        window: 30 يوما
+        owner: الرئيس المالي
+        date: '2026-12-15'
+        actions:
+        - تعيين المستشار المالي والقانوني
+        - اعتماد خطة الحوكمة
+      - label: التالي
+        window: الأشهر 2 إلى 5
+        owner: الرئيس التنفيذي
+        date: '2027-03-31'
+        actions:
+        - إنهاء القوائم المدققة
+        - تقديم الطلب لهيئة السوق
+      - label: لاحقا
+        window: الأشهر 6 إلى 8
+        owner: رئيس المجلس
+        date: '2027-06-30'
+        actions:
+        - إطلاق الطرح عند النطاق المعتمد
+        - الإدراج في السوق الرئيسية
+    notes: 'Evidence slide 10: نوصي بطرح 30% من الأسهم في الربع الثاني من 2027'

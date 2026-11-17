@@ -439,7 +439,7 @@ class Deck:
             f'<dc:title>{escape(self.title)}</dc:title><dc:creator>{escape(self.brand)}</dc:creator>'
             f'<dcterms:created xsi:type="dcterms:W3CDTF">{now}</dcterms:created><dcterms:modified xsi:type="dcterms:W3CDTF">{now}</dcterms:modified></cp:coreProperties>')
         files["docProps/app.xml"] = (
-            f'{XML}<Properties xmlns="http://schemas.openxmlformats.org/officeDocument/2006/extended-properties"><Application>OpenMultiples</Application>'
+            f'{XML}<Properties xmlns="http://schemas.openxmlformats.org/officeDocument/2006/extended-properties"><Application>Acretia</Application>'
             f'<Slides>{n}</Slides></Properties>')
         files["ppt/presentation.xml"] = (
             f'{XML}<p:presentation xmlns:a="{NS_A}" xmlns:r="{NS_R}" xmlns:p="{NS_P}" saveSubsetFonts="1">'
@@ -497,9 +497,9 @@ def _theme() -> str:
            + f'<a:hlink><a:srgbClr val="{c["blue"]}"/></a:hlink><a:folHlink><a:srgbClr val="{c["slate"]}"/></a:folHlink>')
     fill = '<a:solidFill><a:schemeClr val="phClr"/></a:solidFill>'
     ln = '<a:ln w="9525"><a:solidFill><a:schemeClr val="phClr"/></a:solidFill></a:ln>'
-    return (f'{XML}<a:theme xmlns:a="{NS_A}" name="OpenMultiples"><a:themeElements><a:clrScheme name="OpenMultiples">{clr}</a:clrScheme>'
-            f'<a:fontScheme name="OpenMultiples"><a:majorFont><a:latin typeface="{FONT}"/><a:ea typeface=""/><a:cs typeface=""/></a:majorFont>'
+    return (f'{XML}<a:theme xmlns:a="{NS_A}" name="Acretia"><a:themeElements><a:clrScheme name="Acretia">{clr}</a:clrScheme>'
+            f'<a:fontScheme name="Acretia"><a:majorFont><a:latin typeface="{FONT}"/><a:ea typeface=""/><a:cs typeface=""/></a:majorFont>'
             f'<a:minorFont><a:latin typeface="{FONT}"/><a:ea typeface=""/><a:cs typeface=""/></a:minorFont></a:fontScheme>'
-            f'<a:fmtScheme name="OpenMultiples"><a:fillStyleLst>{fill * 3}</a:fillStyleLst><a:lnStyleLst>{ln * 3}</a:lnStyleLst>'
+            f'<a:fmtScheme name="Acretia"><a:fillStyleLst>{fill * 3}</a:fillStyleLst><a:lnStyleLst>{ln * 3}</a:lnStyleLst>'
             '<a:effectStyleLst>' + '<a:effectStyle><a:effectLst/></a:effectStyle>' * 3 + '</a:effectStyleLst>'
             f'<a:bgFillStyleLst>{fill * 3}</a:bgFillStyleLst></a:fmtScheme></a:themeElements></a:theme>')

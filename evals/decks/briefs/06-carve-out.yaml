@@ -1,0 +1,407 @@
+brief: 'Prepare a 10-slide board paper on the carve-out of the specialty chemicals unit (Project Cedar): standalone
+  financials, structure, separation plan, exit options (sale, IPO, retain), risks and the decision requested. Synthetic
+  data.'
+ghost:
+  deck_id: d06-carve-out
+  brief: 'Prepare a 10-slide board paper on the carve-out of the specialty chemicals unit (Project Cedar): standalone
+    financials, structure, separation plan, exit options (sale, IPO, retain), risks and the decision requested.
+    Synthetic data.'
+  lang: en
+  slides:
+  - id: s1
+    title: 'Project Cedar: specialty chemicals carve-out'
+    section: Answer
+    archetype_hint: cover
+    purpose: 'Evidence slide 1: Project Cedar: specialty chemicals carve-out'
+  - id: s2
+    title: A trade sale of Cedar at $1,880m beats an IPO, with separation in 9 months
+    section: Answer
+    archetype_hint: exec_summary
+    purpose: 'Evidence slide 2: A trade sale of Cedar at $1,880m beats an IPO, with separati'
+  - id: s3
+    title: Cedar earns $196m of reported EBITDA on $1,240m of revenue, a 15.8% margin
+    section: Perimeter
+    archetype_hint: kpi_row
+    purpose: 'Evidence slide 3: Cedar earns $196m of reported EBITDA on $1,240m of revenue, '
+  - id: s4
+    title: Standalone EBITDA is $163m after $45m of standalone costs and $12m of transition services
+    section: Perimeter
+    archetype_hint: waterfall
+    purpose: 'Evidence slide 4: Standalone EBITDA is $163m after $45m of standalone costs an'
+  - id: s5
+    title: Cedar NewCo holds 100% of the operating companies until the sale closes
+    section: Structure
+    archetype_hint: deal_structure
+    purpose: 'Evidence slide 5: Cedar NewCo holds 100% of the operating companies until the '
+  - id: s6
+    title: IT separation sets the critical path to day-one readiness in month 9
+    section: Structure
+    archetype_hint: gantt
+    purpose: 'Evidence slide 6: IT separation sets the critical path to day-one readiness in'
+  - id: s7
+    title: A trade sale values Cedar at $1,880m against $1,760m for an IPO
+    section: Options
+    archetype_hint: comparison_table
+    purpose: 'Evidence slide 7: A trade sale values Cedar at $1,880m against $1,760m for an '
+  - id: s8
+    title: Europe and the US make up 78% of revenue, so the TSA targets two regions
+    section: Options
+    archetype_hint: stacked_bar
+    purpose: 'Evidence slide 8: Europe and the US make up 78% of revenue, so the TSA targets'
+  - id: s9
+    title: 3 of 5 separation risks are high impact and each needs a named owner
+    section: Risks
+    archetype_hint: risk_heatmap
+    purpose: 'Evidence slide 9: 3 of 5 separation risks are high impact and each needs a nam'
+  - id: s10
+    title: Approve exclusivity at $1,880m and a 9-month separation plan
+    section: Next steps
+    archetype_hint: recommendation
+    purpose: 'Evidence slide 10: Approve exclusivity at $1,880m and a 9-month separation plan'
+  sections:
+  - Answer
+  - Perimeter
+  - Structure
+  - Options
+  - Risks
+  - Next steps
+  approved: true
+  approved_by: eval-corpus
+  approved_at: '2026-11-17T00:00:00+00:00'
+  lint: []
+spec:
+  deck_id: d06-carve-out
+  title: 'Project Cedar: specialty chemicals carve-out'
+  lang: en
+  client: Board of Directors
+  as_of: '2026-11-19'
+  art_direction: isometric_system
+  theme: house
+  slides:
+  - id: s1
+    archetype: cover
+    title: 'Project Cedar: specialty chemicals carve-out'
+    blocks:
+      client: Board of Directors
+      date: 19 November 2026
+    visual:
+      concept: isometric blocks separating from a larger stack
+      kind: illustration
+    notes: 'Evidence slide 1: Project Cedar: specialty chemicals carve-out'
+  - id: s2
+    archetype: exec_summary
+    title: A trade sale of Cedar at $1,880m beats an IPO, with separation in 9 months
+    source: Carve-out financials (synthetic); Bid summary (synthetic)
+    sources:
+    - Carve-out financials (synthetic)
+    - Bid summary (synthetic)
+    as_of: '2026-11-19'
+    blocks:
+      subtitle: Carve-out summary, $ million
+      insights:
+      - lead: Value
+        text: A trade sale gives the highest value of the three options
+        figure: $1,880m
+      - lead: Multiple
+        text: The sale price equals this multiple of standalone EBITDA
+        figure: 11.5x
+      - lead: Standalone
+        text: EBITDA after new costs and transition services
+        figure: $163m
+      - lead: Timing
+        text: Day-one readiness is the critical path
+        figure: 9 months
+      so_what:
+        text: Approve exclusive talks with the lead bidder.
+    notes: 'Evidence slide 2: A trade sale of Cedar at $1,880m beats an IPO, with separati'
+  - id: s3
+    archetype: kpi_row
+    title: Cedar earns $196m of reported EBITDA on $1,240m of revenue, a 15.8% margin
+    source: Management accounts, FY26E (synthetic)
+    as_of: '2026-11-19'
+    blocks:
+      subtitle: Perimeter financials, FY26E, $ million
+      highlight: 0
+      kpis:
+      - label: Revenue
+        value: $1,240m
+        context: +6% on FY25
+        change:
+          text: up
+          direction: up
+      - label: Reported EBITDA
+        value: $196m
+        context: 15.8% margin
+        change:
+          text: up
+          direction: up
+      - label: Capex
+        value: $62m
+        context: 5% of revenue
+        change:
+          text: flat
+          direction: flat
+      - label: Employees
+        value: 2,400
+        context: In 14 sites
+        change:
+          text: flat
+          direction: flat
+      so_what: Reported EBITDA excludes the costs of running Cedar alone.
+    notes: 'Evidence slide 3: Cedar earns $196m of reported EBITDA on $1,240m of revenue, '
+  - id: s4
+    archetype: waterfall
+    title: Standalone EBITDA is $163m after $45m of standalone costs and $12m of transition services
+    source: Carve-out financials (synthetic); Separation plan v6 (synthetic)
+    sources:
+    - Carve-out financials (synthetic)
+    - Separation plan v6 (synthetic)
+    as_of: '2026-11-19'
+    blocks:
+      subtitle: Reported to standalone EBITDA, FY26E, $ million
+      number_format: '0'
+      prefix: $
+      suffix: m
+      steps:
+      - label: Reported
+        value: 196
+      - label: Allocations out
+        value: 24
+      - label: Standalone costs
+        value: -45
+      - label: TSA costs
+        value: -12
+      - label: Standalone
+        value: 163
+      takeaway: Standalone costs of $45m are the largest adjustment [1]
+    notes: 'Evidence slide 4: Standalone EBITDA is $163m after $45m of standalone costs an'
+  - id: s5
+    archetype: deal_structure
+    title: Cedar NewCo holds 100% of the operating companies until the sale closes
+    source: Draft separation memo (synthetic)
+    as_of: '2026-11-19'
+    blocks:
+      subtitle: Pre-closing structure
+      entities:
+      - id: parent
+        label: Parent group
+        sub: Listed holding
+        tier: 0
+      - id: newco
+        label: Cedar NewCo
+        sub: Delaware
+        tier: 1
+        highlight: true
+      - id: us
+        label: Cedar US
+        sub: Opco
+        tier: 2
+      - id: eu
+        label: Cedar Europe
+        sub: Opco
+        tier: 2
+      - id: asia
+        label: Cedar Asia
+        sub: Opco
+        tier: 2
+      links:
+      - from: parent
+        to: newco
+        label: 100%
+      - from: newco
+        to: us
+        label: 100%
+      - from: newco
+        to: eu
+        label: 100%
+      - from: newco
+        to: asia
+        label: 100%
+    notes: 'Evidence slide 5: Cedar NewCo holds 100% of the operating companies until the '
+  - id: s6
+    archetype: gantt
+    title: IT separation sets the critical path to day-one readiness in month 9
+    source: PMO plan v6 (synthetic)
+    as_of: '2026-11-19'
+    blocks:
+      subtitle: Separation workstreams, 2027
+      today: 0.5
+      months:
+      - Jan
+      - Feb
+      - Mar
+      - Apr
+      - May
+      - Jun
+      - Jul
+      - Aug
+      - Sep
+      workstreams:
+      - name: Legal entities
+        bars:
+        - start: 0
+          end: 3
+          label: Form NewCo
+        milestones:
+        - month: 3
+          label: NewCo live
+      - name: IT separation
+        bars:
+        - start: 1
+          end: 8
+          label: Platform split
+          highlight: true
+        milestones:
+        - month: 8.5
+          label: 'Month 9: cut-over'
+      - name: TSA set-up
+        bars:
+        - start: 2
+          end: 5
+          label: Agree services
+        milestones: []
+      - name: People transfer
+        bars:
+        - start: 3
+          end: 8
+          label: Move 2,400 staff
+        milestones: []
+      - name: Financing
+        bars:
+        - start: 0
+          end: 2
+        milestones:
+        - month: 7
+          label: Funds drawn
+    notes: 'Evidence slide 6: IT separation sets the critical path to day-one readiness in'
+  - id: s7
+    archetype: comparison_table
+    title: A trade sale values Cedar at $1,880m against $1,760m for an IPO
+    source: Valuation model v4 (synthetic)
+    sources:
+    - Valuation model v4 (synthetic)
+    as_of: '2026-11-19'
+    blocks:
+      subtitle: Exit options, $ million
+      options:
+      - Trade sale
+      - IPO
+      - Retain
+      highlight: 0
+      rows:
+      - criterion: Equity value
+        values:
+        - $1,880m
+        - $1,760m
+        - $1,520m
+      - criterion: Time to close
+        values:
+        - 7 months
+        - 12 months
+        - n.a.
+      - criterion: Tax leakage
+        values:
+        - $45m
+        - $20m
+        - $0m
+      - criterion: Execution risk
+        values:
+        - Low
+        - High
+        - Low
+      verdict:
+      - Recommended
+      - Window risk
+      - Value gap
+      takeaway: A sale closes in 7 months against 12 for an IPO [1]
+    notes: 'Evidence slide 7: A trade sale values Cedar at $1,880m against $1,760m for an '
+  - id: s8
+    archetype: stacked_bar
+    title: Europe and the US make up 78% of revenue, so the TSA targets two regions
+    source: Management accounts (synthetic)
+    sources:
+    - Management accounts (synthetic)
+    as_of: '2026-11-19'
+    blocks:
+      subtitle: Revenue by region, % of total
+      mode: percent
+      categories:
+      - FY24
+      - FY25
+      - FY26E
+      parts:
+      - name: Europe
+        values:
+        - 41
+        - 40
+        - 40
+        key: true
+      - name: US
+        values:
+        - 36
+        - 37
+        - 38
+      - name: Asia
+        values:
+        - 23
+        - 23
+        - 22
+      takeaway: Asia is 22% of revenue and needs only a light TSA [1]
+    notes: 'Evidence slide 8: Europe and the US make up 78% of revenue, so the TSA targets'
+  - id: s9
+    archetype: risk_heatmap
+    title: 3 of 5 separation risks are high impact and each needs a named owner
+    source: PMO risk workshop (synthetic)
+    sources:
+    - PMO risk workshop (synthetic)
+    as_of: '2026-11-19'
+    blocks:
+      subtitle: Separation risk register, five-point scale
+      risks:
+      - label: IT cut-over slips beyond 9 months
+        likelihood: 4
+        impact: 5
+      - label: Customer consent in 3 contracts
+        likelihood: 3
+        impact: 4
+      - label: Key staff attrition above 8%
+        likelihood: 3
+        impact: 4
+      - label: Stranded costs above $45m
+        likelihood: 2
+        impact: 3
+      - label: TSA pricing dispute
+        likelihood: 2
+        impact: 2
+      takeaway: 'IT cut-over is the largest exposure: likelihood 4 and impact 5 [1]'
+    notes: 'Evidence slide 9: 3 of 5 separation risks are high impact and each needs a nam'
+  - id: s10
+    archetype: recommendation
+    title: Approve exclusivity at $1,880m and a 9-month separation plan
+    source: PMO plan v6 (synthetic)
+    as_of: '2026-11-19'
+    blocks:
+      subtitle: Next steps
+      phases:
+      - label: Now
+        window: next 30 days
+        owner: Deal lead
+        date: Dec 2026
+        actions:
+        - Sign exclusivity at $1,880m
+        - Launch confirmatory diligence
+      - label: Next
+        window: months 2 to 4
+        owner: CFO
+        date: Mar 2027
+        actions:
+        - Finalise the SPA and TSA scope
+        - Agree the $45m standalone cost plan
+      - label: Later
+        window: months 5 to 9
+        owner: COO
+        date: Sep 2027
+        actions:
+        - Complete the IT cut-over
+        - Transfer 2,400 staff to NewCo
+    notes: 'Evidence slide 10: Approve exclusivity at $1,880m and a 9-month separation plan'

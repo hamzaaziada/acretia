@@ -91,11 +91,11 @@ Any grader can block. Specialist findings become Fix Packets, and the work is re
 
 ```bash
 python3 -m unittest discover -s tests -q          # full offline suite
-python3 open_multiples.py model AAPL              # integrated 3-statement + DCF, graded
-python3 open_multiples.py grade path/to/model.xlsx
-python3 open_multiples.py bench AAPL MSFT --libreoffice
+python3 acretia.py model AAPL              # integrated 3-statement + DCF, graded
+python3 acretia.py grade path/to/model.xlsx
+python3 acretia.py bench AAPL MSFT --libreoffice
 python3 scripts/verify_s<N>.py                    # stage gates
-python3 open_multiples.py serve --port 8791       # local web app
+python3 acretia.py serve --port 8791       # local web app
 ```
 
 ## Data and environment

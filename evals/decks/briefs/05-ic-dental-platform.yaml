@@ -1,0 +1,324 @@
+brief: 'Write a 10-slide investment committee memo for Project Meridian, a US dental service organisation buy-and-build:
+  returns first, then market, platform performance, value creation bridge, sensitivity, risks and the ask. Synthetic
+  data.'
+ghost:
+  deck_id: d05-ic-dental-platform
+  brief: 'Write a 10-slide investment committee memo for Project Meridian, a US dental service organisation buy-and-build:
+    returns first, then market, platform performance, value creation bridge, sensitivity, risks and the ask. Synthetic
+    data.'
+  lang: en
+  slides:
+  - id: s1
+    title: 'Project Meridian: investment committee memo'
+    section: Answer
+    archetype_hint: cover
+    purpose: 'Evidence slide 1: Project Meridian: investment committee memo'
+  - id: s2
+    title: Meridian returns 3.1x and 25.4% IRR from a dental platform buy-and-build
+    section: Answer
+    archetype_hint: exec_summary
+    purpose: 'Evidence slide 2: Meridian returns 3.1x and 25.4% IRR from a dental platform b'
+  - id: s3
+    title: The US dental services market is worth $34bn, and DSOs hold only 12% of clinics
+    section: Market
+    archetype_hint: stat_hero
+    purpose: 'Evidence slide 3: The US dental services market is worth $34bn, and DSOs hold '
+  - id: s4
+    title: EBITDA compounds at 15% a year to $54m across 148 clinics
+    section: Platform
+    archetype_hint: column_kpi
+    purpose: 'Evidence slide 4: EBITDA compounds at 15% a year to $54m across 148 clinics'
+  - id: s5
+    title: Revenue per clinic rises in every region, reaching $2.6m in the West
+    section: Platform
+    archetype_hint: paired_bars
+    purpose: 'Evidence slide 5: Revenue per clinic rises in every region, reaching $2.6m in '
+  - id: s6
+    title: EBITDA growth drives $672m of value, multiple adds $177m and net debt costs $50m
+    section: Returns
+    archetype_hint: waterfall
+    purpose: 'Evidence slide 6: EBITDA growth drives $672m of value, multiple adds $177m and'
+  - id: s7
+    title: IRR stays at or above 17.6% across exit multiples of 11.0x to 13.0x
+    section: Returns
+    archetype_hint: sensitivity_table
+    purpose: 'Evidence slide 7: IRR stays at or above 17.6% across exit multiples of 11.0x t'
+  - id: s8
+    title: Dentist retention at 94% is the one risk that moves returns by over 3 points
+    section: Risks
+    archetype_hint: risk_heatmap
+    purpose: 'Evidence slide 8: Dentist retention at 94% is the one risk that moves returns '
+  - id: s9
+    title: A four-step playbook integrates each add-on within 90 days of closing
+    section: Risks
+    archetype_hint: process_flow
+    purpose: 'Evidence slide 9: A four-step playbook integrates each add-on within 90 days o'
+  - id: s10
+    title: We recommend a $371m equity commitment for 3.1x and 25.4% IRR
+    section: Decision
+    archetype_hint: takeaway_box
+    purpose: 'Evidence slide 10: We recommend a $371m equity commitment for 3.1x and 25.4% IR'
+  sections:
+  - Answer
+  - Market
+  - Platform
+  - Returns
+  - Risks
+  - Decision
+  approved: true
+  approved_by: eval-corpus
+  approved_at: '2026-11-17T00:00:00+00:00'
+  lint: []
+spec:
+  deck_id: d05-ic-dental-platform
+  title: 'Project Meridian: investment committee memo'
+  lang: en
+  client: Growth Fund II
+  as_of: '2026-11-12'
+  art_direction: auto
+  theme: house
+  slides:
+  - id: s1
+    archetype: cover
+    title: 'Project Meridian: investment committee memo'
+    blocks:
+      client: Investment Committee, Growth Fund II
+      date: 12 November 2026
+    visual:
+      concept: stacked tiles forming a molar tooth silhouette, flat blue
+      kind: illustration
+    notes: 'Evidence slide 1: Project Meridian: investment committee memo'
+  - id: s2
+    archetype: exec_summary
+    title: Meridian returns 3.1x and 25.4% IRR from a dental platform buy-and-build
+    source: Deal team model v9 (synthetic); Management plan (synthetic)
+    sources:
+    - Deal team model v9 (synthetic)
+    - Management plan (synthetic)
+    as_of: '2026-11-12'
+    blocks:
+      subtitle: Investment case, $ million
+      insights:
+      - lead: Entry
+        text: Entry at 10.5x EBITDA of $54.0m across 148 clinics
+        figure: $567m
+      - lead: Returns
+        text: Base case money multiple over a five-year hold
+        figure: 3.1x
+      - lead: Plan
+        text: Add-on clinics at 6.0x lift EBITDA to the exit level
+        figure: $118m
+      - lead: Risk
+        text: Dentist retention after acquisition is the key diligence item
+        figure: 94%
+      so_what:
+        text: Approve a $371m equity commitment to the platform.
+    notes: 'Evidence slide 2: Meridian returns 3.1x and 25.4% IRR from a dental platform b'
+  - id: s3
+    archetype: stat_hero
+    title: The US dental services market is worth $34bn, and DSOs hold only 12% of clinics
+    source: Industry association data (synthetic); Market study (synthetic)
+    sources:
+    - Industry association data (synthetic)
+    - Market study (synthetic)
+    as_of: '2026-11-12'
+    blocks:
+      subtitle: US dental services, 2025
+      stats:
+      - value: $34bn
+        label: annual spend on dental services
+        context: Growing 5.1% a year to 2030
+      - value: 12%
+        label: share of clinics owned by DSOs
+        context: Up from 8% in 2020
+      so_what: Low penetration leaves room for consolidation at 6.0x add-on multiples [1]
+    notes: 'Evidence slide 3: The US dental services market is worth $34bn, and DSOs hold '
+  - id: s4
+    archetype: column_kpi
+    title: EBITDA compounds at 15% a year to $54m across 148 clinics
+    source: Company accounts, FY21 to FY25 (synthetic)
+    sources:
+    - Company accounts, FY21 to FY25 (synthetic)
+    as_of: '2026-11-12'
+    blocks:
+      subtitle: EBITDA, FY21 to FY25, $ million
+      number_format: '0'
+      series_name: EBITDA
+      categories:
+      - FY21
+      - FY22
+      - FY23
+      - FY24
+      - FY25
+      values:
+      - 31
+      - 36
+      - 42
+      - 48
+      - 54
+      stats:
+      - value: $54m
+        label: FY25 EBITDA across 148 clinics, 17.0% margin
+      - value: 15%
+        label: EBITDA CAGR over four years
+      takeaway: Growth comes from 31 acquired clinics and same-clinic gains [1]
+    notes: 'Evidence slide 4: EBITDA compounds at 15% a year to $54m across 148 clinics'
+  - id: s5
+    archetype: paired_bars
+    title: Revenue per clinic rises in every region, reaching $2.6m in the West
+    source: Company accounts, FY25 (synthetic)
+    sources:
+    - Company accounts, FY25 (synthetic)
+    as_of: '2026-11-12'
+    blocks:
+      subtitle: Revenue per clinic by region, FY24 versus FY25, $ million
+      number_format: '0.0'
+      categories:
+      - Northeast
+      - Southeast
+      - Midwest
+      - West
+      - Texas
+      before:
+        name: FY24
+        values:
+        - 1.9
+        - 2.1
+        - 1.7
+        - 2.4
+        - 2.0
+      after:
+        name: FY25
+        values:
+        - 2.1
+        - 2.3
+        - 1.8
+        - 2.6
+        - 2.2
+      stat:
+        value: +$0.2m
+        label: average gain per clinic
+      takeaway: The Midwest lags at $1.8m and is the first target for a pricing review [1]
+    notes: 'Evidence slide 5: Revenue per clinic rises in every region, reaching $2.6m in '
+  - id: s6
+    archetype: waterfall
+    title: EBITDA growth drives $672m of value, multiple adds $177m and net debt costs $50m
+    source: Deal team model v9 (synthetic)
+    sources:
+    - Deal team model v9 (synthetic)
+    as_of: '2026-11-12'
+    blocks:
+      subtitle: Equity value bridge, entry to exit, $ million
+      number_format: '#,##0'
+      prefix: $
+      suffix: m
+      steps:
+      - label: Entry equity
+        value: 371
+      - label: EBITDA growth
+        value: 672
+      - label: Multiple
+        value: 177
+      - label: Net debt
+        value: -50
+      - label: Fees
+        value: -20
+      - label: Exit equity
+        value: 1150
+      takeaway: Exit equity of $1,150m is 3.1x the $371m invested [1]
+    notes: 'Evidence slide 6: EBITDA growth drives $672m of value, multiple adds $177m and'
+  - id: s7
+    archetype: sensitivity_table
+    title: IRR stays at or above 17.6% across exit multiples of 11.0x to 13.0x
+    source: Deal team model v9 (synthetic)
+    sources:
+    - Deal team model v9 (synthetic)
+    as_of: '2026-11-12'
+    blocks:
+      subtitle: Gross IRR, exit multiple by FY30E EBITDA, %
+      row_label: Exit multiple, x
+      col_label: FY30E EBITDA, $m
+      row_values:
+      - 11.0
+      - 12.0
+      - 13.0
+      col_values:
+      - 100
+      - 118
+      - 130
+      values:
+      - - 17.6
+        - 22.7
+        - 25.7
+      - - 20.3
+        - 25.4
+        - 28.4
+      - - 22.8
+        - 27.9
+        - 30.9
+      base:
+      - 1
+      - 1
+      takeaway: Base case IRR is 25.4% at 12.0x and $118m of EBITDA [1]
+    notes: 'Evidence slide 7: IRR stays at or above 17.6% across exit multiples of 11.0x t'
+  - id: s8
+    archetype: risk_heatmap
+    title: Dentist retention at 94% is the one risk that moves returns by over 3 points
+    source: Deal team risk workshop (synthetic)
+    sources:
+    - Deal team risk workshop (synthetic)
+    as_of: '2026-11-12'
+    blocks:
+      subtitle: Risk register, likelihood by impact, five-point scale
+      risks:
+      - label: Dentist retention below 94%
+        likelihood: 3
+        impact: 5
+      - label: Add-on multiples above 6.0x
+        likelihood: 3
+        impact: 3
+      - label: Reimbursement cut of 3%
+        likelihood: 2
+        impact: 4
+      - label: Hygienist wage inflation
+        likelihood: 4
+        impact: 2
+      - label: Integration of 31 clinics
+        likelihood: 3
+        impact: 3
+      takeaway: A retention bonus pool that vests over three years protects the largest exposure [1]
+    notes: 'Evidence slide 8: Dentist retention at 94% is the one risk that moves returns '
+  - id: s9
+    archetype: process_flow
+    title: A four-step playbook integrates each add-on within 90 days of closing
+    source: Operating partner playbook (synthetic)
+    as_of: '2026-11-12'
+    blocks:
+      highlight: 1
+      output_label: Output
+      subtitle: Add-on integration playbook
+      steps:
+      - name: Close
+        output: 'Day 0: dentist agreements signed'
+      - name: Migrate
+        output: 'Day 30: systems moved'
+      - name: Reprice
+        output: 'Day 60: fee schedule aligned'
+      - name: Cross-sell
+        output: 'Day 90: hygiene hours added'
+    notes: 'Evidence slide 9: A four-step playbook integrates each add-on within 90 days o'
+  - id: s10
+    archetype: takeaway_box
+    title: We recommend a $371m equity commitment for 3.1x and 25.4% IRR
+    source: Deal team model v9 (synthetic)
+    as_of: '2026-11-12'
+    blocks:
+      decision: Approve a $371m equity commitment to the Meridian platform at 567m EV and 10.5x EBITDA
+      rationale:
+      - 'Returns: 3.1x and 25.4% in the base case'
+      - 'Market: DSOs hold only 12% of clinics'
+      - 'Plan: 31 add-ons at 6.0x lift EBITDA to $118m'
+      risks:
+      - 'Retention: 94% dentist retention is a condition'
+      - 'Pricing: add-on multiples above 6.0x erode IRR'
+    notes: 'Evidence slide 10: We recommend a $371m equity commitment for 3.1x and 25.4% IR'

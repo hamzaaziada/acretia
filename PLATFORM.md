@@ -7,7 +7,7 @@ The goal is one tool that covers what bankers and investors use three products f
 | Search and monitor documents | AlphaSense | Hybrid keyword + semantic search over filings, transcripts, broker PDFs and news, with saved searches, alerts and topic and sentiment tracking |
 | Ask questions across many documents | Hebbia (Matrix) | A grid of documents × questions. An agent answers each cell with a citation to the exact page and passage, then exports to Excel |
 | Build models | Shortcut | An AI spreadsheet agent that writes real formulas, pulls live data from our API (`=OM.FIELD("AAPL","ev_ebitda_ltm")`), and builds comps, precedents and DCF/LBO templates |
-| Data | Multiples / CapIQ | **open-multiples**: fundamentals, multiples, M&A precedents, funding rounds and a taxonomy, all from filings |
+| Data | Multiples / CapIQ | **acretia**: fundamentals, multiples, M&A precedents, funding rounds and a taxonomy, all from filings |
 
 ## Architecture
 
@@ -20,7 +20,7 @@ The goal is one tool that covers what bankers and investors use three products f
           ┌─────────────┬──────────┴──────────┬───────────────────┬─────────────────┐
           ▼             ▼                     ▼                   ▼                 ▼
    Search service   Matrix agent        Sheet agent          Data API          Alert engine
-   (hybrid index)   (cell workers)      (formula planner)   (open-multiples)   (saved queries)
+   (hybrid index)   (cell workers)      (formula planner)   (acretia)   (saved queries)
           │             │                     │                   │
           └──────┬──────┴─────────┬───────────┘                   │
                  ▼                ▼                               ▼

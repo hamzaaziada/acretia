@@ -251,7 +251,7 @@ def get_statements(state, ticker: str, as_of: _dt.date | None = None):
 
 
 def _no_data_hint(ticker: str) -> str:
-    return (f"Cached SEC data for {ticker} is not available offline. Fetch it with `python3 open_multiples.py model {ticker}` "
+    return (f"Cached SEC data for {ticker} is not available offline. Fetch it with `python3 acretia.py model {ticker}` "
             f"(set SEC_USER_AGENT first) or place companyfacts_{ticker}.json under data/raw.")
 
 
@@ -435,7 +435,7 @@ def peers_step(cx):
                      "These are not real companies; the multiples are for demonstration only.")
     if not have:
         raise StepFailed(f"No peer filings are available ({', '.join(missing) or 'no peers named'}).",
-                         "Name peers whose SEC data is cached, e.g. 'comps for AAPL vs MSFT', or fetch them with open_multiples.py first.")
+                         "Name peers whose SEC data is cached, e.g. 'comps for AAPL vs MSFT', or fetch them with acretia.py first.")
     if missing and not notes:
         notes.append(f"Peers without cached filings were left out: {', '.join(missing)}.")
     return {"peers": have, "missing": missing, "notes": notes, "detail": f"peers: {', '.join(have)}"}
@@ -800,6 +800,12 @@ def approve_outline(cx):
         titles = {t["id"]: t["title"] for t in titles if isinstance(t, dict) and t.get("id") and t.get("title")}
     g = dict(gd["ghost"])
     g["slides"] = [{**s, "title": str(titles.get(s["id"], s["title"]))[:200]} for s in g["slides"]]
+    order = (ap or {}).get("order")                  # optional: ids of the slides to keep, in the approved order (reorder / remove)
+    if isinstance(order, list) and order:
+        by_id = {s["id"]: s for s in g["slides"]}
+        kept = [by_id[i] for i in dict.fromkeys(order) if isinstance(i, str) and i in by_id]
+        if kept:
+            g["slides"] = kept
     edited = [s["id"] for s in gd["ghost"]["slides"] if titles.get(s["id"]) and titles[s["id"]] != s["title"]]
     return {"ghost": g, "approved_by": cx.user_id, "edited": edited, "detail": f"approved by {cx.user_id}" + (f", edited {len(edited)} titles" if edited else "")}
 
@@ -1057,4 +1063,9 @@ def describe_sources(svc, job: dict, plan: dict, conn) -> list[dict]:
             out.append({"label": "Documents in this deal", "kind": "documents", "task": tid, "detail": f"{n} indexed documents", "available": n > 0})
         if needs & {"load_deck", "load_model", "load_deliverables", "prior_model"}:
             out.append({"label": "Decks and models already in this deal", "kind": "deliverables", "task": tid, "detail": "latest versions", "available": bool(job["deal_id"])})
+    seen: dict[str, int] = {}
+    for o in out:                                   # stable, unique ids the approve body can reference (`payload.selected`)
+        base = re.sub(r"[^a-z0-9]+", "-", f"{o['task']}-{o['label']}".lower()).strip("-")[:60]
+        seen[base] = seen.get(base, 0) + 1
+        o["id"] = base if seen[base] == 1 else f"{base}-{seen[base]}"
     return out

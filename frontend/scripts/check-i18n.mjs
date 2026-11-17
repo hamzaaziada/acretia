@@ -53,7 +53,7 @@ const dynamic = {
   'docs.upload.': ['queued', 'uploading', 'done', 'failed'],
   'source.via.': ['email', 'schedule', 'api', 'app'],
   'viewer.': ['doc.title', 'model.title', 'deck.title', 'grid.title'],
-  'approval.': ['source_review.title', 'source_review.lead', 'ghost_deck.title', 'ghost_deck.lead', 'assumptions.title', 'assumptions.lead'],
+  'approval.': ['sources.title', 'sources.lead', 'ghost_deck.title', 'ghost_deck.lead', 'assumptions.title', 'assumptions.lead'],
   'deal.empty.': ['grid', 'model', 'deck'].flatMap((k) => ['title', 'body', 'cta', 'prompt'].map((s) => `${k}.${s}`)),
   'settings.': ['firm', 'definitions', 'templates', 'users', 'connectors', 'mailbox', 'audit', 'preferences'].concat(
     ['firm', 'definitions', 'templates', 'connectors', 'mailbox'].flatMap((k) => ['title', 'body', 'cta'].map((s) => `${k}.${s}`)),

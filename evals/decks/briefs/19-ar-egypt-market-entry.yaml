@@ -1,0 +1,373 @@
+brief: 'أعدّ عرضا من 10 شرائح لشركة نبض باي عن دخول السوق المصري في مدفوعات المنشآت الصغيرة والمتوسطة: حجم السوق،
+  المنافسون، فرز القطاعات، خيارات الدخول، الاحتياج التمويلي والتوصية. بيانات توضيحية.'
+ghost:
+  deck_id: d19-ar-egypt-market-entry
+  brief: 'أعدّ عرضا من 10 شرائح لشركة نبض باي عن دخول السوق المصري في مدفوعات المنشآت الصغيرة والمتوسطة: حجم السوق،
+    المنافسون، فرز القطاعات، خيارات الدخول، الاحتياج التمويلي والتوصية. بيانات توضيحية.'
+  lang: ar
+  slides:
+  - id: s1
+    title: 'دخول السوق المصري: مدفوعات المنشآت الصغيرة والمتوسطة'
+    section: الخلاصة
+    archetype_hint: cover
+    purpose: 'Evidence slide 1: دخول السوق المصري: مدفوعات المنشآت الصغيرة والمتوسطة'
+  - id: s2
+    title: ندخل مصر عبر شراكة مصرفية بتمويل 24 مليون دولار ونتعادل في الشهر 22
+    section: الخلاصة
+    archetype_hint: exec_summary
+    purpose: 'Evidence slide 2: ندخل مصر عبر شراكة مصرفية بتمويل 24 مليون دولار ونتعادل في ا'
+  - id: s3
+    title: تنمو إيرادات مدفوعات المنشآت الصغيرة في مصر إلى 2.0 مليار دولار بحلول 2030
+    section: السوق
+    archetype_hint: stat_hero
+    purpose: 'Evidence slide 3: تنمو إيرادات مدفوعات المنشآت الصغيرة في مصر إلى 2.0 مليار دو'
+  - id: s4
+    title: السوق ينمو 12.7% سنويا من 1.1 إلى 2.0 مليار دولار
+    section: السوق
+    archetype_hint: column_kpi
+    purpose: 'Evidence slide 4: السوق ينمو 12.7% سنويا من 1.1 إلى 2.0 مليار دولار'
+  - id: s5
+    title: أكبر ثلاثة مزودين يسيطرون على 38% من المعاملات والسوق مجزأ
+    section: السوق
+    archetype_hint: ranked_bar
+    purpose: 'Evidence slide 5: أكبر ثلاثة مزودين يسيطرون على 38% من المعاملات والسوق مجزأ'
+  - id: s6
+    title: التجزئة والمقاولات تتجاوزان 0.7 في الجاذبية وقدرة الفوز
+    section: الدخول
+    archetype_hint: matrix_2x2
+    purpose: 'Evidence slide 6: التجزئة والمقاولات تتجاوزان 0.7 في الجاذبية وقدرة الفوز'
+  - id: s7
+    title: الشراكة مع بنك تتعادل في الشهر 22 مقابل الشهر 33 للترخيص المباشر
+    section: الدخول
+    archetype_hint: comparison_table
+    purpose: 'Evidence slide 7: الشراكة مع بنك تتعادل في الشهر 22 مقابل الشهر 33 للترخيص الم'
+  - id: s8
+    title: الاحتياج التمويلي الأقصى 24 مليون دولار قبل التعادل في السنة الثانية
+    section: الخطة
+    archetype_hint: annotated_line
+    purpose: 'Evidence slide 8: الاحتياج التمويلي الأقصى 24 مليون دولار قبل التعادل في السنة'
+  - id: s9
+    title: أربع مراحل تنقل نبض باي من الشراكة إلى التعادل خلال 22 شهرا
+    section: الخطة
+    archetype_hint: process_flow
+    purpose: 'Evidence slide 9: أربع مراحل تنقل نبض باي من الشراكة إلى التعادل خلال 22 شهرا'
+  - id: s10
+    title: نوصي بتمويل 24 مليون دولار على ثلاث دفعات وبدء الشراكة
+    section: القرار
+    archetype_hint: recommendation
+    purpose: 'Evidence slide 10: نوصي بتمويل 24 مليون دولار على ثلاث دفعات وبدء الشراكة'
+  sections:
+  - الخلاصة
+  - السوق
+  - الدخول
+  - الخطة
+  - القرار
+  approved: true
+  approved_by: eval-corpus
+  approved_at: '2026-11-17T00:00:00+00:00'
+  lint: []
+spec:
+  deck_id: d19-ar-egypt-market-entry
+  title: 'دخول السوق المصري: مدفوعات المنشآت الصغيرة والمتوسطة'
+  lang: ar
+  client: نبض باي
+  as_of: '2026-10-20'
+  art_direction: auto
+  theme: house
+  slides:
+  - id: s1
+    archetype: cover
+    title: 'دخول السوق المصري: مدفوعات المنشآت الصغيرة والمتوسطة'
+    blocks:
+      client: نبض باي، فريق الاستراتيجية
+      date: '2026-10-20'
+    visual:
+      concept: abstract tiled map with a dashed route along a river
+      kind: diagram
+    notes: 'Evidence slide 1: دخول السوق المصري: مدفوعات المنشآت الصغيرة والمتوسطة'
+  - id: s2
+    archetype: exec_summary
+    title: ندخل مصر عبر شراكة مصرفية بتمويل 24 مليون دولار ونتعادل في الشهر 22
+    source: Market model v2 (synthetic); Central bank data (synthetic)
+    sources:
+    - Market model v2 (synthetic)
+    - Central bank data (synthetic)
+    as_of: '2026-10-20'
+    blocks:
+      subtitle: توصية دخول السوق
+      insights:
+      - lead: السوق
+        text: إيرادات مدفوعات المنشآت الصغيرة بالمليار دولار في 2030
+        figure: '2.0'
+      - lead: النمو
+        text: النمو السنوي المركب خلال خمس سنوات
+        figure: 12.7%
+      - lead: الاقتصاد
+        text: شهر التعادل في حالة الشراكة مع بنك
+        figure: الشهر 22
+      - lead: التمويل
+        text: الاحتياج التمويلي بالمليون دولار على ثلاث دفعات
+        figure: '24'
+      so_what:
+        text: نوصي بالموافقة على التمويل المرحلي في اجتماع المجلس.
+    notes: 'Evidence slide 2: ندخل مصر عبر شراكة مصرفية بتمويل 24 مليون دولار ونتعادل في ا'
+  - id: s3
+    archetype: stat_hero
+    title: تنمو إيرادات مدفوعات المنشآت الصغيرة في مصر إلى 2.0 مليار دولار بحلول 2030
+    source: Market model v2 (synthetic); Central bank data (synthetic)
+    sources:
+    - Market model v2 (synthetic)
+    - Central bank data (synthetic)
+    as_of: '2026-10-20'
+    blocks:
+      subtitle: سوق المدفوعات للمنشآت الصغيرة والمتوسطة في مصر
+      stats:
+      - value: $2.0bn
+        label: إيرادات المدفوعات المتوقعة في 2030
+        context: نمو سنوي مركب 12.7% من 1.1 مليار دولار في 2025
+      - value: 3.2m
+        label: منشأة صغيرة ومتوسطة نشطة
+        context: منها 41% تقبل الدفع الرقمي
+      so_what: الفجوة بين المنشآت النشطة وقبول الدفع الرقمي هي مصدر النمو [1]
+    notes: 'Evidence slide 3: تنمو إيرادات مدفوعات المنشآت الصغيرة في مصر إلى 2.0 مليار دو'
+  - id: s4
+    archetype: column_kpi
+    title: السوق ينمو 12.7% سنويا من 1.1 إلى 2.0 مليار دولار
+    source: Market model v2 (synthetic)
+    sources:
+    - Market model v2 (synthetic)
+    as_of: '2026-10-20'
+    blocks:
+      subtitle: إيرادات المدفوعات، مليار دولار
+      number_format: '0.00'
+      series_name: الإيرادات
+      categories:
+      - '2025'
+      - '2026'
+      - '2027'
+      - '2028'
+      - '2029'
+      - '2030'
+      values:
+      - 1.1
+      - 1.25
+      - 1.4
+      - 1.58
+      - 1.78
+      - 2.0
+      stats:
+      - value: $2.0bn
+        label: الإيرادات في 2030
+      - value: 12.7%
+        label: النمو السنوي المركب
+      takeaway: النمو مستقر ولا تقل أي سنة عن 11% [1]
+    notes: 'Evidence slide 4: السوق ينمو 12.7% سنويا من 1.1 إلى 2.0 مليار دولار'
+  - id: s5
+    archetype: ranked_bar
+    title: أكبر ثلاثة مزودين يسيطرون على 38% من المعاملات والسوق مجزأ
+    source: Industry interviews (synthetic)
+    sources:
+    - Industry interviews (synthetic)
+    as_of: '2026-10-20'
+    blocks:
+      subtitle: حصة المزودين من المعاملات، نسبة مئوية
+      number_format: '0'
+      series_name: الحصة
+      items:
+      - label: مدفوعات النيل
+        value: 18
+      - label: بنك القاهرة للمدفوعات
+        value: 12
+      - label: سريع باي
+        value: 8
+      - label: المحفظة الذهبية
+        value: 6
+      - label: تجارة باي
+        value: 5
+      - label: الأهرام للدفع
+        value: 4
+      - label: بوابة السويس
+        value: 3
+      stat:
+        value: 38%
+        label: حصة أكبر ثلاثة مزودين من المعاملات
+      takeaway: المزودون الأصغر يحتفظون بحصص أقل من 6% لكل منهم [1]
+    notes: 'Evidence slide 5: أكبر ثلاثة مزودين يسيطرون على 38% من المعاملات والسوق مجزأ'
+  - id: s6
+    archetype: matrix_2x2
+    title: التجزئة والمقاولات تتجاوزان 0.7 في الجاذبية وقدرة الفوز
+    source: Team scoring (synthetic)
+    sources:
+    - Team scoring (synthetic)
+    as_of: '2026-10-20'
+    blocks:
+      subtitle: فرز القطاعات، الجاذبية مقابل القدرة على الفوز
+      x_axis:
+        label: القدرة على الفوز
+        low: منخفضة
+        high: عالية
+      y_axis:
+        label: جاذبية القطاع
+        low: منخفضة
+        high: عالية
+      quadrants:
+      - بناء القدرات
+      - أولوية الآن
+      - تأجيل
+      - فرص أقل
+      target: 1
+      items:
+      - label: التجزئة
+        xv: 0.8
+        yv: 0.85
+        highlight: true
+      - label: المقاولات
+        xv: 0.7
+        yv: 0.78
+        highlight: true
+      - label: النقل
+        xv: 0.45
+        yv: 0.6
+      - label: الضيافة
+        xv: 0.55
+        yv: 0.3
+      - label: الصحة
+        xv: 0.3
+        yv: 0.55
+      - label: الصناعة
+        xv: 0.25
+        yv: 0.2
+      takeaway: التجزئة والمقاولات في الربع العلوي الأيمن من الفرز [1]
+    notes: 'Evidence slide 6: التجزئة والمقاولات تتجاوزان 0.7 في الجاذبية وقدرة الفوز'
+  - id: s7
+    archetype: comparison_table
+    title: الشراكة مع بنك تتعادل في الشهر 22 مقابل الشهر 33 للترخيص المباشر
+    source: Entry model v2 (synthetic)
+    sources:
+    - Entry model v2 (synthetic)
+    as_of: '2026-10-20'
+    blocks:
+      subtitle: خيارات الدخول إلى مصر
+      options:
+      - شراكة مع بنك
+      - ترخيص مباشر
+      - استحواذ على شركة
+      highlight: 0
+      rows:
+      - criterion: التمويل المطلوب
+        values:
+        - 24 مليون دولار
+        - 41 مليون دولار
+        - 78 مليون دولار
+      - criterion: شهر التعادل
+        values:
+        - الشهر 22
+        - الشهر 33
+        - الشهر 26
+      - criterion: أول إيراد
+        values:
+        - 6 أشهر
+        - 15 شهرا
+        - 3 أشهر
+      - criterion: مخاطر التنفيذ
+        values:
+        - متوسطة
+        - عالية
+        - متوسطة
+      verdict:
+      - موصى به
+      - أبطأ
+      - مكلف
+      takeaway: الشراكة تحتاج 24 مليون دولار مقابل 41 مليون دولار للترخيص [1]
+    notes: 'Evidence slide 7: الشراكة مع بنك تتعادل في الشهر 22 مقابل الشهر 33 للترخيص الم'
+  - id: s8
+    archetype: annotated_line
+    title: الاحتياج التمويلي الأقصى 24 مليون دولار قبل التعادل في السنة الثانية
+    source: Entry model v2 (synthetic)
+    sources:
+    - Entry model v2 (synthetic)
+    as_of: '2026-10-20'
+    blocks:
+      subtitle: التدفق النقدي التراكمي بالمليون دولار
+      number_format: '0'
+      change_unit: m
+      categories:
+      - ش 3
+      - ش 6
+      - ش 9
+      - ش 12
+      - ش 15
+      - ش 18
+      - ش 21
+      - ش 24
+      - ش 27
+      - ش 30
+      - ش 33
+      series:
+      - name: التدفق النقدي التراكمي
+        values:
+        - -4
+        - -10
+        - -16
+        - -21
+        - -24
+        - -20
+        - -7
+        - 6
+        - 17
+        - 27
+        - 37
+      annotation:
+        at: 4
+        text: أدنى نقطة عند 24 مليونا
+      takeaway: التدفق يتحول إلى موجب قبل الشهر 24 [1]
+    notes: 'Evidence slide 8: الاحتياج التمويلي الأقصى 24 مليون دولار قبل التعادل في السنة'
+  - id: s9
+    archetype: process_flow
+    title: أربع مراحل تنقل نبض باي من الشراكة إلى التعادل خلال 22 شهرا
+    source: Entry plan (synthetic)
+    as_of: '2026-10-20'
+    blocks:
+      highlight: 1
+      output_label: المخرج
+      subtitle: خطة الدخول
+      steps:
+      - name: الشراكة
+        output: 'الشهر 3: توقيع البنك الشريك'
+      - name: التجربة
+        output: 'الشهر 9: تجربة مع 30 منشأة'
+      - name: التوسع
+        output: 'الشهر 18: 500 عميل'
+      - name: التعادل
+        output: 'الشهر 22: تعادل تشغيلي'
+    notes: 'Evidence slide 9: أربع مراحل تنقل نبض باي من الشراكة إلى التعادل خلال 22 شهرا'
+  - id: s10
+    archetype: recommendation
+    title: نوصي بتمويل 24 مليون دولار على ثلاث دفعات وبدء الشراكة
+    source: Entry plan (synthetic)
+    as_of: '2026-10-20'
+    blocks:
+      subtitle: الخطوات التالية
+      phases:
+      - label: الآن
+        window: نوفمبر
+        owner: الرئيس المالي
+        date: '2026-11-30'
+        actions:
+        - اعتماد التمويل المرحلي بقيمة 24 مليون دولار
+        - بدء التفاوض مع بنكين شريكين
+      - label: التالي
+        window: الربع الأول
+        owner: الرئيس التنفيذي
+        date: '2027-03-31'
+        actions:
+        - تعيين المدير الإقليمي في القاهرة
+        - توقيع اتفاقية البنك الشريك
+      - label: لاحقا
+        window: النصف الثاني
+        owner: مدير العمليات
+        date: '2027-09-30'
+        actions:
+        - تشغيل التجربة مع 30 منشأة
+        - التحضير للتوسع إلى 500 عميل
+    notes: 'Evidence slide 10: نوصي بتمويل 24 مليون دولار على ثلاث دفعات وبدء الشراكة'

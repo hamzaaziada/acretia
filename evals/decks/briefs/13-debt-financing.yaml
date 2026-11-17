@@ -1,0 +1,376 @@
+brief: 'Prepare a 10-slide acquisition financing proposal for Project Keystone: sources and uses, structure, term
+  loan versus unitranche versus bond, deleveraging, interest cover sensitivity, risks and syndication plan. Synthetic
+  data.'
+ghost:
+  deck_id: d13-debt-financing
+  brief: 'Prepare a 10-slide acquisition financing proposal for Project Keystone: sources and uses, structure, term
+    loan versus unitranche versus bond, deleveraging, interest cover sensitivity, risks and syndication plan. Synthetic
+    data.'
+  lang: en
+  slides:
+  - id: s1
+    title: 'Project Keystone: acquisition financing proposal'
+    section: Answer
+    archetype_hint: cover
+    purpose: 'Evidence slide 1: Project Keystone: acquisition financing proposal'
+  - id: s2
+    title: A $950m debt package at 7.0x funds the $1,350m purchase with $480m of equity
+    section: Answer
+    archetype_hint: exec_summary
+    purpose: 'Evidence slide 2: A $950m debt package at 7.0x funds the $1,350m purchase with'
+  - id: s3
+    title: The $650m term loan sits at BidCo, below $300m of senior notes at the holdco
+    section: Structure
+    archetype_hint: deal_structure
+    purpose: 'Evidence slide 3: The $650m term loan sits at BidCo, below $300m of senior not'
+  - id: s4
+    title: Debt of $950m and equity of $480m fund the $1,350m price and $80m of costs
+    section: Structure
+    archetype_hint: stacked_bar
+    purpose: 'Evidence slide 4: Debt of $950m and equity of $480m fund the $1,350m price and'
+  - id: s5
+    title: A term loan B at S+375 is the cheapest of three structures at 7.9%
+    section: Structure
+    archetype_hint: comparison_table
+    purpose: 'Evidence slide 5: A term loan B at S+375 is the cheapest of three structures a'
+  - id: s6
+    title: Total leverage falls from 7.0x at closing to 3.8x by FY31E
+    section: Credit
+    archetype_hint: annotated_line
+    purpose: 'Evidence slide 6: Total leverage falls from 7.0x at closing to 3.8x by FY31E'
+  - id: s7
+    title: Interest cover stays above 1.5x even with EBITDA down 10% and SOFR at 5.0%
+    section: Credit
+    archetype_hint: sensitivity_table
+    purpose: 'Evidence slide 7: Interest cover stays above 1.5x even with EBITDA down 10% an'
+  - id: s8
+    title: 3 of 4 financing risks are covered by a hedge, cap or call option
+    section: Credit
+    archetype_hint: risk_heatmap
+    purpose: 'Evidence slide 8: 3 of 4 financing risks are covered by a hedge, cap or call o'
+  - id: s9
+    title: Syndication runs 6 weeks from launch on 16 November to funding
+    section: Process
+    archetype_hint: process_flow
+    purpose: 'Evidence slide 9: Syndication runs 6 weeks from launch on 16 November to fundi'
+  - id: s10
+    title: Approve the $950m financing and launch syndication on 16 November
+    section: Process
+    archetype_hint: recommendation
+    purpose: 'Evidence slide 10: Approve the $950m financing and launch syndication on 16 Nov'
+  sections:
+  - Answer
+  - Structure
+  - Credit
+  - Process
+  approved: true
+  approved_by: eval-corpus
+  approved_at: '2026-11-17T00:00:00+00:00'
+  lint: []
+spec:
+  deck_id: d13-debt-financing
+  title: 'Project Keystone: acquisition financing proposal'
+  lang: en
+  client: Sponsor investment committee
+  as_of: '2026-11-12'
+  art_direction: line_art_schematic
+  theme: house
+  slides:
+  - id: s1
+    archetype: cover
+    title: 'Project Keystone: acquisition financing proposal'
+    blocks:
+      client: Sponsor investment committee and lenders
+      date: 12 November 2026
+    visual:
+      concept: orthogonal flow schematic with nodes and elbow connectors
+      kind: diagram
+    notes: 'Evidence slide 1: Project Keystone: acquisition financing proposal'
+  - id: s2
+    archetype: exec_summary
+    title: A $950m debt package at 7.0x funds the $1,350m purchase with $480m of equity
+    source: Financing term sheet v4 (synthetic); Sponsor model v12 (synthetic)
+    sources:
+    - Financing term sheet v4 (synthetic)
+    - Sponsor model v12 (synthetic)
+    as_of: '2026-11-12'
+    blocks:
+      subtitle: Financing summary, $ million
+      insights:
+      - lead: Debt
+        text: Term loan B and senior notes fund the acquisition
+        figure: $950m
+      - lead: Equity
+        text: Sponsor equity completes the sources of funds
+        figure: $480m
+      - lead: Leverage
+        text: Total debt to EBITDA at closing
+        figure: 7.0x
+      - lead: Cost
+        text: Blended cash cost of the package
+        figure: 7.9%
+      so_what:
+        text: Launch syndication to lenders on 16 November.
+    notes: 'Evidence slide 2: A $950m debt package at 7.0x funds the $1,350m purchase with'
+  - id: s3
+    archetype: deal_structure
+    title: The $650m term loan sits at BidCo, below $300m of senior notes at the holdco
+    source: Financing term sheet v4 (synthetic)
+    as_of: '2026-11-12'
+    blocks:
+      subtitle: Financing structure at closing, $ million
+      entities:
+      - id: sponsor
+        label: Sponsor fund
+        sub: $480m equity
+        tier: 0
+      - id: holdco
+        label: Holdco
+        sub: $300m notes
+        tier: 1
+      - id: bidco
+        label: BidCo
+        sub: $650m TLB
+        tier: 2
+        highlight: true
+      links:
+      - from: sponsor
+        to: holdco
+        label: 100%
+      - from: holdco
+        to: bidco
+        label: 100%
+    notes: 'Evidence slide 3: The $650m term loan sits at BidCo, below $300m of senior not'
+  - id: s4
+    archetype: stacked_bar
+    title: Debt of $950m and equity of $480m fund the $1,350m price and $80m of costs
+    source: Sponsor model v12 (synthetic)
+    sources:
+    - Sponsor model v12 (synthetic)
+    as_of: '2026-11-12'
+    blocks:
+      subtitle: Sources and uses at closing, $ million
+      mode: absolute
+      number_format: '#,##0'
+      categories:
+      - Sources
+      - Uses
+      parts:
+      - name: Term loan B
+        values:
+        - 650
+        - 0
+      - name: Senior notes
+        values:
+        - 300
+        - 0
+      - name: Sponsor equity
+        values:
+        - 480
+        - 0
+        key: true
+      - name: Purchase price
+        values:
+        - 0
+        - 1350
+      - name: Fees and cash
+        values:
+        - 0
+        - 80
+      takeaway: Sponsor equity of $480m funds the balance of the purchase [1]
+    notes: 'Evidence slide 4: Debt of $950m and equity of $480m fund the $1,350m price and'
+  - id: s5
+    archetype: comparison_table
+    title: A term loan B at S+375 is the cheapest of three structures at 7.9%
+    source: Lender soundings (synthetic)
+    sources:
+    - Lender soundings (synthetic)
+    as_of: '2026-11-12'
+    blocks:
+      subtitle: Debt alternatives for the $650m senior tranche
+      options:
+      - Term loan B
+      - Unitranche
+      - High-yield bond
+      highlight: 0
+      rows:
+      - criterion: Pricing
+        values:
+        - S+375
+        - S+525
+        - 8.1% fixed
+      - criterion: Blended cost
+        values:
+        - 7.9%
+        - 9.2%
+        - 8.6%
+      - criterion: Call protection
+        values:
+        - 6 months
+        - 24 months
+        - 36 months
+      - criterion: Execution time
+        values:
+        - 6 weeks
+        - 4 weeks
+        - 8 weeks
+      verdict:
+      - Recommended
+      - Faster
+      - Costlier
+      takeaway: The unitranche costs 9.2% against 7.9% for the term loan B [1]
+    notes: 'Evidence slide 5: A term loan B at S+375 is the cheapest of three structures a'
+  - id: s6
+    archetype: annotated_line
+    title: Total leverage falls from 7.0x at closing to 3.8x by FY31E
+    source: Sponsor model v12, base case (synthetic)
+    sources:
+    - Sponsor model v12, base case (synthetic)
+    as_of: '2026-11-12'
+    blocks:
+      subtitle: Debt to EBITDA, x
+      number_format: '0.0'
+      change_unit: x
+      categories:
+      - Close
+      - FY27E
+      - FY28E
+      - FY29E
+      - FY30E
+      - FY31E
+      series:
+      - name: Total leverage
+        values:
+        - 7.0
+        - 6.3
+        - 5.6
+        - 4.9
+        - 4.3
+        - 3.8
+      - name: Senior leverage
+        values:
+        - 4.8
+        - 4.3
+        - 3.8
+        - 3.3
+        - 2.8
+        - 2.4
+      annotation:
+        at: 3
+        text: Notes callable from FY29E
+      takeaway: Senior leverage reaches 2.4x by FY31E [1]
+    notes: 'Evidence slide 6: Total leverage falls from 7.0x at closing to 3.8x by FY31E'
+  - id: s7
+    archetype: sensitivity_table
+    title: Interest cover stays above 1.5x even with EBITDA down 10% and SOFR at 5.0%
+    source: Sponsor model v12 (synthetic)
+    sources:
+    - Sponsor model v12 (synthetic)
+    as_of: '2026-11-12'
+    blocks:
+      subtitle: Interest cover, SOFR by EBITDA change, x
+      row_label: SOFR, %
+      col_label: EBITDA change, %
+      row_values:
+      - 3.5
+      - 4.0
+      - 4.5
+      - 5.0
+      col_values:
+      - -10
+      - 0
+      - 10
+      values:
+      - - 1.7
+        - 1.89
+        - 2.08
+      - - 1.63
+        - 1.81
+        - 1.99
+      - - 1.56
+        - 1.73
+        - 1.91
+      - - 1.5
+        - 1.66
+        - 1.83
+      base:
+      - 1
+      - 1
+      value_format: '0.00'
+      takeaway: Base interest cover is 1.81x at SOFR 4.0% [1]
+    notes: 'Evidence slide 7: Interest cover stays above 1.5x even with EBITDA down 10% an'
+  - id: s8
+    archetype: risk_heatmap
+    title: 3 of 4 financing risks are covered by a hedge, cap or call option
+    source: Sponsor treasury (synthetic)
+    sources:
+    - Sponsor treasury (synthetic)
+    as_of: '2026-11-12'
+    blocks:
+      subtitle: Financing risk register, five-point scale
+      risks:
+      - label: SOFR above 5.0%
+        likelihood: 3
+        impact: 3
+      - label: Syndication shortfall of $100m
+        likelihood: 2
+        impact: 4
+      - label: Covenant headroom below 25%
+        likelihood: 2
+        impact: 5
+      - label: Flex of 50 bps on pricing
+        likelihood: 3
+        impact: 2
+      takeaway: Hedging 70% of the term loan covers the rate risk [1]
+    notes: 'Evidence slide 8: 3 of 4 financing risks are covered by a hedge, cap or call o'
+  - id: s9
+    archetype: process_flow
+    title: Syndication runs 6 weeks from launch on 16 November to funding
+    source: Syndication plan (synthetic)
+    as_of: '2026-11-12'
+    blocks:
+      highlight: 1
+      output_label: Milestone
+      subtitle: Syndication process
+      steps:
+      - name: Launch
+        output: 'Week 0: lender meeting'
+      - name: Commitments
+        output: 'Week 2: bids due'
+      - name: Allocate
+        output: 'Week 3: allocations set'
+      - name: Document
+        output: 'Week 5: credit agreement'
+      - name: Fund
+        output: 'Week 6: funds drawn'
+    notes: 'Evidence slide 9: Syndication runs 6 weeks from launch on 16 November to fundi'
+  - id: s10
+    archetype: recommendation
+    title: Approve the $950m financing and launch syndication on 16 November
+    source: Syndication plan (synthetic)
+    as_of: '2026-11-12'
+    blocks:
+      subtitle: Next steps
+      phases:
+      - label: Now
+        window: this week
+        owner: Sponsor IC
+        date: Nov 2026
+        actions:
+        - Approve the $950m debt package
+        - Sign the commitment papers
+      - label: Next
+        window: weeks 1 to 3
+        owner: Treasury
+        date: Dec 2026
+        actions:
+        - Run the lender meeting on 16 November
+        - Hedge 70% of the term loan
+      - label: Later
+        window: weeks 4 to 6
+        owner: CFO
+        date: Jan 2027
+        actions:
+        - Sign the credit agreement
+        - Draw funds at week 6
+    notes: 'Evidence slide 10: Approve the $950m financing and launch syndication on 16 Nov'
