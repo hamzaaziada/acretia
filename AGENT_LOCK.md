@@ -30,12 +30,8 @@ One row per active claim. Claim a packet before you touch its files, commit the 
 | SF.3 e2e journeys + product gate (session F) | session F gate worker | main | 2026-11-16 | e2e/**, scripts/verify_product.py |
 | SF.4 TSB + reliability harness (session F, D-032) | session F workers | main | 2026-11-16 | eval/tsb/**, eval/reliability/** |
 | S6.2 figure verifier | worker (session A) | claude/dreamy-ramanujan-k8p2xt | 2026-11-16 | src/harness/research/verify.py, tests/test_research_verify.py |
-| S4.7c dashboards for LBO/merger/comps | worker (session C) | claude/busy-knuth-i3ewp5 | 2026-11-16 | om/lbo.py, om/merger.py, om/comps.py, tests/test_polish_models.py |
-| S4.6a OM-Bench 10 + planted audit | worker (session C) | claude/busy-knuth-i3ewp5 | 2026-11-16 | om/bench.py, om/validate_xlsx.py, tests/test_bench.py, tests/test_validate_xlsx.py |
 | S4.6c reliability-100 + timing | worker (session C) | claude/busy-knuth-i3ewp5 | 2026-11-16 | om/reliability.py, tests/test_reliability.py |
 | S4 gate script | gate worker (session C) | claude/busy-knuth-i3ewp5 | 2026-11-16 | scripts/verify_s4.py |
-| S4.8 model API for product app | worker (session C) | claude/busy-knuth-i3ewp5 | 2026-11-16 | om/modelapi.py, tests/test_modelapi.py, docs/interfaces.md (Models section only) |
-| S4.9 reference-structure generation + firm templates | worker (session C) | claude/busy-knuth-i3ewp5 | 2026-11-17 | om/templatefit.py, tests/test_templatefit.py |
 | FP-S1c buyer-research rubric thresholds | worker (session A) | claude/dreamy-ramanujan-k8p2xt | 2026-11-17 | docs/buyer-research.md |
 | S4.fix2 formula engine coverage (SpreadsheetBench) | worker (session C) | claude/busy-knuth-i3ewp5 | 2026-11-17 | om/formula.py, tests/test_formula_ext2.py |
 | S6.1 research workflows | worker (session A) | claude/dreamy-ramanujan-k8p2xt | 2026-11-17 | src/harness/research/workflows/**, src/harness/research/api.py, tests/test_research_workflows.py, docs/interfaces-s6/workflows.md |
@@ -46,6 +42,7 @@ One row per active claim. Claim a packet before you touch its files, commit the 
 | FP-S2b adapter/ledger/PII/router | worker (session A) | claude/dreamy-ramanujan-k8p2xt | 2026-11-17 | src/harness/adapter.py, src/harness/ledger.py, src/harness/router.py, src/harness/profiles/*, om/pii.py, om/replay.py, tests/test_adapter.py, tests/test_harness_router.py, tests/test_llm_router.py |
 | FP-S2c evidence/deals/queue | worker (session A) | claude/dreamy-ramanujan-k8p2xt | 2026-11-17 | src/harness/evidence.py, om/deals.py, om/storage.py, tests/test_evidence.py, tests/test_deal_memory.py, tests/test_storage.py |
 | FP-S2d unpack/crawler | worker (session A) | claude/dreamy-ramanujan-k8p2xt | 2026-11-17 | src/harness/connectors/unpack.py, src/harness/connectors/web.py, tests/test_connectors_harness.py |
+| S4.10 rendered samples | worker (session C) | claude/busy-knuth-i3ewp5 | 2026-11-17 | docs/samples/s4/**, scripts/render_samples_s4.py |
 
 ## Log
 - 2026-11-16: created; no active claims.
@@ -85,3 +82,4 @@ One row per active claim. Claim a packet before you touch its files, commit the 
 - 2026-11-16: session A: FP-CI1 landed.
 - 2026-11-17: S5.5b verified on main and released; S5.5c, S5.6 claimed (session D).
 - 2026-11-17: session B: FP-S3-a, FP-S3-b, S3.12 merged and released; claimed S3.10 corpus, FP-S3-c, FP-S3-d.
+- 2026-11-17: S4.7c, S4.6a, S4.8, S4.9 merged and released; S4.10 samples claimed.
