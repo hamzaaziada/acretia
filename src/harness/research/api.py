@@ -204,7 +204,7 @@ _PLAN_SCHEMA = {"type": "object", "properties": {"tool": {"type": "string"}, "ar
 
 def run_research(request: ResearchRequest, *, adapter=None, tools=None, evidence_dir="storage/evidence",
                  job_id: str | None = None, on_event: Callable[[dict], None] | None = None,
-                 cancel: threading.Event | None = None) -> ResearchResult:
+                 cancel: threading.Event | None = None, resolver=None, review=None) -> ResearchResult:
     """STABLE entry point. Never raises for agent-level failures: they come back as status "failed" with ``error``.
     Raises ContractError only for an invalid request/job_id."""
     if isinstance(request, dict):
@@ -213,6 +213,15 @@ def run_research(request: ResearchRequest, *, adapter=None, tools=None, evidence
     if job_id is None:
         job_id = "res_" + re.sub(r"\W", "", _now())[:20]
     string(pattern=JOB_ID_RE)(job_id, "job_id")
+    from src.harness.research import workflows      # S6.1: explicit workflow, "/" command or a strong phrase
+    try:
+        wf, request = workflows.route(request)
+    except workflows.WorkflowError as e:
+        raise ContractError(f"workflow: {e}") from None
+    if wf is not None:
+        request.validate()
+        return workflows.run_request(wf, request, adapter=adapter, tools=tools, evidence_dir=evidence_dir,
+                                     job_id=job_id, on_event=on_event, cancel=cancel, resolver=resolver, review=review)
     steps: list[JobStep] = []
     cost, tokens = 0.0, 0
     state = {"status": "succeeded", "error": None}

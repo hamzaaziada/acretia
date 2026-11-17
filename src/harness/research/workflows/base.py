@@ -99,6 +99,7 @@ class Workflow:
     steps: tuple
     outputs: tuple = ("slide_specs", "excel_inputs", "figures")
     keywords: tuple = ()
+    requires: tuple = ()                    # request keys that must be non-empty (e.g. "tickers")
     prepare: Callable | None = None         # request dict -> {"..."} deterministic plan, visible as ``plan.*``
 
     def __post_init__(self):
@@ -324,6 +325,9 @@ class RunContext:
         data = {"question": self.request.get("question"), "tickers": self.request.get("tickers", []),
                 "doc_ids": self.request.get("doc_ids", []), "options": self.options}
         err = _schema_validate(data, string) if string else None
+        for k in self.workflow.requires:
+            if not self.request.get(k):
+                err = err or f"{k} is required"
         if err:
             self.status, self.error = "failed", f"invalid inputs for {self.workflow.id}: {err}"
         return self
