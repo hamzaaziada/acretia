@@ -259,7 +259,9 @@ def explain(data: bytes, cell: str, *, _graph: WorkbookGraph | None = None, _boo
 
     def info(k: str) -> dict:
         n = g.nodes[k]
-        return {"cell": k, "label": label_of(book, k), "formula": n.formula, "value": n.value}
+        sh, r, c, _, _ = split_key(k)
+        return {"cell": k, "sheet": sh, "label": label_of(book, k), "period": period_header(book, sh, r, c),
+                "formula": n.formula, "value": n.value}
 
     def comment_of(k: str) -> tuple[str | None, str | None]:
         sh, r, c, _, _ = split_key(k)
@@ -272,11 +274,16 @@ def explain(data: bytes, cell: str, *, _graph: WorkbookGraph | None = None, _boo
         for t in g.edges.get(k, []):
             if ":" in t:
                 cells = _expand(g, t)
-                out.append({"cell": t, "range": True, "n_cells": len(cells), "label": label_of(book, t.split(":")[0]),
+                first = t.split(":")[0]
+                sh, r, c, _, _ = split_key(first)
+                out.append({"cell": t, "range": True, "n_cells": len(cells), "sheet": sh,
+                            "label": label_of(book, first), "period": period_header(book, sh, r, c),
                             "values": [g.nodes[x].value for x in cells][:12]})
                 continue
             if t not in g.nodes:
-                out.append({"cell": t, "label": label_of(book, t), "formula": None, "value": None, "empty": True, "precedents": []})
+                sh, r, c, _, _ = split_key(t)
+                out.append({"cell": t, "sheet": sh, "label": label_of(book, t), "period": period_header(book, sh, r, c),
+                            "formula": None, "value": None, "empty": True, "precedents": []})
                 continue
             d = info(t)
             d["precedents"] = tree(t, depth - 1)

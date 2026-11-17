@@ -157,6 +157,22 @@ class ModelView(Base):
         empty = self.call("GET", self.base + "/explain", query={"ref": "IS!Z99"})
         self.assertTrue(empty["empty"])
 
+    def test_explain_carries_sheet_and_period_for_the_drawer(self):
+        m = self.call("GET", self.base)
+        f = next(k for k, c in m["cells"].items() if k.startswith("DCF!") and c.get("f") and c["cls"] == "calc")
+        ex = self.call("GET", self.base + "/explain", query={"ref": f})
+        self.assertEqual(ex["sheet"], "DCF")
+        self.assertIn("period", ex)
+        for node in ex["precedents"]:
+            self.assertIn("sheet", node, node)
+            self.assertIn("period", node, node)
+        for leaf in ex["inputs"]:
+            self.assertIn("sheet", leaf, leaf)
+            self.assertIn("period", leaf, leaf)
+        rng = next((n for n in ex["precedents"] if n.get("range")), None)
+        if rng is not None:
+            self.assertIn("sheet", rng, rng)
+
     def test_audit_lists_links_and_flags_injected_hardcode(self):
         a = self.call("GET", self.base + "/audit")
         self.assertGreater(a["totals"]["links"], 0)

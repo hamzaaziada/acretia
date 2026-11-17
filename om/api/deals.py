@@ -203,6 +203,50 @@ def list_deals(ctx):
     return {"items": items, "next_cursor": str(off + lim) if len(rows) > lim else None}
 
 
+def _board_signals(conn, org_id, deal_id) -> list[dict]:
+    """What needs attention on this deal, newest first. Deterministic: every signal is a row we can point at."""
+    out = []
+    for r in conn.execute(
+            "SELECT id, name, status, error, hint, created_at FROM documents WHERE org_id=? AND deal_id=? AND status='failed' "
+            "ORDER BY created_at DESC LIMIT 3", (org_id, deal_id)):
+        out.append({"kind": "doc_failed", "severity": "high", "at": r["created_at"], "ref": r["id"],
+                    "text": f"{r['name']} failed to index", "detail": r["hint"] or r["error"] or ""})
+    for r in conn.execute(
+            "SELECT id, name, status, created_at FROM documents WHERE org_id=? AND deal_id=? AND status IN ('queued','indexing') "
+            "ORDER BY created_at DESC LIMIT 3", (org_id, deal_id)):
+        out.append({"kind": "doc_indexing", "severity": "info", "at": r["created_at"], "ref": r["id"],
+                    "text": f"{r['name']} is still indexing", "detail": r["status"]})
+    for r in conn.execute(
+            "SELECT id, kind, status, prompt, error, hint, COALESCE(finished_at, started_at, created_at) at FROM jobs "
+            "WHERE org_id=? AND deal_id=? AND status='failed' ORDER BY rowid DESC LIMIT 3", (org_id, deal_id)):
+        out.append({"kind": "job_failed", "severity": "high", "at": r["at"], "ref": r["id"],
+                    "text": f"Run failed: {(r['prompt'] or r['kind'] or 'run')[:80]}", "detail": r["hint"] or r["error"] or ""})
+    for r in conn.execute(
+            "SELECT id, kind, status, prompt, started_at FROM jobs WHERE org_id=? AND deal_id=? AND status='running' "
+            "ORDER BY rowid DESC LIMIT 3", (org_id, deal_id)):
+        out.append({"kind": "job_running", "severity": "info", "at": r["started_at"] or "", "ref": r["id"],
+                    "text": f"Running: {(r['prompt'] or r['kind'] or 'run')[:80]}", "detail": ""})
+    out.sort(key=lambda s: (s["at"] or ""), reverse=True)
+    return out[:6]
+
+
+def deal_board(ctx):
+    """The front dashboard: one row per deal with its counts, its latest deliverable and what needs attention."""
+    rows = ctx.conn.execute(_DEAL_SQL + " ORDER BY COALESCE(m.updated_at, d.created_at) DESC, d.deal_id LIMIT 200",
+                            (ctx.org_id,)).fetchall()
+    items = []
+    for r in rows:
+        d = _summary(ctx.conn, r)
+        last = ctx.conn.execute(
+            "SELECT name, version, kind, created_at FROM deal_deliverables WHERE org_id=? AND deal_id=? "
+            "ORDER BY created_at DESC, version DESC LIMIT 1", (ctx.org_id, r["deal_id"])).fetchone()
+        d["latest_deliverable"] = ({"name": last["name"], "version": last["version"], "kind": last["kind"],
+                                    "created_at": last["created_at"]} if last else None)
+        d["signals"] = _board_signals(ctx.conn, ctx.org_id, r["deal_id"])
+        items.append(d)
+    return {"items": items, "generated_at": db.now()}
+
+
 def create_deal_record(conn, store, org_id, user_id, name, target="", sector="", status="active", definitions=None) -> str:
     defs = firm_definitions(conn, org_id)
     defs.update(definitions or {})
@@ -710,6 +754,7 @@ def index_document_sync(state, doc_id: str) -> None:
 
 ROUTES = [
     Route("GET", P + "/deals", list_deals, role="viewer"),
+    Route("GET", P + "/deals/board", deal_board, role="viewer"),
     Route("POST", P + "/deals", create_deal, role="member"),
     Route("GET", P + "/deals/{deal_id}", get_deal, role="viewer"),
     Route("PATCH", P + "/deals/{deal_id}", patch_deal, role="member"),

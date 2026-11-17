@@ -124,6 +124,40 @@ class DealTests(DealCase):
         self.assertEqual(d["counts"]["deliverables"], 1)
 
 
+class BoardTests(DealCase):
+    def test_board_shape_and_tenancy(self):
+        s, d, _ = self.c.j("GET", "/api/v1/deals/board")
+        self.assertEqual(s, 200)
+        self.assertIn("generated_at", d)
+        self.assertEqual([i["deal_id"] for i in d["items"]], [self.deal])
+        row = d["items"][0]
+        for k in ("name", "target", "sector", "status", "counts", "latest_deliverable", "signals"):
+            self.assertIn(k, row)
+        self.assertIsNone(row["latest_deliverable"])
+        self.assertEqual(row["signals"], [])
+
+    def test_board_reports_failed_document_and_latest_deliverable(self):
+        self.upload_multipart([("broken.pdf", b"%PDF-1.4\nthis is not a real pdf\n%%EOF", "application/pdf")])
+        self.wait_indexed()
+        self.conn.execute("INSERT INTO deal_deliverables(org_id,deal_id,name,version,kind,sha256,size,note,created_at) "
+                          "VALUES(?,?,?,?,?,?,?,?,?)", (self.org, self.deal, "model.xlsx", 2, "xlsx", "0" * 64, 10, "", "2026-11-17T10:00:00Z"))
+        row = self.c.j("GET", "/api/v1/deals/board")[1]["items"][0]
+        self.assertEqual(row["latest_deliverable"]["name"], "model.xlsx")
+        self.assertEqual(row["latest_deliverable"]["version"], 2)
+        self.assertEqual([s["kind"] for s in row["signals"]], ["doc_failed"])
+        self.assertEqual(row["signals"][0]["severity"], "high")
+
+    def test_board_is_scoped_to_the_org(self):
+        other, _ = self.make_org("Other Capital", "o@other.example")
+        oc = self.client("o@other.example")
+        self.assertEqual(oc.j("GET", "/api/v1/deals/board")[1]["items"], [])
+        self.assertEqual(len(self.c.j("GET", "/api/v1/deals/board")[1]["items"]), 1)
+
+    def test_board_requires_a_session(self):
+        anon = Client(self.port)
+        self.assertEqual(anon.j("GET", "/api/v1/deals/board", csrf=False, cookie=False)[0], 401)
+
+
 class DocumentTests(DealCase):
     def test_multipart_pdf_indexes_with_text_lines_and_tables(self):
         events = notify.subscribe(self.org)

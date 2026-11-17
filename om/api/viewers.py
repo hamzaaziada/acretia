@@ -528,9 +528,15 @@ def model_explain(ctx):
     ex["dependents"] = deps
     ex["n_dependents"] = len(wbgraph.dependents(g, key))
     ex["value"] = _num(ex.get("value"))
-    ct = _citation_tokens(ctx, ctx.params["deal_id"]).get(key)
+    cites = _citation_tokens(ctx, ctx.params["deal_id"])
+    ct = cites.get(key)
     if ct and not ex.get("formula"):
         ex["citation_token"] = ct["token"]
+    # Leaf inputs carry their own citation token, so the drawer can show the source page for each one.
+    for leaf in ex.get("inputs") or []:
+        lc = cites.get(leaf.get("cell"))
+        if lc:
+            leaf["citation_token"] = lc["token"]
     ex["note"] = book.comments.get(wbgraph.split_key(key)[0], {}).get(wbgraph.split_key(key)[1:3])
     return ex
 
