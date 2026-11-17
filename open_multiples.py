@@ -764,6 +764,12 @@ def main() -> None:
     pm3.add_argument("--no-circ", action="store_true", help="interest on opening balances (no circularity)")
     pm3.add_argument("--years", type=int, default=5, help="years of actuals (default 5)")
     pm3.add_argument("--out", help="output .xlsx path (default data/out/<TICKER> three-statement model.xlsx)")
+    pim = sp.add_parser("intl-model", help="annual-report PDF (native/scanned, Arabic/English) -> tied, cited three-statement model")
+    pim.add_argument("pdf")
+    pim.add_argument("--out", required=True, help="output .xlsx path")
+    pim.add_argument("--company")
+    pim.add_argument("--prior", help="previous year's report PDF (comparatives tie)")
+    pim.add_argument("--json", action="store_true", help="print the full ReportResult as JSON")
     pg = sp.add_parser("grade", help="grade any Excel model: errors, checks, balance, hard-codes, consistency, colours, circularity, sources")
     pg.add_argument("file")
     pg.add_argument("--json", action="store_true")
@@ -814,6 +820,9 @@ def main() -> None:
         cmd_slides(args)
     elif args.cmd == "model":
         cmd_model(args)
+    elif args.cmd == "intl-model":
+        from om.intl.pipeline import cmd_intl_model
+        sys.exit(cmd_intl_model(args))
     elif args.cmd == "grade":
         cmd_grade(args)
     elif args.cmd == "bench":
