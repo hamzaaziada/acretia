@@ -1,0 +1,123 @@
+/* Shared viewer styles: citation popover, fallbacks. Logical properties only. */
+
+.cite-pop {
+  position: fixed;
+  z-index: 900;
+  inline-size: min(380px, calc(100vw - 16px));
+  padding: var(--acr-s-3);
+  background: var(--acr-surface);
+  color: var(--acr-text);
+  border: 1px solid var(--acr-border-strong);
+  border-radius: var(--acr-radius-lg);
+  box-shadow: var(--acr-shadow-3);
+  font-size: var(--acr-fs-12);
+  line-height: 1.5;
+  display: grid;
+  gap: var(--acr-s-2);
+  transition: opacity 90ms var(--acr-ease);
+}
+.cite-pop__head {
+  display: flex;
+  align-items: center;
+  gap: var(--acr-s-2);
+  min-inline-size: 0;
+}
+.cite-pop__icon {
+  display: inline-grid;
+  place-items: center;
+  color: var(--acr-accent-text);
+}
+.cite-pop__name {
+  flex: 1;
+  min-inline-size: 0;
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.cite-pop__page {
+  flex: none;
+  padding: 1px 6px;
+  border-radius: var(--acr-radius-sm);
+  background: var(--acr-accent-subtle);
+  color: var(--acr-accent-text);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+.cite-pop__ctx {
+  margin: 0;
+  padding-inline-start: var(--acr-s-3);
+  border-inline-start: 2px solid var(--acr-accent);
+  display: -webkit-box;
+  -webkit-line-clamp: 6;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.cite-pop__dim {
+  color: var(--acr-text-3);
+}
+.cite-pop__mark {
+  background: color-mix(in srgb, var(--acr-accent) 22%, transparent);
+  color: var(--acr-text);
+  padding-inline: 1px;
+  border-radius: 2px;
+  box-decoration-break: clone;
+  -webkit-box-decoration-break: clone;
+}
+.cite-pop__foot {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--acr-s-2) var(--acr-s-3);
+  color: var(--acr-text-3);
+  font-size: var(--acr-fs-11);
+}
+.cite-pop__tag {
+  padding: 0 5px;
+  border-radius: var(--acr-radius-sm);
+  background: var(--acr-surface-2);
+}
+.cite-pop__hint {
+  margin-inline-start: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--acr-accent-text);
+  font-weight: 500;
+}
+.cite-pop__loading {
+  display: grid;
+  gap: var(--acr-s-2);
+}
+.cite-pop__err {
+  margin: 0;
+  color: var(--acr-negative);
+}
+
+[data-cite] {
+  cursor: pointer;
+}
+[data-cite]:focus-visible {
+  outline: 2px solid var(--acr-focus);
+  outline-offset: 1px;
+}
+
+/* Missing-viewer fallback and route loading */
+.vw-fallback {
+  display: grid;
+  place-items: center;
+  min-block-size: 60vh;
+  padding: var(--acr-s-8) var(--acr-s-4);
+}
+.vw-loading {
+  display: grid;
+  gap: var(--acr-s-3);
+  padding: var(--acr-s-6);
+  max-inline-size: 720px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cite-pop {
+    transition: none;
+  }
+}

@@ -8,7 +8,7 @@ One row per active claim. Claim a packet before you touch its files, commit the 
 | S5.4b evals + VDR50 (session D) | worker | main | 2026-11-17 | evals/vdr50/*, evals/odl_bench/*, evals/out/*, scripts/build_vdr50.py, scripts/eval_s5.py, tests/test_s5_eval_runner.py, scorecard.csv (S5 rows only) |
 | S5.5c Matrix Chat (session D) | worker | main | 2026-11-17 | om/grid_chat.py, tests/test_grid_chat.py, tests/fixtures/grid_chat/* |
 | S5.6 grid interfaces doc (session D) | worker | main | 2026-11-17 | docs/interfaces.md ("Document grid (S5)" section only) |
-| S5.F1 completeness recovery (session D) | worker | main | 2026-11-17 | om/docparse.py, tests/test_docparse.py |
+| S5.F3a RTL logical order (session D) | worker | main | 2026-11-17 | om/docparse.py, tests/test_docparse.py, tests/test_docparse_rtl.py |
 | S5.F2 extractive precision (session D) | worker | main | 2026-11-17 | om/grid.py, tests/test_grid.py, tests/test_grid_parity.py, tests/test_grid_extractive.py |
 | S5 docs (session D) | Boss | main | 2026-11-16 | docs/s5/* |
 | S1 gate | Boss | claude/dreamy-ramanujan-k8p2xt | 2026-11-16 | scripts/verify_s1.py |
@@ -33,7 +33,6 @@ One row per active claim. Claim a packet before you touch its files, commit the 
 | S6.2 figure verifier | worker (session A) | claude/dreamy-ramanujan-k8p2xt | 2026-11-16 | src/harness/research/verify.py, tests/test_research_verify.py |
 | FP-S1c buyer-research rubric thresholds | worker (session A) | claude/dreamy-ramanujan-k8p2xt | 2026-11-17 | docs/buyer-research.md |
 | S4.fix2 formula engine coverage (SpreadsheetBench) | worker (session C) | claude/busy-knuth-i3ewp5 | 2026-11-17 | om/formula.py, tests/test_formula_ext2.py |
-| FP-S2b adapter/ledger/PII/router | worker (session A) | claude/dreamy-ramanujan-k8p2xt | 2026-11-17 | src/harness/adapter.py, src/harness/ledger.py, src/harness/router.py, src/harness/profiles/*, om/pii.py, om/replay.py, tests/test_adapter.py, tests/test_harness_router.py, tests/test_llm_router.py |
 | S6.1c awaiting_review + quarterly data | worker (session A) | claude/dreamy-ramanujan-k8p2xt | 2026-11-17 | om/contracts.py (Job.status enum only), src/harness/research/jobs.py, src/harness/research/workflows/review.py, src/harness/research/tools.py, tests/test_research_api.py, tests/test_research_tools.py, tests/test_research_workflows.py |
 | FP-S4-A data fidelity (statements/concepts/facts) | worker (session C) | claude/busy-knuth-i3ewp5 | 2026-11-17 | om/statements.py, om/concepts.py, om/facts.py, tests/test_statements_fix.py |
 | FP-S4-B model3 valuation + robustness | worker (session C) | claude/busy-knuth-i3ewp5 | 2026-11-17 | om/model3.py, tests/test_model3_fix.py, license-and-repo-ledger.csv (one row) |
@@ -41,6 +40,10 @@ One row per active claim. Claim a packet before you touch its files, commit the 
 | FP-S4-D LBO + merger | worker (session C) | claude/busy-knuth-i3ewp5 | 2026-11-17 | om/lbo.py, om/merger.py, tests/test_lbo_merger_fix.py |
 | FP-S4-E comps + market | worker (session C) | claude/busy-knuth-i3ewp5 | 2026-11-17 | om/comps.py, om/market.py, tests/test_comps_fix.py |
 | FP-S4-F validator 3-column rows | worker (session C) | claude/busy-knuth-i3ewp5 | 2026-11-17 | om/validate_xlsx.py, tests/test_validate_fix.py |
+| S2-rr S2 specialist re-review | reviewer (session A) | claude/dreamy-ramanujan-k8p2xt | 2026-11-17 | docs/reviews/s2-specialist.md |
+| S6-gate verify_s6.py | gate-writer (session A) | claude/dreamy-ramanujan-k8p2xt | 2026-11-17 | scripts/verify_s6.py, tests/fixtures/s6gate/** |
+| S7.5b Docker/compose/deploy | worker (session A) | claude/dreamy-ramanujan-k8p2xt | 2026-11-17 | Dockerfile, .dockerignore, docker-compose.yml, deploy/**, DEPLOY.md, scripts/verify_s7_deploy.py |
+| S7.4a security review | reviewer (session A) | claude/dreamy-ramanujan-k8p2xt | 2026-11-17 | SECURITY_REPORT.md, docs/reviews/security-*.md |
 
 ## Log
 - 2026-11-16: created; no active claims.
@@ -88,3 +91,7 @@ One row per active claim. Claim a packet before you touch its files, commit the 
 - 2026-11-16: session A: FP-S2c done (pending S2 re-review).
 - 2026-11-16: session A: S6.1, S6.4, S6.5a, S6.5b done; S6.1c claimed.
 - 2026-11-17: S4.6c, S4 gate, S4.10 merged and released. Fix Packets FP-S4-A..F claimed (IB VP review 6.2/10, gate FAILs, reliability 52%).
+- 2026-11-16: session A: FP-S2a-d all done; S2 specialist re-review claimed.
+- 2026-11-17: S5.F1 verified on main and released; S5.F3a claimed (session D).
+- 2026-11-16: session A: S6 gate-writer claimed.
+- 2026-11-16: session A: S7.5b and S7.4a claimed.

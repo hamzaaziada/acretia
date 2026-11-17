@@ -4,12 +4,12 @@
 
 | v2 stage | Status | Evidence |
 |---|---|---|
-| S1 Ledger, teardowns, buyer research | ⬜ | ledger started (1 row) |
-| S2 Harness, router, adapter | 🟡 | v1 M1 ✅ (contracts, storage, PII, replay, DealMemory, router hardening; verify_m1 20/20). Adapter, router/profiles, MCP, connectors, evidence chain and DuckDB storage landed on main (e988e01, f8bc923); `scripts/verify_s2.py` 16/16 so far, connector section and graders pending |
+| S1 Ledger, teardowns, buyer research | 🟡 | Deterministic gate `scripts/verify_s1.py` 13/13 (exact ledger mapping, import coverage, copyleft isolation, NOTICE coverage, labelled teardowns). Specialist review PASS WITH FIXES 7.5/10, all High fixed. Teardowns: 15 deck engines + Excel/grid/research on real inputs. Buyer research: 56 sources, self-consistent rubric (102-anchor computed self-test). Persona gate NOT met: round 8 IB 7.4, MBB 6.6, PE 6.3 (D-S1-04) |
+| S2 Harness, router, adapter | 🟡 | Deterministic gate `scripts/verify_s2.py` 32/32 and `verify_m1` 20/20 (hermetic). Adapter, router/profiles, MCP stdio servers, connectors, evidence chain, DuckDB storage on main. Specialist review round 1 FAIL 5/10 (1 Critical, 7 High) → FP-S2a–d fixed; re-review in progress. Persona gate n/a (infrastructure) |
 | S3 Deck engine + eval | 🟡 | Deck Studio, spacing, graders exist |
 | S4 Excel engine | 🟡 | 3-statement + DCF, grader, bench verified |
 | S5 Document matrix grid | 🟡 | Session D building S5.1–S5.4 (claimed 2026-11-16). Existing: Matrix with verified quotes (no bbox/DuckDB) |
-| S6 Research agent | 🟡 | Ask with verified citations exists |
+| S6 Research agent | 🟡 | Built: job interface (S6.0), sourced tools (S6.1b), figure verifier (S6.2), eval harness Vals/FinanceBench/BankerToolBench in replay (S6.3), workflows incl. tick-and-tie and source review (S6.1), schedules/email (S6.4), admin + SCIM/ACL (S6.5). Gate script, specialist review and personas pending; live evals need an endpoint (D-021) |
 | S7 UI, security, Docker/CI | ⬜ | |
 | Product (Felix parity, session F) | 🟡 | Not demoable yet. On main: SPEC + API/security/test-id contracts (docs/product/SPEC.md), API core (om/api/http.py, db.py; 22 tests). In flight (worktrees, not merged): backend services (auth/RBAC/CSRF, audit chain, deals, documents, library, notifications, demo seed), job runtime + 14-task agent library + telemetry + TSB baselines parser, frontend shell + agent home + run view, PDF citation inspector + model view, Matrix grid + deck viewer, independent gate (verify_product.py, Playwright P-J1..P-J8, parity checklist tests). Container restart lost the first wave once (re-dispatched). No grader has run: no ✅ until verify_product, the UI/UX-lead reviewer and the Haiku personas all pass (D-033) |
 | S8 International accounting + OCR financials | 🟡 | Session E building S8.1–S8.7 (claimed 2026-11-16) |
@@ -35,3 +35,4 @@ Status: ✅ verified (gate passed) · 🟡 partial · ⬜ not started. Update th
 - 2026-11-16: M1 gate passed (19/19), suite 222 green. Next: M2.
 - 2026-11-16: Architectural pivot to plan v2. Meshpool Harness reference code added. M1 work (gated) maps into S2. Next: S1.
 - 2026-11-16: session A: reviewer findings (router live path, OCR test recursion, psycopg/pypdf ledger rows) fixed in f8bc923; verify_m1 20/20 hermetic.
+- 2026-11-17: session A: S1 deterministic + specialist graders pass; persona gate not met after 8 rounds (D-S1-04). S2 fixes for specialist findings landed; re-review running. S6 packets built; S6 gate next.
