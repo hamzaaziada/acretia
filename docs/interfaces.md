@@ -141,3 +141,40 @@ Guarantees:
 - No model call is made, so `tokens` and `cost_usd` are 0.
 
 Stability: fields are only added within `"v": 1`.
+
+## Deck engine (S3, session B)
+
+One stable call for the product app: **brief → ghost deck → (approval) → deck + validation report**.
+
+```python
+from om.deck.engine import deck_from_brief, build
+from src.harness.adapter import Adapter
+
+res = deck_from_brief(brief,                    # str, or dict {"brief", "client", "lang", optional "ghost", "spec"}
+                      adapter=Adapter.from_env(),  # None or replay-miss -> needs brief["ghost"] + brief["spec"]
+                      lang="en",                # "ar" -> RTL deck
+                      approve=None,             # None: return the ghost for UI approval, no deck
+                                                # True or callable(GhostDeck) -> bool: build after approval
+                      out="deck.pptx", seed=None, template=None, critic=True)
+# -> {"ghost": GhostDeck dict, "pptx": path | None, "report": BuildReport dict}
+```
+
+Two-step flow for the UI (S7.3 workbench): call once with `approve=None` and show `res["ghost"]` (action titles,
+sections, lint findings). When the user approves (optionally after editing titles), call again with the edited
+ghost in `brief["ghost"]` and `approve=True`.
+
+`build(spec, *, out, adapter=None, ghost=None, require_ghost_approval=False, seed=None, template=None,
+profile=None, manifest=None, values=None, critic=True, n_candidates=3, job_id=None, strict=True) -> BuildReport`
+builds from a DeckSpec v2 (YAML/JSON, `om/deck/spec.py`).
+
+BuildReport (`.to_dict()`): `ok`, `path`, `slides`, `critical`, `major`, `findings` (each `{severity, rule, slide,
+shape_id, shape_name, message}`: shape ids let the UI badge the exact shape), `art_direction`, `image_probe`,
+`visuals` (per slide candidates, scores, kept id), `critic` ("not run live" offline), `timings` (per step ms),
+`total_seconds`, `tokens`, `cost_usd`, `numbers_digest` (same brief + data → same digest; visuals may vary),
+`job` (om.contracts.Job dict).
+
+Related: `scripts/validate_pptx.py deck.pptx --json` (validator alone), `om.deck.sync.resync(pptx, manifest,
+values)` (refresh bound charts/tables/KPIs from the model, no LLM), `om.deck.revise` / `om.deck.versions`
+(per-slide revision, annotations, versions, rollback). CLI: `python3 open_multiples.py slides build spec.yaml
+--out deck.pptx [--json]`. Stability: the call signature and the report keys above are stable from S3; new keys
+may be added, none removed without a decision entry.

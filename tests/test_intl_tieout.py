@@ -280,12 +280,11 @@ class SoftTieTests(unittest.TestCase):
 class ReviewTests(unittest.TestCase):
     @staticmethod
     def tiny_pdf():
-        from reportlab.pdfgen import canvas
-        buf = io.BytesIO()
-        c = canvas.Canvas(buf, pagesize=(300, 400))
-        c.drawString(20, 300, "Revenue                 1,100.000")
-        c.save()
-        return buf.getvalue()
+        from om.pdfwrite import PDFWriter
+        w = PDFWriter(page_size=(300, 400))
+        w.page()
+        w.text(20, 300, "Revenue                 1,100.000")
+        return w.to_bytes()
 
     def mutated(self):
         ex = make()

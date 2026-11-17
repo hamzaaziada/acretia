@@ -71,10 +71,11 @@ export function CommandPalette({ open, onClose, label, placeholder, value, onVal
   let idx = -1;
   return createPortal(
     <div className="acr-scrim acr-scrim--palette" onMouseDown={(e) => e.target === e.currentTarget && onClose()}>
-      <div ref={ref} role="dialog" aria-modal="true" aria-label={label} className="acr-palette" tabIndex={-1}>
+      <div ref={ref} role="dialog" aria-modal="true" aria-label={label} className="acr-palette" data-testid="cmdk" tabIndex={-1}>
         <textarea
           ref={input}
           data-autofocus
+          data-testid="cmdk-input"
           rows={2}
           className="acr-palette__input"
           placeholder={placeholder}
@@ -103,6 +104,7 @@ export function CommandPalette({ open, onClose, label, placeholder, value, onVal
                       key={it.id}
                       id={`${listId}-${my}`}
                       role="option"
+                      data-testid="cmdk-item"
                       aria-selected={my === active}
                       className={cx('acr-palette__item', my === active && 'is-active')}
                       onMouseEnter={() => setActive(my)}

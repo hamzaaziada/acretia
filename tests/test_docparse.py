@@ -2,6 +2,7 @@ import http.server
 import json
 import os
 import re
+import shutil
 import threading
 import unittest
 from types import SimpleNamespace as NS
@@ -42,6 +43,10 @@ PDF = make_pdf()
 HAVE_DOCLING = parse_dl = docparse.docling_available()
 
 
+HAVE_PDF_TEXT = pdfdoc.pdfplumber is not None or shutil.which("pdftotext") is not None
+
+
+@unittest.skipUnless(HAVE_PDF_TEXT, "needs pdfplumber (pip, requirements.txt) or poppler pdftotext (system binary: apt-get install poppler-utils)")
 class TestPdfdocBackend(unittest.TestCase):
     @classmethod
     def setUpClass(cls):

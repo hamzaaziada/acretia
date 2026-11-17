@@ -288,6 +288,7 @@ export interface UseJob {
   loading: boolean;
   error: ApiError | null;
   reload: () => void;
+  reconnect: () => void;
   dispatchLocal: (a: { kind: 'clear-approval' }) => void;
 }
 
@@ -295,6 +296,7 @@ export function useJob(jobId: string | undefined): UseJob {
   const [state, dispatch] = useReducer(foldRun, EMPTY_RUN);
   const [connection, setConnection] = useState<StreamState>('connecting');
   const [now, setNow] = useState(() => Date.now());
+  const [epoch, setEpoch] = useState(0);
   const job = useResource<Job | null>((signal) => (jobId ? api.get<Job>(`/jobs/${jobId}`, { signal }) : Promise.resolve(null)), [jobId]);
 
   useEffect(() => {
@@ -332,7 +334,7 @@ export function useJob(jobId: string | undefined): UseJob {
     });
     return () => close();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [jobId]);
+  }, [jobId, epoch]);
 
   const active = !TERMINAL_JOB.includes(state.status);
   useEffect(() => {
@@ -347,8 +349,9 @@ export function useJob(jobId: string | undefined): UseJob {
   const end = !active && endIso ? new Date(endIso).getTime() : now;
   const elapsed = start ? Math.max(0, (end - start) / 1000) : 0;
 
+  const reconnect = useCallback(() => setEpoch((n) => n + 1), []);
   const dispatchLocal = useCallback((a: { kind: 'clear-approval' }) => dispatch(a), []);
-  return { state, connection, elapsed, loading: job.loading, error: job.error, reload: job.reload, dispatchLocal };
+  return { state, connection, elapsed, loading: job.loading, error: job.error, reload: job.reload, reconnect, dispatchLocal };
 }
 
 /* ---------- org-wide events (notifications + job status) ---------- */
@@ -371,7 +374,7 @@ export function OrgEventsProvider({ children }: { children: ReactNode }) {
       listeners.current.forEach((fn) => fn({ name, data }));
     };
     const close = openStream('/events', {
-      events: { notification: emit('notification'), job: emit('job'), status: emit('job') },
+      events: { notification: emit('notification'), job: emit('job'), status: emit('job'), document: emit('document') },
       message: (data) => emit('message')(data),
     });
     return () => {

@@ -18,6 +18,7 @@ SCHEMA_MODULES: tuple[str, ...] = (
     "om.api.notify",
     "om.api.jobs",
     "om.api.agents.library",
+    "om.api.citations",
     "om.api.viewers",
     "om.api.firm",
     "om.api.mail",

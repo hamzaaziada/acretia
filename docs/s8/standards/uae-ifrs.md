@@ -1,18 +1,19 @@
 # IFRS in the UAE and wider GCC (UAE, Qatar, Kuwait, Bahrain, Oman)
 
-*Generated from `om/intl/standards/frameworks.yaml`. Authored by Acretia in its own words. Confidence: unverified.*
+*Generated from `om/intl/standards/frameworks.yaml`. Authored by Acretia in its own words. Confidence: verified.*
 
 **Issuer:** Local securities regulators and commercial company laws; IASB standards used unmodified  
 **Jurisdictions:** UAE, Qatar, Kuwait, Bahrain, Oman
 
 ## Summary
-Listed and most regulated entities in the UAE apply full IFRS as issued by the IASB with no local carve-outs. Federal corporate tax (9 percent above a threshold) began for financial years starting on or after 1 June 2023, so earlier years show no income tax for most UAE entities and later years need deferred tax. Gratuity under the labour law is a defined benefit item.
+The UAE has no local GAAP: companies law requires international standards. Listed companies (DFM, ADX) under the securities regulator (the SCA, reconstituted as the Capital Market Authority from 1 January 2026) and most regulated entities in the UAE apply full IFRS as issued by the IASB with no local carve-outs. Federal corporate tax (9 percent above AED 375,000) began for financial years starting on or after 1 June 2023, so earlier years show no income tax for most UAE entities and later years need deferred tax. Large multinational groups also face a 15 percent Domestic Minimum Top-up Tax from 2025. Gratuity under the labour law is a defined benefit item.
 
 ## Relationship to full IFRS
 Full IFRS, unmodified. GCC states differ on local tax and labour law, not on the standards.
 
 ## Effective dates and caveats
-- UAE federal corporate tax: financial years starting on or after 1 June 2023 (UNVERIFIED: confirm decree text)
+- UAE federal corporate tax: 9 percent above AED 375,000, financial years starting on or after 1 June 2023
+- UAE Domestic Minimum Top-up Tax: 15 percent for groups with revenue of EUR 750m or more, fiscal years from 1 January 2025 (Cabinet Decision 142 of 2024)
 
 ## Presentation
 - **Profit or loss layout:** By function typical; real estate developers often show revenue and direct costs.
@@ -88,6 +89,14 @@ Full IFRS, unmodified. GCC states differ on local tax and labour law, not on the
 - `diff-eosb-gcc-egypt` (end_of_service): recipe `eosb_as_debt_like`
 - `diff-government-grants` (government_grants): recipe `gov_grant_gross_up`
 - `diff-uae-corporate-tax` (zakat_tax): recipe `zakat_as_tax`
+- `diff-uae-dmtt-pillar-two` (zakat_tax): recipe `zakat_as_tax`
+- `diff-uae-ifrs-requirement` (framework_adoption): recipe `eas_to_ifrs_map`
+- `diff-uae-ct-year-ends` (zakat_tax): recipe `zakat_as_tax`
+
+**Verified facts**
+- 9 percent above AED 375,000, from 1 June 2023 financial years: <https://mof.gov.ae/en/news/ministry-of-finance-confirms-applicable-taxable-income-threshold-for-corporate-tax-abu-dhabi-uae/>
+- DMTT 15 percent, EUR 750m, from 1 Jan 2025: <https://www.ey.com/en_gl/technical/tax-alerts/uae-issues-domestic-minimum-top-up-tax-legislation>
 
 ## Sources
-- IFRS adoption by jurisdiction, UAE profile: <https://www.ifrs.org/use-around-the-world/use-of-ifrs-standards-by-jurisdiction/>
+- UAE Ministry of Finance, Corporate tax rate and threshold: <https://mof.gov.ae/en/news/ministry-of-finance-confirms-applicable-taxable-income-threshold-for-corporate-tax-abu-dhabi-uae/>
+- Cabinet Decision 142 of 2024, DMTT: <https://www.ey.com/en_gl/technical/tax-alerts/uae-issues-domestic-minimum-top-up-tax-legislation>
