@@ -100,6 +100,30 @@ class RoutingTests(unittest.TestCase):
             self.assertEqual(rows[1][4], "modeling")
 
 
+class LogSafetyTests(unittest.TestCase):
+    def _row(self, request):
+        with tempfile.TemporaryDirectory() as d:
+            p = os.path.join(d, "r.csv")
+            R.route(request, log_path=p)
+            with open(p, newline="") as fh:
+                return list(csv.reader(fh))[1]
+
+    def test_pii_masked_in_log(self):
+        row = self._row("Build a DCF for jane.doe@example.com, card 4111 1111 1111 1111, call +44 20 7946 0958")
+        for raw in ("jane.doe", "4111", "7946"):
+            self.assertNotIn(raw, ",".join(row))
+        self.assertIn("[EMAIL_1]", row[2])
+
+    def test_formula_injection_neutralised(self):
+        for lead in ("=", "+", "-", "@", "\t", "\r"):
+            with self.subTest(lead=repr(lead)):
+                self.assertTrue(self._row(lead + "cmd|' /C calc'!A0 build a dcf")[2].startswith("'" + lead))
+
+    def test_truncated_to_500(self):
+        self.assertLessEqual(len(self._row("model " + "x" * 5000)[2]), 500)
+        self.assertEqual(R.csv_safe("a" * 900), "a" * 500)
+
+
 class ProfileTests(unittest.TestCase):
     def test_all_profiles_complete(self):
         ps = R.load_profiles()

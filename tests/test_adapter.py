@@ -232,6 +232,29 @@ class KeyHostTests(unittest.TestCase):
         with self.assertRaises(LLMError):
             Adapter("http://api.openai.com/v1", KEY, "m", transport=lambda *a, **k: {})
 
+    def test_key_with_unknown_host_and_no_key_host_is_refused(self):
+        for url in ("https://gateway.example.com/v1", "https://evil.example/v1", "https://llm.meshpool.ai.evil.com/v1"):
+            with self.subTest(url=url), self.assertRaises(LLMError) as cm:
+                Adapter(url, KEY, "m", transport=lambda *a, **k: self.fail("sent"))
+            self.assertIn("key_host", str(cm.exception))
+            self.assertNotIn(KEY, str(cm.exception))
+        a = Adapter("https://gateway.example.com/v1", KEY, "m", key_host="gateway.example.com", transport=lambda *a, **k: {})
+        self.assertEqual(a.key_host, "gateway.example.com")
+        Adapter("https://gateway.example.com/v1", None, "m")                    # no key: no binding needed
+
+    def test_from_env_key_host_from_preset_or_env(self):
+        env = {"ACRETIA_LLM_BASE_URL": "https://api.anthropic.com/v1", "ACRETIA_LLM_API_KEY": KEY}
+        with mock.patch.dict(os.environ, env, clear=True):
+            self.assertEqual(Adapter.from_env().key_host, "api.anthropic.com")
+        env = {"ACRETIA_LLM_BASE_URL": "https://gateway.example.com/v1", "ACRETIA_LLM_API_KEY": KEY}
+        with mock.patch.dict(os.environ, env, clear=True):
+            with self.assertRaises(LLMError):
+                Adapter.from_env()
+        with mock.patch.dict(os.environ, {**env, "ACRETIA_LLM_KEY_HOST": "gateway.example.com"}, clear=True):
+            self.assertEqual(Adapter.from_env().key_host, "gateway.example.com")
+        for h in ("llm.meshpool.ai", "api.anthropic.com", "api.openai.com", "generativelanguage.googleapis.com"):
+            self.assertIn(h, adp.KNOWN_KEY_HOSTS)
+
     def test_base_url_mutated_after_construction_is_refused_before_sending(self):
         a, t = make(reply("x"))
         a.base_url = "https://evil.com/v1"
@@ -417,7 +440,8 @@ class LedgerTests(unittest.TestCase):
     def test_price_table_longest_match_and_cache_discount(self):
         self.assertAlmostEqual(cost_usd("gpt-4.1-mini-2025", 1_000_000, 0), 0.40)
         self.assertAlmostEqual(cost_usd("gpt-4.1", 1_000_000, 0), 2.0)
-        self.assertAlmostEqual(cost_usd("claude-sonnet-5", 0, 1_000_000), 15.0)
+        self.assertAlmostEqual(cost_usd("claude-sonnet-5-5", 0, 1_000_000), 10.0)      # verified 2026-11-16
+        self.assertAlmostEqual(cost_usd("claude-sonnet-4-5", 0, 1_000_000), 15.0)
         self.assertAlmostEqual(cost_usd("gpt-4.1", 1_000_000, 0, 1_000_000), 0.2)
         self.assertEqual(cost_usd("ollama:qwen", 10**6, 10**6), 0.0)
 
@@ -531,6 +555,322 @@ class HeaderEncodingTests(unittest.TestCase):
             with self.assertRaises(LLMError) as cm:
                 adp.urllib_transport("https://llm.meshpool.ai/v1/x", {}, {"X-Test": "a\r\nb"})
         self.assertIn("X-Test", str(cm.exception))
+
+
+# ====================================================================================== FP-S2b
+import textwrap  # noqa: E402
+import subprocess  # noqa: E402
+import threading  # noqa: E402
+import time  # noqa: E402
+from src.harness.adapter import StreamInterrupted  # noqa: E402
+
+MSG = [{"role": "user", "content": "q"}]
+
+
+class AtomicSpendTests(unittest.TestCase):
+    def test_threads_never_exceed_limit_and_blocked_never_reach_transport(self):
+        led = Ledger(guard=SpendGuard(0.05))
+        live, peak, calls = [0], [0], [0]
+        lock = threading.Lock()
+
+        def transport(url, body, headers):
+            with lock:
+                calls[0] += 1
+                live[0] += 1
+                peak[0] = max(peak[0], live[0])
+            time.sleep(0.15)
+            with lock:
+                live[0] -= 1
+            return reply("x", 10, 5)
+        a = Adapter("https://llm.meshpool.ai/v1", KEY, "claude-sonnet-x", transport=transport, mode="live", ledger=led, mask=False)
+        outcomes = []
+
+        def worker():
+            try:
+                a.chat(MSG, max_tokens=2000, job_id="J")
+                outcomes.append("ok")
+            except BudgetExceeded:
+                outcomes.append("blocked")
+        ts = [threading.Thread(target=worker) for _ in range(8)]
+        [t.start() for t in ts]
+        [t.join() for t in ts]
+        self.assertEqual(outcomes.count("ok"), calls[0])            # a blocked call never touched the transport
+        self.assertGreaterEqual(outcomes.count("blocked"), 1)
+        self.assertEqual(peak[0], 1)                                # worst case $0.03 each: one in flight at a time
+        self.assertLessEqual(led.total()["cost_usd"] + led.inflight_usd(), 0.05)
+        self.assertEqual(led.inflight_usd(), 0.0)
+
+    def test_four_processes_share_one_budget(self):
+        with tempfile.TemporaryDirectory() as d:
+            ledger, log = Path(d) / "l.jsonl", Path(d) / "sends.log"
+            code = textwrap.dedent(f"""
+                import sys, time, os
+                sys.path.insert(0, {str(ROOT)!r})
+                from src.harness.adapter import Adapter
+                from src.harness.ledger import Ledger, SpendGuard, BudgetExceeded
+                def tr(url, body, headers):
+                    t0 = time.time(); time.sleep(0.2)
+                    open({str(log)!r}, "a").write(f"{{t0}} {{time.time()}}\\n")
+                    return {{"choices": [{{"message": {{"content": "x"}}, "finish_reason": "stop"}}], "usage": {{"prompt_tokens": 5, "completion_tokens": 2}}}}
+                led = Ledger({str(ledger)!r}, guard=SpendGuard(0.05))
+                a = Adapter("https://llm.meshpool.ai/v1", "{KEY}", "claude-sonnet-x", transport=tr, mode="live", ledger=led, mask=False)
+                for _ in range(3):
+                    try: a.chat([{{"role": "user", "content": "q"}}], max_tokens=2000, job_id="J")
+                    except BudgetExceeded: pass
+            """)
+            ps = [subprocess.Popen([sys.executable, "-c", code]) for _ in range(4)]
+            self.assertTrue(all(p.wait(60) == 0 for p in ps))
+            spans = [tuple(map(float, l.split())) for l in log.read_text().splitlines()]
+            peak = max(sum(1 for (a, b) in spans if a <= t0 < b) for (t0, _) in spans) if spans else 0
+            self.assertEqual(peak, 1)                               # worst-case $0.03: never two sends in flight
+            led = Ledger(ledger, guard=SpendGuard(0.05))
+            self.assertEqual(led.total()["calls"], len(spans))
+            self.assertLessEqual(led.total()["cost_usd"], 0.05)
+            self.assertEqual(led.inflight_usd(), 0.0)
+            self.assertEqual(len(ledger.read_text().splitlines()), len(spans))      # JSONL audit trail kept
+
+    def test_retries_reserve_each_attempt_and_failures_release(self):
+        led = Ledger(guard=SpendGuard(1.0))
+        a, t = make(TransportError("x", 503), reply("ok", 10, 5), ledger=led, mask=False)
+        a.model = "claude-sonnet-x"
+        a.chat(MSG, max_tokens=100)
+        self.assertEqual(len(t.calls), 2)
+        self.assertEqual(led.total()["calls"], 1)                   # the failed attempt cost nothing and holds nothing
+        self.assertEqual(led.inflight_usd(), 0.0)
+
+    def test_retry_blocked_by_budget_is_not_sent(self):
+        led = Ledger(guard=SpendGuard(0.05))
+        hold = led.reserve("other", "claude-sonnet-x", 0.04)         # someone else's in-flight call
+        a, t = make(TransportError("x", 503), reply("ok"), ledger=led, mask=False)
+        a.model = "claude-sonnet-x"
+        with self.assertRaises(BudgetExceeded):
+            a.chat(MSG, max_tokens=2000)
+        self.assertEqual(t.calls, [])
+        led.release(hold)
+
+    def test_settle_and_release_are_idempotent_and_settle_unknown_bills_worst_case(self):
+        led = Ledger(guard=SpendGuard(1.0))
+        r = led.reserve("J", "gpt-4.1", 0.5)
+        row = led.settle(r, None)
+        self.assertAlmostEqual(row["cost_usd"], 0.5, places=4)
+        self.assertEqual(led.settle(r, None), {})
+        led.release(r)
+        self.assertAlmostEqual(led.total()["cost_usd"], 0.5, places=4)
+        r2 = led.reserve("J", "gpt-4.1", 0.3)
+        led.release(r2)
+        led.release(r2)
+        self.assertEqual(led.inflight_usd(), 0.0)
+
+    def test_repair_retry_reserves_again(self):
+        led = Ledger(guard=SpendGuard(0.005))
+        a, t = make(reply("not json", 10, 5), reply('{"answer":"a","n":1}'), ledger=led, mask=False)
+        a.model = "gpt-4.1-mini"
+        with self.assertRaises(BudgetExceeded):
+            a.chat(MSG, json_schema=SCHEMA, max_tokens=2500, job_id="J")      # first fits ($0.004), the repair's reserve does not
+        self.assertEqual(len(t.calls), 1)
+
+
+class StreamBillingTests(unittest.TestCase):
+    def test_abandoned_stream_bills_received_tokens_not_zero(self):
+        led = Ledger(guard=SpendGuard(10.0))
+        a, _ = make(sse("Hello ", "there ", "friend"), ledger=led, mask=False)
+        s = a.chat(MSG, stream=True, max_tokens=1000, job_id="J")
+        it = iter(s)
+        next(it)
+        s.close()
+        tot = led.total("J")
+        self.assertEqual(tot["calls"], 1)
+        self.assertGreater(tot["cost_usd"], 0)
+        self.assertEqual(led.inflight_usd(), 0.0)
+
+    def test_stream_dropped_before_any_text_bills_worst_case(self):
+        led = Ledger(guard=SpendGuard(10.0))
+        a, _ = make([TransportError("reset")] and iter(()), ledger=led, mask=False)   # empty stream, no usage
+        a.model = "gpt-4.1"
+        s = a.chat(MSG, stream=True, max_tokens=1000, job_id="J")
+        self.assertEqual(s.text(), "")
+        self.assertGreater(led.total("J")["cost_usd"], 0)
+
+    def test_unknown_usage_aborted_stream_is_worst_case(self):
+        led = Ledger(guard=SpendGuard(10.0))
+
+        def lines():
+            raise TransportError("conn reset")
+            yield
+        a, _ = make(lines(), ledger=led, mask=False)
+        a.model = "gpt-4.1"
+        with self.assertRaises(TransportError):
+            a.chat(MSG, stream=True, max_tokens=1000, job_id="J").text()
+        worst = cost_usd("gpt-4.1", a._estimate_input_tokens(MSG), 1000)
+        self.assertAlmostEqual(led.total("J")["cost_usd"], worst, places=6)
+
+    def test_mid_stream_failure_before_output_falls_back(self):
+        def broken():
+            raise TransportError("reset", 503)
+            yield
+        good, _ = make(sse("fine"), mask=False)
+        a, _ = make(broken(), fallbacks=[good], mask=False)
+        self.assertEqual(a.chat(MSG, stream=True).text(), "fine")
+
+    def test_mid_stream_failure_after_output_raises_typed_with_partial(self):
+        led = Ledger()
+
+        def broken():
+            yield "data: " + json.dumps({"choices": [{"delta": {"content": "par"}}]}) + "\n"
+            yield "data: " + json.dumps({"choices": [{"delta": {"content": "tial"}}]}) + "\n"
+            raise TransportError("reset", 503)
+        good, gt = make(sse("other"), mask=False)
+        a, _ = make(broken(), fallbacks=[good], ledger=led, mask=False)
+        got = []
+        with self.assertRaises(StreamInterrupted) as cm:
+            for d in a.chat(MSG, stream=True, job_id="J"):
+                got.append(d)
+        self.assertEqual(cm.exception.partial_text, "".join(got))
+        self.assertEqual(cm.exception.partial_text, "partial")
+        self.assertTrue(cm.exception.retryable)
+        self.assertGreater(cm.exception.usage["output_tokens"], 0)
+        self.assertEqual(gt.calls, [])                              # never silently continued elsewhere
+        self.assertGreater(led.total("J")["cost_usd"], 0)
+
+
+class PiiOutboundTests(unittest.TestCase):
+    def _sent(self, messages, **kw):
+        a, t = make(reply("ok"), **kw)
+        a.chat(messages)
+        return json.dumps(t.calls[0]["body"], ensure_ascii=False)
+
+    def test_every_string_field_is_masked(self):
+        card, iban = "4111 1111 1111 1111", "DE89 3704 0044 0532 0130 00"
+        msgs = [
+            {"role": "user", "content": [{"type": "input_text", "text": f"mail {EMAIL}"},
+                                         {"type": "tool_result", "content": [{"type": "text", "text": f"card {card}"}]}]},
+            {"role": "assistant", "content": None, "tool_calls": [{"id": "c1", "type": "function", "function": {
+                "name": "lookup", "arguments": json.dumps({"iban": iban, "who": "x"})}}]},
+            {"role": "tool", "tool_call_id": "c1", "name": "bob.smith@corp.example.com", "content": f"result for {EMAIL}"},
+        ]
+        sent = self._sent(msgs)
+        for raw in (EMAIL, card, iban, "bob.smith@corp.example.com"):
+            self.assertNotIn(raw, sent)
+        self.assertIn("c1", sent)
+        self.assertIn("lookup", sent)
+
+    def test_tool_call_arguments_are_unmasked_in_the_reply(self):
+        j = {"choices": [{"message": {"content": "", "tool_calls": [{"id": "c", "type": "function", "function": {
+            "name": "send", "arguments": '{"to": "[EMAIL_1]"}'}}]}, "finish_reason": "tool_calls"}], "usage": {}}
+        a, _ = make(j)
+        r = a.chat([{"role": "user", "content": f"write to {EMAIL}"}])
+        self.assertEqual(json.loads(r.tool_calls[0]["function"]["arguments"]), {"to": EMAIL})
+
+    def test_confusable_and_spaced_pii_masked_before_send(self):
+        cases = ["jane.doe\uff20example.com", "4111\u00a01111\u00a01111\u00a01111", "4111\u20091111\u20091111\u20091111",
+                 "de89 3704 0044 0532 0130 00", "gb82west12345698765432"]
+        for c in cases:
+            with self.subTest(c=c):
+                sent = self._sent([{"role": "user", "content": f"see {c} thanks"}])
+                self.assertNotIn(c, sent)
+                self.assertNotIn(c.replace("\u00a0", "\\u00a0"), sent)
+
+
+class RecordPiiTests(unittest.TestCase):
+    def setUp(self):
+        self.tmp = tempfile.TemporaryDirectory()
+        self.addCleanup(self.tmp.cleanup)
+        p = mock.patch.dict(os.environ, {"ACRETIA_LLM_FIXTURES": self.tmp.name})
+        p.start()
+        self.addCleanup(p.stop)
+
+    def _fixtures_text(self):
+        return "".join(f.read_text() for f in Path(self.tmp.name).glob("*.json"))
+
+    def test_record_masks_pii_in_the_reply_and_never_writes_it(self):
+        a, _ = make(reply("contact ceo@bigcorp.com or 4111 1111 1111 1111"), mode="record")
+        r = a.chat([{"role": "user", "content": "who?"}], job_id="J")
+        self.assertIn("ceo@bigcorp.com", r.text)                     # the live caller still gets the answer
+        saved = self._fixtures_text()
+        self.assertTrue(saved)
+        self.assertNotIn("bigcorp", saved)
+        self.assertNotIn("4111", saved)
+        self.assertIn("[EMAIL_", saved)
+
+    def test_record_refuses_when_masking_is_off(self):
+        a, _ = make(reply("mail ceo@bigcorp.com"), mode="record", mask=False)
+        with self.assertRaises(replay.FixturePII):
+            a.chat([{"role": "user", "content": "who?"}])
+        self.assertEqual(self._fixtures_text(), "")
+
+    def test_replay_save_itself_refuses_raw_pii(self):
+        with self.assertRaises(replay.FixturePII):
+            replay.save("k" * 64, "t", {"text": "x@y.example.org"}, {}, "m")
+
+
+class KeyEchoTests(unittest.TestCase):
+    def test_error_body_echoing_the_key_is_redacted_everywhere(self):
+        import http.server
+
+        class H(http.server.BaseHTTPRequestHandler):
+            def do_POST(self):
+                body = f'{{"error": "bad key {KEY} (Authorization: Bearer {KEY})"}}'.encode()
+                self.send_response(401)
+                self.end_headers()
+                self.wfile.write(body)
+
+            def log_message(self, *a):
+                pass
+        srv = http.server.HTTPServer(("127.0.0.1", 0), H)
+        threading.Thread(target=srv.serve_forever, daemon=True).start()
+        self.addCleanup(srv.shutdown)
+        with self.assertRaises(TransportError) as cm:
+            adp.urllib_transport(f"http://127.0.0.1:{srv.server_port}/chat/completions", {}, {"Authorization": f"Bearer {KEY}"})
+        self.assertNotIn(KEY, str(cm.exception))
+        self.assertNotIn(KEY, repr(cm.exception))
+        self.assertEqual(cm.exception.status, 401)
+
+    def test_custom_transport_errors_are_scrubbed_and_not_chained(self):
+        for exc in (TransportError(f"HTTP 401: echo {KEY}", 401), ConnectionError(f"reset, header Authorization: Bearer {KEY}"),
+                    ValueError(f"weird {KEY}")):
+            with self.subTest(exc=type(exc).__name__):
+                a, _ = make(exc, max_retries=0, mask=False)
+                with self.assertRaises(Exception) as cm:
+                    a.chat(MSG)
+                e = cm.exception
+                self.assertNotIn(KEY, str(e))
+                self.assertNotIn(KEY, repr(e))
+                self.assertIsNone(e.__context__)
+                self.assertNotIn(KEY, "".join(__import__("traceback").format_exception(e)))
+
+    def test_redact_patterns(self):
+        t = adp.redact("Authorization: Bearer abcdef123456 and bearer zzzzzzzz9 and key sk-live-999999", "sk-live-999999")
+        for bad in ("abcdef123456", "zzzzzzzz9", "sk-live-999999"):
+            self.assertNotIn(bad, t)
+
+    def test_fallback_event_does_not_leak_key(self):
+        b, _ = make(reply("ok"), mask=False)
+        a, _ = make(TransportError(f"HTTP 503 {KEY}", 503), fallbacks=[b], max_retries=0, mask=False)
+        r = a.chat(MSG)
+        self.assertNotIn(KEY, json.dumps(r.fallbacks))
+
+
+class PriceTests(unittest.TestCase):
+    def test_verified_prices_and_default_is_most_expensive(self):
+        self.assertEqual(adp.Ledger and __import__("src.harness.ledger", fromlist=["x"]).price_for("gpt-5-pro"), (15.0, 120.0))
+        from src.harness.ledger import price_for, DEFAULT_PRICE, PRICES
+        self.assertEqual(price_for("gemini-2.5-pro"), (2.5, 15.0))
+        self.assertEqual(price_for("gpt-5-pro-2026"), (15.0, 120.0))
+        self.assertEqual(price_for("claude-opus-4.1"), (15.0, 75.0))
+        self.assertEqual(price_for("totally-unknown-model"), DEFAULT_PRICE)
+        self.assertEqual(DEFAULT_PRICE, (max(p[0] for p in PRICES.values()), max(p[1] for p in PRICES.values())))
+
+    def test_profile_prices_match_ledger_and_are_sourced(self):
+        from src.harness.ledger import price_for
+        for f in (ROOT / "src" / "harness" / "profiles").glob("*.json"):
+            d = json.loads(f.read_text())
+            self.assertIn("price_verified", d)
+            self.assertIn("price_date", d)
+            if d["price_verified"] and d["family"] != "local":
+                self.assertTrue(d["price_source"], f.name)
+            for m, p in d["prices_per_mtok_by_model"].items():
+                if d["family"] != "local":
+                    self.assertEqual(tuple(p.values()), price_for(m), f"{f.name}:{m}")
 
 
 if __name__ == "__main__":
