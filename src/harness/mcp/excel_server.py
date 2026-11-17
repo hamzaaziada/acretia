@@ -57,25 +57,47 @@ def xlsx_grade(path: str) -> dict:
     return modelcheck.grade(_path(path).read_bytes())
 
 
-def xlsx_recalc(path: str) -> dict:
-    """Three-engine recalculation via om.recalc when present."""
+def xlsx_recalc(path: str, engines: list | None = None) -> dict:
+    """Three-engine recalculation via om.recalc.compare: LibreOffice + formulon + om.formula + cached values.
+
+    Returns per-cell divergences. Engines that are not installed are reported in `engines` with a reason and
+    are simply not compared, so this never fails just because LibreOffice is missing.
+    """
     p = _path(path)
     try:
         mod = importlib.import_module("om.recalc")
     except ImportError:
         return {"available": False, "reason": "om.recalc is not installed"}
-    for name in ("recalc_file", "recalc", "recalculate", "three_engine", "check"):
-        fn = getattr(mod, name, None)
-        if callable(fn):
-            try:
-                try:
-                    res = fn(str(p))
-                except TypeError:
-                    res = fn(p.read_bytes())
-            except Exception as e:
-                return {"available": False, "reason": f"om.recalc.{name} failed: {type(e).__name__}: {e}"}
-            return {"available": True, "result": res}
-    return {"available": False, "reason": "om.recalc exposes no recalc entry point"}
+    if engines is not None:
+        bad = [e for e in engines if e not in mod.DEFAULT_ENGINES]
+        if bad:
+            raise ToolFailure(f"unknown engine(s) {bad}; choose from {list(mod.DEFAULT_ENGINES)}")
+    try:
+        report = mod.compare(p.read_bytes(), engines=engines)
+    except Exception as e:                                    # noqa: BLE001
+        return {"available": False, "reason": f"om.recalc.compare failed: {type(e).__name__}: {e}"}
+    return {"available": True, "result": report}
+
+
+def xlsx_engine_status() -> dict:
+    """Which recalculation engines are installed and running right now (no recalculation performed)."""
+    try:
+        mod = importlib.import_module("om.recalc")
+    except ImportError:
+        return {"available": False, "reason": "om.recalc is not installed"}
+    return {"available": True, "result": mod.engine_status()}
+
+
+def xlsx_engine_restart() -> dict:
+    """Restart the persistent headless LibreOffice daemon and report the new engine status."""
+    try:
+        mod = importlib.import_module("om.recalc")
+    except ImportError:
+        return {"available": False, "reason": "om.recalc is not installed"}
+    try:
+        return {"available": True, "result": mod.restart_daemon()}
+    except Exception as e:                                    # noqa: BLE001
+        return {"available": False, "reason": f"restart failed: {type(e).__name__}: {e}"}
 
 
 def build_registry() -> ToolRegistry:
@@ -85,10 +107,20 @@ def build_registry() -> ToolRegistry:
         "type": "object", "required": ["path", "cells"], "additionalProperties": False,
         "properties": {"path": path, "cells": {"type": "array", "items": {"type": "string"}}}},
         task_types=["modeling"], description="Compute values for cells (Sheet!A1 refs) of an xlsx via om.formula.")
-    for n, f, d in (("xlsx_grade", xlsx_grade, "Grade a workbook with om.modelcheck."),
-                    ("xlsx_recalc", xlsx_recalc, "Recalculate with om.recalc if available.")):
-        reg.register(n, f, {"type": "object", "required": ["path"], "additionalProperties": False,
-                            "properties": {"path": path}}, task_types=["modeling"], description=d)
+    reg.register("xlsx_grade", xlsx_grade, {"type": "object", "required": ["path"], "additionalProperties": False,
+                                            "properties": {"path": path}}, task_types=["modeling"],
+                 description="Grade a workbook with om.modelcheck.")
+    reg.register("xlsx_recalc", xlsx_recalc, {
+        "type": "object", "required": ["path"], "additionalProperties": False,
+        "properties": {"path": path, "engines": {"type": "array", "items": {"type": "string"}}}},
+        task_types=["modeling"],
+        description="Recalculate a workbook with every available engine and report per-cell divergences.")
+    reg.register("xlsx_engine_status", xlsx_engine_status, {
+        "type": "object", "required": [], "additionalProperties": False, "properties": {}},
+        task_types=["modeling"], description="Which recalculation engines are installed and running.")
+    reg.register("xlsx_engine_restart", xlsx_engine_restart, {
+        "type": "object", "required": [], "additionalProperties": False, "properties": {}},
+        task_types=["modeling"], description="Restart the headless LibreOffice daemon.")
     return reg
 
 

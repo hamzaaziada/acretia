@@ -228,6 +228,44 @@ def daemon() -> LibreOfficeDaemon:
         return _DAEMON
 
 
+def engine_status() -> dict:
+    """What each engine can do right now, without recalculating anything.
+
+    Reports the LibreOffice daemon (installed, alive, pid, port, restarts, reason), formulon and om.formula.
+    `ready` is True when at least two engines can evaluate, which is the minimum compare() needs to find a
+    divergence. Never raises: a missing dependency is reported, not thrown.
+    """
+    d = daemon()
+    lo_ok = d.available()
+    lo_alive = bool(lo_ok and d.alive())
+    try:
+        import formulon  # noqa: F401
+        formulon_ok, formulon_reason = True, ""
+    except Exception as e:                                    # noqa: BLE001
+        formulon_ok, formulon_reason = False, f"formulon not importable ({type(e).__name__}: {e}); pip install formulon==0.18.0"
+    engines = {
+        "libreoffice": {"available": lo_ok, "running": lo_alive, "pid": d.pid if lo_alive else None,
+                        "port": d.port if lo_alive else None, "starts": d.starts,
+                        "reason": "" if lo_ok else (d.reason or "LibreOffice not available")},
+        "formulon": {"available": formulon_ok, "reason": formulon_reason},
+        "om": {"available": True, "reason": ""},
+        "cached": {"available": True, "reason": ""},
+    }
+    return {"engines": engines, "ready": sum(1 for e in engines.values() if e["available"]) >= 2,
+            "default_engines": list(DEFAULT_ENGINES)}
+
+
+def restart_daemon() -> dict:
+    """Kill the singleton soffice and start a fresh one. Returns the new engine_status()."""
+    d = daemon()
+    with d._lock:                                             # noqa: SLF001  (same module owns the lock)
+        d.close()
+        d._closed = False                                     # noqa: SLF001
+        if d.available():
+            d._ensure()                                       # noqa: SLF001
+    return engine_status()
+
+
 # --------------------------------------------------------------------------- engine adapters
 def _book_cells(data: bytes) -> dict:
     """Formula cells as stored in the file: {(sheet, r, c): cached value or None}."""
