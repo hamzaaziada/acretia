@@ -31,7 +31,7 @@ One row per active claim. Claim a packet before you touch its files, commit the 
 | S6.2 figure verifier | worker (session A) | claude/dreamy-ramanujan-k8p2xt | 2026-11-16 | src/harness/research/verify.py, tests/test_research_verify.py |
 | FP-S1c buyer-research rubric thresholds | worker (session A) | claude/dreamy-ramanujan-k8p2xt | 2026-11-17 | docs/buyer-research.md |
 | S4.fix2 formula engine coverage (SpreadsheetBench) | worker (session C) | claude/busy-knuth-i3ewp5 | 2026-11-17 | om/formula.py, tests/test_formula_ext2.py, tests/test_sbench.py, tests/test_model3.py (obsolete 'unsupported' assertions only) |
-| FP-S4-A data fidelity (statements/concepts/facts) | worker (session C) | claude/busy-knuth-i3ewp5 | 2026-11-17 | om/statements.py, om/concepts.py, om/facts.py, tests/test_statements_fix.py |
+| FP-S4-A data fidelity (statements/concepts/facts) | worker (session C) | claude/busy-knuth-i3ewp5 | 2026-11-17 | om/statements.py, om/concepts.py, om/facts.py, tests/test_statements_fix.py, om/intl/concepts.py (add LINES ifrs mappings only), tests/test_intl_concepts.py (KNOWN_RESPLIT only) |
 | FP-S4-B model3 valuation + robustness | worker (session C) | claude/busy-knuth-i3ewp5 | 2026-11-17 | om/model3.py, tests/test_model3_fix.py, license-and-repo-ledger.csv (one row) |
 | FP-S4-C print/polish + manifest | worker (session C) | claude/busy-knuth-i3ewp5 | 2026-11-17 | om/polish.py, om/xlsx.py, om/manifest.py, tests/test_polish_fix.py |
 | FP-S4-D LBO + merger | worker (session C) | claude/busy-knuth-i3ewp5 | 2026-11-17 | om/lbo.py, om/merger.py, tests/test_lbo_merger_fix.py |
@@ -100,3 +100,4 @@ One row per active claim. Claim a packet before you touch its files, commit the 
 - 2026-11-17: S5.5c verified on main and released; S5.F3b claimed (session D).
 - 2026-11-16: session A: FP-S2e1/2/3, S6.1d, S6 gate, S7.5b, S7.4a done; FP-S6g, FP-S1l, FP-SEC1 claimed.
 - 2026-11-17: session B: FP-S3-f merged, specialist r1 6.4/10 FAIL; claimed R2-a..d fix packets.
+- 2026-11-17: session C FP-S4-A adds IFRS concept mappings to om/intl/concepts.py (S8.2 released; additive only) so LINES and the intl map agree. Known issue for session F: tests/test_api_jobs tearDown closes the sqlite conn while a job thread is in om/api/citations.py:mint -> intermittent segfault of the full suite; jobs.shutdown() should join in-flight jobs first.
