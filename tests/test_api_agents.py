@@ -11,7 +11,7 @@ from pathlib import Path
 from types import SimpleNamespace
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
-os.environ["ACRETIA_LLM_MODE"] = "replay"
+_ENV = {}
 
 from om.api import jobs  # noqa: E402
 from om.api.agents import catalogue as C  # noqa: E402
@@ -24,11 +24,18 @@ _real_connect = socket.socket.connect
 
 def setUpModule():
     socket.socket.connect = lambda *a, **k: (_ for _ in ()).throw(AssertionError("network access attempted"))
-    os.environ.setdefault("ACRETIA_LLM_FIXTURES", str(engines.REPLAY_DIR))
+    for k, v in (("ACRETIA_LLM_MODE", "replay"), ("ACRETIA_LLM_FIXTURES", str(engines.REPLAY_DIR))):
+        _ENV[k] = os.environ.get(k)
+        os.environ[k] = v
 
 
 def tearDownModule():
     socket.socket.connect = _real_connect
+    for k, v in _ENV.items():
+        if v is None:
+            os.environ.pop(k, None)
+        else:
+            os.environ[k] = v
 
 
 PROMPTS = [

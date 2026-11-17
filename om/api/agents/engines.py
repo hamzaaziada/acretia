@@ -20,7 +20,7 @@ from pathlib import Path
 
 REPO = Path(__file__).resolve().parents[3]
 FIXTURE_DIR = REPO / "tests" / "fixtures" / "api"
-REPLAY_DIR = REPO / "tests" / "fixtures" / "llm" / "api_replay"
+REPLAY_DIR = REPO / "tests" / "fixtures" / "llm"
 FIXED_ZIP_TIME = (2000, 1, 1, 0, 0, 0)
 KIND_EXT = {"xlsx": "xlsx", "pptx": "pptx", "docx": "docx", "json": "json"}
 DEFAULT_PEERS = {"AAPL": ["MSFT", "GOOGL", "AMZN"], "MSFT": ["AAPL", "GOOGL", "AMZN"], "SWDY": ["PRYSMIAN", "NEXANS", "HAVELLS"]}
@@ -188,7 +188,7 @@ class StepCtx:
             if name == "ReplayMiss":
                 raise StepFailed("No recorded model reply exists for this draft in replay mode.",
                                  "Run once with ACRETIA_LLM_MODE=record and a model key (or add a replay fixture under "
-                                 "tests/fixtures/llm/api_replay) and try again.") from None
+                                 "tests/fixtures/llm) and try again.") from None
             raise StepFailed(f"The model call failed ({name}).", "Retry the step; if the model endpoint is down, try again later.") from None
         if res.replayed and self.svc.ledger is not None:
             u = res.usage or {}

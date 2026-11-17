@@ -13,7 +13,7 @@ from pathlib import Path
 from types import SimpleNamespace
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
-os.environ["ACRETIA_LLM_MODE"] = "replay"
+_ENV = {}
 
 from om.api import citations, db, jobs  # noqa: E402
 from om.api.agents import engines, library  # noqa: E402
@@ -30,11 +30,18 @@ def _no_net(self, *a, **k):
 
 def setUpModule():
     socket.socket.connect = _no_net
-    os.environ.setdefault("ACRETIA_LLM_FIXTURES", str(engines.REPLAY_DIR))
+    for k, v in (("ACRETIA_LLM_MODE", "replay"), ("ACRETIA_LLM_FIXTURES", str(engines.REPLAY_DIR))):
+        _ENV[k] = os.environ.get(k)
+        os.environ[k] = v
 
 
 def tearDownModule():
     socket.socket.connect = _real_connect
+    for k, v in _ENV.items():
+        if v is None:
+            os.environ.pop(k, None)
+        else:
+            os.environ[k] = v
 
 
 DOC_TABLES = """
