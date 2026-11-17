@@ -612,5 +612,83 @@ class FPS3fProvenanceAndSizes(unittest.TestCase):
                         self.assertEqual([f for f in r.findings if f["rule"] == "type_sizes"], [])
 
 
+def _vt_deck(n=8, **extra):
+    sl = [{"id": "c0", "archetype": "cover", "title": "Visual deck", "blocks": {"client": "Acme", "date": "2026-09-30"},
+           "as_of": "2026-09-30"}]
+    for i in range(1, n + 1):
+        b = copy.deepcopy(archetypes.examples()["visual_text"])
+        b["title"] = f"Onboarding gets faster in step {i}"
+        sl.append({"id": f"v{i}", "archetype": "visual_text", **b})
+    return {"deck_id": "vis", "title": "Visual deck", "lang": "en", "as_of": "2026-09-30", "slides": sl, **extra}
+
+
+def _images(r):
+    return {s.index for s in r.solved if any(e.kind == "image" for e in s.elements)}
+
+
+class ContentVisuals(NoNetwork):
+    def test_uses_visual_capable_deck_has_at_least_40_percent_art_on_content_slides(self):
+        arch = archetypes.REGISTRY["visual_text"]
+        with mock.patch.object(arch, "uses_visual", True, create=True):
+            r = engine.build(_vt_deck(8), seed=3, critic=False, return_slides=True)
+        self.assertTrue(r.ok, r.error)
+        content = [p for p in r.visual_plan if p["content"]]
+        self.assertEqual(len(content), 8)
+        imgs = _images(r)
+        with_art = [p for p in content if p["slide"] in imgs]
+        self.assertGreaterEqual(len(with_art), 4, r.visual_plan)           # >= 40 % of 8
+        self.assertLessEqual(len(with_art), 5)                             # not wallpaper
+        for p in content:
+            self.assertEqual(p["visual"], p["slide"] in imgs, p)
+            self.assertTrue(p["reason"])
+        kinds = [p["kind"] for p in r.visual_plan if p["visual"]]
+        self.assertTrue(all(a != b for a, b in zip(kinds, kinds[1:])), kinds)    # neighbours differ in kind
+        self.assertGreaterEqual(len(set(kinds)), 3)
+        kept = [v["kept"]["png_sha256"] for v in r.visuals]
+        self.assertEqual(len(kept), len(set(kept)))                         # no two identical images
+
+    def test_lowest_data_density_gets_the_art(self):
+        arch = archetypes.REGISTRY["visual_text"]
+        d = _vt_deck(8)
+        d["slides"][3]["blocks"]["points"] = ["Time: 12 days", "Cost: 31% lower", "Volume: 4.2x", "Quality: 9 of 10"]
+        with mock.patch.object(arch, "uses_visual", True, create=True):
+            plan = engine.plan_visuals(d["slides"], archetypes.REGISTRY)
+        row = next(p for p in plan if p["id"] == "v3")
+        self.assertFalse(row["visual"], row)
+        self.assertEqual(sum(p["visual"] and p["content"] for p in plan), 5)
+
+    def test_spec_visual_kind_path_and_none(self):
+        d = _vt_deck(4)
+        d["slides"][1]["visual"] = {"concept": "a clock", "kind": "diagram"}
+        d["slides"][2]["visual"] = {"kind": "none"}
+        plan = engine.plan_visuals(d["slides"], archetypes.REGISTRY)
+        by = {p["id"]: p for p in plan}
+        self.assertTrue(by["v1"]["visual"])
+        self.assertEqual(by["v1"]["kind"], "diagram")
+        self.assertFalse(by["v2"]["visual"])
+        self.assertIn("none", by["v2"]["reason"])
+        r = engine.build(d, seed=2, critic=False, return_slides=True)
+        self.assertTrue(r.ok, r.error)
+        self.assertIn(2, _images(r))
+        self.assertNotIn(3, _images(r))
+        self.assertEqual(r.visuals[0]["kind"], "diagram")
+
+    def test_chart_and_table_archetypes_never_get_art(self):
+        d = {"deck_id": "x", "title": "T", "lang": "en", "as_of": "2026-09-30", "slides": []}
+        for i, aid in enumerate(("chart_takeaways", "comps_table", "ranked_bar"), 1):
+            d["slides"].append({"id": f"d{i}", "archetype": aid, "title": "Example", **copy.deepcopy(archetypes.examples()[aid]),
+                                "visual": {"concept": "x", "kind": "hero"}})
+        with mock.patch.object(archetypes.REGISTRY["chart_takeaways"], "uses_visual", True, create=True):
+            plan = engine.plan_visuals(d["slides"], archetypes.REGISTRY)
+        self.assertFalse(any(p["visual"] for p in plan), plan)
+
+    def test_claims_findings_reach_the_report(self):
+        d = _vt_deck(1)
+        d["slides"][1]["title"] = "Onboarding cuts cost by 77%"
+        r = engine.build(d, seed=1, critic=False)
+        self.assertIn("claim_unsupported", [f["rule"] for f in r.findings])
+        self.assertIn("claims", r.timings)
+
+
 if __name__ == "__main__":
     unittest.main()

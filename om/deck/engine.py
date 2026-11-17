@@ -20,7 +20,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 
 from om.contracts import Job, JobStep
-from om.deck import provenance
+from om.deck import claims, provenance
 from om.deck import spec as specmod
 from om.deck.archetypes import BuildContext
 from om.deck.theme import Theme
@@ -43,6 +43,7 @@ class BuildReport:
     art_direction: str = ""
     image_probe: dict = field(default_factory=dict)
     visuals: list = field(default_factory=list)
+    visual_plan: list = field(default_factory=list)      # per slide: decision, reason, kind, density
     critic: str = ""
     critic_report: dict = field(default_factory=dict)
     timings: dict = field(default_factory=dict)         # step -> ms
@@ -139,6 +140,87 @@ def _uses_visual(slide: dict, arch) -> bool:
     if isinstance(v, dict) and v.get("kind", "illustration" if v.get("concept") else "none") != "none":
         return True
     return bool(getattr(arch, "uses_visual", False))
+
+
+_NON_CONTENT = {"cover", "section_divider", "appendix_divider", "agenda", "closing"}
+_NON_CONTENT_VT = {"cover", "divider"}
+_DATA_VT = {"chart", "bar", "waterfall", "stacked_bar", "stacked_column", "line", "combo", "scatter", "football_field",
+            "small_multiples", "column", "doughnut", "table", "heatmap", "grid"}
+_KIND_ORDER = ("illustration", "diagram", "icon_system", "hero")
+_SHARE_MIN, _SHARE_MAX = 40, 60          # percent of content slides that carry generated art
+
+
+def _is_content(sl: dict, arch) -> bool:
+    return sl["archetype"] not in _NON_CONTENT and getattr(arch, "visual_type", "") not in _NON_CONTENT_VT
+
+
+def _is_data(sl: dict, arch) -> bool:
+    return getattr(arch, "visual_type", "") in _DATA_VT or bool({"chart", "table"} & set((sl.get("blocks") or {})))
+
+
+def _density(sl: dict) -> float:
+    """Numbers per 100 characters of the slide's blocks: high means the slide is evidence, low means it has room for art."""
+    import json
+    txt = json.dumps(sl.get("blocks") or {}, ensure_ascii=False, default=str)
+    return round(100 * len(_NUM.findall(txt)) / max(len(txt), 1), 2)
+
+
+def _explicit_kind(sl: dict):
+    v = sl.get("visual")
+    if isinstance(v, dict):
+        k = v.get("kind", "illustration" if v.get("concept") else "none")
+        return (None if k == "none" else k), True        # (kind, was_specified)
+    return None, False
+
+
+def plan_visuals(spec_slides, registry, style_kinds=_KIND_ORDER) -> list[dict]:
+    """Which slides get a generated visual, and of which kind. Explicit spec visuals always count (except on chart/table
+    archetypes, which never carry art); archetypes with `uses_visual` are topped up, lowest data density first, until at
+    least 40 % of the deck's content slides carry one (and never beyond 60 %). Kinds rotate so neighbours differ."""
+    rows, content = [], 0
+    for i, sl in enumerate(spec_slides, 1):
+        arch = registry.get(sl["archetype"])
+        kind, given = _explicit_kind(sl)
+        row = {"slide": i, "id": sl["id"], "archetype": sl["archetype"], "content": _is_content(sl, arch),
+               "density": _density(sl), "visual": False, "kind": None, "reason": ""}
+        if _is_data(sl, arch):
+            row["reason"] = "chart/table archetype never carries art"
+        elif given and kind is None:
+            row["reason"] = "spec visual.kind is none"
+        elif given:
+            row.update(visual=True, kind=kind, reason="spec visual")
+        elif getattr(arch, "uses_visual", False):
+            row["capable"] = True
+            row["reason"] = "capable, not selected"
+        else:
+            row["reason"] = "archetype takes no visual"
+        content += row["content"]
+        rows.append(row)
+    for r in rows:                                       # non-content slides (cover) keep every capable visual
+        if r.get("capable") and not r["content"]:
+            r.update(visual=True, reason="uses_visual (non-content slide)")
+    have = sum(r["visual"] and r["content"] for r in rows)
+    cap = max(-(-_SHARE_MAX * content // 100), have)
+    need = -(-_SHARE_MIN * content // 100)
+    pool = sorted((r for r in rows if r.get("capable") and r["content"] and not r["visual"]),
+                  key=lambda r: (r["density"], r["slide"]))
+    for r in pool:
+        if have >= cap:
+            break
+        r.update(visual=True, reason="uses_visual, quota" if have < need else "uses_visual, low data density")
+        have += 1
+    recent: list[str] = []
+    for r in rows:
+        if not r["visual"]:
+            continue
+        if r["kind"] is None:
+            order = [k for k in _KIND_ORDER if k in style_kinds] or list(_KIND_ORDER)
+            fresh = [k for k in order if k not in recent[-2:]] or [k for k in order if k not in recent[-1:]] or order
+            r["kind"] = fresh[0]
+        recent.append(r["kind"])
+    for r in rows:
+        r.pop("capable", None)
+    return rows
 
 
 def _build_slides(spec_slides, theme, deck, rtl, manifest, visuals_by_slide, registry):
@@ -245,24 +327,38 @@ def build(spec, *, out=None, adapter=None, ghost=None, require_ghost_approval: b
         registry = archetypes.REGISTRY
         vis_by_slide: dict = {}
         with step("visuals") as st:
-            for i, sl in enumerate(spec_slides, 1):
-                if not _uses_visual(sl, registry.get(sl["archetype"])):
+            plan = plan_visuals(spec_slides, registry, library.STYLES[style].kinds)
+            rep.visual_plan = plan
+            prev_hash, seen_png = None, set()
+            for pl in plan:
+                if not pl["visual"]:
                     continue
-                v = sl.get("visual") or {}
-                concept = v.get("concept") or sl["title"]
-                kind = v.get("kind") if v.get("kind") not in (None, "none") else "illustration"
-                cands = generate.candidates(concept, style, n_candidates, kind=kind, theme=theme, adapter=meter,
-                                            image_status=rep.image_probe, seed=rng.randrange(2 ** 31), job_id=jid)
-                best, scores = score.choose(cands, theme, adapter=meter, concept=concept, job_id=jid)
+                sl, i = spec_slides[pl["slide"] - 1], pl["slide"]
+                concept = (sl.get("visual") or {}).get("concept") or sl["title"]
+                for _try in range(4):                 # a deck never repeats an image: draw again with a new seed
+                    cands = generate.candidates(concept, style, n_candidates, kind=pl["kind"], theme=theme, adapter=meter,
+                                                image_status=rep.image_probe, seed=rng.randrange(2 ** 31), job_id=jid)
+                    best, scores = score.choose(cands, theme, adapter=meter, concept=concept, job_id=jid)
+                    fresh = [c for c in cands if hashlib.sha256(c.png).hexdigest() not in seen_png]
+                    if fresh:
+                        break
+                if fresh and best not in fresh:
+                    best = max(fresh, key=lambda c: scores[c.id]["final"])
+                if prev_hash is not None and score.hamming(score.phash(best.png), prev_hash) < 10:   # same look as the last one
+                    far = [c for c in fresh if score.hamming(score.phash(c.png), prev_hash) >= 10]
+                    if far:
+                        best = max(far, key=lambda c: scores[c.id]["final"])
+                seen_png.add(hashlib.sha256(best.png).hexdigest())
+                prev_hash = score.phash(best.png)
                 vis_by_slide[sl["id"]] = {"png": best.png, "alt": concept, "style": style, "candidate_id": best.id}
                 log.record(style, deck_id=deck.get("deck_id", ""), slide=i, candidate_id=best.id, source=best.source,
                            scores=scores[best.id])
-                rep.visuals.append({"slide": i, "id": sl["id"], "style": style,
+                rep.visuals.append({"slide": i, "id": sl["id"], "style": style, "kind": pl["kind"],
                                     "candidates": [{"id": c.id, "source": c.source, "scores": scores[c.id]} for c in cands],
                                     "kept": {"id": best.id, "source": best.source,
                                              "png_sha256": hashlib.sha256(best.png).hexdigest()}})
             st["detail"] = f"{len(vis_by_slide)} slide(s) with visuals"
-            st["output"] = {"kept": [v["kept"] for v in rep.visuals]}
+            st["output"] = {"kept": [v["kept"] for v in rep.visuals], "plan": plan}
 
         # ---- archetype build
         with step("build") as st:
@@ -290,6 +386,11 @@ def build(spec, *, out=None, adapter=None, ghost=None, require_ghost_approval: b
             rep.findings += pf
             st["detail"] = f"{len(pf)} unsourced"
             st["output"] = {"unsourced": [f["shape_name"] for f in pf]}
+        with step("claims") as st:
+            cf = claims.check(deck, solved)
+            rep.findings += cf
+            st["detail"] = f"{len(cf)} claim finding(s)"
+            st["output"] = {"claims": [(f["rule"], f["slide"]) for f in cf]}
         rep.numbers_digest = _digest(solved)
 
         if _stop_before_render:
