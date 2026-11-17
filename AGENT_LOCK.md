@@ -4,7 +4,6 @@ One row per active claim. Claim a packet before you touch its files, commit the 
 
 | Packet | Agent / session | Branch | Claimed (UTC) | Files |
 |---|---|---|---|---|
-| S2.4b Excel MCP daemon wiring + engine status | worker (session G) | main | 2026-11-17 | src/harness/mcp/excel_server.py, om/recalc.py (additive: engine_status/restart only), tests/test_mcp_excel_daemon.py |
 | S5.F4 Arabic OCR + extraction (session D) | worker | main | 2026-11-17 | om/pdfdoc.py, om/grid.py, tests/test_pdfdoc.py, tests/test_grid_arabic.py |
 | S5.F3b risk detector precision + Arabic (session D) | worker | main | 2026-11-17 | om/vdr_risk.py, tests/test_vdr_risk.py |
 | S5.6 grid interfaces doc (session D) | worker | main | 2026-11-17 | docs/interfaces.md ("Document grid (S5)" section only) |
@@ -103,3 +102,4 @@ One row per active claim. Claim a packet before you touch its files, commit the 
 - 2026-11-17: session B: FP-S3-f merged, specialist r1 6.4/10 FAIL; claimed R2-a..d fix packets.
 - 2026-11-17: session C FP-S4-A adds IFRS concept mappings to om/intl/concepts.py (S8.2 released; additive only) so LINES and the intl map agree. Known issue for session F: tests/test_api_jobs tearDown closes the sqlite conn while a job thread is in om/api/citations.py:mint -> intermittent segfault of the full suite; jobs.shutdown() should join in-flight jobs first.
 - 2026-11-17: session G: claimed S2.4b (Excel MCP daemon wiring). S7.5b deploy files are NOT on main (only in session A's unmerged 049aef4); session G will not touch them.
+- 2026-11-17: session G: S2.4b gate passed (22/23, 1 skipped) and released. Files: src/harness/mcp/excel_server.py, om/recalc.py, tests/test_mcp_excel_daemon.py, scripts/verify_s2_4b.py, docs/gates/s2.4b-gate-spec.md.

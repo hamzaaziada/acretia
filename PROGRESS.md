@@ -5,7 +5,7 @@
 | v2 stage | Status | Evidence |
 |---|---|---|
 | S1 Ledger, teardowns, buyer research | 🟡 | Deterministic gate `scripts/verify_s1.py` 13/13 (exact ledger mapping, import coverage, copyleft isolation, NOTICE coverage, labelled teardowns). Specialist review PASS WITH FIXES 7.5/10, all High fixed. Teardowns: 15 deck engines + Excel/grid/research on real inputs. Buyer research: 56 sources, self-consistent rubric (102-anchor computed self-test). Persona gate NOT met: round 8 IB 7.4, MBB 6.6, PE 6.3 (D-S1-04) |
-| S2 Harness, router, adapter | 🟡 | Deterministic gate `scripts/verify_s2.py` 32/32 and `verify_m1` 20/20 (hermetic). Adapter, router/profiles, MCP stdio servers, connectors, evidence chain, DuckDB storage on main. Specialist review round 1 FAIL 5/10 (1 Critical, 7 High) → FP-S2a–d fixed; re-review in progress. Persona gate n/a (infrastructure) |
+| S2 Harness, router, adapter | 🟡 | S2.4b Excel MCP daemon wiring done: `xlsx_recalc` calls `om.recalc.compare` (was a dead branch), plus `xlsx_engine_status`/`xlsx_engine_restart`; gate `scripts/verify_s2_4b.py` 22/23 passed, 1 skipped (uno bridge not importable on this Mac, D-S2-02). | Deterministic gate `scripts/verify_s2.py` 32/32 and `verify_m1` 20/20 (hermetic). Adapter, router/profiles, MCP stdio servers, connectors, evidence chain, DuckDB storage on main. Specialist review round 1 FAIL 5/10 (1 Critical, 7 High) → FP-S2a–d fixed; re-review in progress. Persona gate n/a (infrastructure) |
 | S3 Deck engine + eval | 🟡 | Deck Studio, spacing, graders exist |
 | S4 Excel engine | 🟡 | 3-statement + DCF, grader, bench verified |
 | S5 Document matrix grid | 🟡 | Session D building S5.1–S5.4 (claimed 2026-11-16). Existing: Matrix with verified quotes (no bbox/DuckDB) |
@@ -36,3 +36,4 @@ Status: ✅ verified (gate passed) · 🟡 partial · ⬜ not started. Update th
 - 2026-11-16: Architectural pivot to plan v2. Meshpool Harness reference code added. M1 work (gated) maps into S2. Next: S1.
 - 2026-11-16: session A: reviewer findings (router live path, OCR test recursion, psycopg/pypdf ledger rows) fixed in f8bc923; verify_m1 20/20 hermetic.
 - 2026-11-17: session A: S1 deterministic + specialist graders pass; persona gate not met after 8 rounds (D-S1-04). S2 fixes for specialist findings landed; re-review running. S6 packets built; S6 gate next.
+- 2026-11-17: session G: S2.4b done and gated (22/23, 1 skipped). Excel MCP server now recalculates through `om.recalc.compare`; engine status and daemon restart exposed. LibreOffice stays a subprocess (D-S2-03).
