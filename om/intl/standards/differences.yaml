@@ -72,7 +72,8 @@ differences:
       - {standard: "IFRS 16", ref: "paras 22-26, 47-49", url: *ifrs16}
       - {standard: "ASC 842", ref: "Subtopic 842-20 (lessee), 842-20-25", url: *asc}
     authored: acretia
-    confidence: verified
+    basis: standard-reference
+    confidence: unverified
 
   - id: diff-leases-net-debt
     topic: leases
@@ -89,7 +90,8 @@ differences:
       - {standard: "IFRS 16", ref: "paras 47(b), 53(g), 58", url: *ifrs16}
       - {standard: "ASC 842", ref: "842-20-45 (balance sheet presentation)", url: *asc}
     authored: acretia
-    confidence: verified
+    basis: standard-reference
+    confidence: unverified
 
   - id: diff-leases-eas49
     topic: leases
@@ -133,7 +135,8 @@ differences:
       - {standard: "ASC 606", ref: "Topic 606-10-25, 606-10-55-36 to 55-40", url: *asc}
       - {standard: "EAS 48", ref: "Revenue from contracts with customers (UNVERIFIED paragraph numbers)", url: *fra}
     authored: acretia
-    confidence: verified
+    basis: standard-reference
+    confidence: unverified
 
   - id: diff-revenue-principal-agent
     topic: revenue
@@ -149,7 +152,8 @@ differences:
     citations:
       - {standard: "IFRS 15", ref: "paras B34-B38", url: *ifrs15}
     authored: acretia
-    confidence: verified
+    basis: standard-reference
+    confidence: unverified
 
   - id: diff-inventory-lifo
     topic: inventory
@@ -165,7 +169,8 @@ differences:
       - {standard: "IAS 2", ref: "paras 23-27", url: *ias2}
       - {standard: "ASC 330", ref: "330-10-30 (inventory pricing methods)", url: *asc}
     authored: acretia
-    confidence: verified
+    basis: standard-reference
+    confidence: unverified
 
   - id: diff-development-costs
     topic: development_costs
@@ -183,7 +188,8 @@ differences:
       - {standard: "ASC 730", ref: "730-10-25", url: *asc}
       - {standard: "FRS 102", ref: "Section 18, paras 18.14-18.15", url: *frs102}
     authored: acretia
-    confidence: verified
+    basis: standard-reference
+    confidence: unverified
 
   - id: diff-revaluation
     topic: revaluation
@@ -206,7 +212,8 @@ differences:
       - {standard: "IFRS jurisdiction profile: Egypt", ref: "Revaluation not permitted under EAS until January 2023", url: *ifrsegypt}
       - {standard: "IFRS jurisdiction profile: Saudi Arabia", ref: "Cost model for fiscal years before 2022; fair value or revaluation after", url: *ifrssaudi}
     authored: acretia
-    confidence: verified
+    basis: standard-reference
+    confidence: unverified
 
   - id: diff-impairment-reversal
     topic: impairment_reversal
@@ -223,7 +230,8 @@ differences:
       - {standard: "IAS 36", ref: "paras 109-125", url: *ias36}
       - {standard: "ASC 360", ref: "360-10-35-20 (restoration prohibited)", url: *asc}
     authored: acretia
-    confidence: verified
+    basis: standard-reference
+    confidence: unverified
 
   - id: diff-borrowing-costs
     topic: borrowing_costs
@@ -240,7 +248,8 @@ differences:
       - {standard: "IAS 23", ref: "paras 8-18", url: *ias23}
       - {standard: "ASC 835-20", ref: "835-20-30", url: *asc}
     authored: acretia
-    confidence: verified
+    basis: standard-reference
+    confidence: unverified
 
   - id: diff-associates-jvs
     topic: associates_jvs
@@ -259,7 +268,8 @@ differences:
       - {standard: "IFRS 11", ref: "paras 14-24", url: *ifrs11}
       - {standard: "ASC 323", ref: "323-10-25", url: *asc}
     authored: acretia
-    confidence: verified
+    basis: standard-reference
+    confidence: unverified
 
   - id: diff-hyperinflation-ias29
     topic: hyperinflation
@@ -299,7 +309,8 @@ differences:
       - {standard: "IAS 21", ref: "paras 38-47", url: *ias21}
       - {standard: "ASC 830", ref: "830-30-45", url: *asc}
     authored: acretia
-    confidence: verified
+    basis: standard-reference
+    confidence: unverified
 
   - id: diff-fx-devaluation-ias21
     topic: fx_devaluation
@@ -439,7 +450,8 @@ differences:
       - {standard: "IAS 20", ref: "paras 7-12, 24-26", url: *ias20}
       - {standard: "FRS 102", ref: "Section 24", url: *frs102}
     authored: acretia
-    confidence: verified
+    basis: standard-reference
+    confidence: unverified
 
   - id: diff-presentation-by-nature-function
     topic: presentation
@@ -457,7 +469,8 @@ differences:
       - {standard: "IAS 1", ref: "paras 99-105", url: *ias1}
       - {standard: "IFRS 18", ref: "Operating category and subtotals", url: *ifrs18}
     authored: acretia
-    confidence: verified
+    basis: standard-reference
+    confidence: unverified
 
   - id: diff-cash-flow-classification
     topic: presentation
@@ -475,7 +488,8 @@ differences:
       - {standard: "ASC 230", ref: "230-10-45-16 to 45-17", url: *asc}
       - {standard: "Ind AS 116", ref: "Lease interest classified in financing", url: *kpmgindas116}
     authored: acretia
-    confidence: verified
+    basis: standard-reference
+    confidence: unverified
 
   - id: diff-eas-ifrs-new-standards
     topic: eas_ifrs_mapping
@@ -593,7 +607,8 @@ differences:
       - {standard: "Ind AS 103", ref: "Appendix C (common control)", url: *indas}
       - {standard: "Ind AS 40", ref: "Cost model", url: *indas}
     authored: acretia
-    confidence: verified
+    basis: standard-reference
+    confidence: unverified
 
   - id: diff-frs102-vs-ifrs
     topic: presentation
@@ -611,7 +626,8 @@ differences:
       - {standard: "FRS 102", ref: "Sections 18, 19 (goodwill amortisation), 20, 23", url: *frs102}
       - {standard: "IAS 36", ref: "para 90 (annual goodwill test)", url: *ias36}
     authored: acretia
-    confidence: verified
+    basis: standard-reference
+    confidence: unverified
 
   - id: diff-ecl-ifrs9-eas47-cecl
     topic: credit_losses
@@ -628,7 +644,8 @@ differences:
       - {standard: "IFRS 9", ref: "paras 5.5.1-5.5.5", url: *ifrs9}
       - {standard: "ASC 326", ref: "326-20", url: *asc}
     authored: acretia
-    confidence: verified
+    basis: standard-reference
+    confidence: unverified
 
   - id: diff-leases-indas116
     topic: leases
@@ -769,7 +786,8 @@ differences:
       - {standard: "Ind AS 103", ref: "Appendix C (common control, pooling of interests)", url: *indas}
       - {standard: "FRS 102", ref: "Section 19 (acquisitions and group reconstructions)", url: *frs102}
     authored: acretia
-    confidence: verified
+    basis: standard-reference
+    confidence: unverified
 
   - id: diff-provisions-ias37-asc450
     topic: provisions
@@ -789,7 +807,8 @@ differences:
       - {standard: "IAS 37", ref: "paras 14, 36, 45, 86", url: *ias37}
       - {standard: "ASC 450", ref: "450-20-25 (loss contingencies)", url: *asc}
     authored: acretia
-    confidence: verified
+    basis: standard-reference
+    confidence: unverified
 
   - id: diff-zakat-base-components
     topic: zakat_tax

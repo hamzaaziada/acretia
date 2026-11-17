@@ -1,6 +1,6 @@
 # IFRS Accounting Standards (full IFRS)
 
-*Generated from `om/intl/standards/frameworks.yaml`. Authored by Acretia in its own words. Confidence: verified.*
+*Generated from `om/intl/standards/frameworks.yaml`. Authored by Acretia in its own words. Confidence: unverified.*
 
 **Issuer:** IASB (IFRS Foundation)  
 **Jurisdictions:** International, EU (as endorsed), most of the world
