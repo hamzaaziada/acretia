@@ -40,7 +40,6 @@ One row per active claim. Claim a packet before you touch its files, commit the 
 | S6.5a admin core | worker (session A) | claude/dreamy-ramanujan-k8p2xt | 2026-11-17 | src/harness/admin/__init__.py, src/harness/admin/agents.py, src/harness/admin/spend.py, src/harness/admin/sources.py, src/harness/admin/mcp_tools.py, tests/test_admin_core.py, docs/interfaces-s6/admin.md |
 | S6.5b SCIM + ACL mirroring | worker (session A) | claude/dreamy-ramanujan-k8p2xt | 2026-11-17 | src/harness/admin/scim.py, src/harness/connectors/acl.py, tests/test_admin_scim_acl.py, docs/interfaces-s6/scim-acl.md |
 | FP-S2b adapter/ledger/PII/router | worker (session A) | claude/dreamy-ramanujan-k8p2xt | 2026-11-17 | src/harness/adapter.py, src/harness/ledger.py, src/harness/router.py, src/harness/profiles/*, om/pii.py, om/replay.py, tests/test_adapter.py, tests/test_harness_router.py, tests/test_llm_router.py |
-| FP-S2c evidence/deals/queue | worker (session A) | claude/dreamy-ramanujan-k8p2xt | 2026-11-17 | src/harness/evidence.py, om/deals.py, om/storage.py, tests/test_evidence.py, tests/test_deal_memory.py, tests/test_storage.py |
 | S4.10 rendered samples | worker (session C) | claude/busy-knuth-i3ewp5 | 2026-11-17 | docs/samples/s4/**, scripts/render_samples_s4.py |
 
 ## Log
@@ -86,3 +85,4 @@ One row per active claim. Claim a packet before you touch its files, commit the 
 - 2026-11-16: session A: FP-S2d done; FP-CI2 claimed (CI forced replay mode broke 12 fake-provider tests).
 - 2026-11-16: session A: FP-CI2 landed (8619648).
 - 2026-11-16: session A: FP-S2a done (pending S2 re-review).
+- 2026-11-16: session A: FP-S2c done (pending S2 re-review).
