@@ -397,7 +397,7 @@ class TelemetryTests(Base):
         self.assertEqual(ts["task_id"], "dcf")
         self.assertEqual(ts["basis"], "estimate")
         self.assertAlmostEqual(ts["t_h_minutes"]["mid"], 90, delta=1)
-        self.assertGreater(ts["t_a_minutes"], 15)                         # wall time plus the 15-minute review estimate
+        self.assertGreaterEqual(ts["t_a_minutes"], 15)                    # wall time plus the 15-minute review estimate (a fast run rounds to 15.0)
         self.assertLess(ts["t_a_minutes"], 30)
         done = self.evs(jid)[-1]["data"]
         self.assertEqual(done["time_saved"]["task_id"], "dcf")

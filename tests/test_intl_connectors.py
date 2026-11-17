@@ -224,7 +224,7 @@ class Storage(unittest.TestCase):
             saved = Path(meta["saved_path"]).resolve()
             self.assertEqual(saved.parent, (Path(d) / "egx").resolve())
             self.assertEqual(meta["sha256"], __import__("hashlib").sha256(b"PDFBYTES").hexdigest())
-            files = [p for p in Path(d).rglob("*") if p.is_file()]
+            files = [p.resolve() for p in Path(d).rglob("*") if p.is_file()]          # macOS: /var is /private/var
             self.assertEqual(files, [saved])
 
     def test_traversal_in_names_cannot_escape(self):
