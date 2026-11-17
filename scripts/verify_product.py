@@ -831,7 +831,7 @@ def check_08():
     st, _, _ = c.request("POST", path, {}, origin=f"http://127.0.0.1:{env.port}.evil.example")
     need(st == 403, f"look-alike Origin host -> {st}")
     # PATCH/DELETE are covered too
-    st, _, _ = c.request("DELETE", f"{API}/deals/{secrets.token_hex(4)}", csrf=None)
+    st, _, _ = c.request("DELETE", f"{API}/org/members/usr_{secrets.token_hex(8)}", csrf=None)
     need(st == 403, f"DELETE without token -> {st} (CSRF must precede resource lookup)")
     st, _, b = c.request("POST", path, {})
     need(200 <= st < 300, f"valid token+Origin -> {st} {b[:150]!r}")
