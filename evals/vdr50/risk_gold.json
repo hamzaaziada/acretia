@@ -1,0 +1,239 @@
+[
+ {
+  "type": "missing_period",
+  "label": "FY2023",
+  "doc": null,
+  "note": "audited statements FY2021, FY2022, FY2024 present; FY2023 absent"
+ },
+ {
+  "type": "missing_period",
+  "label": "2025-05",
+  "doc": null,
+  "note": "management accounts Jan-Apr and Jun 2025 present; May absent"
+ },
+ {
+  "type": "missing_document",
+  "label": "ip_schedule",
+  "doc": null,
+  "note": "no IP schedule in the room"
+ },
+ {
+  "type": "missing_document",
+  "label": "litigation",
+  "doc": null,
+  "note": "no litigation schedule in the room"
+ },
+ {
+  "type": "conflicting_figure",
+  "doc": "01 Financials/Audited/Audited Financial Statements FY2024.pdf",
+  "language": "en",
+  "scanned": false,
+  "role": "base",
+  "metric": "revenue FY2024",
+  "detail": null
+ },
+ {
+  "type": "conflicting_figure",
+  "doc": "01 Financials/CIM/Confidential Information Memorandum - Excerpt.pdf",
+  "language": "en",
+  "scanned": false,
+  "role": "conflict",
+  "metric": "revenue FY2024",
+  "detail": null
+ },
+ {
+  "type": "mfn",
+  "doc": "02 Legal/Material Contracts/Customers/Customer Agreement - Northwind.pdf",
+  "language": "en",
+  "scanned": false,
+  "role": null,
+  "metric": null,
+  "detail": null
+ },
+ {
+  "type": "exclusivity",
+  "doc": "02 Legal/Material Contracts/Customers/Customer Agreement - Northwind.pdf",
+  "language": "en",
+  "scanned": false,
+  "role": null,
+  "metric": null,
+  "detail": null
+ },
+ {
+  "type": "change_of_control",
+  "doc": "02 Legal/Material Contracts/Customers/Customer Agreement - Northwind.pdf",
+  "language": "en",
+  "scanned": false,
+  "role": null,
+  "metric": null,
+  "detail": null
+ },
+ {
+  "type": "change_of_control",
+  "doc": "02 Legal/Material Contracts/Customers/Customer Agreement - Castellan.pdf",
+  "language": "en",
+  "scanned": false,
+  "role": null,
+  "metric": null,
+  "detail": null
+ },
+ {
+  "type": "mfn",
+  "doc": "02 Legal/Material Contracts/Customers/Customer Agreement - Brightline.pdf",
+  "language": "en",
+  "scanned": false,
+  "role": null,
+  "metric": null,
+  "detail": null
+ },
+ {
+  "type": "exclusivity",
+  "doc": "02 Legal/Material Contracts/Customers/Customer Agreement - Orion.pdf",
+  "language": "en",
+  "scanned": false,
+  "role": null,
+  "metric": null,
+  "detail": null
+ },
+ {
+  "type": "exclusivity",
+  "doc": "02 Legal/Material Contracts/Suppliers/Supplier Agreement - Apex.pdf",
+  "language": "en",
+  "scanned": false,
+  "role": null,
+  "metric": null,
+  "detail": null
+ },
+ {
+  "type": "exclusivity",
+  "doc": "02 Legal/Material Contracts/Suppliers/Supplier Agreement - Helix.pdf",
+  "decoy": true,
+  "language": "en"
+ },
+ {
+  "type": "exclusivity",
+  "doc": "02 Legal/Material Contracts/Suppliers/Supplier Agreement - Tundra.pdf",
+  "language": "en",
+  "scanned": false,
+  "role": null,
+  "metric": null,
+  "detail": null
+ },
+ {
+  "type": "mfn",
+  "doc": "02 Legal/Material Contracts/Suppliers/Supplier Agreement - Solace.pdf",
+  "language": "en",
+  "scanned": false,
+  "role": null,
+  "metric": null,
+  "detail": null
+ },
+ {
+  "type": "covenant",
+  "doc": "03 Debt/Credit Agreement - Harborview Bank.pdf",
+  "language": "en",
+  "scanned": false,
+  "role": null,
+  "metric": null,
+  "detail": "leverage 3.5x"
+ },
+ {
+  "type": "covenant",
+  "doc": "03 Debt/Credit Agreement - Harborview Bank.pdf",
+  "language": "en",
+  "scanned": false,
+  "role": null,
+  "metric": null,
+  "detail": "interest coverage 4x"
+ },
+ {
+  "type": "change_of_control",
+  "doc": "03 Debt/Credit Agreement - Harborview Bank.pdf",
+  "language": "en",
+  "scanned": false,
+  "role": null,
+  "metric": null,
+  "detail": null
+ },
+ {
+  "type": "covenant",
+  "doc": "03 Debt/Credit Agreement - Harborview Bank.pdf",
+  "language": "en",
+  "scanned": false,
+  "role": null,
+  "metric": null,
+  "detail": "negative covenant liens"
+ },
+ {
+  "type": "covenant",
+  "doc": "03 Debt/Amendment No. 1 - Credit Agreement.pdf",
+  "language": "en",
+  "scanned": false,
+  "role": null,
+  "metric": null,
+  "detail": "leverage 4x"
+ },
+ {
+  "type": "exclusivity",
+  "doc": "04 Corporate/Board Minutes/Board Minutes - February 2025.pdf",
+  "language": "en",
+  "scanned": false,
+  "role": null,
+  "metric": null,
+  "detail": null
+ },
+ {
+  "type": "change_of_control",
+  "doc": "05 HR/Employment Agreement - Dana Whitmore.pdf",
+  "language": "en",
+  "scanned": false,
+  "role": null,
+  "metric": null,
+  "detail": null
+ },
+ {
+  "type": "exclusivity",
+  "doc": "05 HR/Employment Agreement - Dana Whitmore.pdf",
+  "language": "en",
+  "scanned": false,
+  "role": null,
+  "metric": null,
+  "detail": null
+ },
+ {
+  "type": "change_of_control",
+  "doc": "05 HR/Employment Agreement - Priya Raman.pdf",
+  "language": "en",
+  "scanned": false,
+  "role": null,
+  "metric": null,
+  "detail": null
+ },
+ {
+  "type": "change_of_control",
+  "doc": "02 Legal/Material Contracts/Customers/Customer Agreement - Vantage (scanned).pdf",
+  "language": "en",
+  "scanned": true,
+  "role": null,
+  "metric": null,
+  "detail": null
+ },
+ {
+  "type": "exclusivity",
+  "doc": "04 Corporate/Board Minutes/Board Resolution - May 2024 (Arabic).pdf",
+  "language": "ar",
+  "scanned": false,
+  "role": null,
+  "metric": null,
+  "detail": null
+ },
+ {
+  "type": "exclusivity",
+  "doc": "02 Legal/Material Contracts/Suppliers/Supplier Agreement - Gulf Materials (Arabic).pdf",
+  "language": "ar",
+  "scanned": false,
+  "role": null,
+  "metric": null,
+  "detail": null
+ }
+]
