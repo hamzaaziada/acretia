@@ -1,0 +1,32 @@
+{
+  "label": "CANNED PLACEHOLDER. This is NOT a persona output. No persona was run. The edit list is hand-calibrated so that the sum of edits x eval/tsb/edit_minutes.csv equals the catalogue's review_minutes_estimate for this task (30 min), so a replay run reproduces the product's own review estimate and nothing more.",
+  "task_id": "lbo",
+  "persona_score": null,
+  "persona": null,
+  "edits": [
+    {
+      "edit_class": "formula fix",
+      "count": 2,
+      "blocking": false,
+      "note": "placeholder edit; a live run replaces this list with the Haiku persona's 'edits needed' output"
+    },
+    {
+      "edit_class": "number fix",
+      "count": 1,
+      "blocking": false,
+      "note": "placeholder edit; a live run replaces this list with the Haiku persona's 'edits needed' output"
+    },
+    {
+      "edit_class": "formatting",
+      "count": 1,
+      "blocking": false,
+      "note": "placeholder edit; a live run replaces this list with the Haiku persona's 'edits needed' output"
+    },
+    {
+      "edit_class": "typo/label",
+      "count": 2,
+      "blocking": false,
+      "note": "placeholder edit; a live run replaces this list with the Haiku persona's 'edits needed' output"
+    }
+  ]
+}
