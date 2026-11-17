@@ -321,6 +321,10 @@ export interface DeliverableData {
   version: number;
   kind: DeliverableKind;
   url: string;
+  sha256?: string;
+  size?: number;
+  /** Deck validator summary (pptx). */
+  badges?: { ok: boolean; critical: number; major: number; minor: number };
 }
 export interface DeliverableEvent extends EventBase {
   type: 'deliverable';

@@ -291,8 +291,8 @@ function TimeSavedPanel({ run }: { run: RunState }) {
           {t('run.savedMin', { n: fmt.integer(Math.round(est.saved)) })}
         </div>
         <div className="acr-muted acr-num">
-          {t('run.saved.range', { low: fmt.integer(Math.round(est.low)), high: fmt.integer(Math.round(est.high)) })}
-          {est.pct != null && <> · {fmt.percent(est.pct, 0)}</>}
+          {Math.round(est.low) !== Math.round(est.high) && <>{t('run.saved.range', { low: fmt.integer(Math.round(est.low)), high: fmt.integer(Math.round(est.high)) })} · </>}
+          {est.pct != null && t('run.saved.pct', { p: fmt.percent(est.pct, 0) })}
         </div>
         <div className="acr-saved__basis">
           {t('run.saved.basis')}: <span className="acr-faint">{est.source}</span>
@@ -319,9 +319,13 @@ function TimeSavedPanel({ run }: { run: RunState }) {
   );
 }
 
+const SOURCES_COLLAPSED = 8;
+
 function SourcesPanel({ state, dealId, jobId }: { state: RunState; dealId: string | null; jobId: string }) {
   const { t, fmt } = useI18n();
   const n = state.sources.length;
+  const [all, setAll] = useState(false);
+  const shown = all ? state.sources : state.sources.slice(0, SOURCES_COLLAPSED);
   return (
     <Panel
       title={`${t('run.sources')}${n ? ` (${fmt.integer(n)})` : ''}`}
@@ -337,11 +341,18 @@ function SourcesPanel({ state, dealId, jobId }: { state: RunState; dealId: strin
         <p className="acr-muted">{t('run.sources.empty')}</p>
       ) : (
         <ul className="acr-sources">
-          {state.sources.map((s) => (
+          {shown.map((s) => (
             <li key={s.citation_token}>
               <CitationChip source={s} dealId={dealId} />
             </li>
           ))}
+          {n > SOURCES_COLLAPSED && (
+            <li>
+              <button type="button" className="acr-linkbtn" data-testid="sources-toggle" aria-expanded={all} onClick={() => setAll((v) => !v)}>
+                {all ? t('run.sources.fewer') : t('run.sources.all', { n: fmt.integer(n) })}
+              </button>
+            </li>
+          )}
         </ul>
       )}
     </Panel>
