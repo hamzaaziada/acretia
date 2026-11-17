@@ -120,7 +120,8 @@ def _styles(z: zipfile.ZipFile) -> list[dict]:
         fill = fills[fid] if fid < len(fills) else None
         bt, bb = borders[bid] if bid < len(borders) else (False, False)
         out.append({"fmt": custom.get(i) or _BUILTIN_FMT.get(i, "General"), "bg": None if fill in (None, "FFFFFF") else fill,
-                    "bt": bt, "bb": bb, "ind": int(float(al.get("indent") or 0)) if al is not None else 0})
+                    "bt": bt, "bb": bb, "ind": int(float(al.get("indent") or 0)) if al is not None else 0,
+                    "al": (al.get("horizontal") if al is not None and al.get("horizontal") in ("left", "right", "center") else None)})
     return out
 
 
@@ -157,7 +158,7 @@ def _sheet_layout(data: bytes) -> dict:
             s = int(c.get("s") or 0)
             if m and 0 < s < len(xfs):
                 x = xfs[s]
-                if x["fmt"] != "General" or x["bg"] or x["bt"] or x["bb"] or x["ind"]:
+                if x["fmt"] != "General" or x["bg"] or x["bt"] or x["bb"] or x["ind"] or x["al"]:
                     style[(int(m.group(2)), col_index(m.group(1)))] = x
         out[sh.get("name")] = {"style": style, "freeze": freeze, "widths": widths}
     return out
@@ -193,6 +194,19 @@ def _section_of(book, sheet: str, r: int) -> str | None:
             others = [k for k in grid if k[0] == rr and k[1] >= 3 and grid[k].value not in (None, "")]
             if not others:
                 return c.value
+    return None
+
+
+def _parent_label(book, sheet: str, r: int) -> str | None:
+    """'Revenue growth' for the 'Base' / 'Upside' rows under it: the nearest bold label above that has numbers of its own."""
+    grid = book.sheets.get(sheet, {})
+    for rr in range(r - 1, max(0, r - 8), -1):
+        c = grid.get((rr, 1))
+        if c is None or not isinstance(c.value, str) or not c.value:
+            return None
+        if c.bold:
+            has_vals = any(k[0] == rr and k[1] >= 3 and x.value not in (None, "") for k, x in grid.items())
+            return c.value if has_vals else None
     return None
 
 
@@ -310,6 +324,8 @@ def _view(ctx, deal_id: str, name: str, data: bytes, version: int, latest: int) 
                     d["bb"] = 1
                 if sx["ind"]:
                     d["ind"] = sx["ind"]
+                if sx["al"]:
+                    d["al"] = sx["al"]
             if cell.formula:
                 d["f"] = cell.formula
             fm = _fmt_of(b, sh, (r, c))
@@ -343,6 +359,9 @@ def _view(ctx, deal_id: str, name: str, data: bytes, version: int, latest: int) 
             key = f"{sh}!{col_letter(c)}{r}"
             base = (cell_label := (book.sheets[sh].get((r, 1)))) and cell_label.value or ""
             n_in_row = sum(1 for (rr, cc), x in book.sheets[sh].items() if rr == r and cc >= 3 and x.formula is None and isinstance(x.value, (int, float)))
+            parent = _parent_label(book, sh, r)
+            if parent and base:
+                base = f"{parent} \u00b7 {base}"
             lab = (str(base) if n_in_row == 1 and base else label_of(book, key)) or key
             period = period_header(book, sh, r, c) if n_in_row > 1 else None
             fm = _fmt_of(b, sh, (r, c))
