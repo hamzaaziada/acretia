@@ -129,6 +129,8 @@ def _open_sqlite(db):
             conn = sqlite3.connect(uri, uri=True, check_same_thread=False, timeout=5)
             conn.execute("SELECT 1 FROM sqlite_master LIMIT 1").fetchall()
         except Exception:
+            if conn is not None:
+                conn.close()
             conn = None
     if conn is None:
         with db._lock:
