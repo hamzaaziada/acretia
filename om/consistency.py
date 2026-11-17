@@ -1504,6 +1504,14 @@ def uncalculated(data: bytes) -> int:
     return n
 
 
+_LO_ALWAYS_RECALC = """<?xml version="1.0" encoding="UTF-8"?>
+<oor:items xmlns:oor="http://openoffice.org/2001/registry" xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+<item oor:path="/org.openoffice.Office.Calc/Formula/Load"><prop oor:name="OOXMLRecalcMode" oor:op="fuse"><value>0</value></prop></item>
+<item oor:path="/org.openoffice.Office.Calc/Formula/Load"><prop oor:name="ODFRecalcMode" oor:op="fuse"><value>0</value></prop></item>
+</oor:items>
+"""
+
+
 def recalc(data: bytes) -> bytes | None:
     """Recalculate with LibreOffice (headless) if it's installed; None otherwise."""
     import shutil
@@ -1517,6 +1525,10 @@ def recalc(data: bytes) -> bytes | None:
         src, out = Path(d) / "in.xlsx", Path(d) / "out"
         src.write_bytes(data)
         out.mkdir()
+        # A fresh profile that tells LibreOffice to recalculate every formula on load. Without it, simple
+        # references such as =Filings!C9 keep whatever value the file cached, so a wrong stored value survives.
+        (Path(d) / "profile" / "user").mkdir(parents=True)
+        (Path(d) / "profile" / "user" / "registrymodifications.xcu").write_text(_LO_ALWAYS_RECALC, encoding="utf-8")
         try:
             subprocess.run([exe, "--headless", "--norestore", f"-env:UserInstallation=file://{d}/profile", "--convert-to", "xlsx",
                             "--outdir", str(out), str(src)], capture_output=True, timeout=120)

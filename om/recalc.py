@@ -92,6 +92,9 @@ class LibreOfficeDaemon:
             raise LibreOfficeError("soffice not installed")
         self._stop()
         self._tmp = tempfile.mkdtemp(prefix="om-recalc-")
+        from .consistency import _LO_ALWAYS_RECALC                     # recalculate on load; never trust cached values
+        (Path(self._tmp) / "profile" / "user").mkdir(parents=True)
+        (Path(self._tmp) / "profile" / "user" / "registrymodifications.xcu").write_text(_LO_ALWAYS_RECALC, encoding="utf-8")
         self.port = _free_port()
         cmd = [exe, "--headless", "--invisible", "--norestore", "--nologo", "--nodefault", "--nolockcheck",
                f"-env:UserInstallation=file://{self._tmp}/profile",
