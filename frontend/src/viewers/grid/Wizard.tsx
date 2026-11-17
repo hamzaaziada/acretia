@@ -112,7 +112,7 @@ export function Wizard({ dealId, open, onClose, onCreated }: Props) {
               <Button variant="ghost" onClick={() => setStep(1)}>
                 {t('viewers2.wizard.back')}
               </Button>
-              <Button variant="primary" loading={busy} disabled={cols.length === 0} onClick={() => void create()}>
+              <Button variant="primary" loading={busy} disabled={cols.length === 0 || cols.some((c) => !c.prompt.trim())} onClick={() => void create()}>
                 {t('viewers2.wizard.create', { docs: picked.size, cols: cols.length })}
               </Button>
             </>

@@ -311,6 +311,7 @@
 }
 .vw-hcell--doc {
   position: sticky;
+  block-size: 100%;
   inset-inline-start: 0;
   z-index: 7;
   justify-content: space-between;

@@ -85,7 +85,6 @@ function InputsBar({ gridId, inputs, canEdit, onChanged }: { gridId: string; inp
             onSubmit={(e) => {
               e.preventDefault();
               const n = newName.trim();
-              if (n) void commit(n, ' ').then(() => undefined);
               if (n) void api.put(`/grids/${gridId}/inputs/${encodeURIComponent(n)}`, { value: '' }).then(onChanged);
               setNewName('');
               setAdding(false);
