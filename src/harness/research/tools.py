@@ -756,6 +756,11 @@ def check_url_shape(url: str) -> None:
         raise ToolError(f"url not approved: encoded payload in url ({host})")
 
 
+def _approved_urls(sources) -> list:
+    from .workflows.review import approved_urls
+    return approved_urls(sources)
+
+
 class WebGuard:
     """Per-registry state for ``web_facts``: approved hosts, exact approved URLs and the shingles of document text seen."""
 
@@ -768,8 +773,8 @@ class WebGuard:
         self.evidence = evidence
         for e in allow or ():
             self._add_host(e)
-        self.approve(request_urls or ())
-        self.approve_sources(approved_sources or ())
+        self._add_urls(request_urls or ())
+        self._add_urls(_approved_urls(approved_sources or ()))
 
     def _add_host(self, entry):
         if not isinstance(entry, str) or not entry.strip():
@@ -785,6 +790,9 @@ class WebGuard:
     def approve(self, urls) -> None:
         """Explicitly listed (request or human-approved) URLs: the exact URL and its host become fetchable."""
         self.enforce = True
+        self._add_urls(urls)
+
+    def _add_urls(self, urls) -> None:
         for u in urls:
             if isinstance(u, str) and re.fullmatch(r"https?://\S+", u):
                 self.urls.add(u)
@@ -794,8 +802,7 @@ class WebGuard:
 
     def approve_sources(self, sources) -> None:
         """The approved pre-run source-review plan (``review.plan_sources`` output)."""
-        from .workflows.review import approved_urls
-        self.approve(approved_urls(sources))
+        self.approve(_approved_urls(sources))
 
     def host_ok(self, host: str) -> bool:
         return host in self.hosts or any(host == p or host.endswith("." + p) for p in self.patterns)
