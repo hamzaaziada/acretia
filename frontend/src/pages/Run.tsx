@@ -126,7 +126,7 @@ export default function Run() {
 
   // The deal id is known once the job has one (given, or created by the run). Never build a deal route without it.
   const dealId = job?.deal_id ?? state.dealId ?? null;
-  const title = job?.prompt ?? t('run.title');
+  const title = job?.prompt ?? t("run.title");
   return (
     <div className="acr-page acr-run" data-testid="run-view" data-status={status} data-id={jobId}>
       <PageHeader

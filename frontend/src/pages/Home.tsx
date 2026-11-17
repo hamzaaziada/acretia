@@ -51,7 +51,7 @@ export default function Home() {
   const dealList = deals.data ?? [];
   const firstRun = !jobs.loading && rows.length === 0;
   const columns: Column<Job>[] = [
-    { key: 'prompt', header: t('runs.prompt'), render: (j) => <Link to={`/runs/${j.id}`} className="acr-truncate acr-runlink">{j.prompt}</Link> },
+    { key: 'prompt', header: t('runs.prompt'), render: (j) => <Link to={`/runs/${j.id}`} className="acr-truncate acr-runlink" dir="auto">{j.prompt}</Link> },
     { key: 'status', header: t('runs.status'), render: (j) => <Badge tone={statusTone(j.status)} dot>{t(`status.${j.status}`)}</Badge>, sortValue: (j) => j.status },
     { key: 'agent', header: t('runs.agent'), render: (j) => j.agent_name ?? j.kind, sortValue: (j) => j.agent_name ?? j.kind },
     { key: 'deal', header: t('runs.deal'), render: (j) => j.deal_name ?? '—' },
