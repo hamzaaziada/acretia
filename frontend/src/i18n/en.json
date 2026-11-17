@@ -772,6 +772,7 @@
   "viewers.model.crumbs": "Breadcrumb",
   "viewers.model.dependents": "Dependents",
   "viewers.model.diff.banner": "{n} cells changed vs v{a}",
+  "viewers.model.diff.banner1": "1 cell changed vs v{a}",
   "viewers.model.diff.close": "Hide changes",
   "viewers.model.diff.failed": "The comparison with the previous version could not be loaded.",
   "viewers.model.diff.next": "Next change",

@@ -582,7 +582,7 @@ function Model({ data, diff, diffFailed, onCloseDiff, onVersion, onSaved }: { da
           <span className="mv__diff-text" role="status">
             {diff.count === 0
               ? t('viewers.model.diff.none', { a: diff.a })
-              : t('viewers.model.diff.banner', { n: fmt.integer(diff.count), a: diff.a }) + (diff.truncated ? ` ${t('viewers.model.diff.truncated')}` : '')}
+              : t(diff.count === 1 ? 'viewers.model.diff.banner1' : 'viewers.model.diff.banner', { n: fmt.integer(diff.count), a: diff.a }) + (diff.truncated ? ` ${t('viewers.model.diff.truncated')}` : '')}
           </span>
           {diff.count > 0 && (
             <span className="mv__diff-nav">

@@ -150,7 +150,7 @@ def submit_rollforward(state, org_id, deal_id, user_id, ticker, source="app", fi
     if filing and filing.get("label"):
         prompt = f"Roll forward the {ticker} model to {filing['label']} (earnings update)."
     job = jobs.svc().submit(org_id, user_id, prompt, deal_id, C.builtin_id("earnings_update"),
-                            {"ticker": ticker, "model": model[0]}, source=source)
+                            {"ticker": ticker, "model": model[0], "source_review": False}, source=source)
     conn.execute("INSERT OR IGNORE INTO watch_runs(job_id,org_id,deal_id,trigger_kind,filing_json,requested_by,created_at) VALUES(?,?,?,?,?,?,?)",
                  (job["id"], org_id, deal_id, trigger, json.dumps(filing) if filing else None, user_id, db.now()))
     return job

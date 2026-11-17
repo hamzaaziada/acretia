@@ -772,6 +772,7 @@
   "viewers.model.crumbs": "مسار التنقل",
   "viewers.model.dependents": "التوابع",
   "viewers.model.diff.banner": "تغيّرت {n} خلية مقارنةً بالإصدار v{a}",
+  "viewers.model.diff.banner1": "تغيّرت خلية واحدة مقارنةً بالإصدار v{a}",
   "viewers.model.diff.close": "إخفاء التغييرات",
   "viewers.model.diff.failed": "تعذّر تحميل المقارنة مع الإصدار السابق.",
   "viewers.model.diff.next": "التغيير التالي",
