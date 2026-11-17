@@ -6,21 +6,22 @@ One row per active claim. Claim a packet before you touch its files, commit the 
 |---|---|---|---|---|
 | S5.4a 10-K corpus (session D) | worker | main | 2026-11-16 | evals/tenk/*, scripts/build_tenk_corpus.py, tests/test_s5_evals.py |
 | S5.4b evals + VDR50 (session D) | worker | main | 2026-11-17 | evals/vdr50/*, evals/odl_bench/*, evals/out/*, scripts/build_vdr50.py, scripts/eval_s5.py, tests/test_s5_eval_runner.py, scorecard.csv (S5 rows only) |
-| S5.5b grid export (session D) | worker | main | 2026-11-17 | om/grid_export.py, tests/test_grid_export.py |
+| S5.5c Matrix Chat (session D) | worker | main | 2026-11-17 | om/grid_chat.py, tests/test_grid_chat.py, tests/fixtures/grid_chat/* |
+| S5.6 grid interfaces doc (session D) | worker | main | 2026-11-17 | docs/interfaces.md ("Document grid (S5)" section only) |
 | S5 gate (session D) | gate-writer worker | main | 2026-11-17 | scripts/verify_s5.py |
 | S5 docs (session D) | Boss | main | 2026-11-16 | docs/s5/* |
 | S1 gate | Boss | claude/dreamy-ramanujan-k8p2xt | 2026-11-16 | scripts/verify_s1.py |
-| FP-S3-a renderer native shapes/connectors + chart plot layout | session B worker | claude/upbeat-mccarthy-viqjuo | 2026-11-16 | om/deck/render.py, om/deck/model.py, tests/test_deck_render.py |
-| FP-S3-b archetype keys, sourced examples, derived provenance, citation markers, positive token | session B worker | claude/upbeat-mccarthy-viqjuo | 2026-11-16 | om/deck/archetypes/*.py, om/deck/provenance.py, om/deck/theme.py, tests/test_deck_arch_*.py, tests/test_deck_engine.py |
-| S3.12 revisions: per-slide edit, annotations, versions, rollback | session B worker | claude/upbeat-mccarthy-viqjuo | 2026-11-16 | om/deck/revise.py, om/deck/versions.py, tests/test_deck_revise.py |
 | S3 gate script (independent writer) | session B gate worker | claude/upbeat-mccarthy-viqjuo | 2026-11-16 | scripts/verify_s3.py |
+| S3.10 corpus, reliability run, eval, scorecard, samples | session B worker | claude/upbeat-mccarthy-viqjuo | 2026-11-17 | evals/decks/**, om/deck/eval.py, scripts/eval_s3.py, scorecard.csv (S3 rows only), docs/samples/s3/**, tests/test_deck_eval.py |
+| FP-S3-c takeaway provenance, engine returns solved slides, revise without spy | session B worker | claude/upbeat-mccarthy-viqjuo | 2026-11-17 | om/deck/archetypes/*.py, om/deck/provenance.py, om/deck/engine.py, om/deck/revise.py, tests/test_deck_arch_*.py, tests/test_deck_engine.py, tests/test_deck_revise.py |
+| FP-S3-d procedural art polish + SVG designer quality | session B worker | claude/upbeat-mccarthy-viqjuo | 2026-11-17 | om/deck/visuals/procedural.py, om/deck/visuals/library.py, tests/test_deck_visuals.py |
 | S3 gate + docs | session B Boss | claude/upbeat-mccarthy-viqjuo | 2026-11-16 | docs/s3/*, docs/deck-engine.md, PROGRESS.md (S3 row only) |
 | S8.1 standards KB (session E) | worker | main | 2026-11-16 | om/intl/standards/**, docs/s8/standards/**, scripts/gen_standards_docs.py, tests/test_intl_standards.py |
 | S8.3a numbers + OCR service + synthetic fixtures (session E) | worker | main | 2026-11-16 | om/intl/numparse.py, om/intl/ocr.py, scripts/make_intl_fixtures.py, tests/fixtures/intl/**, tests/test_intl_numparse.py, tests/test_intl_ocr.py, license-and-repo-ledger.csv (S8 rows only) |
 | S8.3b extraction pipeline + read_report + intl-model CLI (session E) | worker | main | 2026-11-16 | om/intl/extract.py, om/intl/tables.py, om/intl/pipeline.py, open_multiples.py (intl-model subcommand only), tests/test_intl_extract.py, tests/test_intl_pipeline.py, evals/intl/review_minutes.csv, evals/intl/telemetry.jsonl |
 | S8.0/S8.7-corpus anchors + eval sourcing (session E) | worker | main | 2026-11-16 | evals/intl/corpus/**, evals/intl/anchors/*/sources.json, scripts/fetch_intl_corpus.py, data/raw/intl/** (never committed) |
 | S8.0 anchor notes + QA (session E, wave 2) | worker | main | 2026-11-16 | om/intl/companies/**, evals/intl/anchors/*/{figures,release_recon,qa}.jsonl |
-| S8.5 intl connectors (session E, wave 2; new files only, base.py untouched) | worker | main | 2026-11-16 | src/harness/connectors/intl_*.py, om/intl/sources/**, om/intl/ixbrl.py, docs/s8/source-terms.md, tests/test_intl_connectors.py, tests/fixtures/intl_connectors/** |
+| S8.5 intl connectors (session E, wave 2; new files only, base.py untouched) | worker | main | 2026-11-16 | src/harness/connectors/intl_*.py (S2.5 base fixed on main; S8.5 dispatched 2026-11-17), om/intl/sources/**, om/intl/ixbrl.py, docs/s8/source-terms.md, tests/test_intl_connectors.py, tests/fixtures/intl_connectors/** |
 | S8.7c standards QA eval (session E) | worker | main | 2026-11-16 | evals/intl/standards_qa/**, scripts/eval_intl_qa.py, tests/test_eval_intl_qa.py, scorecard.csv (S8 rows only) |
 | S8 gate + docs (session E) | Boss + gate worker | main | 2026-11-16 | scripts/verify_s8.py, tests/test_verify_s8_smoke.py, docs/s8/*.md, om/intl/__init__.py, PROGRESS.md (S8 row only) |
 | SF.0 product spec + gate spec (session F) | Boss | main | 2026-11-16 | docs/product/**, docs/product-requests.md, PROGRESS.md (Product row only), DECISIONS.md (D-SF-* only) |
@@ -82,3 +83,5 @@ One row per active claim. Claim a packet before you touch its files, commit the 
 - 2026-11-16: session A: FP-CI1 claimed (main CI runs all cancelled by cancel-in-progress).
 - 2026-11-16: session E: S8.2, S8.3a, S8.4, S8.6a landed (S8.4/S8.6a/S8.2 rows released; S8.3a row kept for the Eastern-digit fix). S8.3b claimed.
 - 2026-11-16: session A: FP-CI1 landed.
+- 2026-11-17: S5.5b verified on main and released; S5.5c, S5.6 claimed (session D).
+- 2026-11-17: session B: FP-S3-a, FP-S3-b, S3.12 merged and released; claimed S3.10 corpus, FP-S3-c, FP-S3-d.

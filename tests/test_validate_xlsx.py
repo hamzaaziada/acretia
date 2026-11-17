@@ -278,6 +278,101 @@ class TestNegatives(unittest.TestCase):
         self.assertEqual((f["sheet"], f["cell"]), ("Model", "C9"))
 
 
+class TestS46Rules(unittest.TestCase):
+    """S4.6a: typed numbers disguised as calculations, edge-cell pattern breaks, and require_sources (parity item 20)."""
+
+    @staticmethod
+    def calc_sheet(wb):
+        c = wb.sheet("Calc")
+        c.set("A2", "Calc", kind="title")
+        c.set("A5", "USD in millions", kind="header")
+        for r in (7, 8, 9, 10):
+            c.set(f"C{r}", "=Inputs!$C$8", fmt="num0")
+            c.set(f"D{r}", f"=$C{r}*(1+Inputs!$C$7)", fmt="num0")
+        return c
+
+    def test_typed_black_number_in_a_one_cell_row(self):
+        def mut(wb):
+            wb["Model"].set("C20", 123.0, kind="calc", fmt="num0")
+        res = vx.validate(mini(mutate=mut))
+        self.assertEqual(crit(res), {"hardcode.typed"})
+        self.assertEqual([f["cell"] for f in res["findings"] if f["id"] == "hardcode.typed"], ["C20"])
+
+    def test_typed_black_number_on_an_input_named_sheet(self):
+        def mut(wb):
+            wb["Inputs"].set("C20", 5.0, kind="calc")
+        self.assertIn("hardcode.typed", crit(vx.validate(mini(mutate=mut))))
+
+    def test_blue_input_on_input_sheet_is_fine(self):
+        def mut(wb):
+            wb["Inputs"].set("C20", 5.0, kind="input", fmt="num0")
+        self.assertEqual(vx.validate(mini(mutate=mut))["findings"], [])
+
+    def test_isolated_blue_plug_between_formulas(self):
+        def mut(wb):
+            c = self.calc_sheet(wb)
+            c.set("C8", 42.0, kind="hist", fmt="num0")
+            del c.cells[(8, 4)]
+        res = vx.validate(mini(mutate=mut))
+        self.assertIn(("hardcode.isolated", "C8"), {(f["id"], f["cell"]) for f in res["findings"]})
+        self.assertFalse(res["passed"])
+
+    def test_sourced_typed_number_between_formulas_is_allowed(self):
+        def mut(wb):
+            c = self.calc_sheet(wb)
+            c.set("C8", 42.0, kind="hist", fmt="num0", comment="10-K FY24 p.51")
+        self.assertNotIn("hardcode.isolated", {f["id"] for f in vx.validate(mini(mutate=mut))["findings"]})
+
+    def test_last_column_pattern_break(self):
+        # modelcheck's consistency grader needs a neighbour on both sides: an edge cell escapes it
+        def mut(wb):
+            wb["Model"].set("F8", "=F7", fmt="num0")
+        res = vx.validate(mini(mutate=mut))
+        self.assertIn(("consistency.columns", "F8"), {(f["id"], f["cell"]) for f in res["findings"]})
+        self.assertNotIn("modelcheck.consistency", {f["id"] for f in res["findings"]})
+        self.assertFalse(res["passed"])
+
+    def test_first_column_may_differ(self):
+        self.assertEqual(vx.validate(mini())["findings"], [])        # Model row 7: C is the base-year link, D..F roll forward
+
+    def test_stacked_row_pattern_break(self):
+        def mut(wb):
+            c = self.calc_sheet(wb)
+            c.set("D8", "=$C8*Inputs!$C$7", fmt="num0")
+        res = vx.validate(mini(mutate=mut))
+        self.assertIn(("consistency.rows", "D8"), {(f["id"], f["cell"]) for f in res["findings"]})
+
+    def test_total_under_its_parts_is_not_flagged(self):
+        def mut(wb):
+            c = self.calc_sheet(wb)
+            c.set("D11", "=SUM(D7:D10)", fmt="num0")
+        self.assertEqual(vx.validate(mini(mutate=mut))["findings"], [])
+
+    def test_require_sources(self):
+        def mut(wb):
+            wb["Model"].set("C20", 7.0, kind="hist", fmt="num0")
+        data = mini(mutate=mut)
+        self.assertEqual(vx.validate(data)["findings"], [])
+        res = vx.validate(data, require_sources=True)
+        self.assertEqual(crit(res), {"sources.missing"})
+        self.assertEqual([f["cell"] for f in res["findings"]], ["C20"])
+        self.assertFalse(res["passed"])
+
+    def test_require_sources_accepts_comment_or_link(self):
+        def mut(wb):
+            wb["Model"].set("C20", 7.0, kind="hist", fmt="num0", comment="10-K FY24")
+            wb["Model"].set("C21", 8.0, kind="hist", fmt="num0", link="https://www.sec.gov/Archives/edgar/data/1/x.htm")
+        self.assertEqual(vx.validate(mini(mutate=mut), require_sources=True)["findings"], [])
+
+    def test_require_sources_skips_input_sheets(self):
+        self.assertEqual(vx.validate(mini(), require_sources=True)["findings"], [])
+
+    def test_model3_passes_with_require_sources(self):
+        s = statements.build(synthetic_companyfacts(), "TEST")
+        data, _ = model3.build(s)
+        self.assertEqual(vx.validate(data, require_sources=True)["findings"], [])
+
+
 class TestCLI(unittest.TestCase):
     def run_cli(self, data, *args):
         with tempfile.TemporaryDirectory() as d:

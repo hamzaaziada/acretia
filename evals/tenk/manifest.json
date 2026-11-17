@@ -1,0 +1,992 @@
+{
+ "soffice_version": "LibreOffice 24.2.7.2 420(Build:2)",
+ "user_agent_note": "SEC fair-access UA used for fetches",
+ "filings": [
+  {
+   "ticker": "AAPL",
+   "cik": 320193,
+   "accession": "0000320193-26-000026",
+   "primary_document": "https://www.sec.gov/Archives/edgar/data/320193/000032019326000026/aapl-20260926.htm",
+   "fiscal_year_end": "2026-09-26",
+   "filing_date": "2026-11-03",
+   "pdf": "pdfs/AAPL.pdf",
+   "sha256": "472fd39bae43ac4a9c0d07b9e67263a5a7182d01da054f7497ddca99aa75bbef",
+   "bytes": 147651,
+   "page_map": [
+    {
+     "page": 1,
+     "orig_page": 1
+    },
+    {
+     "page": 2,
+     "orig_page": 7
+    },
+    {
+     "page": 3,
+     "orig_page": 9
+    },
+    {
+     "page": 4,
+     "orig_page": 10
+    },
+    {
+     "page": 5,
+     "orig_page": 11
+    },
+    {
+     "page": 6,
+     "orig_page": 37
+    },
+    {
+     "page": 7,
+     "orig_page": 39
+    },
+    {
+     "page": 8,
+     "orig_page": 40
+    },
+    {
+     "page": 9,
+     "orig_page": 41
+    },
+    {
+     "page": 10,
+     "orig_page": 42
+    },
+    {
+     "page": 11,
+     "orig_page": 43
+    },
+    {
+     "page": 12,
+     "orig_page": 44
+    },
+    {
+     "page": 13,
+     "orig_page": 50
+    },
+    {
+     "page": 14,
+     "orig_page": 70
+    },
+    {
+     "page": 15,
+     "orig_page": 71
+    },
+    {
+     "page": 16,
+     "orig_page": 72
+    },
+    {
+     "page": 17,
+     "orig_page": 73
+    },
+    {
+     "page": 18,
+     "orig_page": 74
+    },
+    {
+     "page": 19,
+     "orig_page": 79
+    }
+   ],
+   "orig_page_count": 81,
+   "soffice_version": "LibreOffice 24.2.7.2 420(Build:2)"
+  },
+  {
+   "ticker": "MSFT",
+   "cik": 789019,
+   "accession": "0001193125-26-323660",
+   "primary_document": "https://www.sec.gov/Archives/edgar/data/789019/000119312526323660/msft-20260630.htm",
+   "fiscal_year_end": "2026-06-30",
+   "filing_date": "2026-07-29",
+   "pdf": "pdfs/MSFT.pdf",
+   "sha256": "cb4c9ffdc708e35d88876ab04cf775e5dd4c405a38734d02c917b73574d4e9f2",
+   "bytes": 140506,
+   "page_map": [
+    {
+     "page": 1,
+     "orig_page": 1
+    },
+    {
+     "page": 2,
+     "orig_page": 2
+    },
+    {
+     "page": 3,
+     "orig_page": 5
+    },
+    {
+     "page": 4,
+     "orig_page": 7
+    },
+    {
+     "page": 5,
+     "orig_page": 16
+    },
+    {
+     "page": 6,
+     "orig_page": 46
+    },
+    {
+     "page": 7,
+     "orig_page": 49
+    },
+    {
+     "page": 8,
+     "orig_page": 69
+    },
+    {
+     "page": 9,
+     "orig_page": 70
+    },
+    {
+     "page": 10,
+     "orig_page": 71
+    },
+    {
+     "page": 11,
+     "orig_page": 72
+    },
+    {
+     "page": 12,
+     "orig_page": 73
+    },
+    {
+     "page": 13,
+     "orig_page": 74
+    },
+    {
+     "page": 14,
+     "orig_page": 110
+    },
+    {
+     "page": 15,
+     "orig_page": 112
+    },
+    {
+     "page": 16,
+     "orig_page": 142
+    },
+    {
+     "page": 17,
+     "orig_page": 144
+    },
+    {
+     "page": 18,
+     "orig_page": 145
+    },
+    {
+     "page": 19,
+     "orig_page": 146
+    },
+    {
+     "page": 20,
+     "orig_page": 147
+    },
+    {
+     "page": 21,
+     "orig_page": 148
+    }
+   ],
+   "orig_page_count": 162,
+   "soffice_version": "LibreOffice 24.2.7.2 420(Build:2)"
+  },
+  {
+   "ticker": "KO",
+   "cik": 21344,
+   "accession": "0001628280-26-010047",
+   "primary_document": "https://www.sec.gov/Archives/edgar/data/21344/000162828026010047/ko-20251231.htm",
+   "fiscal_year_end": "2025-12-31",
+   "filing_date": "2026-02-20",
+   "pdf": "pdfs/KO.pdf",
+   "sha256": "fabe16361746d357be92d94fb9896d467bcb769ec94845d7ba4853d42ea75ce1",
+   "bytes": 159406,
+   "page_map": [
+    {
+     "page": 1,
+     "orig_page": 1
+    },
+    {
+     "page": 2,
+     "orig_page": 13
+    },
+    {
+     "page": 3,
+     "orig_page": 47
+    },
+    {
+     "page": 4,
+     "orig_page": 62
+    },
+    {
+     "page": 5,
+     "orig_page": 63
+    },
+    {
+     "page": 6,
+     "orig_page": 67
+    },
+    {
+     "page": 7,
+     "orig_page": 68
+    },
+    {
+     "page": 8,
+     "orig_page": 69
+    },
+    {
+     "page": 9,
+     "orig_page": 70
+    },
+    {
+     "page": 10,
+     "orig_page": 71
+    },
+    {
+     "page": 11,
+     "orig_page": 90
+    },
+    {
+     "page": 12,
+     "orig_page": 91
+    },
+    {
+     "page": 13,
+     "orig_page": 92
+    },
+    {
+     "page": 14,
+     "orig_page": 93
+    },
+    {
+     "page": 15,
+     "orig_page": 94
+    },
+    {
+     "page": 16,
+     "orig_page": 99
+    },
+    {
+     "page": 17,
+     "orig_page": 100
+    },
+    {
+     "page": 18,
+     "orig_page": 110
+    },
+    {
+     "page": 19,
+     "orig_page": 142
+    },
+    {
+     "page": 20,
+     "orig_page": 143
+    },
+    {
+     "page": 21,
+     "orig_page": 144
+    },
+    {
+     "page": 22,
+     "orig_page": 145
+    },
+    {
+     "page": 23,
+     "orig_page": 146
+    }
+   ],
+   "orig_page_count": 158,
+   "soffice_version": "LibreOffice 24.2.7.2 420(Build:2)"
+  },
+  {
+   "ticker": "JNJ",
+   "cik": 200406,
+   "accession": "0000200406-26-000016",
+   "primary_document": "https://www.sec.gov/Archives/edgar/data/200406/000020040626000016/jnj-20251228.htm",
+   "fiscal_year_end": "2025-12-28",
+   "filing_date": "2026-02-11",
+   "pdf": "pdfs/JNJ.pdf",
+   "sha256": "ab689d936246414ae73bca83303aebc0f5eea1e466361a9570fc51e49ed14b78",
+   "bytes": 160582,
+   "page_map": [
+    {
+     "page": 1,
+     "orig_page": 1
+    },
+    {
+     "page": 2,
+     "orig_page": 7
+    },
+    {
+     "page": 3,
+     "orig_page": 10
+    },
+    {
+     "page": 4,
+     "orig_page": 14
+    },
+    {
+     "page": 5,
+     "orig_page": 47
+    },
+    {
+     "page": 6,
+     "orig_page": 48
+    },
+    {
+     "page": 7,
+     "orig_page": 51
+    },
+    {
+     "page": 8,
+     "orig_page": 56
+    },
+    {
+     "page": 9,
+     "orig_page": 57
+    },
+    {
+     "page": 10,
+     "orig_page": 58
+    },
+    {
+     "page": 11,
+     "orig_page": 59
+    },
+    {
+     "page": 12,
+     "orig_page": 60
+    },
+    {
+     "page": 13,
+     "orig_page": 119
+    },
+    {
+     "page": 14,
+     "orig_page": 120
+    },
+    {
+     "page": 15,
+     "orig_page": 121
+    },
+    {
+     "page": 16,
+     "orig_page": 122
+    },
+    {
+     "page": 17,
+     "orig_page": 123
+    },
+    {
+     "page": 18,
+     "orig_page": 134
+    },
+    {
+     "page": 19,
+     "orig_page": 135
+    },
+    {
+     "page": 20,
+     "orig_page": 136
+    },
+    {
+     "page": 21,
+     "orig_page": 137
+    },
+    {
+     "page": 22,
+     "orig_page": 138
+    },
+    {
+     "page": 23,
+     "orig_page": 139
+    },
+    {
+     "page": 24,
+     "orig_page": 140
+    },
+    {
+     "page": 25,
+     "orig_page": 141
+    }
+   ],
+   "orig_page_count": 154,
+   "soffice_version": "LibreOffice 24.2.7.2 420(Build:2)"
+  },
+  {
+   "ticker": "PG",
+   "cik": 80424,
+   "accession": "0000080424-26-000103",
+   "primary_document": "https://www.sec.gov/Archives/edgar/data/80424/000008042426000103/pg-20260630.htm",
+   "fiscal_year_end": "2026-06-30",
+   "filing_date": "2026-08-04",
+   "pdf": "pdfs/PG.pdf",
+   "sha256": "221ac7812953d555a41ede9dddace9c3f1f77169bffef04ef989bb355fe6174d",
+   "bytes": 202059,
+   "page_map": [
+    {
+     "page": 1,
+     "orig_page": 1
+    },
+    {
+     "page": 2,
+     "orig_page": 5
+    },
+    {
+     "page": 3,
+     "orig_page": 12
+    },
+    {
+     "page": 4,
+     "orig_page": 19
+    },
+    {
+     "page": 5,
+     "orig_page": 23
+    },
+    {
+     "page": 6,
+     "orig_page": 26
+    },
+    {
+     "page": 7,
+     "orig_page": 36
+    },
+    {
+     "page": 8,
+     "orig_page": 37
+    },
+    {
+     "page": 9,
+     "orig_page": 38
+    },
+    {
+     "page": 10,
+     "orig_page": 39
+    },
+    {
+     "page": 11,
+     "orig_page": 40
+    },
+    {
+     "page": 12,
+     "orig_page": 41
+    },
+    {
+     "page": 13,
+     "orig_page": 42
+    },
+    {
+     "page": 14,
+     "orig_page": 43
+    },
+    {
+     "page": 15,
+     "orig_page": 44
+    },
+    {
+     "page": 16,
+     "orig_page": 45
+    },
+    {
+     "page": 17,
+     "orig_page": 46
+    },
+    {
+     "page": 18,
+     "orig_page": 47
+    },
+    {
+     "page": 19,
+     "orig_page": 49
+    },
+    {
+     "page": 20,
+     "orig_page": 80
+    },
+    {
+     "page": 21,
+     "orig_page": 87
+    }
+   ],
+   "orig_page_count": 92,
+   "soffice_version": "LibreOffice 24.2.7.2 420(Build:2)"
+  },
+  {
+   "ticker": "WMT",
+   "cik": 104169,
+   "accession": "0000104169-26-000055",
+   "primary_document": "https://www.sec.gov/Archives/edgar/data/104169/000010416926000055/wmt-20260131.htm",
+   "fiscal_year_end": "2026-01-31",
+   "filing_date": "2026-03-13",
+   "pdf": "pdfs/WMT.pdf",
+   "sha256": "84d18c3d5c0ed12437eaacc5e756b0557e1c52a97f8ed3ecd57a1ce564f143a2",
+   "bytes": 137759,
+   "page_map": [
+    {
+     "page": 1,
+     "orig_page": 1
+    },
+    {
+     "page": 2,
+     "orig_page": 6
+    },
+    {
+     "page": 3,
+     "orig_page": 12
+    },
+    {
+     "page": 4,
+     "orig_page": 40
+    },
+    {
+     "page": 5,
+     "orig_page": 46
+    },
+    {
+     "page": 6,
+     "orig_page": 55
+    },
+    {
+     "page": 7,
+     "orig_page": 59
+    },
+    {
+     "page": 8,
+     "orig_page": 60
+    },
+    {
+     "page": 9,
+     "orig_page": 61
+    },
+    {
+     "page": 10,
+     "orig_page": 62
+    },
+    {
+     "page": 11,
+     "orig_page": 63
+    },
+    {
+     "page": 12,
+     "orig_page": 64
+    },
+    {
+     "page": 13,
+     "orig_page": 65
+    },
+    {
+     "page": 14,
+     "orig_page": 66
+    },
+    {
+     "page": 15,
+     "orig_page": 76
+    },
+    {
+     "page": 16,
+     "orig_page": 96
+    }
+   ],
+   "orig_page_count": 114,
+   "soffice_version": "LibreOffice 24.2.7.2 420(Build:2)"
+  },
+  {
+   "ticker": "COST",
+   "cik": 909832,
+   "accession": "0000909832-26-000093",
+   "primary_document": "https://www.sec.gov/Archives/edgar/data/909832/000090983226000093/cost-20260830.htm",
+   "fiscal_year_end": "2026-08-30",
+   "filing_date": "2026-10-07",
+   "pdf": "pdfs/COST.pdf",
+   "sha256": "72a4c5ea73cbdbabf81391b77fdd54c32cb9de17db8fb349c855e8cd437b473b",
+   "bytes": 141964,
+   "page_map": [
+    {
+     "page": 1,
+     "orig_page": 1
+    },
+    {
+     "page": 2,
+     "orig_page": 5
+    },
+    {
+     "page": 3,
+     "orig_page": 6
+    },
+    {
+     "page": 4,
+     "orig_page": 7
+    },
+    {
+     "page": 5,
+     "orig_page": 24
+    },
+    {
+     "page": 6,
+     "orig_page": 31
+    },
+    {
+     "page": 7,
+     "orig_page": 33
+    },
+    {
+     "page": 8,
+     "orig_page": 34
+    },
+    {
+     "page": 9,
+     "orig_page": 35
+    },
+    {
+     "page": 10,
+     "orig_page": 36
+    },
+    {
+     "page": 11,
+     "orig_page": 37
+    },
+    {
+     "page": 12,
+     "orig_page": 38
+    },
+    {
+     "page": 13,
+     "orig_page": 39
+    },
+    {
+     "page": 14,
+     "orig_page": 40
+    },
+    {
+     "page": 15,
+     "orig_page": 41
+    },
+    {
+     "page": 16,
+     "orig_page": 54
+    }
+   ],
+   "orig_page_count": 75,
+   "soffice_version": "LibreOffice 24.2.7.2 420(Build:2)"
+  },
+  {
+   "ticker": "HD",
+   "cik": 354950,
+   "accession": "0001628280-26-019436",
+   "primary_document": "https://www.sec.gov/Archives/edgar/data/354950/000162828026019436/hd-20260201.htm",
+   "fiscal_year_end": "2026-02-01",
+   "filing_date": "2026-03-18",
+   "pdf": "pdfs/HD.pdf",
+   "sha256": "75fbe79bc04631cbc8929d1796d116445346f544e3d4b44e6a69efbd49351e8d",
+   "bytes": 176762,
+   "page_map": [
+    {
+     "page": 1,
+     "orig_page": 1
+    },
+    {
+     "page": 2,
+     "orig_page": 14
+    },
+    {
+     "page": 3,
+     "orig_page": 28
+    },
+    {
+     "page": 4,
+     "orig_page": 38
+    },
+    {
+     "page": 5,
+     "orig_page": 39
+    },
+    {
+     "page": 6,
+     "orig_page": 40
+    },
+    {
+     "page": 7,
+     "orig_page": 41
+    },
+    {
+     "page": 8,
+     "orig_page": 42
+    },
+    {
+     "page": 9,
+     "orig_page": 43
+    },
+    {
+     "page": 10,
+     "orig_page": 46
+    },
+    {
+     "page": 11,
+     "orig_page": 47
+    },
+    {
+     "page": 12,
+     "orig_page": 48
+    },
+    {
+     "page": 13,
+     "orig_page": 49
+    },
+    {
+     "page": 14,
+     "orig_page": 50
+    },
+    {
+     "page": 15,
+     "orig_page": 51
+    },
+    {
+     "page": 16,
+     "orig_page": 52
+    },
+    {
+     "page": 17,
+     "orig_page": 53
+    },
+    {
+     "page": 18,
+     "orig_page": 58
+    },
+    {
+     "page": 19,
+     "orig_page": 67
+    },
+    {
+     "page": 20,
+     "orig_page": 68
+    },
+    {
+     "page": 21,
+     "orig_page": 71
+    },
+    {
+     "page": 22,
+     "orig_page": 86
+    },
+    {
+     "page": 23,
+     "orig_page": 87
+    },
+    {
+     "page": 24,
+     "orig_page": 88
+    },
+    {
+     "page": 25,
+     "orig_page": 89
+    }
+   ],
+   "orig_page_count": 101,
+   "soffice_version": "LibreOffice 24.2.7.2 420(Build:2)"
+  },
+  {
+   "ticker": "MCD",
+   "cik": 63908,
+   "accession": "0000063908-26-000035",
+   "primary_document": "https://www.sec.gov/Archives/edgar/data/63908/000006390826000035/mcd-20251231.htm",
+   "fiscal_year_end": "2025-12-31",
+   "filing_date": "2026-02-24",
+   "pdf": "pdfs/MCD.pdf",
+   "sha256": "a9b9e0775a651b799869d684a3623f2f7b655b8d6084cfe079ea16fcdcef56be",
+   "bytes": 163837,
+   "page_map": [
+    {
+     "page": 1,
+     "orig_page": 1
+    },
+    {
+     "page": 2,
+     "orig_page": 6
+    },
+    {
+     "page": 3,
+     "orig_page": 11
+    },
+    {
+     "page": 4,
+     "orig_page": 13
+    },
+    {
+     "page": 5,
+     "orig_page": 14
+    },
+    {
+     "page": 6,
+     "orig_page": 15
+    },
+    {
+     "page": 7,
+     "orig_page": 16
+    },
+    {
+     "page": 8,
+     "orig_page": 29
+    },
+    {
+     "page": 9,
+     "orig_page": 30
+    },
+    {
+     "page": 10,
+     "orig_page": 42
+    },
+    {
+     "page": 11,
+     "orig_page": 50
+    },
+    {
+     "page": 12,
+     "orig_page": 53
+    },
+    {
+     "page": 13,
+     "orig_page": 54
+    },
+    {
+     "page": 14,
+     "orig_page": 55
+    },
+    {
+     "page": 15,
+     "orig_page": 56
+    },
+    {
+     "page": 16,
+     "orig_page": 57
+    },
+    {
+     "page": 17,
+     "orig_page": 58
+    },
+    {
+     "page": 18,
+     "orig_page": 59
+    },
+    {
+     "page": 19,
+     "orig_page": 87
+    },
+    {
+     "page": 20,
+     "orig_page": 91
+    },
+    {
+     "page": 21,
+     "orig_page": 92
+    },
+    {
+     "page": 22,
+     "orig_page": 93
+    },
+    {
+     "page": 23,
+     "orig_page": 94
+    },
+    {
+     "page": 24,
+     "orig_page": 95
+    }
+   ],
+   "orig_page_count": 103,
+   "soffice_version": "LibreOffice 24.2.7.2 420(Build:2)"
+  },
+  {
+   "ticker": "LOW",
+   "cik": 60667,
+   "accession": "0000060667-26-000029",
+   "primary_document": "https://www.sec.gov/Archives/edgar/data/60667/000006066726000029/low-20260130.htm",
+   "fiscal_year_end": "2026-01-30",
+   "filing_date": "2026-03-23",
+   "pdf": "pdfs/LOW.pdf",
+   "sha256": "3d7b43c7bedf760d89fd6b42662976342470f89e38c4bcbc6fd413f368ecdf2d",
+   "bytes": 150429,
+   "page_map": [
+    {
+     "page": 1,
+     "orig_page": 1
+    },
+    {
+     "page": 2,
+     "orig_page": 6
+    },
+    {
+     "page": 3,
+     "orig_page": 8
+    },
+    {
+     "page": 4,
+     "orig_page": 16
+    },
+    {
+     "page": 5,
+     "orig_page": 28
+    },
+    {
+     "page": 6,
+     "orig_page": 29
+    },
+    {
+     "page": 7,
+     "orig_page": 31
+    },
+    {
+     "page": 8,
+     "orig_page": 32
+    },
+    {
+     "page": 9,
+     "orig_page": 33
+    },
+    {
+     "page": 10,
+     "orig_page": 34
+    },
+    {
+     "page": 11,
+     "orig_page": 41
+    },
+    {
+     "page": 12,
+     "orig_page": 42
+    },
+    {
+     "page": 13,
+     "orig_page": 43
+    },
+    {
+     "page": 14,
+     "orig_page": 44
+    },
+    {
+     "page": 15,
+     "orig_page": 45
+    },
+    {
+     "page": 16,
+     "orig_page": 46
+    },
+    {
+     "page": 17,
+     "orig_page": 47
+    },
+    {
+     "page": 18,
+     "orig_page": 60
+    },
+    {
+     "page": 19,
+     "orig_page": 61
+    }
+   ],
+   "orig_page_count": 101,
+   "soffice_version": "LibreOffice 24.2.7.2 420(Build:2)"
+  }
+ ]
+}

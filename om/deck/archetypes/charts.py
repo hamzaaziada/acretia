@@ -219,6 +219,9 @@ def build_waterfall(slide: dict, ctx: BuildContext):
     pre, suf = b.get("prefix", ""), b.get("suffix", "")
     pct = f" ({_fmt(delta / first * 100, '0.0', True)}%)" if first else ""
     badge = f"{'+' if delta >= 0 else MINUS}{pre}{fmt_number(abs(delta), nf)}{suf}{pct}"
+    base.declare(meta, abs(delta), "blocks.steps[0].value", "blocks.steps[-1].value")
+    if first:
+        base.declare(meta, abs(delta / first * 100), "blocks.steps[0].value", "blocks.steps[-1].value")
     spec = {"type": "waterfall", "categories": [s["label"] for s in steps], "totals": totals, "number_format": nf,
             "labels": True, "labels_above": True, "axis_min": 0,
             "series": [{"name": b.get("series_name", "Value"), "values": [s["value"] for s in steps]}]}
@@ -305,6 +308,10 @@ def build_annotated_line(slide: dict, ctx: BuildContext):
     rng = (hi - lo) or abs(hi) * 0.1 or 1.0
     amin, amax = lo - 0.1 * rng, hi + 0.5 * rng
     unit = b.get("change_unit", "%")
+    base.declare(meta, abs(main[-1] - main[0]), "blocks.series[0].values[0]", "blocks.series[0].values[-1]")
+    if main[0]:
+        base.declare(meta, abs((main[-1] / main[0] - 1) * 100), "blocks.series[0].values[0]",
+                     "blocks.series[0].values[-1]")
     if unit == "%":
         badge = f"{_fmt((main[-1] / main[0] - 1) * 100, '0.0', True)}% vs {cats[0]}" if main[0] else ""
     else:
@@ -356,6 +363,7 @@ def build_combo_margin(slide: dict, ctx: BuildContext):
     els.append(_chart_el(ctx, None, grid_x(0), y, grid_w(9), h, spec, _binding(b, [bars, line], [b])))
     pp = (line["values"][-1] - line["values"][0]) * (100 if "%" in lf else 1)
     badge = f"{_fmt(pp, '0.0', True)} pp vs {cats[0]}"
+    base.declare(meta, abs(pp), "blocks.line.values[0]", "blocks.line.values[-1]")
     els += _panel(ctx, meta, 9, 3, y, h, b["takeaway"], badge=badge,
                   key=[(bars["name"], "mute_bar"), (line["name"], "accent")])
     return _finish(slide, ctx, "combo_margin", "combo", els, meta)
@@ -364,8 +372,8 @@ def build_combo_margin(slide: dict, ctx: BuildContext):
 # ---------------------------------------------------------------- 7. scatter_quadrant
 @register("scatter_quadrant", data=True, visual_type="scatter", schema=_schema({
     "points": {"type": "array", "minItems": 5, "maxItems": 12, "items": {
-        "type": "object", "additionalProperties": False, "required": ["label", "x", "y"],
-        "properties": {"label": {"type": "string", "maxLength": 22}, "x": _NUM, "y": _NUM,
+        "type": "object", "additionalProperties": False, "required": ["label", "xv", "yv"],
+        "properties": {"label": {"type": "string", "maxLength": 22}, "xv": _NUM, "yv": _NUM,
                        "subject": {"type": "boolean"}}}},
     "x_title": {"type": "string", "maxLength": 40}, "y_title": {"type": "string", "maxLength": 40},
     "x_format": _NF, "y_format": _NF, "stat": _STAT, "binding": {"type": ["string", "object"]}},
@@ -373,7 +381,7 @@ def build_combo_margin(slide: dict, ctx: BuildContext):
 def build_scatter_quadrant(slide: dict, ctx: BuildContext):
     b, meta, els, y, h = _begin(slide, ctx, "scatter_quadrant", "points", "x_title", "y_title", "stat")
     pts = b["points"]
-    xs, ys = [p["x"] for p in pts], [p["y"] for p in pts]
+    xs, ys = [p["xv"] for p in pts], [p["yv"] for p in pts]
     mx, my = statistics.median(xs), statistics.median(ys)
 
     def pad(lo: float, hi: float) -> tuple[float, float]:
@@ -438,6 +446,8 @@ def build_football_field(slide: dict, ctx: BuildContext):
     els.append(core.tx(ctx, meta, "callout", "price", bx, y, bw, 0.4, [core.para(lbl, b=False)], BODY, valign="m"))
     els.append(core.vline(ctx, "marker", "price", px, y + 0.4, round(pbot - (y + 0.4), 2), "text", 1.5))
     up = (implied / price - 1) * 100 if price else 0.0
+    base.declare(meta, implied, *[f"blocks.methods[{i}].{k}" for i in range(len(ms)) for k in ("low", "high")])
+    base.declare(meta, abs(up), "blocks.current_price", "blocks.methods")
     stat = {"value": f"{pre}{fmt_number(implied, nf)}",
             "label": f"Implied value per share, {_fmt(up, '0.0', True)}% vs current {pre}{fmt_number(price, nf)}"}
     els += _panel(ctx, meta, 9, 3, y, h, b["takeaway"], stats=[stat])
@@ -561,36 +571,39 @@ EXAMPLES = {
     "ranked_bar": {
         "title": "Acme trades at the lowest EV/EBITDA multiple in its peer set",
         "source": "FactSet consensus", "as_of": "2026-10-31",
+        "sources": ["FactSet consensus, NTM EV/EBITDA", "Company filings, net debt at 30 Sep 2026"],
         "blocks": {"subtitle": "EV/EBITDA, next twelve months, x", "number_format": '0.0"x"', "series_name": "EV/EBITDA",
                    "items": [{"label": "Northwind Bank", "value": 14.8}, {"label": "Helios Financial", "value": 13.9},
                              {"label": "Brightline Capital", "value": 13.4}, {"label": "Meridian Group", "value": 12.9},
                              {"label": "Corvus Holdings", "value": 12.1}, {"label": "Aster Partners", "value": 11.8},
                              {"label": "Acme", "value": 10.6, "key": True}],
                    "stat": {"value": "2.3x", "label": "discount to the peer median of 12.9x"},
-                   "takeaway": "Closing half the gap to the median re-rates Acme by 1.2x EBITDA",
+                   "takeaway": "Closing half the gap to the median re-rates Acme by 1.2x EBITDA [1]",
                    "binding": "m-peer-ev-ebitda"}},
     "waterfall": {
         "title": "EBITDA grows $32m as price and savings outweigh cost inflation",
         "source": _SRC, "as_of": "2026-09-30",
+        "sources": ["Company filings, FY25 and FY26 accounts", "Acretia analysis, bridge model v3"],
         "blocks": {"subtitle": "EBITDA bridge, FY25 to FY26, $ million", "number_format": "0", "prefix": "$", "suffix": "m",
                    "steps": [{"label": "FY25", "value": 412}, {"label": "Price", "value": 58},
                              {"label": "Volume", "value": -31}, {"label": "Mix", "value": 12},
                              {"label": "Inflation", "value": -44}, {"label": "FX", "value": -9},
                              {"label": "Savings", "value": 46}, {"label": "FY26", "value": 444}],
-                   "takeaway": "Price and savings add $104m; volume, inflation and FX give back $84m",
+                   "takeaway": "Price and savings add $104m; volume, inflation and FX give back $84m [2]",
                    "binding": {"manifest_id": "m-ebitda-bridge"}}},
     "stacked_bar": {
         "title": "Acme leans on retail more than any peer while corporate lags",
         "source": _SRC, "as_of": "2026-06-30",
+        "sources": ["Company filings, segment notes FY25", "Peer annual reports FY25"],
         "blocks": {"subtitle": "Revenue mix by business line, FY25, % of total revenue", "mode": "percent",
                    "categories": ["Acme", "Northwind", "Helios", "Brightline"],
                    "parts": [{"name": "Retail", "values": [52, 45, 38, 30], "key": True},
                              {"name": "Corporate", "values": [28, 30, 34, 41]},
                              {"name": "Treasury and markets", "values": [12, 15, 19, 20]},
                              {"name": "Other", "values": [8, 10, 9, 9]}],
-                   "takeaway": "Retail is 52% of Acme revenue, 14 points above the peer average"}},
+                   "takeaway": "Retail is 52% of Acme revenue, 14 points above the peer average [2]"}},
     "stacked_column": {
-        "title": "Current accounts now fund 42% of deposits, up 11 points in four years",
+        "title": "Current accounts now fund 42% of deposits, up from 31% four years ago",
         "source": _SRC, "as_of": "2026-09-30",
         "blocks": {"subtitle": "Deposit mix, FY22 to FY26, % of total deposits", "mode": "percent",
                    "categories": ["FY22", "FY23", "FY24", "FY25", "FY26"],
@@ -601,35 +614,38 @@ EXAMPLES = {
     "annotated_line": {
         "title": "Net interest margin recovers to 3.42% after the floating book reprices",
         "source": _SRC, "as_of": "2026-09-30",
+        "sources": ["Company filings, quarterly results", "Peer quarterly results, median of six banks"],
         "blocks": {"subtitle": "Net interest margin, quarterly, %", "number_format": "0.00", "change_unit": "pp",
                    "categories": ["Q1 FY25", "Q2 FY25", "Q3 FY25", "Q4 FY25", "Q1 FY26", "Q2 FY26", "Q3 FY26", "Q4 FY26"],
                    "series": [{"name": "Acme NIM", "values": [3.05, 3.02, 2.94, 2.88, 3.01, 3.17, 3.31, 3.42],
                                "binding": "m-nim"},
                               {"name": "Peer median", "values": [3.10, 3.08, 3.04, 3.02, 3.05, 3.10, 3.15, 3.20]}],
                    "annotation": {"at": 3, "text": "Floating book reprices from Q1 FY26"},
-                   "takeaway": "Acme now earns 22 bps more than the peer median, from 8 bps less a year ago"}},
+                   "takeaway": "Acme now earns 22 bps more than the peer median, from 8 bps less a year ago [2]"}},
     "combo_margin": {
         "title": "Revenue grows 8% a year while EBITDA margin widens 4.2 points",
         "source": _SRC, "as_of": "2026-09-30",
+        "sources": ["Company filings, FY22 to FY26 accounts"],
         "blocks": {"subtitle": "Revenue, $ million, and EBITDA margin, %", "number_format": "#,##0", "line_format": "0.0%",
                    "categories": ["FY22", "FY23", "FY24", "FY25", "FY26"],
                    "bars": {"name": "Revenue, $m", "values": [820, 905, 968, 1042, 1128], "binding": "m-revenue"},
                    "line": {"name": "EBITDA margin", "values": [0.184, 0.196, 0.201, 0.213, 0.226]},
-                   "takeaway": "Operating leverage turns each extra $100m of revenue into $31m of EBITDA"}},
+                   "takeaway": "Operating leverage turns each extra $100m of revenue into $31m of EBITDA [1]"}},
     "scatter_quadrant": {
         "title": "Acme pairs peer-median growth with the highest margin in the set",
         "source": "FactSet consensus", "as_of": "2026-10-31",
         "blocks": {"subtitle": "Revenue growth versus EBITDA margin, FY26E", "x_title": "Revenue growth, FY25 to FY26E",
                    "y_title": "EBITDA margin, FY26E", "x_format": "0%", "y_format": "0%",
-                   "points": [{"label": "Acme", "x": 0.083, "y": 0.226, "subject": True},
-                              {"label": "Northwind", "x": 0.121, "y": 0.184}, {"label": "Helios", "x": 0.064, "y": 0.171},
-                              {"label": "Brightline", "x": 0.095, "y": 0.152}, {"label": "Meridian", "x": 0.048, "y": 0.198},
-                              {"label": "Corvus", "x": 0.109, "y": 0.139}, {"label": "Aster", "x": 0.072, "y": 0.163}],
+                   "points": [{"label": "Acme", "xv": 0.083, "yv": 0.226, "subject": True},
+                              {"label": "Northwind", "xv": 0.121, "yv": 0.184}, {"label": "Helios", "xv": 0.064, "yv": 0.171},
+                              {"label": "Brightline", "xv": 0.095, "yv": 0.152}, {"label": "Meridian", "xv": 0.048, "yv": 0.198},
+                              {"label": "Corvus", "xv": 0.109, "yv": 0.139}, {"label": "Aster", "xv": 0.072, "yv": 0.163}],
                    "stat": {"value": "+5.5pp", "label": "EBITDA margin above the peer median of 17.1%"},
                    "takeaway": "Margin, not growth, explains why Acme earns a premium to peers"}},
     "football_field": {
         "title": "Every method values Acme above the current $142 share price",
         "source": "Company filings; broker research", "as_of": "2026-11-13",
+        "sources": ["Acretia DCF model v9", "FactSet, trading and transaction comparables", "Broker research, Nov 2026"],
         "blocks": {"subtitle": "Equity value per share by method, $", "prefix": "$", "number_format": "0",
                    "current_price": 142.1,
                    "methods": [{"label": "DCF (WACC 8.5 to 10.5%)", "low": 148, "high": 186, "key": True},
@@ -637,7 +653,7 @@ EXAMPLES = {
                                {"label": "Precedent transactions", "low": 152, "high": 194},
                                {"label": "52-week range", "low": 118, "high": 156},
                                {"label": "Broker targets", "low": 145, "high": 175}],
-                   "takeaway": "The DCF range sits entirely above the market, a 17% upside at the midpoint"}},
+                   "takeaway": "The DCF range sits entirely above the market, a 17% upside at the midpoint [1]"}},
     "small_multiples": {
         "title": "Operating margin improves in all four regions, led by the Gulf",
         "source": _SRC, "as_of": "2026-09-30",

@@ -1,0 +1,13 @@
+{
+  "name": "acretia-e2e",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Playwright journeys P-J1..P-J8, parity checklist and accessibility checks for the Acretia product app (SF.3)",
+  "scripts": {
+    "test": "playwright test --trace off",
+    "list": "playwright test --list"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.63.0"
+  }
+}

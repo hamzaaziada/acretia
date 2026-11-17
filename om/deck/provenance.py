@@ -6,6 +6,12 @@ series). Prose fields (takeaways, bullets, subtitles, titles, notes) are never a
 vouch for its own figures. Data blocks only count when the slide carries a `source` or `as_of`; manifest values and the
 `values` mapping always count. Untraceable numbers are critical findings, rule `unsourced_number`, naming the shape id.
 
+Wave 3 (D-S3-11): a prose number also traces when it appears in a sourced data block of ANY slide of the deck (an
+executive summary cites later slides), and when an archetype declares it as computed: `SolvedSlide.meta["derived"] =
+[{"value": v, "from": [json paths]}]` (medians, totals, CAGR, implied values). Numbers with no data anywhere stay critical.
+Citations (#19): `[n]` markers in rendered text must resolve to the slide's `sources` list (or its single `source` as
+[1]); a dangling marker is a critical `citation` finding. Markers are never counted as numbers.
+
 Zero LLM, zero network."""
 from __future__ import annotations
 
@@ -43,9 +49,13 @@ def _cands(raw: float, dec: int, unit: str | None, cur: bool) -> list[tuple[floa
     return [(raw, tol)]
 
 
+CITE = re.compile(r"\[(\d{1,2})\]")
+
+
 def tokens(text: str, *, strict_skip: bool = True) -> list[dict]:
-    """Numeric tokens in `text`: {"text", "cands": [(value, tolerance)]}. Years, dates, ordinals and code-like ids are skipped."""
-    text = _norm(text)
+    """Numeric tokens in `text`: {"text", "cands": [(value, tolerance)]}. Years, dates, ordinals, citation markers and
+    code-like ids are skipped."""
+    text = CITE.sub(" ", _norm(text))
     text = _DATES.sub(" ", text)
     out = []
     for m in _TOK.finditer(text):
@@ -92,7 +102,7 @@ def _walk(node, pool: list, prose: bool = False) -> None:
 
 def slide_pool(slide: dict, extra: list) -> list[tuple[float, float]]:
     pool = list(extra)
-    if slide.get("source") or slide.get("as_of"):
+    if slide.get("source") or slide.get("sources") or slide.get("as_of"):
         _walk(slide.get("blocks") or {}, pool)
     return pool
 
@@ -130,24 +140,57 @@ def element_texts(el) -> list[str]:
     return out
 
 
+def _derived_pool(sl) -> list[tuple[float, float]]:
+    """Archetype-declared computed values of one solved slide, as (value, tolerance) pairs."""
+    pool: list = []
+    for d in (getattr(sl, "meta", None) or {}).get("derived") or []:
+        v = d.get("value") if isinstance(d, dict) else None
+        if isinstance(v, (int, float)) and not isinstance(v, bool):
+            pool.append((abs(float(v)), 0.0))
+    return pool
+
+
+def source_list(slide: dict) -> list[str]:
+    """The slide's citation list: `sources` (list of strings) when present, else its single `source` as [1]."""
+    src = slide.get("sources")
+    if isinstance(src, (list, tuple)) and src:
+        return [str(x) for x in src]
+    return [str(slide["source"])] if slide.get("source") else []
+
+
 def check(spec: dict, slides, *, manifest=None, values=None) -> list[dict]:
-    """Findings (validator format) for every rendered number that cannot be traced to sourced data."""
+    """Findings (validator format) for every rendered number that cannot be traced to sourced data, and every `[n]`
+    citation marker without a matching source."""
     bound = _bound_pool(manifest, values)
     spec_slides = list((spec or {}).get("slides") or [])
+    slides = list(slides)
+    deck_pool = list(bound)                            # sourced data blocks of every slide + declared derived values
+    for s in slides:
+        i = getattr(s, "index", 0) - 1
+        sp = spec_slides[i] if 0 <= i < len(spec_slides) else {}
+        if sp.get("source") or sp.get("sources") or sp.get("as_of"):
+            _walk(sp.get("blocks") or {}, deck_pool)
+        deck_pool += _derived_pool(s)                  # declared by archetype code, not by model-written prose
     out: list[dict] = []
     for s in slides:
         i = getattr(s, "index", 0) - 1
         sp = spec_slides[i] if 0 <= i < len(spec_slides) else {}
-        pool = slide_pool(sp, bound)
+        n_src = len(source_list(sp))
         for el in s.elements:
             if el.role in SKIP_ROLES:
                 continue
-            bad = []
+            bad, marks = [], []
             for text in element_texts(el):
-                bad += [t["text"] for t in tokens(text) if not _match(t, pool)]
+                bad += [t["text"] for t in tokens(text) if not _match(t, deck_pool)]
+                marks += [int(n) for n in CITE.findall(text) if not 1 <= int(n) <= n_src]
             if bad:
                 out.append({"severity": "critical", "rule": "unsourced_number", "slide": s.index, "shape_id": None,
                             "shape_name": el.id,
                             "message": f"{el.id}: number(s) {', '.join(dict.fromkeys(bad))} not traceable to sourced "
                                        f"spec data, a bound manifest value or a chart series"})
+            if marks:
+                out.append({"severity": "critical", "rule": "citation", "slide": s.index, "shape_id": None,
+                            "shape_name": el.id,
+                            "message": f"{el.id}: citation marker(s) {', '.join(f'[{n}]' for n in dict.fromkeys(marks))} "
+                                       f"have no matching entry in the slide's sources ({n_src} listed)"})
     return out

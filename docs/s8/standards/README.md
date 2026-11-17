@@ -12,6 +12,7 @@ Machine-readable data lives in `om/intl/standards/*.yaml`; load it with `om.intl
 - [Indian Accounting Standards (Ind AS)](indas.md)
 - [US generally accepted accounting principles (FASB ASC)](usgaap.md)
 - [IFRS standards depth](ifrs-standards.md)
+- [EAS list and IFRS counterparts](eas-standards.md)
 - [Differences and recipes](differences.md)
 
 ## API

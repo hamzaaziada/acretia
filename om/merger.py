@@ -19,8 +19,11 @@ financed and capitalised, no circularity).
 """
 from __future__ import annotations
 
+import math
+
 from . import statements as stm
 from .model3 import _avg, _clamp, _sd
+from .polish import CONFIDENTIAL, finish, section, trend, waterfall
 from .xlsx import BLUE, GREEN, GREY, NAVY, Workbook, col_letter, quote_sheet, ref
 
 F = 3                       # forecast years
@@ -29,6 +32,9 @@ BASE = C0                   # last actual year column on Pro forma
 Y = [C0 + 1 + i for i in range(F)]
 FIRST = 8
 LT_GROWTH = 0.03
+# Fixed Cover layout (rows) so the Checks sheet can tie out the chart tables before the Cover is written.
+COV = dict(kpi=12, charts1=29, charts2=48, data=67, adt=70, bridge=82)
+BRIDGE_STEPS = 4                    # equity price, + debt assumed, - cash, = enterprise value
 
 
 # --------------------------------------------------------------------------- defaults
@@ -54,6 +60,16 @@ def _proj_defaults(s: stm.Statements) -> tuple[list, list]:
     return gs, [margin] * F
 
 
+def _cash_used_default(acq: stm.Statements, tgt: stm.Statements, tgt_market: dict, premium: float, pct_stock: float, fee_pct: float) -> float:
+    """Half the acquirer's cash and short-term investments, never more than the cash the deal needs (cash consideration + fees),
+    so an all-stock deal does not net a negative amount of new debt."""
+    la, lt = len(acq.years) - 1, len(tgt.years) - 1
+    equity = float(tgt_market["price"]) * (1 + premium) * (tgt.get("diluted_shares", lt) or 0)
+    cash_cons = (1 - pct_stock) * equity + fee_pct * equity
+    acq_cash = (acq.get("cash", la) or 0) + (acq.get("sti", la) or 0)
+    return math.floor(max(0.0, min(0.5 * acq_cash, cash_cons)) * 10) / 10      # round down so the cap is never exceeded
+
+
 def defaults(acq: stm.Statements, tgt: stm.Statements, acq_market: dict, tgt_market: dict) -> dict:
     """Driver defaults from history and the market inputs. Everything here is overridable via `assumptions`."""
     la, lt = len(acq.years) - 1, len(tgt.years) - 1
@@ -63,10 +79,7 @@ def defaults(acq: stm.Statements, tgt: stm.Statements, acq_market: dict, tgt_mar
     tax = [acq.get("tax", i) for i in range(la + 1)]
     tax_rate = _clamp(_avg([_sd(tax[i], pretax[i]) for i in range(la + 1) if (pretax[i] or 0) > 0]), 0.0, 0.35, 0.21)
     premium, pct_stock, fee_pct = 0.30, 0.50, 0.01
-    equity = float(tgt_market["price"]) * (1 + premium) * (tgt.get("diluted_shares", lt) or 0)
-    cash_cons = (1 - pct_stock) * equity + fee_pct * equity
-    acq_cash = (acq.get("cash", la) or 0) + (acq.get("sti", la) or 0)
-    cash_used = round(max(0.0, min(0.5 * acq_cash, cash_cons)), 1)
+    cash_used = _cash_used_default(acq, tgt, tgt_market, premium, pct_stock, fee_pct)
     syn = round(0.02 * (tgt.get("revenue", lt) or 0), 1)
     return {
         "acq_growth": ag, "acq_margin": am, "tgt_growth": tg, "tgt_margin": tm,
@@ -610,7 +623,7 @@ def _checks(m: _M, sh) -> None:
     sh.width("C", 12)
     sh.freeze = (6, 2)
     R = m.rows[n] = {}
-    tol_r = FIRST + 18
+    tol_r = FIRST + 20
     tols = [("Tol", "tol", "Rounding tolerance ($m)", "num2"), ("TolPct", "tol_pct", "Percentage tolerance (mix sums to 100%)", "pct"),
             ("TolEPS", "tol_eps", "Accretion tolerance (fraction of standalone EPS)", "pct")]
     T = {}
@@ -629,6 +642,8 @@ def _checks(m: _M, sh) -> None:
     BE = lambda key, c: f"Breakeven!{ref(m.rows['Breakeven'][key], c, True, True)}"
     S = m.rows["Sensitivity"]
     y1 = Y[0]
+    accr = m.rows["Pro forma"]["acc_p"]
+    PFR = f"'Pro forma'!{ref(accr, Y[0], True, True)}:{ref(accr, Y[-1], True, True)}"
     checks = [
         ("Sources equal uses", f'=IF(ABS({SU("s_total")}-{SU("u_total")})<={T["Tol"]},"OK","ERROR")'),
         ("Consideration mix (stock + cash) sums to 100%", f'=IF(ABS({As("pct_stock")}+{As("pct_cash")}-1)<={T["TolPct"]},"OK","ERROR")'),
@@ -648,6 +663,11 @@ def _checks(m: _M, sh) -> None:
          f'=IF(ABS(Sensitivity!{ref(S["g1_centre"], S["g1_centre_col"], True, True)}-{PF("acc_p", y1)})<={T["TolEPS"]},"OK","ERROR")'),
         ("Sensitivity grid 2 centre equals the base case",
          f'=IF(ABS(Sensitivity!{ref(S["g2_centre"], S["g2_centre_col"], True, True)}-{PF("acc_p", y1)})<={T["TolEPS"]},"OK","ERROR")'),
+        ("Cover purchase-price bridge ties to the Purchase price sheet",
+         f'=IF(AND(ABS(SUM(Cover!$C${COV["bridge"] + 1}:$C${COV["bridge"] + BRIDGE_STEPS - 1})-Cover!$C${COV["bridge"] + BRIDGE_STEPS})<={T["Tol"]},'
+         f'ABS(Cover!$C${COV["bridge"] + BRIDGE_STEPS}-{m.x("Purchase price", "ev")})<={T["Tol"]}),"OK","ERROR")'),
+        ("Cover accretion table ties to the Pro forma sheet",
+         f'=IF(ABS(SUM(Cover!$C${COV["adt"] + 4}:${col_letter(2 + F)}${COV["adt"] + 4})-SUM({PFR}))<={T["TolEPS"]},"OK","ERROR")'),
     ]
     for i, (label, f) in enumerate(checks):
         r = FIRST + 2 + i
@@ -664,52 +684,102 @@ def _checks(m: _M, sh) -> None:
     sh.ok_error(f"C{FIRST}")
 
 
+def _print_dashboard(sh, model_name: str) -> None:
+    """Print the Cover as a one-page dashboard (header, key metrics and the chart grid); chart data and contents stay on screen."""
+    sh.print_setup(area=f"A1:N{COV['charts2'] + 18}", title_rows="2:3", header=("", "", CONFIDENTIAL),
+                   footer=("Source: company filings (SEC EDGAR)", model_name, ""), landscape=True, fit_width=1, fit_height=1)
+
+
 def _cover(m: _M, sh) -> None:
     n = "Cover"
+    m.rows[n] = {"master": 10}
     sh.width("A", 3)
-    sh.width("B", 46)
-    for c in range(3, 8):
-        sh.width(c, 13)
+    sh.width("B", 40)
+    for c in range(3, 15):
+        sh.width(c, 11.5)
     sh.set("B2", f"{m.acq.name} ({m.acq.ticker}) acquires {m.tgt.name} ({m.tgt.ticker})", kind="title", size=18)
-    sh.set("B3", "Accretion / dilution merger model, built from SEC filings", kind="note")
+    sh.set("B3", "Accretion / dilution merger model, built from SEC filings; every number is written by code", kind="note")
     P = lambda k: m.x("Purchase price", k)
     SU = lambda k: m.x("Sources & Uses", k)
     As = lambda k: m.x("Assumptions", k)
     PF = lambda k, c: f"'Pro forma'!{ref(m.rows['Pro forma'][k], c)}"
-    sh.set("B5", "Deal summary", bold=True, color=NAVY, bottom=True)
-    sh.set("C5", "", bottom=True)
+    BEr = lambda k, c: f"Breakeven!{ref(m.rows['Breakeven'][k], c)}"
+    sh.set("B5", "Acquirer", bold=True)
+    sh.set("C5", f"{m.acq.name} ({m.acq.ticker})")
+    sh.set("B6", "Target", bold=True)
+    sh.set("C6", f"{m.tgt.name} ({m.tgt.ticker})")
+    sh.set("B7", "Units", bold=True)
+    sh.set("C7", f"{m.acq.currency} in millions, except per-share data")
+    sh.set("B8", "Forecast", bold=True)
+    sh.set("C8", f"{m.fy(0)}–{m.fy(F - 1)}; reported basis (integration costs included, no circularity)")
+    sh.set("B9", "Consideration", bold=True)
+    sh.set("C9", f'=TEXT({As("pct_stock")},"0%")&" stock / "&TEXT({As("pct_cash")},"0%")&" cash"')
+    sh.set("B10", "MASTER CHECK", bold=True)
+    sh.set("C10", f"=Checks!{ref(m.rows['Checks']['master'], C0)}", bold=True)
+    sh.ok_error("C10")
+
+    # ---- key metrics
+    k0 = COV["kpi"]
+    section(sh, k0, "Deal summary", 2, 4)
+    y1 = Y[0]
     rows = [
-        ("Offer price per share ($)", f"={P('offer')}", "usd2"),
-        ("Offer premium", f"={As('premium')}", "pct"),
-        ("Equity purchase price ($m)", f"={P('equity')}", "num0"),
-        ("Enterprise value paid ($m)", f"={P('ev')}", "num0"),
-        ("Implied EV / EBITDA", f"={P('ev_ebitda')}", "x"),
-        ("Implied P/E paid", f"={P('pe_paid')}", "x"),
-        ("Consideration in stock", f"={As('pct_stock')}", "pct"),
-        ("New acquirer shares issued (m)", f"={SU('new_sh')}", "num1"),
-        ("New acquisition debt ($m)", f"={SU('s_debt')}", "num0"),
-        ("Goodwill created ($m)", f"={m.x('PPA', 'goodwill')}", "num0"),
+        ("Offer price per share ($)", f"={P('offer')}", "usd2", "per share"),
+        ("Offer premium", f"={As('premium')}", "pct", "to current price"),
+        ("Equity purchase price", f"={P('equity')}", "num0", "$m"),
+        ("Enterprise value paid", f"={P('ev')}", "num0", "$m"),
+        ("Implied EV / EBITDA", f"={P('ev_ebitda')}", "x", "last actual"),
+        ("Implied P/E paid", f"={P('pe_paid')}", "x", "last actual"),
+        ("Consideration in stock", f"={As('pct_stock')}", "pct", "of equity price"),
+        ("New acquirer shares issued", f"={SU('new_sh')}", "num1", "m shares"),
+        ("New acquisition debt", f"={SU('s_debt')}", "num0", "$m"),
+        ("Goodwill created", f"={m.x('PPA', 'goodwill')}", "num0", "$m"),
+        (f"EPS accretion / (dilution), {m.fy(0)}", f"={PF('acc_p', y1)}", "pct", "year 1"),
+        (f"Pro forma diluted EPS, {m.fy(0)}", f"={PF('pf_eps', y1)}", "usd2", "year 1"),
+        (f"Pre-tax synergies to break even, {m.fy(0)}", f"={BEr('be_pre', y1)}", "num1", "$m, year 1"),
     ]
-    for i, (lab, f, fmt) in enumerate(rows):
-        sh.set((6 + i, 2), lab, indent=1)
-        sh.set((6 + i, 3), f, fmt=fmt)
-    r = 6 + len(rows) + 1
-    sh.set((r, 2), "Accretion / dilution", bold=True, color=NAVY, bottom=True)
+    for i, (lab, f, fmt, note) in enumerate(rows):
+        sh.set((k0 + 1 + i, 2), lab)
+        sh.set((k0 + 1 + i, 3), f, fmt=fmt, bold=i in (10, 11))
+        sh.set((k0 + 1 + i, 4), note, kind="note")
+
+    # ---- chart data and charts
+    c1, c2, d0, a0, b0 = COV["charts1"], COV["charts2"], COV["data"], COV["adt"], COV["bridge"]
+    section(sh, c1 - 2, "Charts", 2, 14)
+    section(sh, d0, "Chart data", 2, 8)
+    sh.set((d0 + 1, 2), "Formula-driven tables behind the charts above; every cell links to the model.", kind="note")
+    sh.set((a0, 2), "Accretion / dilution by year", bold=True, color=NAVY, bottom=True)
     for k, c in enumerate(Y):
-        sh.set((r, 3 + k), m.fy(k), bold=True, align="right", bottom=True)
-    for i, (lab, key, fmt) in enumerate((("Standalone acquirer EPS ($)", "sa_eps", "usd2"), ("Pro forma EPS ($)", "pf_eps", "usd2"),
-                                         ("Accretion / (dilution), $ per share", "acc_d", "usd2"), ("Accretion / (dilution), %", "acc_p", "pct"),
-                                         ("Pre-tax synergies to break even ($m)", None, "num1"))):
-        sh.set((r + 1 + i, 2), lab, indent=1, bold=key == "acc_p")
+        sh.set((a0, 3 + k), f"='Pro forma'!{ref(5, c)}", bold=True, align="right", bottom=True)
+    lines = [("Standalone acquirer EPS ($)", lambda c: f"={PF('sa_eps', c)}", "usd2"),
+             ("Pro forma EPS ($)", lambda c: f"={PF('pf_eps', c)}", "usd2"),
+             ("Accretion / (dilution), $ per share", lambda c: f"={PF('acc_d', c)}", "usd2"),
+             ("Accretion / (dilution), %", lambda c: f"={PF('acc_p', c)}", "pct"),
+             ("Breakeven pre-tax synergies ($m)", lambda c: f"={BEr('be_pre', c)}", "num1"),
+             ("Planned pre-tax synergies ($m)", lambda c: f"={PF('syn', c)}", "num1"),
+             ("Synergies above / (below) breakeven ($m)", lambda c: f"={BEr('cushion', c)}", "num1"),
+             ("Chart axis baseline (keeps the accretion axis at zero)", lambda c: "=0", "pct")]
+    for i, (lab, fn, fmt) in enumerate(lines):
+        r = a0 + 1 + i
+        sh.set((r, 2), lab, indent=1, bold=i == 3)
         for k, c in enumerate(Y):
-            f = f"={PF(key, c)}" if key else f"=Breakeven!{ref(m.rows['Breakeven']['be_pre'], c)}"
-            sh.set((r + 1 + i, 3 + k), f, fmt=fmt, bold=key == "acc_p")
-    r += 7
-    m.rows[n] = {"master": r}
-    sh.set((r, 2), "MASTER CHECK", bold=True)
-    sh.set((r, 3), f"=Checks!{ref(m.rows['Checks']['master'], C0)}", bold=True)
-    sh.ok_error(f"C{r}")
-    r += 2
+            sh.set((r, 3 + k), fn(c), fmt=fmt, bold=i == 3)
+    row = lambda i: f"Cover!{ref(a0 + i, 3, True, True)}:{ref(a0 + i, 2 + F, True, True)}"
+    cats = row(0)
+    sh.chart("column", title="EPS accretion / (dilution) by year", anchor=(f"B{c1}", f"F{c1 + 17}"), y_format="pct", data_labels=True, legend=False,
+             series=[{"name": "Accretion / (dilution), %", "cats": cats, "vals": row(4)},
+                     {"name": "Zero baseline", "cats": cats, "vals": row(8), "invisible": True}])
+    trend(sh, title="Standalone vs pro forma EPS ($)", cats=cats, series=[("Standalone EPS", row(1)), ("Pro forma EPS", row(2))],
+          anchor=(f"H{c1}", f"N{c1 + 17}"), y_format="usd2", data_labels=True)
+    steps = [("Equity purchase price", f"={P('equity')}"), ("Plus: target debt assumed", f"={P('debt')}"),
+             ("Less: target cash and investments", f"={P('cash')}"), ("Enterprise value paid", f"={P('ev')}")]
+    assert len(steps) == BRIDGE_STEPS
+    waterfall(sh, top_left=(b0, 2), steps=steps, title="Purchase price bridge: equity price to enterprise value ($m)",
+              anchor=(f"B{c2}", f"F{c2 + 17}"), y_format="num0")
+    trend(sh, title="Breakeven vs planned synergies, pre-tax ($m)", cats=cats, series=[("Breakeven synergies", row(5)), ("Planned synergies", row(6))],
+          anchor=(f"H{c2}", f"N{c2 + 17}"), y_format="num1", data_labels=True)
+
+    # ---- colour code, contents, sources
+    r = b0 + BRIDGE_STEPS + 3
     sh.set((r, 2), "Colour code", bold=True, color=NAVY, bottom=True)
     sh.set((r + 1, 2), "Hard-coded input or figure as filed", color=BLUE)
     sh.set((r + 2, 2), "Formula on this sheet")
@@ -748,6 +818,12 @@ def build_workbook(acq: stm.Statements, tgt: stm.Statements, *, acq_market: dict
     d = defaults(acq, tgt, acq_market, tgt_market)
     if assumptions:
         d.update(assumptions)
+        if "pct_stock" in assumptions and "pct_cash" not in assumptions:
+            d["pct_cash"] = 1 - float(d["pct_stock"])
+        elif "pct_cash" in assumptions and "pct_stock" not in assumptions:
+            d["pct_stock"] = 1 - float(d["pct_cash"])
+        if "cash_used" not in assumptions:                 # re-cap the default cash used when the deal terms moved
+            d["cash_used"] = _cash_used_default(acq, tgt, tgt_market, float(d["premium"]), float(d["pct_stock"]), float(d["fee_pct"]))
     m = _M(acq, tgt, acq_market, tgt_market, d)
     wb = m.wb
     cover = wb.sheet("Cover", tab=NAVY)
@@ -774,6 +850,11 @@ def build_workbook(acq: stm.Statements, tgt: stm.Statements, *, acq_market: dict
     wb.sheets.sort(key=lambda sh: order.index(sh.name))
     from .formula import calculate_workbook
     eng = calculate_workbook(wb)
+    nf = max(m.ha, m.ht)
+    finish(wb, model_name=f"{acq.ticker} / {tgt.ticker} merger model", source="Source: company filings (SEC EDGAR); share prices per the caller's market data",
+           period_sheets={"Pro forma": {"hist": (BASE, BASE), "proj": (Y[0], Y[-1])}, "Breakeven": {"proj": (Y[0], Y[-1])},
+                          "Assumptions": {"proj": (Y[0], Y[-1])}, "Filings": {"hist": (C0, C0 + nf - 1)}})
+    _print_dashboard(cover, f"{acq.ticker} / {tgt.ticker} merger model")
 
     pf, rows = m.rows["Pro forma"], m.rows
     cell = lambda sheet, key, c=C0: ref(rows[sheet][key], c)
@@ -795,7 +876,7 @@ def build_workbook(acq: stm.Statements, tgt: stm.Statements, *, acq_market: dict
         warnings.append("fiscal year ends differ between acquirer and target; projections are not calendarised")
     meta = {"model": "merger", "converged": eng.converged, "iterations": eng.iterations, "acquirer": acq.ticker, "target": tgt.ticker,
             "rows": {k: dict(v) for k, v in rows.items()}, "outputs": outputs, "plants": plants, "warnings": warnings, "defaults": d,
-            "forecast_years": F}
+            "forecast_years": F, "charts": [{"sheet": "Cover", "kind": c["kind"], "title": c["title"]} for c in cover.charts]}
     return wb, meta
 
 

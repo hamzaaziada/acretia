@@ -6,7 +6,7 @@
 
 ### `diff-leases-ifrs16-asc842`
 - **Frameworks:** IFRS, USGAAP, SOCPA-IFRS, UAE-IFRS, IndAS
-- **Confidence:** verified
+- **Confidence:** unverified
 - **Summary:** IFRS 16 puts nearly every lease on the balance sheet and splits cost into depreciation and interest, so lease expense leaves operating costs. US GAAP ASC 842 also records a liability and asset for operating leases, but keeps one straight-line lease cost inside operating expenses; only finance leases are split. The same lease therefore gives higher EBITDA under IFRS than under US GAAP.
 - **Analyst impact:** EBITDA, operating cash flow and net debt are not comparable between IFRS and US GAAP retailers, airlines and restaurants. Move IFRS companies to a pre-IFRS 16 basis (deduct lease payments from EBITDA) or move US companies to a post-16 basis.
 - **Adjustment recipe:** `ifrs16_to_pre16_ebitda`
@@ -16,7 +16,7 @@
 
 ### `diff-leases-net-debt`
 - **Frameworks:** IFRS, USGAAP, SOCPA-IFRS, UAE-IFRS, EAS
-- **Confidence:** verified
+- **Confidence:** unverified
 - **Summary:** Lease liabilities are debt-like but are reported in different places. IFRS companies show them with borrowings or in their own line; US companies split operating and finance lease liabilities. Whether to add them to net debt depends on whether EBITDA in the same ratio is before or after rent.
 - **Analyst impact:** Keep numerator and denominator consistent: post-16 EBITDA with lease-inclusive net debt, or pre-16 EBITDA with lease-exclusive net debt. Mixed bases overstate or understate leverage.
 - **Adjustment recipe:** `lease_adjusted_net_debt`
@@ -54,11 +54,24 @@
 **Verified facts**
 - Effective 1 April 2019; no fair value model for investment-property ROU; lease interest always financing; inflation exemption for lessors removed: <https://alumni.in.kpmg.com/downloads/Publications/Accounting_Publications/firstnotes-leases-standard-ind-as-116-notified-mca.pdf>
 
+### `diff-eas49-ebitda-effect`
+- **Frameworks:** EAS, IFRS
+- **Confidence:** unverified
+- **Summary:** Moving to EAS 49, the lessee records a right-of-use asset and a lease liability, depreciates the asset and accrues interest on the liability. Rent that was an operating expense becomes depreciation and interest, so EBITDA and EBIT rise (EBIT by the interest element only), operating cash flow rises and financing outflows include lease principal. Debt and total assets increase by the lease liability and asset.
+- **Analyst impact:** For Egyptian retailers, real estate and logistics firms, build a pre-EAS 49 EBITDA by deducting lease payments (principal and interest), and add lease liabilities to net debt only when EBITDA is on the post-adoption basis.
+- **Adjustment recipe:** `ifrs16_to_pre16_ebitda`
+- **Citations:**
+  - EAS 49 Lease Contracts, Lessee model (same as IFRS 16 paras 22-38): <https://fra.gov.eg/en/?p=13760728>
+  - IFRS 16, paras 22-38: <https://www.ifrs.org/issued-standards/list-of-standards/ifrs-16-leases/>
+
+**Unverified facts**
+- EAS 49 effective date and transition method by company
+
 ## revenue
 
 ### `diff-revenue-ifrs15-asc606-eas48`
 - **Frameworks:** IFRS, USGAAP, EAS, IndAS, SOCPA-IFRS, UAE-IFRS
-- **Confidence:** verified
+- **Confidence:** unverified
 - **Summary:** IFRS 15 and ASC 606 share the five-step model for revenue from contracts with customers (identify the contract, the performance obligations, the transaction price, allocate it, recognise as control passes), so most revenue is recognised alike. Remaining gaps: the collectability test wording, treatment of some licences, impairment reversal on contract costs, and interim disclosure. EAS 48 (Revenue from Contracts with Customers, which replaced the older Egyptian revenue standard) and Ind AS 115 follow IFRS 15 and apply the same five-step model to contracts with customers. Under older Egyptian and UK-style rules, revenue recognition followed risk-and-reward and percentage-of-completion methods.
 - **Analyst impact:** Revenue growth across the transition year can step; check the transition method and whether comparatives were restated. For gross versus net, rely on the principal-agent note.
 - **Adjustment recipe:** `revenue_principal_agent_net`
@@ -69,7 +82,7 @@
 
 ### `diff-revenue-principal-agent`
 - **Frameworks:** IFRS, USGAAP, EAS, IndAS
-- **Confidence:** verified
+- **Confidence:** unverified
 - **Summary:** A company that controls goods or services before transfer reports revenue gross; an agent reports only its fee. Distributors, platforms and travel businesses differ in judgement, so identical business models can show revenue at very different levels while gross profit stays similar.
 - **Analyst impact:** Compare margin on a net-revenue or gross-profit basis when peers differ in principal-agent conclusions.
 - **Adjustment recipe:** `revenue_principal_agent_net`
@@ -80,7 +93,7 @@
 
 ### `diff-inventory-lifo`
 - **Frameworks:** IFRS, USGAAP, EAS, FRS102, IndAS, SOCPA-IFRS, UAE-IFRS
-- **Confidence:** verified
+- **Confidence:** unverified
 - **Summary:** IFRS, EAS, FRS 102 and Ind AS ban last-in first-out. US GAAP permits it, and US companies using LIFO in rising prices show lower profit and inventory than FIFO peers. LIFO users disclose a LIFO reserve, the cumulative gap to FIFO.
 - **Analyst impact:** Convert LIFO inventory to FIFO by adding the LIFO reserve and adjust cost of sales by the change in reserve before comparing margins or working capital with IFRS peers.
 - **Adjustment recipe:** `lifo_to_fifo`
@@ -92,7 +105,7 @@
 
 ### `diff-development-costs`
 - **Frameworks:** IFRS, USGAAP, FRS102, IndAS, EAS
-- **Confidence:** verified
+- **Confidence:** unverified
 - **Summary:** IFRS requires capitalising development costs once defined criteria are met. US GAAP generally expenses research and development as incurred, with exceptions for certain software costs. FRS 102 lets entities choose to capitalise or expense. Capitalised development appears in intangible assets, with amortisation later.
 - **Analyst impact:** Capitalising raises current EBIT and operating cash flow and shifts spending to investing. For comparability, expense the capitalised amount and reverse the related amortisation.
 - **Adjustment recipe:** `dev_cost_expense`
@@ -105,7 +118,7 @@
 
 ### `diff-revaluation`
 - **Frameworks:** IFRS, USGAAP, FRS102, IndAS, EAS, SOCPA-IFRS, UAE-IFRS
-- **Confidence:** verified
+- **Confidence:** unverified
 - **Summary:** IFRS allows revaluing whole classes of PPE (and intangibles with active markets) to fair value, with the increase held in a revaluation surplus in OCI. US GAAP prohibits upward revaluation. Ind AS allows revaluation of PPE but not the fair value model for investment property. Egypt did not permit revaluation of PPE, intangibles or investment property until January 2023. Saudi Arabia kept the cost model for listed companies until fiscal years starting 2022 and allows fair value or revaluation after that.
 - **Analyst impact:** Revalued assets lift equity and the depreciation base; reverse the surplus and the extra depreciation for return-on-capital comparisons across jurisdictions, and treat Egypt and Saudi periods before the change as cost-based.
 - **Adjustment recipe:** `revaluation_reverse`
@@ -120,7 +133,7 @@
 
 ### `diff-impairment-reversal`
 - **Frameworks:** IFRS, USGAAP, FRS102, IndAS, EAS
-- **Confidence:** verified
+- **Confidence:** unverified
 - **Summary:** IFRS lets a company reverse an earlier impairment of PPE, intangibles other than goodwill and investments when the reasons fade, up to the depreciated cost that would have existed. Goodwill impairment is never reversed. US GAAP prohibits reversing an impairment of assets held and used; written-down cost becomes the new basis.
 - **Analyst impact:** Reversals inflate IFRS earnings in recoveries (commodities, shipping). Remove reversals from normalised profit before comparing with US peers.
 - **Adjustment recipe:** `impairment_reversal_strip`
@@ -132,7 +145,7 @@
 
 ### `diff-borrowing-costs`
 - **Frameworks:** IFRS, USGAAP, FRS102, IndAS, EAS
-- **Confidence:** verified
+- **Confidence:** unverified
 - **Summary:** IFRS requires capitalising borrowing costs on qualifying assets, and deducts investment income on funds borrowed specifically. US GAAP also capitalises interest but does not net investment income and uses the weighted average accumulated expenditure method. FRS 102 permits either capitalising or expensing.
 - **Analyst impact:** Capitalised interest hides financing cost inside capex. Add it back to interest expense for interest cover and EBIT-to-interest ratios.
 - **Adjustment recipe:** `capitalised_interest_expense`
@@ -144,7 +157,7 @@
 
 ### `diff-associates-jvs`
 - **Frameworks:** IFRS, USGAAP, EAS, IndAS, SOCPA-IFRS, UAE-IFRS, FRS102
-- **Confidence:** verified
+- **Confidence:** unverified
 - **Summary:** Both frameworks use the equity method for associates and joint ventures. IFRS requires uniform accounting policies with the investor, forbids proportionate consolidation of joint ventures and treats joint operations line by line. US GAAP allows proportionate consolidation in some industries and the fair value option. The share of results sits in one P&L line, often before tax.
 - **Analyst impact:** EBITDA should exclude equity-accounted profit; add the equity investment (or market value) to the EV bridge and consider proportionate debt.
 - **Adjustment recipe:** `associates_share_strip`
@@ -192,7 +205,7 @@
 
 ### `diff-fx-translation`
 - **Frameworks:** IFRS, USGAAP, EAS, FRS102, IndAS, SOCPA-IFRS, UAE-IFRS
-- **Confidence:** verified
+- **Confidence:** unverified
 - **Summary:** Under IAS 21 and ASC 830, a foreign operation is translated into the reporting currency with the closing rate for the balance sheet and average (or transaction date) rates for the income statement, and the difference goes to OCI as a translation reserve. Using the wrong rate mix distorts margins and ratios.
 - **Analyst impact:** Compare companies on the same translation basis. Use period-end rates for balances and period average for flows; keep a constant-currency view for growth.
 - **Adjustment recipe:** `fx_translate_period_end_average`
@@ -243,13 +256,29 @@
 - Exact scope and amortisation periods of each appendix
 - Effective dates of the 2023 and 2024 rounds
 
+### `diff-eas-fx-relief-comparatives`
+- **Frameworks:** EAS, IFRS
+- **Confidence:** unverified
+- **Summary:** After the special FX treatment appendices expired at the end of 2023 and EAS 13 was replaced in 2024, comparatives are not like for like: 2022 and 2023 figures may carry capitalised or deferred FX losses (with extra depreciation or amortisation later) while 2024 figures recognise movements in profit or loss under the aligned text. The FX relief is a one-time application, so a company that used it reports lower expenses in the relief years and higher charges in later years.
+- **Analyst impact:** Restate comparatives to a single basis: reverse the deferred FX balance and its amortisation, add back FX capitalised into asset cost and the extra depreciation, and show EBITDA and net income before and after relief so that 2022 to 2024 trends are comparable.
+- **Adjustment recipe:** `devaluation_fx_loss_normalise`
+- **Citations:**
+  - IFRS jurisdiction profile: Egypt, FX translation differences treatment: <https://www.ifrs.org/use-around-the-world/use-of-ifrs-standards-by-jurisdiction/view-jurisdiction/egypt/>
+  - PM Decree 636 of 2024, Article 1 (EAS 13 replaced): <https://fra.gov.eg/wp-content/uploads/2024/07/Decree-no-636_.pdf>
+
+**Verified facts**
+- One-time FX relief application extended to end of 2023; affects depreciation of remeasured assets: <https://www.ifrs.org/use-around-the-world/use-of-ifrs-standards-by-jurisdiction/view-jurisdiction/egypt/>
+
+**Unverified facts**
+- Detail of which items each appendix covered and exact amortisation periods
+
 ## zakat_tax
 
 ### `diff-zakat-vs-income-tax`
 - **Frameworks:** SOCPA-IFRS, IFRS
 - **Confidence:** verified
 - **Summary:** In Saudi Arabia zakat is a 2.5 percent charge on the zakat base (broadly net worth as computed for zakat) and falls on the Saudi and GCC owners' share, while income tax at 20 percent of adjusted profit applies to the share held by non-Saudi, non-GCC owners. Mixed-ownership companies bear both in proportion. SOCPA's position is that zakat sits outside IAS 12, so it is accounted for under its own endorsed requirements and IAS 8 rather than as an IAS 12 income tax, and there is no deferred tax on zakat. A live IFRS 18 debate concerns whether zakat is presented together with income tax or in operating results.
-- **Analyst impact:** Compare KSA companies on a pre-zakat and pre-tax basis, or treat zakat as a tax by adding it to tax expense (recipe zakat_as_tax). Effective tax rates are not comparable across ownership structures, and net income to owners is after zakat. Do not leave zakat in operating costs.
+- **Analyst impact:** Compare KSA companies on a pre-zakat and pre-tax basis, or treat zakat as a tax by adding it to tax expense. Effective tax rates are not comparable across ownership structures, and net income to owners is after zakat. Do not leave zakat in operating costs.
 - **Adjustment recipe:** `zakat_as_tax`
 - **Citations:**
   - PwC Tax Summaries Saudi Arabia, Zakat 2.5 percent, income tax 20 percent, ownership split: <https://taxsummaries.pwc.com/saudi-arabia/corporate/taxes-on-corporate-income>
@@ -298,6 +327,37 @@
 **Verified facts**
 - Standard rate 22.5 percent; oil exploration 40.55 percent; SCA, EGPC and CBE 40 percent: <https://taxsummaries.pwc.com/egypt/corporate/taxes-on-corporate-income>
 
+### `diff-zakat-base-components`
+- **Frameworks:** SOCPA-IFRS
+- **Confidence:** verified
+- **Summary:** Zakat is 2.5 percent of the zakat base for a Hijri year (prorated by days when the fiscal year differs). A company with legal accounts adds property rights and their equivalents (equity, reserves and provisions treated as equity), partners' loans and allocations, the gap between adjusted and book net profit, and liabilities that are effectively long-term funding (non-current debt, end-of-service and leave provisions, deferred tax liability, lease liabilities, negative derivatives). It deducts net fixed assets, intangibles, qualifying investments, materials not for sale, statutory deposits and deferred tax assets, with caps that tie the liabilities added to the assets deducted. A minimum base applies: the base cannot fall below adjusted net profit, and if the result is negative with no adjusted profit there is no zakat base.
+- **Analyst impact:** Zakat is driven by balance sheet items, not just profit, so asset-light and highly capitalised companies pay different effective rates; forecast zakat from equity plus long-term funding less fixed assets and investments, with adjusted profit as a floor, and treat it as a tax-like charge below operating profit.
+- **Adjustment recipe:** `zakat_as_tax`
+- **Citations:**
+  - ZATCA Implementing Regulations for Zakat Collection (1445H, Ministerial Decision 1007, amended by 1248), Articles 15, 23, 26, 27, 29: <https://zatca.gov.sa/en/RulesRegulations/Documents/ZAKAT%20COLLECTION.pdf>
+
+**Verified facts**
+- Zakat 2.5 percent of the base for the Hijri year, prorated by days (Article 15): <https://zatca.gov.sa/en/RulesRegulations/Documents/ZAKAT%20COLLECTION.pdf>
+- Added items: property rights, partners' loans, profit difference; liabilities incl. non-current debt, end-of-service and leave provisions, deferred tax liability, lease obligations, negative derivatives (Articles 23, 29): <https://zatca.gov.sa/en/RulesRegulations/Documents/ZAKAT%20COLLECTION.pdf>
+- Deductions: net fixed assets, intangibles, qualifying investments, non-sale materials, statutory deposits, deferred tax assets (Article 26); minimum base by adjusted net profit (Article 27): <https://zatca.gov.sa/en/RulesRegulations/Documents/ZAKAT%20COLLECTION.pdf>
+
+### `diff-uae-ct-year-ends`
+- **Frameworks:** UAE-IFRS
+- **Confidence:** unverified
+- **Summary:** UAE corporate tax applies from the first financial year starting on or after 1 June 2023, so the first taxable period depends on the year end. A calendar-year company starts on 1 January 2024 (no tax in 2023). A company with a 31 May or 30 June year end starts on the first financial year beginning on or after 1 June 2023: 1 June 2023 to 31 May 2024 in one case and 1 July 2023 to 30 June 2024 in the other. The federal authority accepts a first period of six to eighteen months, the 375,000 threshold is not pro-rated, and returns are due nine months after period end.
+- **Analyst impact:** Normalise effective tax rates by year end: non-calendar companies show tax a half-year earlier than calendar ones; use pre-tax profit when comparing the transition year and add a one-off deferred tax effect.
+- **Adjustment recipe:** `zakat_as_tax`
+- **Citations:**
+  - UAE Ministry of Finance, Effective date of the corporate tax regime: <https://mof.gov.ae/en/news/ministry-of-finance-confirms-applicable-taxable-income-threshold-for-corporate-tax-abu-dhabi-uae/>
+  - UAE Corporate Tax FAQs, Tax period and first period: <https://mof.gov.ae/?p=19308>
+
+**Verified facts**
+- Corporate Tax effective for financial years starting on or after 1 June 2023: <https://mof.gov.ae/en/news/ministry-of-finance-confirms-applicable-taxable-income-threshold-for-corporate-tax-abu-dhabi-uae/>
+
+**Unverified facts**
+- Worked examples for 31 May and 30 June year ends are inferences from the rule, not read in an official example
+- First-period length range and nine-month filing window from secondary sources
+
 ## end_of_service
 
 ### `diff-eosb-gcc-egypt`
@@ -327,11 +387,27 @@
 **Verified facts**
 - Award of half a month per year for the first five years, a month per year after; resignation scaling: <https://www.hrsd.gov.sa/en/knowledge-centre/articles/317-0>
 
+### `diff-eosb-ksa-actuarial-vs-nominal`
+- **Frameworks:** SOCPA-IFRS, IFRS
+- **Confidence:** unverified
+- **Summary:** The Saudi end-of-service award is a statutory amount based on final wage and years of service (a nominal, accrual-style figure: what would be paid if everyone left at the reporting date). IAS 19 treats it as a defined benefit plan and requires the projected unit credit method: project future salary, attrition and retirement, discount at high-quality bond yields, and put remeasurements in OCI. Smaller reporters sometimes book the nominal amount; listed companies are expected to use an actuarial valuation, and the zakat base adds the provision as a long-term liability.
+- **Analyst impact:** The actuarial liability is usually lower than the nominal amount because of attrition and discounting; check which method is used before comparing, and treat the provision as debt-like with the nominal amount as the upper bound.
+- **Adjustment recipe:** `eosb_as_debt_like`
+- **Citations:**
+  - IAS 19, paras 67-69 (projected unit credit), 120: <https://www.ifrs.org/issued-standards/list-of-standards/ias-19-employee-benefits/>
+  - ZATCA Implementing Regulations for Zakat Collection, Article 29(1)(b): <https://zatca.gov.sa/en/RulesRegulations/Documents/ZAKAT%20COLLECTION.pdf>
+
+**Verified facts**
+- Provisions for end-of-service benefits are added to the zakat base as stable debt to non-owners (Article 29): <https://zatca.gov.sa/en/RulesRegulations/Documents/ZAKAT%20COLLECTION.pdf>
+
+**Unverified facts**
+- How widespread nominal-method accounting is among listed Saudi companies
+
 ## government_grants
 
 ### `diff-government-grants`
 - **Frameworks:** IFRS, USGAAP, FRS102, IndAS, EAS, SOCPA-IFRS, UAE-IFRS
-- **Confidence:** verified
+- **Confidence:** unverified
 - **Summary:** IAS 20 gives clear rules: recognise grants when conditions are reasonably assured, take them to income to match costs or deduct them from the asset. US GAAP has no general standard; practice often applies IAS 20 by analogy, with new disclosure rules for government assistance. FRS 102 permits a performance or accrual model. The line used (other income, a deduction from cost of sales or from capex) changes margins.
 - **Analyst impact:** Gross up grants netted against costs to compare margins, and separate grants from recurring operating profit when subsidies may end.
 - **Adjustment recipe:** `gov_grant_gross_up`
@@ -343,7 +419,7 @@
 
 ### `diff-presentation-by-nature-function`
 - **Frameworks:** IFRS, IndAS, EAS, FRS102, USGAAP
-- **Confidence:** verified
+- **Confidence:** unverified
 - **Summary:** IFRS and most local sets let a company choose expenses by function or by nature. Ind AS schedule III forces by nature. Companies using by nature show raw materials, staff cost and depreciation and often no operating profit line. IFRS 18 from 2027 will require an operating profit subtotal for everyone, while US GAAP income from operations is by function and the SEC requires some natural-expense detail.
 - **Analyst impact:** Build EBIT as revenue less operating expenses by nature, with flagged basis, and separate other operating income and FX items consistently.
 - **Adjustment recipe:** `by_nature_ebit`
@@ -353,7 +429,7 @@
 
 ### `diff-cash-flow-classification`
 - **Frameworks:** IFRS, USGAAP, EAS, IndAS
-- **Confidence:** verified
+- **Confidence:** unverified
 - **Summary:** IFRS lets entities place interest and dividends received or paid in different sections; US GAAP fixes them (interest received and paid and dividends received in operating, dividends paid in financing). Ind AS 116 always puts the interest part of lease payments in financing, and Ind AS usually shows interest paid in financing for non-finance entities.
 - **Analyst impact:** Align cash flow from operations by moving interest to a single section before comparing free cash flow.
 - **Adjustment recipe:** `ifrs16_to_pre16_ebitda`
@@ -364,7 +440,7 @@
 
 ### `diff-ind-as-carveouts`
 - **Frameworks:** IndAS, IFRS
-- **Confidence:** verified
+- **Confidence:** unverified
 - **Summary:** Ind AS differs from IFRS in a few places: no fair value model for investment property (Ind AS 40), pooling at carrying values for common-control business combinations (Ind AS 103 Appendix C), a mandatory by-nature layout in Schedule III, and some financial instrument and employee benefit details. The reporting year ends 31 March.
 - **Analyst impact:** Calendarise to a common year end; expect no goodwill on group reorganisations; handle by-nature profit.
 - **Adjustment recipe:** `by_nature_ebit`
@@ -374,7 +450,7 @@
 
 ### `diff-frs102-vs-ifrs`
 - **Frameworks:** FRS102, IFRS
-- **Confidence:** verified
+- **Confidence:** unverified
 - **Summary:** FRS 102 permits policy choices that IFRS removes: expensing or capitalising development, expensing or capitalising borrowing costs, and amortising goodwill over its useful life (a maximum of ten years when the life cannot be estimated reliably) where IFRS tests goodwill for impairment each year and never amortises it. Until 2026 operating leases of lessees stayed off balance sheet. After the 2024 amendments (periods from 1 January 2026), revenue and leases follow an IFRS 15 and IFRS 16 like approach.
 - **Analyst impact:** Compare UK private company accounts with IFRS peers after adding back goodwill amortisation and pre-2026 lease commitments, and decide a common development and borrowing cost policy.
 - **Adjustment recipe:** `capitalise_operating_leases`
@@ -435,7 +511,7 @@
 
 ### `diff-ecl-ifrs9-eas47-cecl`
 - **Frameworks:** IFRS, EAS, USGAAP
-- **Confidence:** verified
+- **Confidence:** unverified
 - **Summary:** IFRS 9 uses three stages of expected credit loss, with lifetime loss on significant credit deterioration. US CECL books lifetime loss at initial recognition for all assets at amortised cost. EAS 47 follows IFRS 9 where adopted; earlier Egyptian rules used incurred loss or regulator-set provisions for banks.
 - **Analyst impact:** Compare provisioning on loans and receivables by looking at coverage ratios; do not read a first-year ECL step as underlying deterioration.
 - **Adjustment recipe:** `eas_to_ifrs_map`
@@ -486,7 +562,7 @@
 
 ### `diff-business-combinations`
 - **Frameworks:** IFRS, USGAAP, IndAS, FRS102, EAS
-- **Confidence:** verified
+- **Confidence:** unverified
 - **Summary:** IFRS 3 and ASC 805 both require the acquisition method for business combinations: identify the acquirer, measure assets and liabilities at fair value, recognise goodwill, expense deal costs; pooling of interests is not allowed for acquisitions. Transactions under common control are outside the scope of IFRS 3, so practice varies (book value or predecessor accounting, sometimes with restatement of comparatives); US GAAP uses carrying amounts for common-control transfers. Ind AS 103 Appendix C prescribes pooling of interests at carrying values for common-control combinations, so no goodwill arises. FRS 102 uses acquisition accounting for acquisitions but still allows merger accounting for qualifying group reconstructions.
 - **Analyst impact:** After a group reorganisation, expect no fair value step-up or goodwill under pooling or merger accounting and restated comparatives; for acquisitions compare on the acquisition method and add back purchase-price amortisation. Use pro forma figures to compare organic growth.
 - **Adjustment recipe:** `associates_share_strip`
@@ -500,7 +576,7 @@
 
 ### `diff-provisions-ias37-asc450`
 - **Frameworks:** IFRS, USGAAP, EAS, IndAS, FRS102
-- **Confidence:** verified
+- **Confidence:** unverified
 - **Summary:** Under IAS 37 a provision needs a present obligation, legal or constructive, arising from a past event, a probable outflow of economic benefits (more likely than not), and a reliable estimate; it is measured at the best estimate and discounted when the effect is material. Possible obligations or ones that cannot be measured are contingent liabilities, disclosed but not booked. US GAAP (ASC 450) accrues a loss contingency when a loss is probable (a higher likelihood bar than IFRS) and reasonably estimable, uses the low end of a range when no point is better, and generally does not discount. Egyptian, Indian and UK standards follow the IAS 37 approach.
 - **Analyst impact:** IFRS reporters book some litigation and restructuring liabilities earlier and at a higher point in a range than US reporters; treat litigation, decommissioning and warranty provisions with expected cash outflows as debt-like and read the contingent liability note for unbooked exposure.
 - **Adjustment recipe:** `eosb_as_debt_like`

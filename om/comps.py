@@ -19,9 +19,12 @@ from __future__ import annotations
 from datetime import date, timedelta
 
 from .facts import ANNUAL_FORMS, Company, Fact
-from .xlsx import BLUE, GREY, NAVY, Workbook, col_letter, quote_sheet, ref
+from .polish import CONFIDENTIAL, finish, section, trend
+from .xlsx import BLUE, GREEN, GREY, NAVY, Workbook, col_letter, quote_sheet, ref
 
 C0 = 3                                    # first company column (C)
+# Fixed Cover layout (rows) so the Checks sheet can tie out the chart tables before the Cover is written.
+COV = dict(kpi=13, charts1=27, charts2=46, data=65, peers=68)
 M = 1e6
 
 METRICS = (("rev", "revenue", "Revenue", "num1"), ("ebit", "ebit", "EBIT (operating income)", "num1"),
@@ -248,6 +251,7 @@ def build_workbook(target: tuple[str, dict], peers: list[tuple[str, dict]], *, m
     shE = wb.sheet("Equity value")
     shP = wb.sheet("Comps", tab=NAVY)
     shV = wb.sheet("Valuation", tab=NAVY)
+    shCov = wb.sheet("Cover", tab=NAVY)
     shK = wb.sheet("Checks")
     shF = wb.sheet("Filings", tab=GREY)
     rows: dict = {}
@@ -568,6 +572,13 @@ def build_workbook(target: tuple[str, dict], peers: list[tuple[str, dict]], *, m
         shV.set((fr, 4), f'=IF(ISNUMBER(B{fr}),IF(ISNUMBER(C{fr}),C{fr}-B{fr},"NM"),"NM")', fmt="usd2", align="right")
         shV.set((fr, 5), f"=$C${V.rows['price']}", fmt="usd2", align="right")
     ff1 = V.r - 1
+    mk_r = V.r                                  # current-price marker bar (a thin bar around the price) so the chart shows it
+    V.r += 1
+    shV.set((mk_r, 1), "Current share price (marker)", bold=True, top=True)
+    shV.set((mk_r, 2), f"=$C${V.rows['price']}*(1-0.5/100)", fmt="usd2", align="right", top=True)
+    shV.set((mk_r, 3), f"=$C${V.rows['price']}*(1+0.5/100)", fmt="usd2", align="right", top=True)
+    shV.set((mk_r, 4), f"=C{mk_r}-B{mk_r}", fmt="usd2", align="right", top=True)
+    shV.set((mk_r, 5), f"=$C${V.rows['price']}", fmt="usd2", align="right", top=True)
     V.gap()
     ref_r = V.r
     V.rows["ref_low"], V.rows["ref_high"] = ref_r, ref_r + 1
@@ -577,6 +588,11 @@ def build_workbook(target: tuple[str, dict], peers: list[tuple[str, dict]], *, m
     shV.set((ref_r + 1, 3), f'=IF(COUNT(C{ff0}:C{ff1})=0,"NM",MEDIAN(C{ff0}:C{ff1}))', fmt="usd2", bold=True, align="right")
     V.r += 2
     rows["Valuation"].update({"method_first": first_m, "method_last": last_m, "ff_header": ff_head, "ff_first": ff0, "ff_last": ff1})
+
+    # ================================================================ Cover layout (the Checks sheet ties out its chart tables)
+    t0 = COV["peers"]
+    cov_first, cov_last, cov_med = t0 + 1, t0 + n, t0 + n + 1
+    ebitda_c, pe_c = col_letter(mcol[("ebitda", "ltm")]), col_letter(mcol[("pe", "ltm")])
 
     # ================================================================ Checks
     shK.set("A2", "Checks", kind="title")
@@ -615,7 +631,7 @@ def build_workbook(target: tuple[str, dict], peers: list[tuple[str, dict]], *, m
     for key, label, fn in per_company:
         r = Kc.line(key, label, "")
         for i in range(n):
-            shK.set((r, C0 + i), fn(CL(i)), kind="check", align="right")
+            shK.set((r, C0 + i), fn(CL(i)), align="right")
     singles = (
         ("c_comps", "No error values on Comps",
          f'=IF(SUMPRODUCT(--ISERROR(Comps!C7:{col_letter(col - 1)}{P["n"]}))=0,"OK","ERROR")'),
@@ -623,10 +639,15 @@ def build_workbook(target: tuple[str, dict], peers: list[tuple[str, dict]], *, m
          f'=IF(SUMPRODUCT(--ISERROR(Valuation!C{first_m}:K{ff1}))=0,"OK","ERROR")'),
         ("c_ff", "Football field: no negative spread (high >= low)", f'=IF(MIN(Valuation!D{ff0}:D{ff1})>=0,"OK","ERROR")'),
         ("c_peers", "Peer statistics exclude the target (peer range starts below the target row)", f'=IF(Comps!A{p0 - 1}="Peers","OK","ERROR")'),
+        ("c_cov", "Cover chart data ties to Comps (target and peer-median EV / EBITDA)",
+         f'=IF(AND(ABS(Cover!$C${cov_first}-IF(ISNUMBER(Comps!{ebitda_c}{comp_row[0]}),Comps!{ebitda_c}{comp_row[0]},0))<=Tol,'
+         f'ABS(Cover!$C${cov_med}-IF(ISNUMBER(Comps!{ebitda_c}{P["median"]}),Comps!{ebitda_c}{P["median"]},0))<=Tol),"OK","ERROR")'),
+        ("c_ffpx", "Football field marker row brackets the current share price",
+         f'=IF(AND(Valuation!B{mk_r}<=Valuation!C{V.rows["price"]},Valuation!C{mk_r}>=Valuation!C{V.rows["price"]}),"OK","ERROR")'),
     )
     for key, label, f in singles:
         r = Kc.line(key, label, "")
-        shK.set((r, C0), f, kind="check", align="right")
+        shK.set((r, C0), f, align="right")
     first_row, last_row = Kc.rows["c_dil"], Kc.r - 1
     rng = f"C{first_row}:{col_letter(lastc)}{last_row}"
     shK.set((master_r, C0), f'=IF(AND(COUNTIF({rng},"ERROR")=0,SUMPRODUCT(--ISERROR({rng}))=0,COUNTIF({rng},"OK")>0),"OK","ERROR")', bold=True, kind="check")
@@ -665,10 +686,17 @@ def build_workbook(target: tuple[str, dict], peers: list[tuple[str, dict]], *, m
             fr += 1
     shF.freeze = (5, 0)
 
+    # ================================================================ Cover
+    _cover(wb, shCov, recs, rows, P, comp_row, mcol, ff0, ff1, mk_r, n)
+
     # sheet order
-    order = ["Inputs", "Calendarisation", "Equity value", "Comps", "Valuation", "Checks", "Filings"]
+    order = ["Cover", "Inputs", "Calendarisation", "Equity value", "Comps", "Valuation", "Checks", "Filings"]
     wb.sheets.sort(key=lambda s: order.index(s.name))
     eng = calculate_workbook(wb)
+    peers_blk = {"proj": (C0 + 1, C0 + n - 1)}          # the peer columns collapse under the target
+    finish(wb, model_name=f"{recs[0]['name']} trading comparables", source="Source: company filings (SEC EDGAR); share prices per the caller's market data",
+           period_sheets={nm: dict(peers_blk) for nm in ("Inputs", "Calendarisation", "Equity value", "Checks")})
+    _print_dashboard(shCov, f"{recs[0]['name']} trading comparables")
 
     # ================================================================ meta
     def vals(sheet: str, r: int, c: int):
@@ -690,13 +718,132 @@ def build_workbook(target: tuple[str, dict], peers: list[tuple[str, dict]], *, m
          "label": "Target diluted shares (treasury stock method)"},
     ]
     meta = {"model": "comps", "rows": rows, "outputs": outputs, "converged": eng.converged, "iterations": eng.iterations,
+            "charts": [{"sheet": "Cover", "kind": c["kind"], "title": c["title"]} for c in shCov.charts],
             "warnings": warnings, "target": tickers[0], "peers": tickers[1:], "as_of": as_of, "calendar_month": int(calendar_month),
             "columns": {t: CL(i) for i, t in enumerate(tickers)},
-            "football_field": {"sheet": "Valuation", "ref": f"A{ff_head}:E{ff1}", "header_row": ff_head, "first_row": ff0, "last_row": ff1,
+            "football_field": {"sheet": "Valuation", "ref": f"A{ff_head}:E{ff1}", "marker_row": mk_r, "header_row": ff_head, "first_row": ff0, "last_row": ff1,
                                "columns": {"method": "A", "low": "B", "high": "C", "spread": "D", "current": "E"}},
             "plants": {"tsm": f"Equity value!{CL(plant_i)}{itm_r}", "bridge": f"Equity value!{CL(plant_i)}{ev_r}",
                        "nm": f"Comps!{col_letter(mcol[('pe', 'ltm')])}{comp_row[plant_i]}"}}
     return wb, meta
+
+
+def _print_dashboard(sh, model_name: str) -> None:
+    """Print the Cover as a one-page dashboard (header, key metrics and the chart grid); chart data and contents stay on screen."""
+    sh.print_setup(area=f"A1:N{COV['charts2'] + 18}", title_rows="2:3", header=("", "", CONFIDENTIAL),
+                   footer=("Source: company filings (SEC EDGAR)", model_name, ""), landscape=True, fit_width=1, fit_height=1)
+
+
+def _cover(wb, sh, recs, rows, P, comp_row, mcol, ff0, ff1, mk_r, n) -> None:
+    """The dashboard: header block, key metrics, four native charts, formula-driven chart data, contents and sources."""
+    tgt = recs[0]
+    tick = [r["ticker"] for r in recs]
+    sh.width("A", 3)
+    sh.width("B", 40)
+    for c in range(3, 15):
+        sh.width(c, 11.5)
+    sh.set("B2", f"{tgt['name']} ({tgt['ticker']}) — trading comparables", kind="title", size=18)
+    sh.set("B3", "Peer multiples, calendarised and treasury-stock-method diluted, built from SEC filings; every multiple is a live formula", kind="note")
+    sh.set("B5", "Target", bold=True)
+    sh.set("C5", f"{tgt['name']} ({tgt['ticker']})")
+    sh.set("B6", "Peers", bold=True)
+    sh.set("C6", ", ".join(tick[1:]) + f" ({n - 1})")
+    sh.set("B7", "Prices as of", bold=True)
+    sh.set("C7", str(tgt["market"].get("as_of", "")))
+    sh.set("B8", "Units", bold=True)
+    sh.set("C8", "USD in millions, except per-share data; shares in millions")
+    sh.set("B9", "Calendarised to", bold=True)
+    sh.set("C9", '="Calendar year ending in month "&CalMonth')
+    sh.set("B10", "MASTER CHECK", bold=True)
+    sh.set("C10", f"=Checks!{ref(rows['Checks']['master'], C0)}", bold=True)
+    sh.ok_error("C10")
+
+    # ---- key metrics
+    k0 = COV["kpi"]
+    ec, pc = col_letter(mcol[("ebitda", "ltm")]), col_letter(mcol[("pe", "ltm")])
+    EQ = lambda key: f"'Equity value'!{col_letter(C0)}{rows['Equity value'][key]}"
+    section(sh, k0, "Key metrics", 2, 4)
+    kp = [("Share price ($)", f"={EQ('price')}", "usd2", "current"),
+          ("Equity value", f"={EQ('eqv')}", "num0", "$m, diluted (TSM)"),
+          ("Enterprise value", f"={EQ('ev')}", "num0", "$m"),
+          ("EV / EBITDA, LTM", f"=Comps!{ec}{comp_row[0]}", "x", "target"),
+          ("Peer median EV / EBITDA, LTM", f"=Comps!{ec}{P['median']}", "x", "peers only"),
+          ("P / E, LTM", f"=Comps!{pc}{comp_row[0]}", "x", "target"),
+          ("Peer median P / E, LTM", f"=Comps!{pc}{P['median']}", "x", "peers only"),
+          ("Implied share price, low ($)", f"=Valuation!C{rows['Valuation']['ref_low']}", "usd2", "median of method lows"),
+          ("Implied share price, high ($)", f"=Valuation!C{rows['Valuation']['ref_high']}", "usd2", "median of method highs"),
+          ("Implied midpoint vs current price",
+           f'=IF(AND(ISNUMBER(Valuation!C{rows["Valuation"]["ref_low"]}),ISNUMBER(Valuation!C{rows["Valuation"]["ref_high"]})),'
+           f'AVERAGE(Valuation!C{rows["Valuation"]["ref_low"]},Valuation!C{rows["Valuation"]["ref_high"]})/{EQ("price")}-1,"NM")', "pct", "premium / (discount)")]
+    for i, (lab, f, fmt, note) in enumerate(kp):
+        sh.set((k0 + 1 + i, 2), lab)
+        sh.set((k0 + 1 + i, 3), f, fmt=fmt, bold=i in (3, 4, 7, 8), align="right")
+        sh.set((k0 + 1 + i, 4), note, kind="note")
+
+    # ---- chart data
+    c1, c2, d0, t0 = COV["charts1"], COV["charts2"], COV["data"], COV["peers"]
+    section(sh, c1 - 2, "Charts", 2, 14)
+    section(sh, d0, "Chart data", 2, 8)
+    sh.set((d0 + 1, 2), "Formula-driven tables behind the charts above; every cell links to the model. The football field reads the Valuation sheet table.", kind="note")
+    sh.set((t0, 2), "Company", bold=True, color=NAVY, bottom=True)
+    for c, h in zip(range(3, 7), ("EV/EBITDA", "P/E", "Rev growth", "EBIT margin")):
+        sh.set((t0, c), h, bold=True, align="right", bottom=True)
+    K = rows["Calendarisation"]
+    safe = lambda ref_: f"=IF(ISNUMBER({ref_}),{ref_},0)"
+    first, last, med = t0 + 1, t0 + n, t0 + n + 1
+    for i, rc in enumerate(recs):
+        r = first + i
+        cl = col_letter(C0 + i)
+        sh.set((r, 2), f"{rc['ticker']} (target)" if i == 0 else rc["ticker"], bold=i == 0, indent=0 if i == 0 else 1)
+        sh.set((r, 3), safe(f"Comps!{ec}{comp_row[i]}"), fmt="x", bold=i == 0)
+        sh.set((r, 4), safe(f"Comps!{pc}{comp_row[i]}"), fmt="x", bold=i == 0)
+        sh.set((r, 5), f"=IF(Calendarisation!{cl}{K['rev_py']}>0,Calendarisation!{cl}{K['rev_fy']}/Calendarisation!{cl}{K['rev_py']}-1,0)", fmt="pct", bold=i == 0)
+        sh.set((r, 6), f"=IF(Calendarisation!{cl}{K['rev_ltm']}>0,Calendarisation!{cl}{K['ebit_ltm']}/Calendarisation!{cl}{K['rev_ltm']},0)", fmt="pct", bold=i == 0)
+    sh.set((med, 2), "Peer median", bold=True, top=True)
+    sh.set((med, 3), safe(f"Comps!{ec}{P['median']}"), fmt="x", bold=True, top=True)
+    sh.set((med, 4), safe(f"Comps!{pc}{P['median']}"), fmt="x", bold=True, top=True)
+    for c in (5, 6):
+        rng = f"{col_letter(c)}{first + 1}:{col_letter(c)}{last}"
+        sh.set((med, c), f"=MEDIAN({rng})", fmt="pct", bold=True, top=True)
+
+    # ---- charts
+    rng = lambda c, r1=first, r2=med: f"Cover!${col_letter(c)}${r1}:${col_letter(c)}${r2}"
+    cats = rng(2)
+    v = lambda c: f"Valuation!${c}${ff0}:${c}${mk_r}"
+    sh.chart("stacked_bar", title="Implied share price by method vs current price ($)", anchor=(f"B{c1}", f"F{c1 + 17}"), y_format="usd2", legend=False,
+             gap_width=60, overlap=100,
+             series=[{"name": "Low", "cats": v("A"), "vals": v("B"), "invisible": True},
+                     {"name": "25th-75th percentile range", "cats": v("A"), "vals": v("D"), "color": "2E6DA4"}])
+    trend(sh, title="Peer EV / EBITDA, LTM", cats=cats, series=[("EV / EBITDA, LTM", rng(3))], kind="bar", y_format='0.0"x";-0.0"x";', data_labels=True,
+          anchor=(f"H{c1}", f"N{c1 + 17}"), legend=False)
+    trend(sh, title="Revenue growth, latest fiscal year", cats=cats, series=[("Revenue growth", rng(5))], kind="column", y_format="pct", data_labels=True,
+          anchor=(f"B{c2}", f"F{c2 + 17}"), legend=False)
+    trend(sh, title="EBIT margin, LTM", cats=cats, series=[("EBIT margin", rng(6))], kind="column", y_format="pct", data_labels=True,
+          anchor=(f"H{c2}", f"N{c2 + 17}"), legend=False)
+
+    # ---- colour code, contents, sources
+    r = med + 3
+    sh.set((r, 2), "Colour code", bold=True, color=NAVY, bottom=True)
+    sh.set((r + 1, 2), "Hard-coded input or figure as filed", color=BLUE)
+    sh.set((r + 2, 2), "Formula on this sheet")
+    sh.set((r + 3, 2), "Link to another sheet", color=GREEN)
+    r += 5
+    sh.set((r, 2), "Contents", bold=True, color=NAVY, bottom=True)
+    for i, (name, what) in enumerate([("Inputs", "every typed number, with its filing, plus the global assumptions"),
+                                      ("Calendarisation", "fiscal-year, LTM and calendar-year figures"),
+                                      ("Equity value", "treasury stock method shares, equity value and the EV bridge"),
+                                      ("Comps", "multiples with NM rules and peer-only statistics"),
+                                      ("Valuation", "implied share price from peer quartiles; football-field table"),
+                                      ("Checks", "integrity checks and the master check"),
+                                      ("Filings", "the filings every typed number comes from")]):
+        sh.set((r + 1 + i, 2), name, link=f"'{name}'!A1", color=BLUE, underline=True)
+        sh.set((r + 1 + i, 3), what, kind="note")
+    r += 9
+    sh.set((r, 2), "Sources", bold=True, color=NAVY, bottom=True)
+    for i, rc in enumerate(recs):
+        mk = rc["market"]
+        sh.set((r + 1 + i, 2), f"{rc['ticker']}: price ${float(mk['price']):,.2f} as of {mk.get('as_of', '')}, {mk.get('source', '')}; financials from SEC companyfacts",
+               kind="note")
 
 
 def build(target: tuple[str, dict], peers: list[tuple[str, dict]], *, markets: dict[str, dict], as_of: str | None = None,

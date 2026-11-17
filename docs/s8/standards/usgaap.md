@@ -1,6 +1,6 @@
 # US generally accepted accounting principles (FASB ASC)
 
-*Generated from `om/intl/standards/frameworks.yaml`. Authored by Acretia in its own words. Confidence: verified.*
+*Generated from `om/intl/standards/frameworks.yaml`. Authored by Acretia in its own words. Confidence: unverified.*
 
 **Issuer:** FASB, with SEC rules for registrants  
 **Jurisdictions:** United States

@@ -235,6 +235,11 @@ def build_comps_table(slide: dict, ctx: BuildContext):
     if not stats["median"] or not stats["mean"]:
         raise ValueError("comps_table: give median and mean, or set compute_stats true")
     body = _strip(ctx, meta, els, b, box)
+    for kind in ("median", "mean"):       # computed or supplied statistics are archetype output: declare them
+        for k in _COMPS_KEYS:
+            v = (stats[kind] or {}).get(k)
+            if v is not None:
+                base.declare(meta, v, *[f"blocks.rows[{i}].{k}" for i in range(len(b["rows"]))])
     rows = [_comps_row(r["company"], r) for r in b["rows"]]
     rows += [_comps_row("Median", stats["median"]), _comps_row("Mean", stats["mean"])]
     sizes = (14, 12, 10) if (b.get("dense") or ctx.dense) else (14, 12)
@@ -282,9 +287,9 @@ _AXIS = {"type": "object", "additionalProperties": False, "required": ["label"],
 @register("matrix_2x2", visual_type="matrix", schema=_S({
     "x_axis": _AXIS, "y_axis": _AXIS, "quadrants": _strs(4, 4), "target": {"type": "integer", "minimum": 0, "maximum": 3},
     "items": {"type": "array", "minItems": 3, "maxItems": 8, "items": {
-        "type": "object", "additionalProperties": False, "required": ["label", "x", "y"],
-        "properties": {"label": {"type": "string"}, "x": {"type": "number", "minimum": 0, "maximum": 1},
-                       "y": {"type": "number", "minimum": 0, "maximum": 1}, "highlight": {"type": "boolean"}}}},
+        "type": "object", "additionalProperties": False, "required": ["label", "xv", "yv"],
+        "properties": {"label": {"type": "string"}, "xv": {"type": "number", "minimum": 0, "maximum": 1},
+                       "yv": {"type": "number", "minimum": 0, "maximum": 1}, "highlight": {"type": "boolean"}}}},
 }, ["subtitle", "x_axis", "y_axis", "quadrants", "target", "items", "takeaway"]))
 def build_matrix_2x2(slide: dict, ctx: BuildContext):
     b, meta, els, box = _setup(slide, ctx, "matrix_2x2", True)
@@ -305,9 +310,9 @@ def build_matrix_2x2(slide: dict, ctx: BuildContext):
     for i, it in enumerate(b["items"]):
         label = it["label"]
         bw = round(text_width(label, 12, bold=bool(it.get("highlight"))) + 0.45, 2)
-        px = mx + it["x"] * (qw * 2 + 0.2)
-        py = my + (1 - it["y"]) * (qh * 2 + 0.2)
-        qy = my if it["y"] >= 0.5 else my + qh + 0.2
+        px = mx + it["xv"] * (qw * 2 + 0.2)
+        py = my + (1 - it["yv"]) * (qh * 2 + 0.2)
+        qy = my if it["yv"] >= 0.5 else my + qh + 0.2
         py = min(max(py, qy + 0.42), qy + qh - 0.2)
         right = px + bw > mx + 2 * qw + 0.2 - 0.05
         bx = px - bw + 0.3 if right else px - 0.15
@@ -602,6 +607,9 @@ def build_scorecard(slide: dict, ctx: BuildContext):
     for k in b["kpis"]:
         txt, d = kpi_change(k["values"], k["format"])
         dirs.append(d)
+        a_, z_ = k["values"][-2], k["values"][-1]
+        base.declare(meta, abs(z_ - a_) if k["format"] == "pct" else (abs((z_ - a_) / abs(a_)) * 100 if a_ else 0.0),
+                     f"blocks.kpis[{len(rows)}].values[-2]", f"blocks.kpis[{len(rows)}].values[-1]")
         rows.append([k["name"]] + [_KPI_FMT[k["format"]](v) for v in k["values"]] + [txt])
     g = _table(ctx, meta, els, "table", box[0], box[1], box[2], body, ["KPI", *b["periods"], "Change"], rows,
                aligns=["l"] + ["r"] * (n + 1), highlight=n, max_row=0.5, bindings=b.get("bindings"), bindings_format=b.get("bindings_format"))
@@ -622,19 +630,21 @@ EXAMPLES = {
     "comparison_table": {
         "title": "Option B delivers the highest value with the lowest execution risk",
         "source": "Management case; advisor analysis", "as_of": "2026-09-30",
+        "sources": ["Management case, board pack Sep 2026", "Advisor analysis, option model v5"],
         "blocks": {
             "subtitle": "Strategic options, value and risk, $ billion",
             "options": ["Option A: sell", "Option B: merge", "Option C: hold"], "highlight": 1,
             "rows": [{"criterion": "Equity value", "values": ["$4.2bn", "$5.1bn", "$3.6bn"]},
                      {"criterion": "Net cost savings", "values": ["$0.0bn", "$0.4bn", "$0.1bn"]},
-                     {"criterion": "Time to close", "values": ["6 months", "9 months", "n.a."]},
+                     {"criterion": "Time to close", "values": ["6 months", "9 months [2]", "n.a."]},
                      {"criterion": "Execution risk", "values": ["Low", "Medium", "Low"]},
                      {"criterion": "Tax leakage", "values": ["$0.3bn", "$0.0bn", "$0.0bn"]}],
             "verdict": ["Lower value", "Recommended", "Value gap"],
-            "takeaway": "Merge: $5.1bn of equity value, $0.9bn above a sale, with medium execution risk."}},
+            "takeaway": "Merge: $5.1bn of equity value, $0.9bn above a sale, with medium execution risk [1]."}},
     "comps_table": {
-        "title": "The target trades at a 2.1x discount to peers on EV/EBITDA",
+        "title": "Peers trade at a median 11.2x EBITDA, the benchmark for the target",
         "source": "FactSet consensus; company filings", "as_of": "2026-10-31",
+        "sources": ["FactSet consensus, 31 Oct 2026", "Company filings, latest 10-K and 10-Q"],
         "blocks": {
             "subtitle": "Trading comparables, NTM multiples, EV in $ billion",
             "compute_stats": True, "dense": True,
@@ -644,10 +654,11 @@ EXAMPLES = {
                      {"company": "Adatum Partners", "ev": 7.3, "ev_ebitda": 10.9, "pe": 17.4, "growth": 5.8, "margin": 21.7},
                      {"company": "Litware Industries", "ev": 5.8, "ev_ebitda": 9.7, "pe": 15.9, "growth": 4.1, "margin": 19.5},
                      {"company": "Proseware Corp", "ev": 4.4, "ev_ebitda": 9.2, "pe": 14.6, "growth": 3.5, "margin": 18.2}],
-            "takeaway": "Median EV/EBITDA is 11.2x; applying it to the target implies $1.3bn of upside."}},
+            "takeaway": "Median EV/EBITDA is 11.2x [1]; applying it to the target implies upside to its current value."}},
     "sensitivity_table": {
         "title": "Value per share stays above $44 across the full WACC and growth range",
         "source": "Acretia DCF model", "as_of": "2026-09-30",
+        "sources": ["Acretia DCF model v9, base case"],
         "blocks": {
             "subtitle": "Implied share price, WACC by terminal growth, $ per share",
             "row_label": "WACC", "col_label": "Terminal growth", "base": [2, 2],
@@ -655,20 +666,20 @@ EXAMPLES = {
             "values": [[58.10, 61.40, 65.30, 70.10, 76.20], [53.20, 55.90, 59.00, 62.80, 67.50],
                        [49.00, 51.20, 53.80, 56.90, 60.60], [45.40, 47.30, 49.50, 52.10, 55.20],
                        [42.30, 43.90, 45.80, 48.00, 50.60]],
-            "takeaway": "Base case: $53.80 per share, 14.3% above the current price."}},
+            "takeaway": "Base case: $53.80 per share, 14.3% above the current price [1]."}},
     "matrix_2x2": {
         "title": "Two of six targets combine high attractiveness with a credible path to win",
         "blocks": {
             "subtitle": "Acquisition screen, market attractiveness by ability to win",
             "x_axis": {"label": "Ability to win"}, "y_axis": {"label": "Market attractiveness"}, "target": 1,
             "quadrants": ["Build selectively", "Pursue now", "Deprioritise", "Opportunistic"],
-            "items": [{"label": "Helios", "x": 0.82, "y": 0.84, "highlight": True},
-                      {"label": "Orbit", "x": 0.68, "y": 0.7},
-                      {"label": "Vertex", "x": 0.2, "y": 0.78},
-                      {"label": "Nimbus", "x": 0.3, "y": 0.2},
-                      {"label": "Quanta", "x": 0.78, "y": 0.25},
-                      {"label": "Zenith", "x": 0.12, "y": 0.42}],
-            "takeaway": "Helios and Orbit clear both bars: $2.4bn of combined revenue and a 62% win probability."}},
+            "items": [{"label": "Helios", "xv": 0.82, "yv": 0.84, "highlight": True},
+                      {"label": "Orbit", "xv": 0.68, "yv": 0.7},
+                      {"label": "Vertex", "xv": 0.2, "yv": 0.78},
+                      {"label": "Nimbus", "xv": 0.3, "yv": 0.2},
+                      {"label": "Quanta", "xv": 0.78, "yv": 0.25},
+                      {"label": "Zenith", "xv": 0.12, "yv": 0.42}],
+            "takeaway": "Helios and Orbit clear both bars and form the shortlist for the next round of diligence."}},
     "market_map": {
         "title": "Our client is the only player present in all three payment segments",
         "blocks": {
@@ -710,7 +721,7 @@ EXAMPLES = {
         "title": "Three risks sit in the high-impact corner and need mitigation before signing",
         "source": "Deal team risk workshop", "as_of": "2026-10-15",
         "blocks": {
-            "subtitle": "Risk register, likelihood by impact, scale 1 to 5",
+            "subtitle": "Risk register, likelihood by impact, five-point scale",
             "risks": [{"label": "Regulatory approval delayed beyond 9 months", "likelihood": 4, "impact": 5},
                       {"label": "Customer churn above 8% after close", "likelihood": 3, "impact": 4},
                       {"label": "Key engineer attrition of 20%", "likelihood": 4, "impact": 3},
@@ -720,6 +731,7 @@ EXAMPLES = {
             "takeaway": "Regulatory delay is the largest exposure: likelihood 4 of 5 and a $120m impact."}},
     "deal_structure": {
         "title": "The deal runs through a Cayman holdco that owns 100% of the target",
+        "source": "Draft term sheet v3", "as_of": "2026-10-31",
         "blocks": {
             "subtitle": "Post-closing structure, ownership percentages",
             "entities": [{"id": "sponsor", "label": "Sponsor fund", "sub": "Cayman LP", "tier": 0},
@@ -742,6 +754,7 @@ EXAMPLES = {
     "scorecard": {
         "title": "Margins improved while growth slowed in the latest quarter",
         "source": "Management accounts", "as_of": "2026-09-30",
+        "sources": ["Management accounts, quarterly pack"],
         "blocks": {
             "subtitle": "KPI scorecard, last five quarters, latest quarter against prior",
             "periods": ["Q3 25", "Q4 25", "Q1 26", "Q2 26", "Q3 26"],

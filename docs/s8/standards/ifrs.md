@@ -1,6 +1,6 @@
 # IFRS Accounting Standards (full IFRS)
 
-*Generated from `om/intl/standards/frameworks.yaml`. Authored by Acretia in its own words. Confidence: verified.*
+*Generated from `om/intl/standards/frameworks.yaml`. Authored by Acretia in its own words. Confidence: unverified.*
 
 **Issuer:** IASB (IFRS Foundation)  
 **Jurisdictions:** International, EU (as endorsed), most of the world
@@ -122,6 +122,9 @@ This is the reference framework; every other entry in the base is described by i
 - `diff-uae-ifrs-requirement` (framework_adoption): recipe `eas_to_ifrs_map`
 - `diff-business-combinations` (business_combinations): recipe `associates_share_strip`
 - `diff-provisions-ias37-asc450` (provisions): recipe `eosb_as_debt_like`
+- `diff-eosb-ksa-actuarial-vs-nominal` (end_of_service): recipe `eosb_as_debt_like`
+- `diff-eas-fx-relief-comparatives` (fx_devaluation): recipe `devaluation_fx_loss_normalise`
+- `diff-eas49-ebitda-effect` (leases): recipe `ifrs16_to_pre16_ebitda`
 
 ## Sources
 - IAS 1, paras 54, 82 (minimum line items): <https://www.ifrs.org/issued-standards/list-of-standards/ias-1-presentation-of-financial-statements/>

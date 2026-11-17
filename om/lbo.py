@@ -21,6 +21,7 @@ from __future__ import annotations
 from datetime import date
 
 from . import statements as stm
+from .polish import CONFIDENTIAL, finish, football_field, section, trend, waterfall
 from .xlsx import BLUE, GREEN, GREY, NAVY, Workbook, col_letter, quote_sheet, ref
 
 F = 5                       # projection years
@@ -28,6 +29,10 @@ FIRST = 8                   # first data row
 C0 = 3                      # first period column (C)
 X2 = '0.00"x"_);(0.00"x")'
 PCT2 = '0.00%_);(0.00%)'
+# Fixed Cover layout (rows) so the Checks sheet can tie out the chart tables before the Cover is written.
+COV = dict(kpi=13, charts1=26, charts2=45, data=64, trend=67, bridge=79, ff=89)
+BRIDGE_STEPS = 6                     # entry equity, EBITDA growth, multiple, deleveraging, fees, exit equity
+FF_ROWS = 4                          # IRR football-field bars
 
 
 class UnsupportedCompany(ValueError):
@@ -513,6 +518,15 @@ def build_workbook(s: stm.Statements, *, market: dict, assumptions: dict | None 
     CK.one("c_irr", "Closed-form IRR agrees with IRR() on the cash-flow strip", ok(f"ABS({RT.c('irr_d')})<TolIRR"), fmt="text")
     CK.one("c_attr", "Attribution sums to the sponsor equity gain", ok(f"ABS({RT.c('a_diff')})<Tol"), fmt="text")
     CK.one("c_eq_out", "Exit equity = exit EV less net debt", ok(f"ABS({RT.c('eq_out')}-{RT.c('ev_out')}+{RT.c('nd_out')})<Tol"), fmt="text")
+    CK.section("Dashboard (Cover chart data)")
+    bt, bl = COV["bridge"] + 1, COV["bridge"] + BRIDGE_STEPS
+    CK.one("c_bridge", "Returns bridge on the Cover ties to the Returns sheet",
+           ok(f"AND(ABS(SUM(Cover!$C${bt}:$C${bl - 1})-Cover!$C${bl})<Tol,ABS(Cover!$C${bl}-{RT.c('eq_out')})<Tol,ABS(Cover!$C${bt}-{RT.c('eq_in')})<Tol)"), fmt="text")
+    CK.one("c_debtchart", "Debt chart tranches add up to total debt in every year",
+           ok(f"ABS(SUM(Cover!$C${COV['trend'] + 8}:$H${COV['trend'] + 8})-SUM({DB.rng('debt', 0, F)}))<Tol"), fmt="text")
+    f0, f1 = COV["ff"] + 1, COV["ff"] + FF_ROWS
+    CK.one("c_ff", "IRR football field brackets the base IRR in every bar",
+           ok(f"AND(MAX(Cover!$C${f0}:$C${f1})<={RT.c('irr')}+TolIRR,MIN(Cover!$D${f0}:$D${f1})>={RT.c('irr')}-TolIRR)"), fmt="text")
     CK.gap()
     CK.line("master", "MASTER CHECK", None, None, bold=True, fmt="text")
 
@@ -553,7 +567,7 @@ def build_workbook(s: stm.Statements, *, market: dict, assumptions: dict | None 
 
     # Checks: tolerances and master
     ck = CK.sh
-    top, bot = CK.rows["c_su"], CK.rows["c_eq_out"]
+    top, bot = CK.rows["c_su"], CK.rows["c_ff"]
     first, lastc = col_letter(C0), col_letter(C0 + F)
     tr0 = CK.rows["master"] + 2
     ck.set((tr0, 1), "Tolerances", bold=True, color=NAVY, bottom=True)
@@ -567,11 +581,16 @@ def build_workbook(s: stm.Statements, *, market: dict, assumptions: dict | None 
     ck.ok_error(f"{first}{CK.rows['master']}")
 
     centres = _sensitivity(m, SE, A, SU, OP, DB, RT)
-    _cover(m, cover, SU, RT, CK, DB, d)
+    _cover(m, cover, SU, OP, RT, CK, DB, d, centres)
     order = ["Cover", "Assumptions", "Sources & Uses", "Operations", "Debt", "Returns", "Sensitivity", "Checks", "Filings"]
     wb.sheets.sort(key=lambda sh: order.index(sh.name))
     from .formula import calculate_workbook
     eng = calculate_workbook(wb)
+    full = {"hist": (C0, C0 + H - 1), "proj": (C0 + H, C0 + NP - 1)}
+    short = {"proj": (C0 + 1, C0 + F)}
+    finish(wb, model_name=f"{s.name} LBO model", source="Source: company filings (SEC EDGAR); share price per the caller's market data",
+           period_sheets={"Assumptions": dict(full), "Operations": dict(full), "Filings": {"hist": (C0, C0 + H - 1)}, "Debt": dict(short), "Checks": dict(short)})
+    _print_dashboard(cover, f"{s.name} LBO model")
 
     rrow = lambda key: RT.rows[key]
     out = lambda id_, g, key, units, label: {"id": id_, "sheet": g.name, "ref": ref(g.rows[key], C0), "units": units, "label": label}
@@ -590,6 +609,7 @@ def build_workbook(s: stm.Statements, *, market: dict, assumptions: dict | None 
             out("lbo.attr_multiple", RT, "a_mult", "USD m", "Value created by multiple expansion"),
             out("lbo.attr_deleveraging", RT, "a_delev", "USD m", "Value created by debt paydown and cash generation"),
         ],
+        "charts": [{"sheet": "Cover", "kind": c["kind"], "title": c["title"]} for c in cover.charts],
         "plants": {"sweep": f"Debt!{ref(DB.rows['tlb_sweep'], C0 + 3)}", "pik": f"Debt!{ref(DB.rows['pik_acc'], C0 + 2)}",
                    "exit": f"Returns!{ref(RT.rows['ev_out'], C0)}"},
     }
@@ -670,14 +690,20 @@ def _sensitivity(m: _M, sh, A: _G, SU: _G, OP: _G, DB: _G, RT: _G) -> None:
     return {"irr": f"F{r0 + 4}", "mom": f"F{r0 + 12}", "margin_irr": f"F{r0 + 20}"}
 
 
+def _print_dashboard(sh, model_name: str) -> None:
+    """Print the Cover as a one-page dashboard (header, key metrics and the chart grid); chart data and contents stay on screen."""
+    sh.print_setup(area=f"A1:N{COV['charts2'] + 18}", title_rows="2:3", header=("", "", CONFIDENTIAL),
+                   footer=("Source: company filings (SEC EDGAR)", model_name, ""), landscape=True, fit_width=1, fit_height=1)
+
+
 # --------------------------------------------------------------------------- cover
-def _cover(m: _M, sh, SU: _G, RT: _G, CK: _G, DB: _G, d: dict) -> None:
+def _cover(m: _M, sh, SU: _G, OP: _G, RT: _G, CK: _G, DB: _G, d: dict, centres: dict) -> None:
     s = m.s
     m.ctx = "Cover"
     sh.width("A", 3)
-    sh.width("B", 44)
-    sh.width("C", 18)
-    sh.width("D", 40)
+    sh.width("B", 40)
+    for c in range(3, 15):
+        sh.width(c, 11.5)
     sh.set("B2", f"{s.name} ({s.ticker}) — take-private LBO", kind="title", size=18)
     sh.set("B3", "Leveraged buyout model built from SEC filings; every number is written by code", kind="note")
     sh.set("B5", "Units", bold=True)
@@ -693,17 +719,67 @@ def _cover(m: _M, sh, SU: _G, RT: _G, CK: _G, DB: _G, d: dict) -> None:
     sh.set("B10", "MASTER CHECK", bold=True)
     sh.set("C10", f"={CK.at('master', 0)}", bold=True)
     sh.ok_error("C10")
-    sh.set("B12", "Key returns", bold=True, color=NAVY, bottom=True)
-    sh.set("C12", "", bottom=True)
-    rows = [("Sponsor IRR", RT.c("irr"), "pct"), ("Money multiple (MoM)", RT.c("mom"), X2),
-            ("Entry enterprise value", SU.c("ev"), "num0"), ("Entry EV / LTM EBITDA", SU.c("mult"), "x"),
-            ("Offer price per share ($)", SU.c("offer"), "usd2"), ("Sponsor equity invested", SU.c("s_eq"), "num0"),
-            ("Total debt / EBITDA at close", DB.at("lev", 0), "x"), ("Exit enterprise value", RT.c("ev_out"), "num0"),
-            ("Sponsor equity value at exit", RT.c("eq_out"), "num0")]
-    for i, (label, f, fmt) in enumerate(rows):
-        sh.set((13 + i, 2), label)
-        sh.set((13 + i, 3), f"={f}", fmt=fmt, bold=i < 2)
-    r = 13 + len(rows) + 1
+
+    # ---- key returns
+    k0 = COV["kpi"]
+    section(sh, k0, "Key returns", 2, 4)
+    rows = [("Sponsor IRR", RT.c("irr"), "pct", "base case"), ("Money multiple (MoM)", RT.c("mom"), X2, "base case"),
+            ("Entry enterprise value", SU.c("ev"), "num0", "$m"), ("Entry EV / LTM EBITDA", SU.c("mult"), "x", "at close"),
+            ("Offer price per share ($)", SU.c("offer"), "usd2", "per share"), ("Sponsor equity invested", SU.c("s_eq"), "num0", "$m"),
+            ("Total debt / EBITDA at close", DB.at("lev", 0), "x", "at close"), ("Exit enterprise value", RT.c("ev_out"), "num0", "$m"),
+            ("Sponsor equity value at exit", RT.c("eq_out"), "num0", "$m")]
+    for i, (label, f, fmt, note) in enumerate(rows):
+        sh.set((k0 + 1 + i, 2), label)
+        sh.set((k0 + 1 + i, 3), f"={f}", fmt=fmt, bold=i < 2)
+        sh.set((k0 + 1 + i, 4), note, kind="note")
+
+    # ---- chart data (formula tables) and charts bound to them
+    d0, t0 = COV["data"], COV["trend"]
+    c1, c2 = COV["charts1"], COV["charts2"]
+    section(sh, c1 - 2, "Charts", 2, 14)
+    section(sh, d0, "Chart data", 2, 8)
+    sh.set((d0 + 1, 2), "Formula-driven tables behind the charts above; every cell links to the model.", kind="note")
+    sh.set((t0, 2), "Operating and debt profile", bold=True, color=NAVY, bottom=True)
+    for t in range(F + 1):
+        sh.set((t0, C0 + t), f"=Debt!{ref(6, C0 + t)}", bold=True, align="right", bottom=True)
+    P = lambda t: m.K + t
+    lines = [("Revenue", lambda t: f"={OP.at('rev', P(t))}", "num0"), ("EBITDA", lambda t: f"={OP.at('ebitda', P(t))}", "num0"),
+             ("EBITDA margin", lambda t: f"={ref(t0 + 2, C0 + t)}/{ref(t0 + 1, C0 + t)}", "pct"),
+             ("Revolver", lambda t: f"={DB.at('rev_end', t)}", "num0"), ("Term loan B", lambda t: f"={DB.at('tlb_end', t)}", "num0"),
+             ("Senior notes", lambda t: f"={DB.at('sn_end', t)}", "num0"), ("PIK notes (incl. accrued)", lambda t: f"={DB.at('pik_end', t)}", "num0"),
+             ("Total debt", lambda t: f"=SUM({ref(t0 + 4, C0 + t)}:{ref(t0 + 7, C0 + t)})", "num0"),
+             ("Total debt / EBITDA", lambda t: f"={DB.at('lev', t)}", "x")]
+    for i, (label, fn, fmt) in enumerate(lines):
+        r = t0 + 1 + i
+        tot = label == "Total debt"
+        sh.set((r, 2), label, indent=1 if label.startswith(("Revolver", "Term", "Senior", "PIK")) else 0, bold=tot, top=tot)
+        for t in range(F + 1):
+            sh.set((r, C0 + t), fn(t), fmt=fmt, bold=tot, top=tot)
+    row = lambda i: f"Cover!{ref(t0 + i, C0, True, True)}:{ref(t0 + i, C0 + F, True, True)}"
+    cats = row(0)
+    trend(sh, title="Revenue and EBITDA", cats=cats, series=[("Revenue", row(1)), ("EBITDA", row(2))], anchor=(f"B{c1}", f"F{c1 + 17}"), y_format="num0")
+    sh.chart("stacked_column", title="Debt paydown by tranche", anchor=(f"H{c1}", f"N{c1 + 17}"), y_format="num0", legend=True, gap_width=50,
+             series=[{"name": nm, "cats": cats, "vals": row(i), "color": col} for nm, i, col in
+                     (("Revolver", 4, "A6A6A6"), ("Term loan B", 5, "0B2A4A"), ("Senior notes", 6, "2E6DA4"), ("PIK notes", 7, "9DC3E6"))])
+
+    steps = [("Sponsor equity invested", f"={RT.c('eq_in')}"), ("EBITDA growth", f"={RT.c('a_ebitda')}"), ("Multiple expansion", f"={RT.c('a_mult')}"),
+             ("Debt paydown and cash build", f"={RT.c('a_delev')}"), ("Fees and leakage", f"={RT.c('a_fees')}"),
+             ("Sponsor equity at exit", f"={RT.c('eq_out')}")]
+    assert len(steps) == BRIDGE_STEPS
+    waterfall(sh, top_left=(COV["bridge"], 2), steps=steps, title="Returns attribution: sponsor equity in to equity out ($m)",
+              anchor=(f"B{c2}", f"F{c2 + 17}"), y_format="num0")
+    r0 = int(centres["irr"][1:]) - 4
+    g1, g3 = (r0 + 2, r0 + 6), (r0 + 18, r0 + 22)
+    S = lambda a, b, ca="D", cb="H": f"Sensitivity!${ca}${a}:${cb}${b}"
+    football_field(sh, top_left=(COV["ff"], 2), title="Sponsor IRR range across the sensitivity grids", anchor=(f"H{c2}", f"N{c2 + 17}"), x_format="pct",
+                   rows=[("Entry x exit multiple", f"=MIN({S(*g1)})", f"=MAX({S(*g1)})"),
+                         ("Exit multiple (base entry)", f"=MIN({S(r0 + 4, r0 + 4)})", f"=MAX({S(r0 + 4, r0 + 4)})"),
+                         ("Entry multiple (base exit)", f"=MIN({S(*g1, 'F', 'F')})", f"=MAX({S(*g1, 'F', 'F')})"),
+                         ("Exit multiple x exit margin", f"=MIN({S(*g3)})", f"=MAX({S(*g3)})")],
+                   marker=f"={RT.c('irr')}", marker_label="Base case IRR")
+
+    # ---- colour code, contents, sources
+    r = COV["ff"] + FF_ROWS + 4
     sh.set((r, 2), "Colour code", bold=True, color=NAVY, bottom=True)
     sh.set((r + 1, 2), "Hard-coded input or figure as filed", color=BLUE)
     sh.set((r + 2, 2), "Formula on this sheet")

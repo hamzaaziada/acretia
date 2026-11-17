@@ -276,5 +276,41 @@ class ChartArchetypeTests(unittest.TestCase):
                 self.assertTrue([f for f in os.listdir(d) if f.endswith(".png")])
 
 
+class ReservedKeysAndDerived(unittest.TestCase):
+    """FP-S3-b: scatter coordinates are xv/yv (D-S3-10); computed badge and stat figures are declared (D-S3-11)."""
+
+    def test_every_chart_example_is_a_valid_spec(self):
+        from om.deck import spec
+        for aid in IDS:
+            d = {"deck_id": "d", "title": "T", "lang": "en", "as_of": "2026-09-30",
+                 "slides": [{"id": "s1", "archetype": aid, "blocks": {}, "title": "Example",
+                             **copy.deepcopy(archetypes.get(aid).example)}]}
+            with self.subTest(aid):
+                self.assertEqual([str(e) for e in spec.validate(d)], [])
+
+    def test_scatter_points_use_xv_yv(self):
+        ex = archetypes.get("scatter_quadrant").example
+        self.assertTrue(all({"xv", "yv"} <= set(p) and "x" not in p and "y" not in p for p in ex["blocks"]["points"]))
+        out = archetypes.get("scatter_quadrant").build(copy.deepcopy(dict(ex, id="s1")), ctx(1))
+        self.assertTrue(any(e.kind == "chart" for e in out.elements))
+
+    def test_computed_figures_are_declared(self):
+        def derived(aid):
+            out = archetypes.get(aid).build(copy.deepcopy(dict(archetypes.get(aid).example, id="s1")), ctx(1))
+            return [d["value"] for d in out.meta.get("derived", [])]
+        wf = derived("waterfall")
+        self.assertTrue(any(abs(v - 32) < 1e-9 for v in wf))                       # EBITDA delta in the badge
+        self.assertTrue(any(abs(v - 0.37) < 1e-9 for v in derived("annotated_line")))
+        self.assertTrue(any(abs(v - 4.2) < 1e-9 for v in derived("combo_margin")))
+        self.assertTrue(any(abs(v - 158) < 1 for v in derived("football_field")))   # implied value per share
+
+    def test_markers_and_sources_in_examples_resolve(self):
+        import re
+        for aid in IDS:
+            ex = archetypes.get(aid).example
+            marks = {int(m) for m in re.findall(r"\[(\d)\]", str(ex["blocks"]))}
+            self.assertLessEqual(max(marks, default=0), len(ex.get("sources", [])), aid)
+
+
 if __name__ == "__main__":
     unittest.main()

@@ -104,7 +104,8 @@ frameworks:
       - {standard: "IAS 7", ref: "paras 31-34 (interest and dividends)", url: *u_ias7}
       - {standard: "IFRS 18", ref: "Presentation categories and mandatory subtotals", url: *u_ifrs18}
     authored: acretia
-    confidence: verified
+    basis: standard-reference
+    confidence: unverified
 
   - id: EAS
     name: Egyptian Accounting Standards
@@ -289,7 +290,8 @@ frameworks:
     citations:
       - {standard: "FRS 102", ref: "Sections 1A, 4, 5, 6, 18, 20, 23", url: *u_frs102}
     authored: acretia
-    confidence: verified
+    basis: standard-reference
+    confidence: unverified
 
   - id: IndAS
     name: Indian Accounting Standards (Ind AS)
@@ -333,7 +335,8 @@ frameworks:
       - {standard: "Companies (Indian Accounting Standards) Rules 2015", ref: "Rule 4 applicability phases", url: *u_taxguruindas}
       - {standard: "Ind AS 116", ref: "Differences from IFRS 16", url: *u_kpmgindas116}
     authored: acretia
-    confidence: verified
+    basis: standard-reference
+    confidence: unverified
 
   - id: USGAAP
     name: US generally accepted accounting principles (FASB ASC)
@@ -375,4 +378,5 @@ frameworks:
     citations:
       - {standard: "FASB ASC", ref: "Topics 205, 220, 230, 330, 606, 842", url: *u_asc}
     authored: acretia
-    confidence: verified
+    basis: standard-reference
+    confidence: unverified

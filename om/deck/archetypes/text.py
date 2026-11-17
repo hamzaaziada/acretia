@@ -7,6 +7,8 @@ timeline parts (month labels, bars, markers) carry the role `decor`, which the v
 """
 from __future__ import annotations
 
+import re
+
 from om.deck.archetypes import BuildContext, register
 from om.deck.archetypes import base
 from om.deck.archetypes.core import (FitFailure, area, art, cols, hline, need, para, rect, row_cols, short_footer,
@@ -118,6 +120,8 @@ def build_agenda(slide: dict, ctx: BuildContext):
             els.append(tx(ctx, meta, "label", i + 1, x2, ry, w2, rh, [Para([Run(it["detail"], False, c_side)],
                           space_after=0)], LABEL, valign="m", inset=0.05))
         if it.get("time"):
+            for k, num in enumerate(re.findall(r"\d+(?:\.\d+)?", it["time"])):
+                base.declare(meta, float(num), f"blocks.items[{i}].time[{k}]")
             x3, w3 = cols(10, 11)
             els.append(tx(ctx, meta, "label", f"t{i + 1}", x3, ry, w3, rh, [Para([Run(it["time"], True, c_side)],
                           align="r", space_after=0)], LABEL, valign="m", inset=0.05))
@@ -268,13 +272,13 @@ _SIDE = _obj({"heading": _STR, "metric": _STR, "points": _arr(_STR, 2, 5)}, ["he
 
 
 @register("two_column_compare", visual_type="compare", schema=_schema({
-    "left": _SIDE, "right": _SIDE, "verdict": _STR, "verdict_label": _STR, "emphasis": {"enum": ["left", "right"]}},
-    ["left", "right", "verdict"]))
+    "a": _SIDE, "b": _SIDE, "verdict": _STR, "verdict_label": _STR, "emphasis": {"enum": ["a", "b"]}},
+    ["a", "b", "verdict"]))
 def build_two_column_compare(slide: dict, ctx: BuildContext):
-    b, meta, els, y, h = _begin(slide, ctx, "two_column_compare", "left", "right", "verdict")
+    b, meta, els, y, h = _begin(slide, ctx, "two_column_compare", "a", "b", "verdict")
     vh, hh = 0.9, 0.6
     bh = round(h - hh - vh - ctx.gap, 2)
-    for i, key in enumerate(("left", "right")):
+    for i, key in enumerate(("a", "b")):
         side = b[key]
         cx, cw = cols(6 * i, 6 * i + 5)
         fill = "accent" if b.get("emphasis") == key else "secondary"
@@ -296,7 +300,7 @@ def build_two_column_compare(slide: dict, ctx: BuildContext):
 
 # ---------------------------------------------------------------- numbered_insights
 @register("numbered_insights", visual_type="cards", schema=_schema({
-    "insights": _arr(_obj({"title": _STR, "text": _STR}, ["title", "text"]), 2, 4),
+    "insights": _arr(_obj({"title": _STR, "text": _STR, "figure": _STR}, ["title", "text"]), 2, 4),
     "layout": {"enum": ["grid", "row"]}}, ["insights"]))
 def build_numbered_insights(slide: dict, ctx: BuildContext):
     b, meta, els, y, h = _begin(slide, ctx, "numbered_insights", "insights")
@@ -311,11 +315,24 @@ def build_numbered_insights(slide: dict, ctx: BuildContext):
         spots = [(c, y) for c in row_cols(n)]
     for i, (it, ((cx, cw), cy)) in enumerate(zip(ins, spots)):
         els.append(rect(ctx, "panel", i + 1, cx, cy, cw, ch, "panel"))
-        els.append(tx(ctx, meta, "number", i + 1, cx, cy, cw, 0.8, [Para([Run(f"{i + 1:02d}", True, "accent")],
+        fig = it.get("figure")
+        by, bh_ = round(cy + 0.8, 2), round(ch - 0.8, 2)
+        if fig and grid:              # number on the left two columns, headline figure on the right four
+            c0 = 6 * (i % 2)
+            nx, nw = cols(c0, c0 + 1)
+            fx, fw = cols(c0 + 2, c0 + 5)
+            els.append(tx(ctx, meta, "kpi", i + 1, fx, cy, fw, 0.8, [Para([Run(fig, True)], align="r",
+                          space_after=0)], TITLE, font="major", valign="m", inset=0.2))
+        else:
+            nx, nw = cx, cw
+            if fig:                   # row layout: the figure gets its own band under the number
+                els.append(tx(ctx, meta, "kpi", i + 1, cx, by, cw, 0.9, [Para([Run(fig, True)], space_after=0)],
+                              TITLE, font="major", valign="m", inset=0.2))
+                by, bh_ = round(by + 0.9, 2), round(bh_ - 0.9, 2)
+        els.append(tx(ctx, meta, "number", i + 1, nx, cy, nw, 0.8, [Para([Run(f"{i + 1:02d}", True, "accent")],
                       space_after=0)], TITLE, font="major", valign="m", inset=0.2))
         paras = [Para([Run(it["title"], True)], space_after=4), Para(base.figure_runs(it["text"]), space_after=0)]
-        els.append(tx(ctx, meta, "body", i + 1, cx, round(cy + 0.8, 2), cw, round(ch - 0.8, 2), paras, BODY,
-                      inset=0.2))
+        els.append(tx(ctx, meta, "body", i + 1, cx, by, cw, bh_, paras, BODY, inset=0.2))
     return base.solved(slide, ctx, "numbered_insights", "cards", els, meta)
 
 
@@ -501,16 +518,17 @@ def build_appendix_divider(slide: dict, ctx: BuildContext):
 EXAMPLES = {
     "exec_summary": {
         "title": "Atlas adds $412m of value if we close by Q2 2027", "source": "Deal team model v14",
+        "sources": ["Deal team model v14, base case", "Seller management accounts, FY25"],
         "as_of": "2026-11-12",
         "blocks": {"subtitle": "Key findings, base case, $ million",
                    "insights": [
-                       {"lead": "Value", "text": "Standalone EV of $1,240m rises to $1,652m with $85m of run-rate cost savings",
+                       {"lead": "Value", "text": "Run-rate cost savings and revenue gains lift the standalone value [1]",
                         "figure": "+$412m"},
-                       {"lead": "Returns", "text": "Base case IRR of 21.4% clears the 18% hurdle with 0.4x headroom",
+                       {"lead": "Returns", "text": "Base case IRR clears the hurdle rate with headroom to spare [1]",
                         "figure": "21.4%"},
-                       {"lead": "Leverage", "text": "Net debt of 3.1x EBITDA at close falls to 2.2x within 24 months",
+                       {"lead": "Leverage", "text": "Net debt to EBITDA at close falls back inside covenant within two years [1]",
                         "figure": "3.1x"},
-                       {"lead": "Risk", "text": "Two customers carry 38% of revenue and both renew in 2027",
+                       {"lead": "Risk", "text": "Two customers carry this share of revenue and both renew in 2027 [2]",
                         "figure": "38%"}],
                    "so_what": {"text": "Approve exclusivity now and price the two renewals into the final bid."}}},
     "agenda": {
@@ -523,26 +541,28 @@ EXAMPLES = {
             {"title": "Decision and next steps", "detail": "Bid range and exclusivity", "time": "10 min"}]}},
     "kpi_row": {
         "title": "Unit economics improved on every measure in FY26", "source": "Management accounts",
+        "sources": ["Management accounts, FY26 close", "Covenant schedule, facility agreement"],
         "as_of": "2026-09-30",
         "blocks": {"subtitle": "FY26 versus FY25, carve-out perimeter", "highlight": 1,
                    "kpis": [
-                       {"label": "Revenue", "value": "$2.4bn", "context": "Price and mix lead",
+                       {"label": "Revenue", "value": "$2.4bn", "context": "Price and mix lead [1]",
                         "change": {"text": "+8.2% YoY", "direction": "up"}},
                        {"label": "EBITDA margin", "value": "21.4%", "context": "Savings landed early",
                         "change": {"text": "+190 bps", "direction": "up"}},
-                       {"label": "Net debt / EBITDA", "value": "3.1x", "context": "Covenant at 3.5x",
+                       {"label": "Net debt / EBITDA", "value": "3.1x", "context": "Covenant at 3.5x [2]",
                         "change": {"text": "+0.3x", "direction": "down"}},
                        {"label": "Cash conversion", "value": "82%", "context": "Working capital neutral",
                         "change": {"text": "flat", "direction": "flat"}}],
-                   "so_what": "Margin is the story: +190 bps adds $46m of EBITDA, leverage is the watch item."}},
+                   "so_what": "Margin is the story, with the gain in basis points the main lever; leverage is the watch item."}},
     "stat_hero": {
         "title": "Entering Saudi Arabia triples our addressable market", "source": "Market study, Bank research",
+        "sources": ["Market study, SME lending model", "Bank research, regional lending outlook"],
         "as_of": "2026-10-31",
         "blocks": {"subtitle": "Addressable SME lending, 2026 to 2030, $ billion",
                    "stats": [{"value": "$14.8bn", "label": "SME lending pool by 2030",
-                              "context": "CAGR of 11.6% from $8.6bn in 2026"},
+                              "context": "CAGR of 11.6% from $8.6bn in 2026 [1]"},
                              {"value": "3.1x", "label": "Market size versus current footprint",
-                              "context": "Egypt and UAE combined stand at $4.8bn"}],
+                              "context": "Egypt and UAE combined stand at $4.8bn [2]"}],
                    "so_what": "Enter in 2027 through a partnership licence, then build the branch network."}},
     "quote": {
         "title": "Customers back the platform but want faster onboarding",
@@ -551,6 +571,7 @@ EXAMPLES = {
                    "role": "Customer interview, October 2026"}},
     "recommendation": {
         "title": "Close the deal in three phases over nine months",
+        "source": "Deal team plan v6", "as_of": "2026-11-12",
         "blocks": {"phases": [
             {"label": "Now", "window": "next 30 days", "owner": "Deal lead", "date": "15 Dec 2026",
              "actions": ["Sign exclusivity at $1.62bn EV", "Launch confirmatory diligence on two customers",
@@ -563,31 +584,35 @@ EXAMPLES = {
                          "Report first savings captured to the board"]}]}},
     "takeaway_box": {
         "title": "We recommend a $1.62bn bid with price protection on two renewals",
+        "source": "Deal team model v14", "as_of": "2026-11-12",
         "blocks": {"decision": "Approve a bid of $1.62bn EV, with a 5% earn-out on the two renewals",
-                   "rationale": ["Returns: 21.4% IRR against an 18% hurdle",
-                                 "Savings: $85m run-rate, 60% identified bottom-up",
-                                 "Strategy: adds a 12% share in the Gulf payments market"],
+                   "rationale": ["Returns: base case IRR clears the hurdle rate with room to spare",
+                                 "Savings: run-rate cost savings are mostly identified bottom-up",
+                                 "Strategy: adds a meaningful share of the Gulf payments market"],
                    "risks": ["Concentration: 38% of revenue from two clients, mitigated by the earn-out",
                              "Separation: $120m one-off cost, capped in the SPA"]}},
     "two_column_compare": {
-        "title": "Option B delivers $60m more value but needs 9 more months",
-        "blocks": {"emphasis": "right",
-                   "left": {"heading": "Option A: sell in 2027", "metric": "$1.45bn",
-                            "points": ["Value: 11.2x EBITDA on current run rate",
-                                       "Timing: signing by Q2 2027", "Risk: low, one buyer at exclusivity"]},
-                   "right": {"heading": "Option B: carve out and list", "metric": "$1.51bn",
-                             "points": ["Value: 11.7x EBITDA after two years of margin gains",
-                                        "Timing: listing in Q1 2028", "Risk: market window and $120m separation cost"]},
+        "title": "Option B is worth more than Option A but needs more time",
+        "source": "Deal team valuation", "as_of": "2026-11-12",
+        "blocks": {"emphasis": "b",
+                   "a": {"heading": "Option A: sell in 2027", "metric": "$1.45bn",
+                         "points": ["Value: a lower multiple on the current run rate",
+                                    "Timing: signing by Q2 2027", "Risk: low, one buyer at exclusivity"]},
+                   "b": {"heading": "Option B: carve out and list", "metric": "$1.51bn",
+                         "points": ["Value: a higher multiple after two years of margin gains",
+                                    "Timing: listing in Q1 2028", "Risk: market window and separation cost"]},
                    "verdict": "Option A wins on risk-adjusted value; revisit Option B if bids fall below $1.4bn."}},
     "numbered_insights": {
         "title": "Four drivers explain the margin gain and three of them repeat",
+        "source": "Management accounts", "as_of": "2026-09-30",
         "blocks": {"insights": [
-            {"title": "Pricing", "text": "+$38m from list increases, with churn below 2.0%"},
-            {"title": "Procurement", "text": "$22m saved on the top 40 suppliers by volume"},
-            {"title": "Mix", "text": "Cards and cash management now earn 61% of revenue"},
-            {"title": "One-offs", "text": "$9m of non-recurring recoveries will not repeat"}]}},
+            {"title": "Pricing", "text": "Gains from list increases, with churn held low", "figure": "+$38m"},
+            {"title": "Procurement", "text": "Saved on the top suppliers by volume", "figure": "$22m"},
+            {"title": "Mix", "text": "Cards and cash management now earn most of revenue", "figure": "61%"},
+            {"title": "One-offs", "text": "Non-recurring recoveries will not repeat", "figure": "$9m"}]}},
     "process_flow": {
         "title": "Six steps take the carve-out from signing to day one",
+        "source": "PMO plan v6", "as_of": "2026-11-12",
         "blocks": {"highlight": 2, "steps": [
             {"name": "Sign SPA", "output": "Signed SPA and TSA term sheet"},
             {"name": "Clear approvals", "output": "Merger control in 3 markets"},
@@ -614,6 +639,7 @@ EXAMPLES = {
                         "milestones": [{"month": 8.9, "label": "Funds drawn"}]}]}},
     "issue_tree": {
         "title": "Entry works only if three questions all resolve in our favour",
+        "source": "Market study; Acretia DCF model", "as_of": "2026-10-31",
         "blocks": {"root": "Should we enter the Saudi SME market in 2027?",
                    "branches": [
                        {"name": "Is the market attractive?", "leaves": ["Pool of $14.8bn by 2030",
@@ -622,12 +648,12 @@ EXAMPLES = {
                                                           "Pricing within 15% of incumbents"]},
                        {"name": "Does it pay back?", "leaves": ["Payback in 4.5 years", "Capital need of $160m"]}]}},
     "visual_text": {
-        "title": "Digital onboarding cuts time to first transaction from 21 days to 4",
+        "title": "Digital onboarding cuts time to first transaction from weeks to days",
         "blocks": {"heading": "What changed in 2026",
-                   "points": ["Time: 4 days to first transaction, down from 21 days",
-                              "Cost: $310 per onboarding, down 42%",
-                              "Volume: 9,400 SMEs onboarded, up 2.1x",
-                              "Quality: KYC rejections fell to 3.5%"],
+                   "points": ["Time: first transaction within days of application",
+                              "Cost: onboarding cost per client fell sharply",
+                              "Volume: many more SMEs onboarded in the same team",
+                              "Quality: KYC rejections fell"],
                    "callout": "Onboarding is no longer the bottleneck for growth"}},
     "appendix_divider": {"title": "Appendix",
                          "blocks": {"contents": ["A. Comparable companies", "B. Precedent transactions",
