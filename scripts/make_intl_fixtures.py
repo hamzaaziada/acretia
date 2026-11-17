@@ -82,6 +82,11 @@ FIXTURES = [
     dict(file="nile_valley_ar_native_fy2023.pdf", spec="nile_a", cur=1, kind="native", language="ar", eastern=True),
     dict(file="nile_valley_ar_scanned_fy2023.pdf", spec="nile_a", cur=1, kind="scanned", language="ar", eastern=True,
          raster_of="nile_valley_ar_native_fy2023.pdf", skew=[-1.1, 0.7, 1.4, -0.6]),
+    # held-out fonts (never used for the Eastern-digit templates): scanned only, native twin is a temp file
+    dict(file="nile_valley_ar_scanned_fy2023_amiri.pdf", spec="nile_a", cur=1, kind="scanned", language="ar",
+         eastern=True, font="Amiri", fscale=1.3, skew=[0.8, -1.2, 1.3, -0.7]),
+    dict(file="nile_valley_ar_scanned_fy2023_notosans.pdf", spec="nile_a", cur=1, kind="scanned", language="ar",
+         eastern=True, font="Noto Sans Arabic", skew=[-0.9, 1.1, -1.4, 0.6]),
     dict(file="red_sea_cement_en_native_fy2024.pdf", spec="redsea", cur=2, kind="native", language="en"),
     dict(file="red_sea_cement_en_scanned_fy2024.pdf", spec="redsea", cur=2, kind="scanned", language="en",
          raster_of="red_sea_cement_en_native_fy2024.pdf", skew=[-0.8, 1.4, -0.5, 1.0]),
@@ -414,7 +419,7 @@ def figure_rows(sp, ys, cols, lang, eastern):
     return out
 
 
-def build_pages(sp, spec_fx, ys, cols, eastern):
+def build_pages(sp, spec_fx, ys, cols, eastern, font='DejaVu Sans', fscale=1.0):
     """Return (html, truth) for one fixture."""
     lang = spec_fx["language"]
     d = sp["d"]
@@ -446,7 +451,7 @@ def build_pages(sp, spec_fx, ys, cols, eastern):
     # html
     rtl = lang == "ar"
     h = ["<!doctype html><html lang='%s' dir='%s'><head><meta charset='utf-8'><style>%s</style></head><body class='%s'>"
-         % ("ar" if rtl else "en", "rtl" if rtl else "ltr", CSS, lang)]
+         % ("ar" if rtl else "en", "rtl" if rtl else "ltr", CSS.replace("'DejaVu Sans'", "'%s'" % font).replace("10.4pt", "%.2fpt" % (10.4 * fscale)), lang)]
     cur_dt, prior_dt = sp["years"][cols[0]], sp["years"][cols[1]]
     for code, ten, tar, body in pages:
         is_pos = code == "BS"
@@ -577,10 +582,15 @@ def build_all(outdir):
             sp = SPECS[fx["spec"]]
             eastern = fx.get("eastern", sp["eastern"])
             cols = (fx["cur"], fx["cur"] - 1)
-            htm, truth = build_pages(sp, fx, chains[fx["spec"]], cols, eastern)
+            font = fx.get("font", "DejaVu Sans")
+            htm, truth = build_pages(sp, fx, chains[fx["spec"]], cols, eastern, font, fx.get("fscale", 1.0))
             path = os.path.join(outdir, fx["file"])
             if fx["kind"] == "native":
                 html_to_pdf(htm, path, work)
+            elif "raster_of" not in fx:
+                tmp_native = os.path.join(work, "native_" + fx["file"])
+                html_to_pdf(htm, tmp_native, work)
+                degrade_to_scan(tmp_native, path, fx["skew"], seed=sp["seed"] + 5)
             else:
                 nat = os.path.join(outdir, fx["raster_of"])
                 degrade_to_scan(nat, path, fx["skew"], seed=sp["seed"] + 5)
@@ -591,7 +601,7 @@ def build_all(outdir):
                 digits="eastern_arabic" if eastern else "western",
                 periods=[sp["years"][cols[1]].isoformat(), sp["years"][cols[0]].isoformat()],
                 pages=len(set(t["page"] for t in truth)), bytes=os.path.getsize(path),
-                derived_from=fx.get("raster_of"), ground_truth=truth)
+                derived_from=fx.get("raster_of"), font=font, ground_truth=truth)
     return [entries[f["file"]] for f in FIXTURES]
 
 
@@ -642,7 +652,7 @@ def check():
             if not c:
                 continue
             for k in ("kind", "language", "generator", "company", "currency", "unit_scale",
-                      "fiscal_year_end_month", "ground_truth", "periods", "digits"):
+                      "fiscal_year_end_month", "ground_truth", "periods", "digits", "font"):
                 if c.get(k) != e.get(k):
                     bad.append(f"{e['file']}: {k} differs from regenerated ground truth")
             errs = ties_ok(e["ground_truth"])

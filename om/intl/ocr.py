@@ -204,14 +204,46 @@ def _parse_tsv(rows, w, h, ang, page):
 _E_DIGITS = "٠١٢٣٤٥٦٧٨٩"
 _E_GLYPHS = _E_DIGITS + "٬٫()-"
 _FONT_PATHS = [
+    # Templates come from these system fonts (missing ones are skipped). Amiri and Noto Sans Arabic
+    # are deliberately NOT here: they are the held-out fonts the accuracy of record is measured on.
     "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf",
     "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf",
     "/usr/share/fonts/truetype/freefont/FreeSerif.ttf",
     "/usr/share/fonts/truetype/freefont/FreeSerifBold.ttf",
     "/usr/share/fonts/truetype/freefont/FreeSans.ttf",
+    "/usr/share/fonts/truetype/noto/NotoNaskhArabic-Regular.ttf",
+    "/usr/share/fonts/truetype/noto/NotoNaskhArabic-Bold.ttf",
+    "/usr/share/fonts/truetype/noto/NotoKufiArabic-Regular.ttf",
+    "/usr/share/fonts/truetype/noto/NotoKufiArabic-Bold.ttf",
+    "/usr/share/fonts/opentype/lateef/Lateef-Regular.ttf",
+    "/usr/share/fonts/opentype/lateef/Lateef-Bold.ttf",
+    "/usr/share/fonts/truetype/scheherazade/Scheherazade-Regular.ttf",
+    "/usr/share/fonts/truetype/scheherazade/Scheherazade-Bold.ttf",
 ]
-_BM_W, _BM_H = 16, 20
+_BM_W, _BM_H = 24, 30
 _TEMPLATES = None
+_VARIANTS = ("base", "thick", "thin", "rot+", "rot-")
+
+
+_DFW = 0.2      # weight of the (font dependent) size/position features next to the bitmap shape
+_ACCEPT = 0.35   # minimum token confidence to replace tesseract words
+_WW = 0.25      # glyph width varies a lot between fonts: weigh it less than height and position
+_SCAN_ROWS = (5, 9, 13, 17, 21, 25)
+
+
+def _runs_vec(bm):
+    """Run counts along a few scanlines of a component bitmap (font independent: prongs, loops)."""
+    out = []
+    for r_ in _SCAN_ROWS:
+        row = bm[r_ * _BM_W:(r_ + 1) * _BM_W]
+        n, inside = 0, False
+        for v in row:
+            on = v > 110
+            if on and not inside:
+                n += 1
+            inside = on
+        out.append(n)
+    return out
 
 
 def _comp_bitmap(mask_rows, x0, y0, x1, y1):
@@ -228,12 +260,27 @@ def _comp_bitmap(mask_rows, x0, y0, x1, y1):
     return list(im.tobytes())
 
 
+def _glyph_renders(font, ch, variant):
+    from PIL import Image, ImageDraw, ImageFilter
+    im = Image.new("L", (300, 300), 0)
+    ImageDraw.Draw(im).text((70, 50), ch, fill=255, font=font)
+    if variant == "thick":
+        im = im.filter(ImageFilter.MaxFilter(5))
+    elif variant == "thin":
+        im = im.filter(ImageFilter.MinFilter(3))
+    elif variant == "rot+":
+        im = im.rotate(2, resample=Image.BILINEAR)
+    elif variant == "rot-":
+        im = im.rotate(-2, resample=Image.BILINEAR)
+    return im
+
+
 def _templates():
     global _TEMPLATES
     if _TEMPLATES is not None:
         return _TEMPLATES
-    from PIL import Image, ImageDraw, ImageFont
-    out = []
+    from PIL import ImageFont
+    out = {}
     for path in _FONT_PATHS:
         if not os.path.exists(path):
             continue
@@ -241,25 +288,28 @@ def _templates():
             font = ImageFont.truetype(path, 120)
         except OSError:
             continue
-        glyphs = {}
-        for ch in _E_GLYPHS:
-            im = Image.new("L", (260, 260), 0)
-            ImageDraw.Draw(im).text((60, 40), ch, fill=255, font=font)
-            bb = im.point(lambda p: 255 if p > 110 else 0).getbbox()
-            if not bb:
-                continue
-            w, h = im.size
-            rows = [im.crop((0, y, w, y + 1)).point(lambda p: 1 if p > 110 else 0).tobytes() for y in range(h)]
-            glyphs[ch] = (bb, _comp_bitmap(rows, bb[0], bb[1], bb[2] - 1, bb[3] - 1))
-        tall = [glyphs[c][0] for c in "١٢٣٤٦٧٨٩" if c in glyphs]
-        if len(tall) < 6:
-            continue
-        hs = sorted(b[3] - b[1] for b in tall)
-        ts = sorted(b[1] for b in tall)
-        H, T = hs[len(hs) // 2], ts[len(ts) // 2]
-        for ch, (bb, bm) in glyphs.items():
-            wv, hv = bb[2] - bb[0], bb[3] - bb[1]
-            out.append((ch, (wv / H, hv / H, (bb[1] - T) / H, (bb[3] - T) / H), bm))
+        H = T = None
+        for variant in _VARIANTS:
+            glyphs = {}
+            for ch in _E_GLYPHS:
+                im = _glyph_renders(font, ch, variant)
+                bb = im.point(lambda p: 255 if p > 110 else 0).getbbox()
+                if not bb:
+                    continue
+                w_, h_ = im.size
+                data = im.point(lambda p: 1 if p > 110 else 0).tobytes()
+                rows = [data[y * w_:(y + 1) * w_] for y in range(h_)]
+                glyphs[ch] = (bb, _comp_bitmap(rows, bb[0], bb[1], bb[2] - 1, bb[3] - 1))
+            if H is None:                                   # reference size from the unaugmented render
+                tall = [glyphs[c][0] for c in "١٢٣٤٦٧٨٩" if c in glyphs]
+                if len(tall) < 6:
+                    break
+                hs = sorted(b_[3] - b_[1] for b_ in tall)
+                ts = sorted(b_[1] for b_ in tall)
+                H, T = hs[len(hs) // 2], ts[len(ts) // 2]
+            for ch, (bb, bm) in glyphs.items():
+                wv, hv = bb[2] - bb[0], bb[3] - bb[1]
+                out.setdefault(path, []).append((ch, (wv / H, hv / H, (bb[1] - T) / H, (bb[3] - T) / H), bm))
     _TEMPLATES = out
     return out
 
@@ -345,50 +395,102 @@ def _split_wide(mask, a, b, c, d, H):
 
 
 def _classify(feat, bm, templates):
-    """Nearest template -> (char, distance, second distance)."""
-    best, second = (None, 9.9), 9.9
-    seen = {}
+    """Candidate characters ranked by distance: ``[(char, distance), ...]`` (best first)."""
+    small = feat[1] < 0.45
+    rv = None if small else _runs_vec(bm)
+    scored = []
     for ch, tf, tbm in templates:
-        small = feat[1] < 0.45 or tf[1] < 0.45
-        df = ((feat[0] - tf[0]) ** 2 + (feat[1] - tf[1]) ** 2 + (feat[2] - tf[2]) ** 2 + (feat[3] - tf[3]) ** 2)
-        if small:
+        df = (_WW * (feat[0] - tf[0]) ** 2 + (feat[1] - tf[1]) ** 2 + (feat[2] - tf[2]) ** 2 + (feat[3] - tf[3]) ** 2)
+        scored.append((df, ch, tbm, tf[1] < 0.45))
+    scored.sort(key=lambda t: t[0])
+    seen = {}
+    n = 0
+    for df, ch, tbm, tsmall in scored:
+        if df > 0.9 or n >= 40:
+            break
+        n += 1
+        if small or tsmall:
             d = df * 2.0
         else:
-            db = sum(abs(a - b) for a, b in zip(bm, tbm)) / (255.0 * len(bm))
-            d = db + df * 0.6
+            d = (sum(abs(a - b) for a, b in zip(bm, tbm)) / (255.0 * len(bm)) + df * _DFW
+                 + 0.05 * sum(abs(a - b) for a, b in zip(rv, _runs_vec(tbm))))
         if d < seen.get(ch, 9.9):
             seen[ch] = d
-    ranked = sorted(seen.items(), key=lambda kv: kv[1])
-    if not ranked:
-        return None, 9.9, 9.9
-    best = ranked[0]
-    second = ranked[1][1] if len(ranked) > 1 else 9.9
-    return best[0], best[1], second
+    return sorted(seen.items(), key=lambda kv: kv[1])
+
+
+def _char_conf(ranked, i=0):
+    d1 = ranked[i][1]
+    others = [d for k, (c, d) in enumerate(ranked) if k != i]
+    d2 = min(others) if others else 9.9
+    margin = (d2 - d1) / (d2 + 1e-6) if d2 < 9 else 1.0
+    if i:                                   # a re-chosen alternative: the margin is no evidence
+        margin = 0.0
+    return max(0.0, min(0.99, (1 - d1 / 0.45) * (0.75 + 0.25 * min(1.0, margin * 3)))) if d1 < 0.30 else 0.0
+
+
+def _decode(alts):
+    """Pick one character per glyph under the grammar of printed numbers.
+
+    Brackets only at the ends, no separator in the interior of a digit group, and thousands
+    separators exactly where the grouping puts them (every fourth character from the right).
+    """
+    n = len(alts)
+    pick = []
+    for i, ranked in enumerate(alts):
+        k = 0
+        while k < len(ranked):
+            ch = ranked[k][0]
+            if ch in "()" and (i not in (0, n - 1) or (ch == "(" and i != 0) or (ch == ")" and i != n - 1)):
+                k += 1
+                continue
+            if ch == "-" and n > 1 and i not in (0, n - 1):
+                k += 1
+                continue
+            break
+        pick.append(k if k < len(ranked) else 0)
+    chars = [alts[i][pick[i]][0] for i in range(n)]
+    confs = [_char_conf(alts[i], pick[i]) for i in range(n)]
+    lo = 1 if chars and chars[0] in "(-" else 0
+    hi = n - 1 if chars and chars[-1] in ")-" and n > 1 else n
+    core = list(range(lo, hi))
+    clen = len(core)
+    if clen >= 5 and "٫" not in chars:
+        for j, i in enumerate(core):
+            expect_sep = j > 0 and (clen - j) % 4 == 0
+            has = chars[i] == "٬"
+            if expect_sep and not has and chars[i] in "٠٬":
+                chars[i], confs[i] = "٬", min(confs[i], 0.6)
+            elif has and not expect_sep:
+                alt = next(((c, d) for c, d in alts[i] if c in _E_DIGITS), None)
+                if alt:
+                    chars[i], confs[i] = alt[0], 0.4
+    cost = sum(alts[i][pick[i]][1] for i in range(n)) / max(1, n)
+    return "".join(chars), confs, cost
 
 
 def read_eastern_digits(gray, box, h_ref=None):
-    """Read one or more Eastern-digit tokens inside ``box`` (pixel box) of a deskewed gray image.
+    """Read the Eastern-digit tokens inside ``box`` (pixel box) of a deskewed gray image.
 
     Returns a list of ``(text, conf, (x0, y0, x1, y1))`` tokens (pixel boxes), left to right.
-    Tokens with any component below the confidence margin get a low confidence.
+    Tokens that look like cursive text (long components, too many glyphs) are skipped; a token
+    with any glyph below the match quality gets confidence 0.
     """
     templates = _templates()
     if not templates:
         return []
-    from PIL import Image
     x0, y0, x1, y1 = [int(v) for v in box]
     crop = gray.crop((x0, y0, x1, y1))
     w, h = crop.size
     if w < 4 or h < 4:
         return []
     thr = _otsu(crop.histogram(), w * h)
-    data = crop.tobytes()
-    rows = [bytes(1 if data[y * w + x] < thr else 0 for x in range(w)) for y in range(h)]
+    data = crop.point(lambda p: 1 if p < thr else 0).tobytes()
+    rows = [data[y * w:(y + 1) * w] for y in range(h)]
     boxes, comp_runs = _components(rows, w, h)
     comps = []
     for lab, (a, b, c, d) in boxes.items():
-        cw, ch_ = c - a + 1, d - b + 1
-        if cw < 2 and ch_ < 2:
+        if (c - a + 1) < 2 and (d - b + 1) < 2:
             continue                                   # speck
         comps.append((a, b, c, d, lab))
     if not comps:
@@ -403,16 +505,14 @@ def read_eastern_digits(gray, box, h_ref=None):
                 return [("-", 0.8, (x0 + a, y0 + b, x0 + c + 1, y0 + d + 1))]
         return []
     hs = sorted(c[3] - c[1] + 1 for c in ref)
-    ts = sorted(c[1] for c in ref)
-    H = hs[len(hs) // 2]
-    T = ts[len(ts) // 2]
-    comps = [c for c in comps if not ((c[2] - c[0] + 1) > 2.5 * H and (c[3] - c[1] + 1) < 0.2 * H)]  # rules
+    Hb = hs[len(hs) // 2]
+    comps = [c for c in comps if not ((c[2] - c[0] + 1) > 3 * Hb and (c[3] - c[1] + 1) < 0.4 * Hb)]  # table rules
+    comps = [c for c in comps if not ((c[2] - c[0] + 1) > 1.2 * Hb and (c[3] - c[1] + 1) < 0.3 * Hb)]    # rule pieces
+    comps = [c for c in comps if (c[3] - c[1] + 1) >= 0.08 * Hb or (c[2] - c[0] + 1) >= 0.25 * Hb]
     comps.sort(key=lambda c: c[0])
-    # speckle filter: tiny things that are not plausible dots
-    comps = [c for c in comps if (c[3] - c[1] + 1) >= 0.08 * H or (c[2] - c[0] + 1) >= 0.25 * H]
     tokens, cur = [], []
     for c in comps:
-        if cur and c[0] - max(k[2] for k in cur) > 0.85 * H:
+        if cur and c[0] - max(k[2] for k in cur) > 0.85 * (h_ref or Hb):
             tokens.append(cur)
             cur = []
         cur.append(c)
@@ -420,24 +520,42 @@ def read_eastern_digits(gray, box, h_ref=None):
         tokens.append(cur)
     out = []
     for tok in tokens:
-        text, confs = "", []
+        if len(tok) > 14:
+            continue
+        tmax = max(t[3] - t[1] + 1 for t in tok)
+        tall = [t for t in tok if (t[3] - t[1] + 1) >= 0.6 * tmax and (t[2] - t[0] + 1) <= 1.3 * tmax]
+        if not tall:
+            continue
+        ths = sorted(t[3] - t[1] + 1 for t in tall)
+        H = ths[len(ths) // 2]
+        T = sorted(t[1] for t in tall)[len(tall) // 2]
+        if any((t[2] - t[0] + 1) > 3.2 * H for t in tok) or tmax > 1.7 * H:
+            continue                                   # cursive text, not digits
+        alts = []
         for (a, b, c, d, lab) in tok:
-            mask = [bytearray(w) for _ in range(h)]
+            mask = {}
             for (yy, s_, e_) in comp_runs[lab]:
-                for xx in range(s_, e_ + 1):
-                    mask[yy][xx] = 1
+                row = mask.get(yy)
+                if row is None:
+                    row = mask[yy] = bytearray(w)
+                row[s_:e_ + 1] = b"\x01" * (e_ - s_ + 1)
+            for yy in range(b, d + 1):
+                mask.setdefault(yy, bytearray(w))
             for (pa, pb, pc, pd) in _split_wide(mask, a, b, c, d, H):
                 cw, chh = pc - pa + 1, pd - pb + 1
                 feat = (cw / H, chh / H, (pb - T) / H, (pd + 1 - T) / H)
                 bm = _comp_bitmap(mask, pa, pb, pc, pd)
-                ch, d1, d2 = _classify(feat, bm, templates)
-                if ch is None:
-                    text, confs = text + "?", confs + [0.0]
-                    continue
-                margin = (d2 - d1) / (d2 + 1e-6) if d2 < 9 else 1.0
-                cf = max(0.0, min(0.99, (1 - d1 / 0.45) * (0.75 + 0.25 * min(1.0, margin * 3)))) if d1 < 0.30 else 0.0
-                text += ch
-                confs.append(cf)
+                alts.append((feat, bm))
+        best = None
+        for fid, tpls in templates.items():           # one font at a time: digits of one design never alias
+            fa = []
+            for feat, bm in alts:
+                ranked = _classify(feat, bm, tpls)
+                fa.append(ranked[:4] if ranked else [("?", 9.9)])
+            t_, c_, cost = _decode(fa)
+            if best is None or cost < best[2]:
+                best = (t_, c_, cost)
+        text, confs = best[0], best[1]
         bx = (x0 + min(t[0] for t in tok), y0 + min(t[1] for t in tok),
               x0 + max(t[2] for t in tok) + 1, y0 + max(t[3] for t in tok) + 1)
         out.append((text, min(confs) if confs else 0.0, bx))
@@ -452,78 +570,49 @@ def _digits_of(t):
     return "".join(ch for ch in normalise_digits(t) if ch.isdigit())
 
 
-def _eastern_pass(img, words, ang, w, h, page, force=False):
-    """Replace tesseract's reading of numeric columns by glyph-classifier tokens when the page
-    uses Eastern Arabic digits. Returns the new word list, or None when nothing was changed."""
-    numeric = [x for x in words if x.dbox and _NUMLIKE.match(x.text) and not _AR_LETTER.search(x.text)
-               and (any(ch.isdigit() for ch in x.text) or len(x.text) >= 3)]
-    if len(numeric) < 4:
-        return None
-    heights = sorted((x.dbox[3] - x.dbox[1]) * h for x in numeric)
-    h0 = heights[len(heights) // 2]
+_WESTERN_TOKEN = re.compile(r"^[(\-]*[0-9][0-9,.]*[)\-]*$")
 
-    def pbox(x):
-        return (x.dbox[0] * w - 6, x.dbox[1] * h - 4, x.dbox[2] * w + 6, x.dbox[3] * h + 4)
+
+def _eastern_pass(img, words, ang, w, h, page, force=False):
+    """Scan every text row for Eastern-digit tokens with the glyph classifier and replace the
+    tesseract words under them. Returns the new word list, or None when the page has no such digits.
+    """
+    heights = sorted((x.dbox[3] - x.dbox[1]) * h for x in words if x.dbox)
+    if len(heights) < 8:
+        return None
     if not force:
-        sample = sorted(numeric, key=lambda x: -(x.dbox[2] - x.dbox[0]))[:10]
-        hits = 0
-        for x in sample:
-            toks = read_eastern_digits(img, pbox(x))
-            if toks and toks[0][1] >= 0.3 and _digits_of(toks[0][0]) != _digits_of(x.text):
-                hits += 1
-        if hits < 3 or hits < 0.4 * len(sample):
-            return None
-    # numeric column spans (deskewed pixel x ranges)
-    spans = []
-    for x in sorted(numeric, key=lambda x: x.dbox[0]):
-        a, b = x.dbox[0] * w - 8, x.dbox[2] * w + 8
-        if spans and a <= spans[-1][1] + 0.6 * h0:
-            spans[-1][1] = max(spans[-1][1], b)
-        else:
-            spans.append([a, b])
-    y_lo = max(0, int(min(x.dbox[1] for x in numeric) * h - 1.5 * h0))
-    y_hi = min(h, int(max(x.dbox[3] for x in numeric) * h + 2.5 * h0))
-    new = []
-    for a, b in spans:
-        a, b = max(0, int(a)), min(w, int(b))
-        col = img.crop((a, y_lo, b, y_hi))
-        cw, ch_ = col.size
-        thr = _otsu(col.histogram(), cw * ch_)
-        ink = list(col.point(lambda p: 255 if p < thr else 0).resize((1, ch_), Image_BOX()).tobytes())
-        bands, y = [], 0
-        gap = max(2, int(0.3 * h0))
-        while y < ch_:
-            if ink[y] > 1:
-                s0 = y
-                last = y
-                while y < ch_ and (ink[y] > 1 or y - last <= gap):
-                    if ink[y] > 1:
-                        last = y
-                    y += 1
-                bands.append((s0, last + 1))
-            else:
+        numlike = [x.text for x in words if any(ch.isdigit() for ch in x.text) and len(x.text) >= 3]
+        if len(numlike) >= 8 and sum(bool(_WESTERN_TOKEN.match(t)) for t in numlike) >= 0.7 * len(numlike):
+            return None                                 # clearly Western digits: tesseract is fine
+    h0 = heights[len(heights) // 2]
+    thr = _otsu(img.histogram(), w * h)
+    ink = list(img.point(lambda p: 255 if p < thr else 0).resize((1, h), Image_BOX()).tobytes())
+    gap = max(2, int(0.3 * h0))
+    bands, y = [], 0
+    while y < h:
+        if ink[y] > 2:
+            s0 = last = y
+            while y < h and (ink[y] > 2 or y - last <= gap):
+                if ink[y] > 2:
+                    last = y
                 y += 1
-        for s0, e0 in bands:
-            if e0 - s0 < 2:
-                continue
-            for text, cf, bx in read_eastern_digits(img, (a, y_lo + s0 - 2, b, y_lo + e0 + 2), h_ref=0.85 * h0):
-                if cf < 0.25 or "?" in text or not any(c in _E_DIGITS or c == "-" for c in text):
-                    continue
-                if (bx[3] - bx[1]) < 0.45 * h0 and text != "-":
-                    continue
+            if last + 1 - s0 >= 0.3 * h0:
+                bands.append((s0, last + 1))
+        else:
+            y += 1
+    new = []
+    for s0, e0 in bands:
+        if e0 - s0 > 2.5 * h0:
+            continue                                    # a block of text, not one row
+        for text, cf, bx in read_eastern_digits(img, (0, max(0, s0 - 2), w, min(h, e0 + 2)), h_ref=0.85 * h0):
+            if cf >= _ACCEPT and "?" not in text and sum(c in _E_DIGITS for c in text) >= 2 \
+                    and (bx[3] - bx[1]) >= 0.45 * h0:
                 new.append((text, cf, bx))
-    # digits outside the numeric columns (period headers, notes in running text): word by word
-    def inside(x, boxes):
-        return any(bx[0] <= (x.dbox[0] + x.dbox[2]) / 2 * w <= bx[2] and bx[1] <= (x.dbox[1] + x.dbox[3]) / 2 * h <= bx[3]
-                   for _, _, bx in boxes)
-    for x in words:
-        if not x.dbox or inside(x, new) or _AR_LETTER.search(x.text) or not _NUMLIKE.match(x.text):
-            continue
-        if x.text.isalpha() and len(x.text) > 3:
-            continue                                   # plain Latin word
-        for text, cf, bx in read_eastern_digits(img, pbox(x), h_ref=0.85 * h0):
-            if cf >= 0.35 and "?" not in text and sum(c in _E_DIGITS for c in text) >= 2 and (bx[3] - bx[1]) >= 0.45 * h0:
+            elif text == "-" and cf >= 0.35:
                 new.append((text, cf, bx))
+    big = [t for t in new if sum(c in _E_DIGITS for c in t[0]) >= 3]
+    if len(big) < 6 and not force:
+        return None
     if not new:
         return None
     out = [x for x in words if not (x.dbox and any(
