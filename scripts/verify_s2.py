@@ -94,7 +94,7 @@ except ImportError:
 @check("isolation: no provider SDK imported outside src/harness/adapter.py (AST)")
 def _():
     hits, n = [], 0
-    for base in ("om", "src", "scripts", "open_multiples.py"):
+    for base in ("om", "src", "scripts", "acretia.py"):
         p0 = os.path.join(ROOT, base)
         files = [p0] if p0.endswith(".py") else [os.path.join(dp, f) for dp, dn, fs in os.walk(p0)
                                                  if "__pycache__" not in dp for f in fs if f.endswith(".py")]

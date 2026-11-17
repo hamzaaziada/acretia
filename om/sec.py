@@ -36,7 +36,7 @@ class SecClient:
             self.ua_ok = False
         else:
             self.ua_ok = True
-        self.ua = user_agent or "OpenMultiples/0.1 (research prototype)"
+        self.ua = user_agent or "Acretia/0.1 (research prototype)"
         self.cache = Path(cache_dir)
         self.cache.mkdir(parents=True, exist_ok=True)
         self.min_gap = 1.0 / max_rps

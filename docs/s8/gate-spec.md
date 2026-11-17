@@ -159,7 +159,7 @@ English and Arabic (`٣٠ يونيو ٢٠٢٤`).
    `evals/intl/review_minutes.csv` (reason classes: low_ocr_conf, tie_fail, unmapped_label, comparative_mismatch,
    unit_ambiguous; each row cites a source or is marked `[INFERENCE]` with the reasoning), so `eval/tsb/` can add it
    to review-and-fix time.
-4. Hand-off: `python3 open_multiples.py intl-model <pdf> --out <xlsx>` (or the equivalent `om.intl.pipeline.model_from_report`)
+4. Hand-off: `python3 acretia.py intl-model <pdf> --out <xlsx>` (or the equivalent `om.intl.pipeline.model_from_report`)
    turns Almarai's latest annual FS into a tied three-statement workbook through `release()` and an unchanged
    `om.model3.build`, with balance and cash checks = 0 and every Filings-sheet figure's comment carrying page and bbox.
    Runs when the anchor PDFs are cached in `data/raw/intl/`; otherwise uses the committed synthetic SAR fixture and

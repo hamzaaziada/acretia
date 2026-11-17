@@ -2,7 +2,7 @@
 
 On macOS keys are written and read through the Security framework directly (ctypes), so a key never appears
 on a command line, in a log or in a temp file. Elsewhere (or if the Keychain is unavailable) they go to
-~/.config/open-multiples/secrets.env with owner-only permissions — still outside the project folder, so
+~/.config/acretia/secrets.env with owner-only permissions — still outside the project folder, so
 they can't be committed, zipped or shared with it.
 
 Each key is also bound to the host it was entered for (see settings.py): if an endpoint's address changes,
@@ -16,8 +16,11 @@ import os
 import sys
 from pathlib import Path
 
-SERVICE = "open-multiples"
-FALLBACK = Path.home() / ".config" / "open-multiples" / "secrets.env"
+SERVICE = "acretia"
+FALLBACK = Path.home() / ".config" / "acretia" / "secrets.env"
+# Keys saved before the rename live under the old names; they are still read (and deleted) there.
+LEGACY_SERVICE = "open-" + "multiples"
+LEGACY_FALLBACK = Path.home() / ".config" / LEGACY_SERVICE / "secrets.env"
 
 _NOT_FOUND = -25300
 _sec = None
@@ -25,7 +28,9 @@ _cf = None
 
 
 def _fallback() -> Path:
-    return Path(os.environ.get("OM_KEYSTORE_FILE") or FALLBACK)
+    if os.environ.get("OM_KEYSTORE_FILE"):
+        return Path(os.environ["OM_KEYSTORE_FILE"])
+    return LEGACY_FALLBACK if (not FALLBACK.exists() and LEGACY_FALLBACK.exists()) else FALLBACK
 
 
 def _security():
@@ -57,9 +62,9 @@ def backend() -> str:
     return "macOS Keychain" if _security() else f"private file {_fallback()} (owner-only)"
 
 
-def _find(name: str):
+def _find(name: str, service: str = SERVICE):
     sec = _security()
-    svc, acct = SERVICE.encode(), name.encode()
+    svc, acct = service.encode(), name.encode()
     n, data, item = ctypes.c_uint32(0), ctypes.c_void_p(), ctypes.c_void_p()
     st = sec.SecKeychainFindGenericPassword(None, len(svc), svc, len(acct), acct, ctypes.byref(n), ctypes.byref(data), ctypes.byref(item))
     if st == _NOT_FOUND:
@@ -73,10 +78,13 @@ def _find(name: str):
 
 def get(name: str) -> str | None:
     if _security():
-        value, item = _find(name)
-        if item:
-            _cf.CFRelease(item)
-        return value
+        for service in (SERVICE, LEGACY_SERVICE):
+            value, item = _find(name, service)
+            if item:
+                _cf.CFRelease(item)
+            if value is not None:
+                return value
+        return None
     return _file_read().get(name)
 
 
@@ -103,12 +111,13 @@ def put(name: str, value: str) -> None:
 
 def delete(name: str) -> None:
     if _security():
-        _, item = _find(name)
-        if item:
-            st = _security().SecKeychainItemDelete(item)
-            _cf.CFRelease(item)
-            if st != 0:
-                raise OSError(f"Keychain delete failed (OSStatus {st})")
+        for service in (SERVICE, LEGACY_SERVICE):
+            _, item = _find(name, service)
+            if item:
+                st = _security().SecKeychainItemDelete(item)
+                _cf.CFRelease(item)
+                if st != 0:
+                    raise OSError(f"Keychain delete failed (OSStatus {st})")
         return
     d = _file_read()
     if d.pop(name, None) is not None:

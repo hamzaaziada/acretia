@@ -25,7 +25,7 @@ The opening is that **every competitor's numbers are weakest where ours are stro
 - **Model ML:** the one public figure is about 50% of workbooks fully correct.
 - **Vals:** the most common failure is formulas pointing at the right cells with wrong inputs.
 
-Their models type numbers. Ours can't: every historical in open-multiples is a filing fact, picked by code and carrying its accession number.
+Their models type numbers. Ours can't: every historical in acretia is a filing fact, picked by code and carrying its accession number.
 
 **The strategy:**
 - **Let code build the numbers and the model.** The LLM only chooses assumptions and writes words.
@@ -234,7 +234,7 @@ SSO, audit log, single-tenant or customer-cloud deployment, SOC 2. Rogo and Mode
 - Revolver, and interest on average balances behind a 1/0 circularity breaker.
 - Every historical figure in blue, with the XBRL concept, period and accession in a comment, and a link to the filing.
 
-**Measured (`python3 open_multiples.py bench … --libreoffice`)**
+**Measured (`python3 acretia.py bench … --libreoffice`)**
 - **Models:** AAPL, MSFT, COST, NVDA, ASML (IFRS 20-F) and AI (loss-maker) all grade 100/100 and production-ready.
   - The balance sheet balances every period, in every scenario, with the circularity on or off.
   - Historical EPS, gross profit, total assets and operating cash flow tie to the filing.

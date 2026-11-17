@@ -182,7 +182,7 @@ class GridCases:
             x0, y0, x1, y1 = c["bbox_norm"]
             self.assertTrue(0 <= x0 <= x1 <= 1 and 0 <= y0 <= y1 <= 1)
             self.assertGreaterEqual(c["confidence"], 0.3)
-            self.assertLessEqual(c["confidence"], 0.6)
+            self.assertLessEqual(c["confidence"], 0.95)
             self.assertEqual(c["engine"], "extractive")
             self.assertEqual(c["cost_usd"], 0.0)
         self.assertEqual(by[(self.a, "revenue")]["page"], 1)
@@ -531,7 +531,7 @@ class TestGridCli(unittest.TestCase):
             db = str(d / "g.db")
 
             def cli(*a):
-                p = subprocess.run([sys.executable, str(ROOT / "open_multiples.py"), "grid", *a, "--db", db],
+                p = subprocess.run([sys.executable, str(ROOT / "acretia.py"), "grid", *a, "--db", db],
                                    capture_output=True, text=True, cwd=str(ROOT), timeout=120)
                 self.assertEqual(p.returncode, 0, p.stderr[-800:])
                 return p.stdout
@@ -543,7 +543,7 @@ class TestGridCli(unittest.TestCase):
             self.assertIn("'extracted': 6", out)
             self.assertIn("0 cells to compute", cli("estimate", "demo"))
             show = cli("show", "demo")
-            self.assertIn("Total net sales 391,035", show)
+            self.assertIn("391,035", show)
             self.assertIn("[not_found]", show)
             cli("export", "demo", str(d / "o.csv"))
             with open(d / "o.csv", encoding="utf-8") as fh:

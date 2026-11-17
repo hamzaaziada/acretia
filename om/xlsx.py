@@ -524,7 +524,7 @@ def _comments(items: list, idx: int) -> tuple[str, str]:
     body = "".join(f'<comment ref="{ref(r, c)}" authorId="0"><text><r><rPr><sz val="9"/><rFont val="Tahoma"/></rPr>'
                    f'<t xml:space="preserve">{escape(t)}</t></r></text></comment>' for r, c, t in items)
     cxml = ('<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
-            '<comments xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><authors><author>open-multiples</author></authors>'
+            '<comments xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><authors><author>acretia</author></authors>'
             f'<commentList>{body}</commentList></comments>')
     shapes = []
     for k, (r, c, _) in enumerate(items):

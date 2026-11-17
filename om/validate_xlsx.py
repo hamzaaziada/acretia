@@ -204,6 +204,94 @@ def _sens_blocks(book) -> list[dict]:
 
 
 # --------------------------------------------------------------------------- the validator
+# --------------------------------------------------------------------------- consistency.rowset
+PERIOD_LABEL = re.compile(r"^\s*(?:FY|CY|F|H|Q[1-4]\s*)?'?\d{2,4}\s*([A-Za-z]{0,3})\s*$")
+TOTAL_LABEL = re.compile(r"\b(total|subtotal|check|checks|sum)\b", re.I)
+_ROWTOK = re.compile(r"((?:'[^']+'|[A-Za-z_][\w.]*)!)?R(\[-?\d+\]|\d+)C")
+
+
+def _period_kinds(g: dict) -> dict:
+    """{column: 'A' (historical) | 'E' (projection)} from the first period-label header row in rows 1-12 of a sheet."""
+    best: dict = {}
+    for r in range(1, 13):
+        cols = {}
+        for (rr, cc), c in g.items():
+            if rr == r and cc >= 3 and isinstance(c.value, str) and not c.formula:
+                m = PERIOD_LABEL.match(c.value)
+                if m:
+                    cols[cc] = "A" if m.group(1).upper() in ("A", "ACT") else "E"
+        if len(cols) >= 2 and len(cols) > len(best):
+            best = cols
+    return best
+
+
+def _rowset(rel: str) -> frozenset:
+    return frozenset((m.group(1) or "", m.group(2)) for m in _ROWTOK.finditer(rel))
+
+
+def _rowset_findings(book, F, flagged: set, grid_cells: set, hdr_rows: set, blocks: list) -> None:
+    """consistency.rowset: in a row of period columns, one formula that differs from the pattern of its row-mates.
+    Majority rule when one exists; with two cells or no majority the row is flagged when the cells reference different sets of
+    rows/sheets. Exempt: totals/checks rows, cells across the historical/projection boundary, the first projection column when
+    it opens from the last historical column, and sensitivity grids."""
+    for s in book.order:
+        g = book.sheets[s]
+        kinds = _period_kinds(g)
+        if len(kinds) < 2:
+            continue
+        sens_rows = {r for b in blocks if b["sheet"] == s for r in range(min(b["hr"], *b["rows"]), max(b["rows"]) + 1)}
+        rows: dict[int, dict] = {}
+        for (r, cc), c in g.items():
+            if c.formula and cc in kinds:
+                rows.setdefault(r, {})[cc] = c
+        for r, cells in sorted(rows.items()):
+            label = " ".join(str(g[(r, k)].value) for k in (1, 2) if (r, k) in g and isinstance(g[(r, k)].value, str))
+            if TOTAL_LABEL.search(label) or (s, r) in hdr_rows or r in sens_rows:
+                continue
+            run: list[int] = []
+            runs = []
+            for k in sorted(cells):
+                if run and (k != run[-1] + 1 or kinds[k] != kinds[run[-1]]):
+                    runs.append(run)
+                    run = []
+                run.append(k)
+            runs.append(run)
+            for run in runs:
+                forms = {k: relative(cells[k].formula, r, k) for k in run}
+                if len(run) > 1 and kinds[run[0]] == "E" and kinds.get(run[0] - 1) == "A" and re.search(r"C\[-1\]", forms[run[0]]) \
+                        and forms[run[0]] != forms[run[1]] and all(forms[k] == forms[run[1]] for k in run[2:]):
+                    run = run[1:]              # opening balance: the first projection column opens from the last historical column
+                if len(run) < 2:
+                    continue
+                forms = {k: forms[k] for k in run}
+                if not any(re.search(r"C\[(?:0|-1)\]", f) for f in forms.values()):
+                    continue                    # not a time series: scenario columns / fixed-point valuation cells
+                sets = {k: _rowset(forms[k]) for k in run}
+                counts: dict = {}
+                for f in forms.values():
+                    counts[f] = counts.get(f, 0) + 1
+                top = max(counts, key=counts.get)
+                odd = None
+                if counts[top] >= 2 and counts[top] == len(run) - 1:
+                    odd = next(k for k in run if forms[k] != top)
+                else:
+                    scount: dict = {}
+                    for v in sets.values():
+                        scount[v] = scount.get(v, 0) + 1
+                    stop = max(scount, key=scount.get)
+                    if len(scount) > 1 and (scount[stop] >= 2 or len(run) == 2):
+                        odd = next((k for k in reversed(run) if sets[k] != stop), None)
+                    if odd is not None and len(scount) > 2:
+                        odd = None
+                if odd is None or (s, (r, odd)) in flagged or (s, r, odd) in grid_cells:
+                    continue
+                flagged.add((s, (r, odd)))
+                F.add("consistency.rowset", "critical", s, ref(r, odd),
+                      f"formula differs from its {len(run) - 1} row-mate{'s' if len(run) > 2 else ''} in a period row "
+                      f"(references rows {sorted(x[1] for x in sets[odd])} vs {sorted(x[1] for x in sets[next(k for k in run if k != odd)])}): "
+                      f"{cells[odd].formula[:50]}")
+
+
 def validate(data: bytes, *, circ_policy: str = "breaker", require_green_links: bool = True, units: str | None = None,
              require_sources: bool = False) -> dict:
     if circ_policy not in ("breaker", "forbid"):
@@ -363,6 +451,8 @@ def validate(data: bytes, *, circ_policy: str = "breaker", require_green_links: 
                     F.add(fid, "critical", s, ref(*pos(odd)),
                           f"formula breaks the pattern of the other {counts[top]} cells in its {'row' if axis == 'row' else 'column'}: "
                           f"{cells[odd].formula[:50]}")
+
+    _rowset_findings(book, F, flagged, grid_cells, hdr_rows, blocks)
 
     # ---- sources.missing (parity item 20): every typed historical number outside input sheets must cite its source
     if require_sources:

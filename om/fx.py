@@ -39,7 +39,7 @@ class FX:
             return
         try:
             url = FRANKFURTER.format(start=start.isoformat(), end=end.isoformat())
-            data = json.loads(fetch_bytes(url, {"User-Agent": "OpenMultiples/0.1"}))
+            data = json.loads(fetch_bytes(url, {"User-Agent": "Acretia/0.1"}))
             for d, row in data["rates"].items():
                 self.rates.setdefault(d, {}).update(row)
         except Exception:
@@ -52,7 +52,7 @@ class FX:
         self.path.write_text(json.dumps(self.rates))
 
     def _from_ecb(self) -> None:
-        z = zipfile.ZipFile(io.BytesIO(fetch_bytes(ECB_HIST, {"User-Agent": "OpenMultiples/0.1"}, timeout=120)))
+        z = zipfile.ZipFile(io.BytesIO(fetch_bytes(ECB_HIST, {"User-Agent": "Acretia/0.1"}, timeout=120)))
         rows = csv.DictReader(io.StringIO(z.read(z.namelist()[0]).decode()))
         for row in rows:
             usd = row.get("USD", "").strip()

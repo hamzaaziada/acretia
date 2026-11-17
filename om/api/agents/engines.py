@@ -255,7 +255,7 @@ def get_statements(state, ticker: str, as_of: _dt.date | None = None):
 
 
 def _no_data_hint(ticker: str) -> str:
-    return (f"Cached SEC data for {ticker} is not available offline. Fetch it with `python3 open_multiples.py model {ticker}` "
+    return (f"Cached SEC data for {ticker} is not available offline. Fetch it with `python3 acretia.py model {ticker}` "
             f"(set SEC_USER_AGENT first) or place companyfacts_{ticker}.json under data/raw.")
 
 
@@ -462,7 +462,7 @@ def peers_step(cx):
                      "These are not real companies; the multiples are for demonstration only.")
     if not have:
         raise StepFailed(f"No peer filings are available ({', '.join(missing) or 'no peers named'}).",
-                         "Name peers whose SEC data is cached, e.g. 'comps for AAPL vs MSFT', or fetch them with open_multiples.py first.")
+                         "Name peers whose SEC data is cached, e.g. 'comps for AAPL vs MSFT', or fetch them with acretia.py first.")
     if missing and not notes:
         notes.append(f"Peers without cached filings were left out: {', '.join(missing)}.")
     return {"peers": have, "missing": missing, "notes": notes, "detail": f"peers: {', '.join(have)}"}
