@@ -1,0 +1,11 @@
+{
+ "https://api.company-information.service.gov.uk/company/00000006": "profile.json",
+ "https://api.company-information.service.gov.uk/company/00000006/filing-history": "filings.json",
+ "https://api.company-information.service.gov.uk/company/00000006/filing-history/MzAwMDAwMDA2": "filing_one.json",
+ "https://document-api.company-information.service.gov.uk/document/abc123": "docmeta.json",
+ "https://api.company-information.service.gov.uk/company/00000006/officers": "officers.json",
+ "https://api.company-information.service.gov.uk/company/00000006/persons-with-significant-control": "psc.json",
+ "https://download.companieshouse.gov.uk/en_accountsdata.html": "bulk_page.html",
+ "https://download.companieshouse.gov.uk/Accounts_Bulk_Data-2026-10-16.zip": "bulk_sample.zip.bin",
+ "https://document-api.company-information.service.gov.uk/document/abc123/content": "accounts.xhtml"
+}

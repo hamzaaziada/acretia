@@ -1,0 +1,29 @@
+{
+ "items": [
+  {
+   "name": "Example Holdings Limited",
+   "kind": "corporate-entity-person-with-significant-control",
+   "notified_on": "2016-04-06",
+   "natures_of_control": [
+    "ownership-of-shares-75-to-100-percent"
+   ],
+   "address": {
+    "address_line_1": "1 Corporate Way"
+   }
+  },
+  {
+   "name": "Ms Alex Example",
+   "kind": "individual-person-with-significant-control",
+   "notified_on": "2016-04-06",
+   "ceased_on": "2023-02-01",
+   "date_of_birth": {
+    "month": 5,
+    "year": 1970
+   },
+   "nationality": "British",
+   "address": {
+    "address_line_1": "9 Private Road"
+   }
+  }
+ ]
+}
