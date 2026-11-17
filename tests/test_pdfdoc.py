@@ -252,6 +252,64 @@ class TestOcr(unittest.TestCase):
         self.assertEqual(doc.warnings, [])
 
 
+def _ocr_has_ara():
+    try:
+        out = __import__("subprocess").run(["tesseract", "--list-langs"], capture_output=True, timeout=20).stdout.decode()
+        return "ara" in out.split()
+    except Exception:
+        return False
+
+
+def _arabic_font():
+    try:
+        r = __import__("subprocess").run(["fc-match", "-f", "%{file}", "DejaVu Sans:lang=ar"], capture_output=True, timeout=10)
+        f = r.stdout.decode().strip()
+        return f if f and os.path.exists(f) else None
+    except Exception:
+        return None
+
+
+class TestOcrArabic(unittest.TestCase):
+    """S5.F4: OCR reads Arabic + English in one pass, words come out in logical order with valid geometry."""
+
+    @unittest.skipUnless(HAVE_OCR and _ocr_has_ara() and _arabic_font(), "tesseract ara model or an Arabic font unavailable")
+    def test_arabic_and_english_image_page(self):
+        from PIL import Image, ImageDraw, ImageFont
+        font = ImageFont.truetype(_arabic_font(), 34)
+        im = Image.new("L", (1700, 400), 255)
+        d = ImageDraw.Draw(im)
+        try:
+            d.text((1650, 40), "الإيجار السنوي هو 480000 درهم", font=font, anchor="ra", fill=0, direction="rtl", language="ar")
+        except Exception as e:      # PIL without raqm cannot shape Arabic
+            self.skipTest(f"PIL cannot shape Arabic here: {e}")
+        d.text((60, 160), "Annual rent is AED 480,000 payable quarterly", font=font, fill=0)
+        with tempfile.TemporaryDirectory() as td:
+            path = os.path.join(td, "ar.pdf")
+            im.save(path)
+            doc = load(path)
+        p = doc.pages[0]
+        self.assertTrue(p.ocr, doc.warnings)
+        texts = [ln.text for ln in p.lines]
+        ar = next((t for t in texts if any("\u0600" <= c <= "\u06ff" for c in t)), "")
+        self.assertTrue(ar, texts)
+        words = ar.split()
+        self.assertEqual(words[0], "الإيجار")          # logical order: the first word is the right-most
+        self.assertIn("480000", words)
+        self.assertTrue(any("Annual rent is AED" in t for t in texts), texts)
+        for sp in p.words + p.lines:
+            x0, y0, x1, y1 = sp.bbox_norm
+            self.assertTrue(0 <= x0 <= x1 <= 1 and 0 <= y0 <= y1 <= 1)
+            self.assertRegex(sp.sha256_span_hash, HEX64)
+
+    def test_langs_default_and_override(self):
+        pdfdoc._OCR_LANGS_CACHE.clear()
+        with mock.patch.dict(os.environ, {"ACRETIA_OCR_LANGS": "eng"}):
+            self.assertEqual(pdfdoc._ocr_langs(), "eng")
+        with mock.patch.dict(os.environ, {"ACRETIA_OCR_LANGS": "eng; rm -rf /"}):
+            self.assertIn(pdfdoc._ocr_langs(), ("eng", "ara+eng"))        # invalid override is ignored
+        self.assertEqual(pdfdoc._ocr_env()["OMP_THREAD_LIMIT"], "1")
+
+
 class TestHash(unittest.TestCase):
     def test_hash_and_clamp(self):
         h = pdfdoc.span_hash(1, "a", (0, 0, 0.5, 0.5))

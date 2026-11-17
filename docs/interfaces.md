@@ -377,3 +377,427 @@ version; that `export` never returns bytes the delivery gate refused. Additive c
 ids, new error codes (clients must treat an unknown `code` as a failure) and new export formats. Output ids follow the
 builders (`m3.*`, `lbo.*`, `merger.*`, `comps.*`); a new id may appear, an existing id keeps its meaning. `timings` keys,
 `first_findings`, `method` and the wording of messages are informative, not contract.
+
+## Document grid (S5, session D)
+
+Status: **stable (v1)**, including `MatrixChat` (S5.5c). Code: `om/grid.py` (store, engines, run stream), `om/grid_chat.py`
+(Matrix Chat), `om/grid_export.py` (Excel/CSV), `om/docparse.py` (parse + Locator), `om/vdr_risk.py` (data-room risk
+scan). CLI: `python3 acretia.py grid ...`. Engine version string `ENGINE_VERSION` is currently `grid-3`; it is folded into
+every cell hash, so an engine upgrade reruns cells on the next run and nothing else.
+
+Rule for the UI: **traceable or not shown.** A cell shows an answer only when its status is `ok` or `extracted`, and then
+it always carries a page, a box and a quote the store located itself (an engine only proposes). Never render
+`raw_answer` or a `suggestion`.
+
+### Python signatures
+
+```python
+from om.grid import GridStore, BudgetExceeded
+from om.grid_chat import MatrixChat
+from om.grid_export import export_grid_xlsx, export_tables_xlsx, export_tables_csv
+from om.vdr_risk import scan_documents, scan_room
+
+store = GridStore(path=":memory:", backend="auto", parser_backend=None)   # "auto" = DuckDB if importable, else SQLite
+
+# rows (documents)
+store.add_document(path_or_bytes, name=None, source_path=None) -> doc_id           # parse once, cached by sha256
+store.add_documents(items, workers=4, progress=None) -> {"files": [...], "ok", "failed", "duplicates", "alerts"}
+#   items: paths or (name_or_source_path, bytes); progress(done, total, file_status) is called on the calling thread
+#   file: {"name", "source_path", "status": "ok"|"duplicate"|"failed", "doc_id", "pages", "completeness_min",
+#          "warnings", "error", "seconds"}; one bad file never aborts the batch; alerts are display strings
+store.ingest_log() -> list[dict]                     # persisted per-file statuses from add_documents (not add_document)
+store.create_grid(name, doc_ids, questions) -> grid_id          # name unique; grid_id also accepted by name everywhere
+store.add_rows(grid, doc_ids)                         # idempotent
+store.grid_names() -> [{"grid_id","name","created_at"}]; store.doc_ids(grid); store.document_name(doc_id)
+
+# columns ("questions"): {"id", "text", "type", "instructions"?, "label"?, "condition"?, "engine"?}
+#   type in text|number|percent|currency|date|boolean|list ; id has no whitespace
+store.add_questions(grid, questions); store.questions(grid) -> list[dict]
+store.update_question(grid, qid, text=None, type=None, instructions=None, condition=...)   # changes the hash: reruns
+store.rename_question(grid, qid, label)               # label only, nothing reruns
+store.reorder_questions(grid, [qid, ...])             # every id exactly once
+store.dependents(grid, qid); store.delete_question(grid, qid, cascade=False) -> deleted ids   # ValueError if dependents
+store.set_question_engine(grid, qid, "extractive" | "llm" | "llm:<model>" | <register_engine name>)   # per-column swap
+store.register_engine(name, engine)
+store.set_variable(grid, name, value); store.variables(grid)    # "{{var:name}}" in text / instructions
+store.workflow_graph(grid) -> {"nodes","edges","order"}         # edges kind: variable | column | condition
+
+# cost, run, results
+store.estimate(grid, engine="extractive", questions=None, docs=None) -> estimate dict
+store.run_stream(grid, engine="extractive", workers=8, max_cost_usd=None, questions=None, docs=None)  # generator
+store.run(grid, ..., progress=None) -> done dict + "estimate"   # drains run_stream
+store.runs(grid) -> [{"run_id","engine","started_at","finished_at","touched","skipped","est_cost_usd","actual_cost_usd",
+                      "elapsed_s","first_cell_s","tokens_in","tokens_out","cells"}]
+store.view(grid) -> {"grid_id","name","questions","rows":[{"doc_id","name","source_path","source_folder","cells":{qid: cell}}],
+                     "pending_cells"}            # raw_answer is removed; a missing cell = pending
+store.cells(grid) -> list[cell]; store.formatted_view(grid)    # view + styles
+store.export_rows(grid) -> typed dicts; store.export_csv(grid, path)
+
+# formatting, transfer, source folders, tables
+store.set_format_rules(grid, rules) -> normalised rules; store.format_rules(grid)
+store.filter_docs(grid, when) -> [doc_id]; store.transfer(grid, when, name, copy_questions=True, copy_cells=False) -> new grid_id
+store.group_by_source(grid) -> {folder: [doc_id]}               # "" = no folder
+store.tables(doc_id) -> [{"page","bbox_norm","rows","source","sha256_span_hash"}]
+export_grid_xlsx(store, grid, path=None, *, logo_png=None, title=None, include_unverified=False) -> bytes   # "Matrix", "Sources", "Run log"
+export_tables_xlsx(store, doc_ids_or_grid_id, path=None) -> bytes; export_tables_csv(store, doc_id, out_dir) -> [paths]
+
+# Matrix Chat (S5.5c, stable v1)
+chat = MatrixChat(store, grid_id, adapter=None, model=None)      # adapter None: exact templated answers, no model call
+chat.ask(question, *, stream=False, max_rows=60) -> final dict   # stream=True: generator of events
+```
+
+### JSON shapes (grid payloads are plain dicts; every HTTP body should carry `"v": 1`)
+
+Estimate (first stream event, and `store.estimate`):
+
+```json
+{"pending_cells": 4, "est_input_tokens": 0, "est_output_tokens": 0, "est_cost_usd": 0.0, "model": "extractive",
+ "engine": "extractive", "skipped_cells": 0, "engine_calls": 4}
+```
+
+Cell (`cells`, `view` rows, `cell` events):
+
+```json
+{"doc_id": "<sha256>", "question_id": "revenue", "answer": "$391,035 million", "value": 391035.0, "unit": "USD_m",
+ "status": "extracted", "exact_quote": "Net sales 391,035 Total net sales 391,035", "page": 1,
+ "bbox_norm": [0.1176, 0.1880, 0.7067, 0.1993], "rects": [[0.1176, 0.1880, 0.7067, 0.1993]],
+ "sha256_span_hash": "<64 hex>", "confidence": 0.9, "cost_usd": 0.0, "tokens_in": 0, "tokens_out": 0,
+ "engine": "extractive", "content_hash": "<64 hex>", "run_id": "run_ab12cd34ef56", "updated_at": "<iso>",
+ "flags": [], "extra_citations": [{"page": 2, "bbox_norm": [0, 0, 0, 0], "sha256_span_hash": "<64 hex>", "quote": "..."}]}
+```
+
+(`bbox_norm`/`rects` are tuples in Python, arrays in JSON. `value` is the typed value for the column type.)
+
+### Statuses: what the UI shows
+
+| status | meaning | show |
+|---|---|---|
+| `ok` | engine answer (LLM) whose quote was located | answer + citation (page, highlight) |
+| `extracted` | deterministic extractive answer, quote located | answer + citation; the UI may mark it "extracted" |
+| `not_found` | the document does not answer, or the evidence was too weak | grey "Not found in document". If flag `low_evidence` is set, the cell may carry a `suggestion` in the engine output; it is **not** stored as an answer, never display it as one |
+| `unverified` | the engine gave an answer whose quote could not be located (flags `unverified:quote_not_located` / `unverified:no_quote`) | amber "Needs review"; the answer text is empty in every read, **never show the raw answer** (exports show "Needs review" too) |
+| `error` | the engine raised; flag `error:<Type>: ...` | red retry badge; the cell is retried by the next run |
+| `skipped` | run condition not met; flag `condition_not_met:<qid> <op> <value>` | grey "Skipped (condition)"; counts as filled |
+| (no cell) | pending | spinner / empty |
+
+Flags: `page_corrected:<old>` (the engine's page was wrong, the quote exists on exactly one other page; the cell is still
+verified, show a small info badge), `condition_not_met:...`, `low_evidence`, `unverified:...`, `error:...`. Unknown flags
+must be ignored. Filled statuses are `ok`, `extracted`, `not_found`, `skipped`; `unverified` and `error` rerun.
+
+### Columns, variables, conditions, follow-ups
+
+- Variables: `set_variable(g, "topic", "...")`, then `{{var:topic}}` in a column's text or instructions. An undefined
+  variable raises `ValueError` at estimate/run time. Editing a value reruns only the columns that use it.
+- Follow-up column: `{{col:qid}}` inserts the same row's upstream answer and quote; changes cascade only downstream.
+  Columns run in topological waves; cycles and unknown refs raise `ValueError` (at create/add/update).
+- Run condition: question key `"condition": {"column": qid, "op": OP, "value": v}` against the same row's upstream cell.
+  `OP` is one of `eq ne contains not_contains gt gte lt lte exists not_found is_true is_false` (the last four take no `value`).
+  Not met: status `skipped`, empty answer.
+- `workflow_graph`: nodes `{"id","label","type":"column"|"variable"}` (variables have id `var:<name>`), edges
+  `{"from","to","kind"}`, `order` = a valid run order.
+
+### Cost estimate, budget, run stream
+
+`estimate()` is free and exact about what would compute (unchanged cells are not counted). `run_stream(...,
+max_cost_usd=x)` yields the estimate first and then raises `BudgetExceeded` (nothing was run) if it is above `x`; map it to
+HTTP 402 with the estimate. Events, in order:
+
+```json
+{"type": "estimate", "pending_cells": 4, "est_cost_usd": 0.0, "...": "as above"}
+{"type": "cell", "cell": {"...": "cell dict without raw_answer; already written to the DB"}}
+{"type": "skipped", "reason": "unchanged", "count": 6}
+{"type": "done", "run_id": "run_...", "engine": "extractive", "touched": [["<doc_id>", "revenue"]], "skipped": 6,
+ "stats": {"extracted": 3, "not_found": 1}, "elapsed_s": 0.1, "first_cell_s": 0.01,
+ "actual_cost_usd": 0.0, "tokens_in": 0, "tokens_out": 0, "estimate": {"...": "..."}}
+```
+
+`cell` events arrive in completion order (not row order): place each by `(doc_id, question_id)`. `skipped` is emitted only
+when count > 0. `first_cell_s` (also in `runs()`) is the first-cell latency telemetry (parity item 1: under 10 s).
+Cancellation: close the generator (stop iterating); cells already yielded are saved, the rest stay pending, no `done`
+event or `runs()` row is written for a closed stream.
+
+Incremental semantics: a cell's `content_hash` = sha256(doc_id, resolved question text, type, instructions, engine id,
+`ENGINE_VERSION`, plus a digest of its upstream cells and condition). A cell recomputes only when it is missing, its hash
+changed, or its status is `unverified`/`error`. Not rerun: rename, reorder, adding a row or a column (only the new
+cells compute), a rerun with nothing changed. Rerun: a text/type/instructions edit of that column, a variable edit (users
+only), an upstream cell change (downstream only), a per-column engine swap (that column only). `questions=[qid,...]` and
+`docs=[doc_id,...]` restrict a run (and an estimate) to those columns / rows (bulk run); ids not in the grid raise `KeyError`.
+
+### Cell -> citation -> highlight
+
+A citation is `(doc_id, page, bbox_norm, rects, sha256_span_hash, exact_quote)`. `page` is 1-based. `bbox_norm` is
+`[x0, y0, x1, y1]` normalised to `[0, 1]` against the page, **origin top-left, y grows downward** (not the PDF
+bottom-left origin). `rects` is one such box per text line of the quote (use it for the highlight, so wrapped quotes do not
+paint the whole block; fall back to `bbox_norm` when empty). `sha256_span_hash` fingerprints the located span (the same
+span always hashes the same); use it as the stable citation id and to detect a changed document.
+
+To render: show page `page` of the PDF (any renderer, e.g. pdf.js or a server PNG at a known `width_px x height_px`) and
+draw each rect at `left = x0 * width_px`, `top = y0 * height_px`, `width = (x1 - x0) * width_px`, `height = (y1 - y0) *
+height_px`; scroll it into view (parity items 15-16). `exact_quote` goes in the hover preview (item 15). Extra evidence is
+in `extra_citations` (same fields with `bbox_norm`, no `rects`). Only `ok`/`extracted` cells have a citation. Documents
+with unreliable text layers: `docparse.parse(...).incomplete_pages()` lists pages below the completeness guard, and
+`add_documents` reports them in `alerts` / `completeness_min`.
+
+### Conditional formatting
+
+`set_format_rules(grid, rules)` replaces the rule list (invalid rules raise `ValueError`). Rule:
+`{"id": "weak", "apply_to": "row" | qid, "style": {"fill": "#RRGGBB", "font": "#RRGGBB", "bold": true}, "when": WHEN}`.
+`WHEN` = `{"all": [WHEN, ...]}` | `{"any": [WHEN, ...]}` | a condition `{"column": qid, "op": OP, "value": v}` or
+`{"field": "status" | "confidence" | "source_folder", "op": OP, "value": v[, "column": qid]}` (status/confidence need a
+`column` when the rule applies to a row). `formatted_view()` returns `view()` plus `format_rules`, per row `styles`
+(row rule ids), `cell_styles` {qid: ids} and per cell `styles`; the UI looks the ids up in `format_rules[*].style`.
+
+### Transfer, source folders, tables, exports
+
+- `filter_docs(g, when)` + `transfer(g, when, name, copy_questions, copy_cells)` -> new grid with the matching rows
+  (same `WHEN` language; copies variables and format rules; recomputed incrementally unless `copy_cells`).
+- `source_path` on `add_document(s)` gives each row `source_folder`; `group_by_source` -> `{folder: [doc_id]}` for the
+  Document Source column and folder grouping.
+- `tables(doc_id)` -> auto-extracted tables (`rows` = list of string lists, `source` "docling" | "pdfdoc"); export with
+  `export_tables_xlsx` / `export_tables_csv`. `export_grid_xlsx` writes typed values with a cell note per answered cell
+  (page and exact quote), a Sources sheet and a Run log; `not_found`, `unverified`/`error` and `skipped` cells export as
+  "Not found", "Needs review", "Skipped (condition)". `export_rows` gives `<qid>`, `<qid>__page`, `__quote`, `__status`,
+  `__confidence` per column (value and quote are None unless the cell is shown).
+
+### Matrix Chat
+
+`MatrixChat(store, grid_id, adapter=None, model=None).ask(question, stream=False, max_rows=60)`. It plans
+deterministically first (count, list, filter, top-k, sum, average, min, max, median over typed values; folders), retrieves
+cells with BM25, then answers: templated without an adapter, or one streamed adapter call. Row citations like `[R12]`
+must be in the retrieved context, numbers must come from cited rows or the structured result (otherwise the sentence is
+replaced by "[Removed: not supported by the grid]"); only `ok`/`extracted` cells are citable. Events with `stream=True`:
+
+```json
+{"type": "plan", "operation": "list", "...": "plan fields", "rows_in_scope": 2, "elapsed_s": 0.0}
+{"type": "delta", "text": "1 documents: acme.pdf ($391,035 million) [R1]. "}
+{"type": "final", "answer": "...", "citations": [{"row_id": "R1", "doc_id": "...", "doc_name": "acme.pdf",
+   "question_id": "revenue", "page": 1, "bbox_norm": [0.1, 0.2, 0.7, 0.3], "sha256_span_hash": "<64 hex>", "quote": "..."}],
+ "operation": "list", "plan": {}, "rows_considered": 2, "flags": [], "first_token_s": 0.0, "elapsed_s": 0.0,
+ "tokens_in": 0, "tokens_out": 0, "cost_usd": 0.0}
+```
+
+`ask(stream=False)` returns the `final` dict without `type`. Flags to surface: `uncited_sentence`, `no_valid_citations`,
+`unsupported_number:...`, `invented_row_id:...`, `llm_error:<Type>` (fell back to the exact templated answer). Citations
+open the same way as grid cells.
+
+### VDR risk report
+
+`scan_documents(docs, *, expected_periods=None, checklist=DEFAULT_CHECKLIST, locate=None)` and `scan_room(index, rooms,
+room_id, ...)` return:
+
+```json
+{"findings": [{"id": "<hash>", "type": "change_of_control", "severity": "high", "title": "...", "detail": "...",
+               "doc_id": "c1", "doc_name": "contract.pdf", "page": 1, "quote": "<exact substring of the page>",
+               "bbox_norm": [0.1, 0.1, 0.9, 0.12], "sha256_span_hash": "<64 hex>", "related": [], "locate_failed": false}],
+ "summary": {"by_type": {"missing_period": 0, "...": 0}, "by_severity": {"high": 1}, "documents": 1},
+ "coverage": {"periods": {}, "checklist": {"<id>": {"label": "...", "documents": ["..."]}}}}
+```
+
+`type` in `missing_period | missing_document | conflicting_figure | change_of_control | covenant | mfn | exclusivity`;
+severity `critical | high | medium | low | info`. `docs` items: `{"doc_id","name","pages":[text],"page_items":[(page,text)],
+"pdf": path|None}`. Findings on PDFs carry page, `bbox_norm` and `sha256_span_hash` (same coordinate system as grid cells);
+`bbox_norm` is `None` with `locate_failed: true` when the span cannot be located (a box is never invented), and
+missing-document/period findings have no page. **Callers must omit `locate`** to get the default `om.docparse` locator;
+passing `locate=lambda *a: None` (as `om/api/grid.py` currently does) drops every bounding box.
+
+### Runnable examples
+
+Both snippets were run against synthetic PDFs built with `om.pdfwrite.PDFWriter` and `parser_backend="pdfdoc"`
+(`make_pdf(company, sales, staff)` below is the three-line helper they share).
+
+```python
+from om.pdfwrite import PDFWriter
+
+def make_pdf(company="ACME", sales="391,035", staff="164,000"):
+    w = PDFWriter()
+    w.page()
+    w.text(72, 740, f"{company} Corp Form 10-K", 8)
+    w.text(72, 700, "Consolidated Statements of Operations", 14, "Helvetica-Bold")
+    w.text(72, 670, "(in millions)       2024      2023", 9)
+    w.text(72, 650, "Net sales", 9);       w.text(300, 650, sales, 9);   w.text(400, 650, "383,285", 9)
+    w.text(72, 636, "Total net sales", 9); w.text(300, 636, sales, 9);   w.text(400, 636, "383,285", 9)
+    w.page()
+    w.text(72, 700, f"As of September 28, 2024, the Company had approximately {staff} full-time equivalent employees.", 10)
+    w.text(72, 680, "The auditor, Ernst & Young LLP, issued an unqualified opinion on the financial statements.", 10)
+    return w.to_bytes()
+```
+
+1. Ingest, estimate, budget, stream, incremental rerun, citation:
+
+```python
+# Snippet 1: build a grid, estimate, stream a run, render a citation
+from om.grid import GridStore, BudgetExceeded
+
+store = GridStore(":memory:", parser_backend="pdfdoc")        # ":memory:" -> use "data/grid.duckdb" in the app
+ingest = store.add_documents([("acme/10k.pdf", make_pdf()), ("beta/10k.pdf", make_pdf("BETA", "210,000", "12,500"))],
+                             progress=lambda n, total, st: print(f"ingest {n}/{total} {st['name']} {st['status']}"))
+doc_ids = [f["doc_id"] for f in ingest["files"] if f["doc_id"]]
+gid = store.create_grid("Q3 review", doc_ids, [
+    {"id": "revenue", "text": "What were total net sales?", "type": "currency", "label": "Revenue"},
+    {"id": "staff", "text": "How many full-time equivalent employees did the company have?", "type": "number"},
+])
+est = store.estimate(gid)
+print("estimate", est["pending_cells"], est["est_cost_usd"])
+try:
+    for ev in store.run_stream(gid, max_cost_usd=1.00):         # BudgetExceeded is raised right after the estimate event
+        if ev["type"] == "cell":
+            c = ev["cell"]
+            print("cell", c["question_id"], c["status"], repr(c["answer"]), "page", c["page"])
+        elif ev["type"] == "done":
+            print("done first_cell_s", ev["first_cell_s"], "stats", ev["stats"])
+except BudgetExceeded as e:
+    print("refused", e)
+# Second run: nothing recomputes
+done = store.run(gid)
+print("rerun touched", len(done["touched"]), "skipped", done["skipped"])
+cell = store.cells(gid)[0]
+print({k: cell[k] for k in ("status", "page", "bbox_norm", "rects", "sha256_span_hash", "exact_quote")})
+print(len(store.runs(gid)), "runs logged")
+```
+
+2. Columns, variables, follow-ups, conditions, rules, transfer, exports:
+
+```python
+# Snippet 2: columns, variables, follow-ups, conditions, rules, transfer, exports, tables
+import os, tempfile
+from om.grid import GridStore
+from om.grid_export import export_grid_xlsx, export_tables_xlsx, export_tables_csv
+
+store = GridStore(os.path.join(tempfile.mkdtemp(), "grid.sqlite"), backend="sqlite", parser_backend="pdfdoc")
+a = store.add_document(make_pdf(), name="acme.pdf", source_path="Financials/acme.pdf")
+b = store.add_document(make_pdf("BETA", "210,000", "12,500"), name="beta.pdf", source_path="Legal/beta.pdf")
+gid = store.create_grid("Review", [a], [{"id": "rev", "text": "What were total net sales?", "type": "currency"}])
+store.add_rows(gid, [b])                                           # add a row (idempotent)
+store.set_variable(gid, "topic", "full-time equivalent employees")
+store.add_questions(gid, [
+    {"id": "staff", "text": "How many {{var:topic}} did the company have?", "type": "number"},
+    {"id": "audit", "text": "Who is the auditor? Revenue was {{col:rev}}", "condition": {"column": "rev", "op": "exists"}},
+])
+store.rename_question(gid, "rev", "Revenue (USDm)")                # label only, nothing reruns
+store.reorder_questions(gid, ["staff", "rev", "audit"])
+store.set_question_engine(gid, "audit", "extractive")              # "llm" / "llm:<model>" / register_engine() name
+print(store.workflow_graph(gid)["order"])
+print(store.run(gid)["stats"])
+store.set_variable(gid, "topic", "employees")                      # reruns ONLY the columns that use {{var:topic}}
+print(store.run(gid)["touched"])
+store.set_format_rules(gid, [{"id": "weak", "apply_to": "row", "style": {"fill": "#FFF2CC"},
+                              "when": {"any": [{"field": "confidence", "column": "rev", "op": "lt", "value": 0.5},
+                                               {"field": "status", "column": "rev", "op": "ne", "value": "extracted"}]}}])
+fv = store.formatted_view(gid)
+print(fv["rows"][0]["styles"], fv["rows"][0]["cells"]["rev"]["styles"])
+print(store.group_by_source(gid))
+legal = store.transfer(gid, {"field": "source_folder", "op": "eq", "value": "Legal"}, "Legal only", copy_cells=True)
+print(store.doc_ids(legal) == [b])
+out = tempfile.mkdtemp()
+xl = export_grid_xlsx(store, gid, os.path.join(out, "grid.xlsx"))
+print(len(xl) > 1000, export_tables_csv(store, a, out), len(export_tables_xlsx(store, gid)) > 0)
+print(store.export_rows(gid)[0]["rev__page"], len(store.ingest_log()))   # 0: only add_documents logs
+```
+
+3. Highlight rectangles, Matrix Chat, VDR scan:
+
+```python
+# Snippet 3: citation -> highlight rects, VDR risk scan, Matrix Chat (no adapter = templated, no model call)
+import os, tempfile
+from om.grid import GridStore
+from om.grid_chat import MatrixChat
+from om.vdr_risk import scan_documents
+from om.docparse import parse
+
+store = GridStore(":memory:", parser_backend="pdfdoc")
+d1 = store.add_document(make_pdf(), name="acme.pdf")
+d2 = store.add_document(make_pdf("BETA", "210,000", "12,500"), name="beta.pdf")
+gid = store.create_grid("Chat", [d1, d2], [{"id": "revenue", "text": "What were total net sales?", "type": "currency", "label": "Revenue"}])
+store.run(gid)
+
+def highlight(cell, page_w_px, page_h_px):
+    """normalised [0,1], origin TOP-LEFT, y down -> CSS pixels on the rendered page image."""
+    if cell["status"] not in ("ok", "extracted"):
+        return []                                   # never highlight (or show) anything else
+    return [{"left": x0 * page_w_px, "top": y0 * page_h_px, "width": (x1 - x0) * page_w_px, "height": (y1 - y0) * page_h_px}
+            for x0, y0, x1, y1 in (cell["rects"] or [cell["bbox_norm"]])]
+print(highlight(store.cells(gid)[0], 612, 792)[0])
+
+chat = MatrixChat(store, gid)
+final = chat.ask("Which documents have revenue above 300000?")
+print(final["operation"], "|", final["answer"], "|", [c["doc_name"] for c in final["citations"]])
+print([ev["type"] for ev in chat.ask("What is the average revenue?", stream=True)])
+
+tmp = tempfile.mkdtemp(); path = os.path.join(tmp, "contract.pdf")
+from om.pdfwrite import PDFWriter
+w = PDFWriter(); w.page()
+w.text(72, 700, "This agreement may be terminated upon a change of control of the Company without notice.", 10)
+open(path, "wb").write(w.to_bytes())
+pages = [p.raw_text for p in parse(path, backend="pdfdoc").pages]
+rep = scan_documents([{"doc_id": "c1", "name": "contract.pdf", "pages": pages, "page_items": list(enumerate(pages, 1)), "pdf": path}])
+print(rep["summary"]["by_type"]["change_of_control"], [(f["type"], f["page"], f["bbox_norm"] is not None) for f in rep["findings"] if f["type"] == "change_of_control"])
+```
+
+### Parity map (docs/parity-spec.md)
+
+| Item | Served by |
+|---|---|
+| 1 cited answers stream, first cells < 10 s | `add_questions` + `run_stream` (`cell` events, `first_cell_s`) |
+| 2 two-step creation wizard | `add_documents` (step 1), `create_grid` / `add_questions` (step 2); the splitting of one question into columns is a UI/LLM step, no engine call |
+| 3 run condition skips rows visibly | question `condition`; status `skipped` + flag `condition_not_met` |
+| 4 variable edit reruns dependents | `set_variable` + `run` |
+| 5 Column Manager | `rename_question`, `reorder_questions`, `update_question`, `set_question_engine`, `delete_question`, bulk `run(questions=, docs=)` |
+| 6 Workflow View | `workflow_graph` |
+| 7 conditional formatting AND/OR | `set_format_rules`, `formatted_view` |
+| 8 transfer filtered documents | `filter_docs`, `transfer` (to a new Matrix; "to a Chat" = `MatrixChat` on the new grid) |
+| 9 Document Source column | `add_document(s)(source_path=)`, `source_folder`, `group_by_source` |
+| 10 Excel export, logo | `export_grid_xlsx(logo_png=)` |
+| 11 Matrix Chat over 1,000+ rows | `MatrixChat.ask` (first-token telemetry `first_token_s`) |
+| 12 500-row grid at 60 fps | client-side (virtualised table over `view`); no engine call |
+| 13 100-file upload with status | `add_documents(progress=)`, `ingest_log`, `alerts` |
+| 14 PDF tables exportable | `tables`, `export_tables_xlsx`, `export_tables_csv` |
+| 15 hover preview < 0.5 s | cell `exact_quote` + page/rects in the `view` payload (no extra call) |
+| 16 click opens scrolled highlight | `page` + `rects` (coordinate rules above) |
+| 17 trace a figure in < 2 min | cell citation + `export_grid_xlsx` Sources sheet and cell notes |
+
+### Concurrency, storage, scoping
+
+- One `GridStore` per thread/process. The DB connection never leaves the thread that created it; parsing and engines run in
+  worker threads inside `add_documents` / `run_stream`, but every DB write happens on the calling thread. Consume
+  `run_stream` on the thread that owns the store (a web server runs it in a dedicated worker or per-request store).
+- DuckDB file when `duckdb` is importable (`GridStore("data/grid.duckdb")`), else a SQLite file at the same path
+  (`backend="sqlite"` forces it). Both use the same SQL; do not open one file with both backends. Two processes must not
+  write one file.
+- Parsed documents are cached in the same file (`documents.parsed_json`, plus `pages` and `lines`), keyed by the sha256
+  of the bytes, and in memory per store; the same file is never reparsed. PDF bytes themselves are not stored: keep the
+  original (the highlight needs it) under your own file store keyed by `doc_id`.
+- There is no org scoping inside `GridStore`: the product app must keep one store file per org (for example
+  `storage/<org_id>/grid.duckdb`) and check access before calling it.
+- No model call happens unless a column uses `"llm"` / `"llm:<model>"` (through `src/harness/adapter.py`) or
+  `MatrixChat` has an adapter. Documents are data, never instructions.
+
+### Recommended HTTP surface (for the product-app session; not implemented here)
+
+| Route | Call |
+|---|---|
+| `POST /v1/grids` `{name, doc_ids, questions}` | `create_grid` |
+| `GET /v1/grids`, `GET /v1/grids/{id}` | `grid_names`, `formatted_view` (+ `variables`, `workflow_graph`) |
+| `POST /v1/docs` (multipart, many files) | `add_documents`, returns the batch dict; progress over SSE or polling `ingest_log` |
+| `POST /v1/grids/{id}/rows` | `add_rows` |
+| `POST /v1/grids/{id}/columns`; `PATCH`/`DELETE .../columns/{qid}` | `add_questions`; `update_question` / `rename_question` / `set_question_engine`; `delete_question` |
+| `POST /v1/grids/{id}/columns/order` | `reorder_questions` |
+| `PUT /v1/grids/{id}/variables/{name}` | `set_variable` |
+| `PUT /v1/grids/{id}/format-rules` | `set_format_rules` |
+| `POST /v1/grids/{id}/estimate` `{questions?, docs?, engine?}` | `estimate` |
+| `POST /v1/grids/{id}/run` `{questions?, docs?, engine?, max_cost_usd?}` | `run_stream` as SSE: `event: estimate\|cell\|skipped\|done`, `data:` the event JSON; `BudgetExceeded` -> 402 with the estimate; client disconnect closes the generator |
+| `GET /v1/grids/{id}/runs` | `runs` |
+| `POST /v1/grids/{id}/transfer` `{when, name, copy_cells?}` | `transfer` |
+| `POST /v1/grids/{id}/chat` `{question, stream?}` | `MatrixChat.ask`, SSE `plan\|delta\|final` |
+| `GET /v1/grids/{id}/export.xlsx` | `export_grid_xlsx` |
+| `GET /v1/docs/{doc_id}/tables.xlsx`, `.../tables/csv` | `export_tables_xlsx`, `export_tables_csv` |
+| `GET /v1/docs/{doc_id}/pdf` | the original bytes (your file store) |
+| `POST /v1/rooms/{id}/risk` | `scan_room` (omit `locate`) |
+
+`ValueError` / `KeyError` from these calls -> 422 / 404 with the message.
+
+### Stability promise
+
+Within `"v": 1` fields are only added, never renamed or removed: cell fields, event fields, statuses, flags, the
+`WHEN`/rule language, `run_stream` event order, `MatrixChat` events and the VDR finding fields. Clients must ignore unknown
+fields, flags, statuses and event types. A breaking change bumps `v`. `ENGINE_VERSION` changes are not breaking: they only
+trigger recomputation.

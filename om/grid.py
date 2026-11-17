@@ -55,6 +55,7 @@ import posixpath
 import re
 import sqlite3
 import time
+import unicodedata
 import uuid
 from collections import Counter
 from concurrent.futures import ThreadPoolExecutor, as_completed
@@ -71,7 +72,7 @@ try:  # DuckDB is optional (MIT, D-018); SQLite is the graceful fallback
 except Exception:  # pragma: no cover
     _duckdb = None
 
-ENGINE_VERSION = "grid-2"        # grid-2: precise, abstaining extractive engine (typed extractors, statement line items)
+ENGINE_VERSION = "grid-3"        # grid-3: + Arabic-aware extraction (lexicons, Arabic-Indic digits, Arabic months); grid-2: precise, abstaining extractive engine
 DONE = ("ok", "extracted", "not_found", "skipped")   # statuses that count as filled
 USED = ("ok", "extracted")                      # statuses whose answer is shown (always carry a located quote)
 NOT_FOUND_TEXT = "Not found in document"
@@ -787,13 +788,25 @@ def _prose(doc, max_len: int = 900):
     """(page, text) sentences (non-running-header blocks), long ones truncated at a word boundary."""
     running = _running_headers(doc)
     for pg in doc.pages:
+        blocks = []
         for b in pg.blocks:
             if b.kind in ("header", "footer") and _norm_hdr(b.text) in running:
                 continue
-            if b.kind == "table":
-                pieces = [ln.strip() for ln in b.text.split("\n")]
+            blocks.append((b.kind, b.text))
+        merged = []                       # Arabic sentences wrapped across layout blocks are rejoined (the quote locates across lines)
+        for kind, text in blocks:
+            if merged and kind in ("text", "list") and merged[-1][0] in ("text", "list") and _AR_LET.search(text) \
+                    and _AR_LET.search(merged[-1][1]) and not re.search(r"[.!?؟:؛)\]]\s*$", merged[-1][1].strip()) and len(merged[-1][1]) < 400:
+                merged[-1] = (merged[-1][0], merged[-1][1].rstrip() + " " + text.lstrip())
             else:
-                pieces = [s.strip() for s in SENT_RE.split(" ".join(b.text.split()))]
+                merged.append((kind, text))
+        for kind, text in merged:
+            if kind == "table":
+                pieces = [ln.strip() for ln in text.split("\n")]
+            else:
+                pieces = [s.strip() for s in SENT_RE.split(" ".join(text.split()))]
+            if any(_AR_LET.search(p) for p in pieces):          # Arabic full stops are followed by an Arabic letter, not a capital
+                pieces = [q for p in pieces for q in (_AR_SENT.split(p) if _AR_LET.search(p) else [p])]
             for s in pieces:
                 if len(s) > max_len:
                     s = _snap(s, 0, max_len)
@@ -941,6 +954,13 @@ def _auditor(doc) -> list[dict]:
         if not re.search(r"(?i)audit|accounting firm", s):
             continue
         if re.search(r"(?i)\b(?:resolved|resolve|propos\w+|recommend\w*|to appoint|appoint\w*|ratif\w+|engage\w*|selection of)\b", s):
+            # a minuted decision ("The Board resolved to appoint X as the independent auditor") is an answer; a proposal is not
+            dm = re.search(r"(?i)\b(?:resolved|approved|agreed|decided)\s+(?:to\s+(?:re-?)?appoint|the\s+(?:re-?)?appointment\s+of)\s+(.+?)\s+as\s+(?:the\s+)?(?:company'?s?\s+|group'?s?\s+)?(?:independent\s+)?(?:registered\s+public\s+accounting\s+firm|auditors?|external\s+auditors?)\b", s)
+            if dm and not re.search(r"(?i)\b(?:propos\w+|recommend\w*|subject to|if |whether|considered|discussed)\b", s):
+                dname, _m = _firm_in(dm.group(1))
+                if dname:
+                    out.append({"answer": dname, "value": None, "unit": None, "quote": s if len(s) <= 300 else _snap(s, max(0, dm.start() - 60), dm.end() + 120),
+                                "page": page, "conf": 0.7, "pos": (page, 0), "flags": []})
             continue
         name, m = _firm_in(s)
         if not name:
@@ -1176,10 +1196,438 @@ def _headquarters(doc) -> list[dict]:
     return out
 
 
+# ------------------------------------------------------------------ Arabic-aware extraction (S5.F4)
+# Generic lexicons, not fitted to any room. Matching runs on a folded copy of the sentence (presentation forms -> base
+# letters, harakat/tatweel/bidi marks dropped, alef/yaa variants unified, Arabic-Indic digits and separators -> ASCII);
+# the QUOTE is always the exact page sentence so it still locates.
+_AR_LET = re.compile("[؀-ۿݐ-ݿࢠ-ࣿﭐ-﷿ﹰ-﻿]")
+_AR_DROP = re.compile("[ـً-ٰٟۖ-ۭ‎‏‪-‮⁦-⁩]")
+_AR_MAP = str.maketrans({**{c: "0123456789"[i] for i, c in enumerate("٠١٢٣٤٥٦٧٨٩")},
+                         **{c: "0123456789"[i] for i, c in enumerate("۰۱۲۳۴۵۶۷۸۹")},
+                         "٬": ",", "٫": ".", "أ": "ا", "إ": "ا", "آ": "ا", "ٱ": "ا", "ى": "ي"})
+_AR_SENT = re.compile(r"(?<=[.!?؟])\s+(?=[؀-ۿ])")
+
+
+def _afold(text: str) -> str:
+    return _AR_DROP.sub("", unicodedata.normalize("NFKC", text)).translate(_AR_MAP)
+
+
+def _ar(rx: str) -> str:
+    """Fold a lexicon regex the same way as the text (metacharacters are ASCII and untouched)."""
+    return rx.translate(_AR_MAP)
+
+
+def has_arabic(text: str) -> bool:
+    return bool(_AR_LET.search(text or ""))
+
+
+def _ar_prose(doc):
+    """(page, exact sentence, folded sentence) for prose sentences that contain Arabic letters."""
+    for page, s in _prose(doc):
+        if _AR_LET.search(s):
+            yield page, s, _afold(s)
+
+
+_AR_MONTHS = {"يناير": 1, "كانون الثاني": 1, "جانفي": 1, "فبراير": 2, "شباط": 2, "فيفري": 2, "مارس": 3, "آذار": 3,
+              "أبريل": 4, "ابريل": 4, "نيسان": 4, "أفريل": 4, "مايو": 5, "أيار": 5, "ماي": 5, "يونيو": 6, "يونيه": 6, "حزيران": 6,
+              "جوان": 6, "يوليو": 7, "يوليه": 7, "تموز": 7, "جويلية": 7, "أغسطس": 8, "اغسطس": 8, "غشت": 8, "سبتمبر": 9, "أيلول": 9,
+              "أكتوبر": 10, "اكتوبر": 10, "تشرين الأول": 10, "نوفمبر": 11, "تشرين الثاني": 11, "ديسمبر": 12, "كانون الأول": 12}
+_AR_MONTHS = {_afold(k): v for k, v in _AR_MONTHS.items()}
+_EN_MONTH_NO = {**{m: n for m, n in _MONTHS.items()}, **{m[:3]: n for m, n in _MONTHS.items()}, "sept": 9}
+_MON_ALL = "|".join(sorted(list(_AR_MONTHS) + list(_EN_MONTH_NO), key=len, reverse=True))
+_AD_A = re.compile(rf"(?i)(?<![\d/])(\d{{1,2}})\s+(?:of\s+)?({_MON_ALL})\.?[\s.,]{{1,3}}(\d{{4}})(?!\d)")
+_AD_B = re.compile(rf"(?i)({_MON_ALL})\.?\s+(\d{{1,2}}),?[\s.]{{1,3}}(\d{{4}})(?!\d)")
+_AD_C = re.compile(rf"(?i)({_MON_ALL})\.?\s+(\d{{4}})\s+(\d{{1,2}})(?![\d,./-])")      # "February 2029 28": bidi-scrambled day-month-year
+_AD_ISO = re.compile(r"(?<!\d)(\d{4})[-/](\d{1,2})[-/](\d{1,2})(?!\d)")
+_AD_DMY = re.compile(r"(?<![\d/-])(?<!\d\.)(\d{1,2})[/.-](\d{1,2})[/.-](\d{4})(?![\d])")
+
+
+def _mno(tok: str):
+    t = _afold(tok).lower().rstrip(".")
+    return _AR_MONTHS.get(t) or _EN_MONTH_NO.get(t)
+
+
+def _dates_ar(f: str) -> list[tuple[int, int, str, str]]:
+    """(start, end, iso, printed) in the folded sentence f. Day-first for numeric forms (regional convention)."""
+    found = []
+    for rx, order in ((_AD_A, "dmy_m"), (_AD_B, "mdy_m"), (_AD_C, "myd_m"), (_AD_ISO, "ymd"), (_AD_DMY, "dmy")):
+        for m in rx.finditer(f):
+            g = m.groups()
+            try:
+                if order == "dmy_m":
+                    d, mo, y = int(g[0]), _mno(g[1]), int(g[2])
+                elif order == "mdy_m":
+                    d, mo, y = int(g[1]), _mno(g[0]), int(g[2])
+                elif order == "myd_m":
+                    d, mo, y = int(g[2]), _mno(g[0]), int(g[1])
+                elif order == "ymd":
+                    d, mo, y = int(g[2]), int(g[1]), int(g[0])
+                else:
+                    d, mo, y = int(g[0]), int(g[1]), int(g[2])
+                datetime(y, mo, d)
+            except (TypeError, ValueError):
+                continue
+            found.append((m.start(), m.end(), f"{y:04d}-{mo:02d}-{d:02d}", m.group(0)))
+    found.sort(key=lambda t: (t[0], -(t[1] - t[0])))
+    out, last = [], -1
+    for t in found:
+        if t[0] >= last:
+            out.append(t)
+            last = t[1]
+    return out
+
+
+_CUR_CODES = {"AED": "AED", "SAR": "SAR", "QAR": "QAR", "OMR": "OMR", "KWD": "KWD", "BHD": "BHD", "JOD": "JOD", "EGP": "EGP",
+              "USD": "USD", "EUR": "EUR", "GBP": "GBP", "US$": "USD", "$": "USD", "€": "EUR", "£": "GBP"}
+_CUR_WORDS = [(r"دراهم|درهم", "AED"), (r"ريال\s+سعودي", "SAR"), (r"ريال\s+قطري", "QAR"), (r"ريال\s+عماني", "OMR"), (r"ريال", "riyal"),
+              (r"جنيه\s+استرليني|جنيه\s+إسترليني", "GBP"), (r"جنيه", "EGP"), (r"دينار\s+كويتي", "KWD"), (r"دينار\s+بحريني", "BHD"),
+              (r"دينار\s+أردني", "JOD"), (r"دينار", "dinar"), (r"دولار", "USD"), (r"يورو", "EUR")]
+_CUR_WORDS = [(_ar(w), c) for w, c in _CUR_WORDS]
+_CUR_WORD_RX = "|".join(f"(?:{w})" for w, _ in _CUR_WORDS)
+_CUR_CODE_RX = "|".join(re.escape(c) for c in sorted(_CUR_CODES, key=len, reverse=True))
+_NUMA = r"\d{1,3}(?:,\d{3})+(?:\.\d+)?|\d+(?:\.\d+)?"
+_SCALE_AR = {"مليار": 1e9, "بليون": 1e9, "مليون": 1e6, "الف": 1e3, "billion": 1e9, "million": 1e6, "thousand": 1e3}
+_SCALE_RX = "|".join(_afold(k) for k in _SCALE_AR)
+_M_AFTER = re.compile(rf"(?i)(?<![\d.,])({_NUMA})\s*({_SCALE_RX})?\s*(?:({_CUR_WORD_RX})(?![؀-ۿ])|({_CUR_CODE_RX})(?![A-Za-z]))")
+_M_BEFORE = re.compile(rf"(?i)(?<![A-Za-z])({_CUR_CODE_RX})\s*({_NUMA})\s*({_SCALE_RX})?(?![\d])")
+
+
+def _cur_of_word(w: str):
+    for rx, code in _CUR_WORDS:
+        if re.fullmatch(rx, w) or re.match(rx, w):
+            return code
+    return None
+
+
+def _money_ar(f: str) -> list[tuple[int, float, str]]:
+    """(start, value, currency) for every amount with an explicit currency (word or code) in the folded sentence."""
+    out = []
+    for m in _M_BEFORE.finditer(f):
+        v = float(m.group(2).replace(",", "")) * _SCALE_AR.get((m.group(3) or "").lower(), 1.0)
+        out.append((m.start(), v, _CUR_CODES.get(m.group(1).upper(), _CUR_CODES.get(m.group(1), m.group(1)))))
+    for m in _M_AFTER.finditer(f):
+        if any(abs(m.start() - o[0]) < 3 for o in out):
+            continue
+        v = float(m.group(1).replace(",", "")) * _SCALE_AR.get((m.group(2) or "").lower(), 1.0)
+        cur = _cur_of_word(m.group(3)) if m.group(3) else _CUR_CODES.get(m.group(4).upper())
+        out.append((m.start(), v, cur or "as printed"))
+    out.sort()
+    return out
+
+
+def _orig(s: str, f: str, sub: str) -> str:
+    """The exact-text words of s that correspond to the folded substring sub of f (word counts survive folding)."""
+    sw, fw, uw = s.split(), f.split(), sub.split()
+    if len(sw) == len(fw) and uw:
+        for i in range(len(fw) - len(uw) + 1):
+            if fw[i:i + len(uw)] == uw:
+                return " ".join(sw[i:i + len(uw)])
+    return sub
+
+
+def _cand(answer, quote, page, conf, pos, value=None, unit=None, **kw) -> dict:
+    d = {"answer": answer, "value": value, "unit": unit, "quote": quote, "page": page, "conf": round(conf, 2), "pos": pos, "flags": []}
+    d.update(kw)
+    return d
+
+
+_AR_FEE_LABEL = re.compile(_ar(r"(?:ال)?(?:ايجار|اجر[ةه]|بدل الايجار|رسوم|اتعاب|مقابل|ثمن|سعر|راتب|اجر|قيم[ةه] العقد|قيم[ةه] الايجار)"))
+_AR_FEE_PERIOD = re.compile(_ar(r"سنوي|سنويا|شهري|شهريا|اساسي|ثابت|ربع سنوي|دوري|الاجمالي"))
+_AR_FEE_PAY = re.compile(_ar(r"يدفع|يسدد|مستحق|يستحق|واجب|البالغ|البالغه|تبلغ|يبلغ|بقيم[ةه]|قدره|مبلغ|هي|هو|يلتزم|تدفع|تسدد"))
+_AR_FEE_NOT = re.compile(_ar(r"تاخير|غرام[ةه]|جزاء|اضافي|اداري[ةه]?|تامين|وديع[ةه]|زياد[ةه]|تخفيض|خصم|نسب[ةه]"))
+
+
+def _fee_ar(doc) -> list[dict]:
+    out = []
+    for page, s, f in _ar_prose(doc):
+        lab = _AR_FEE_LABEL.search(f)
+        if not lab or _AR_FEE_NOT.search(f):
+            continue
+        per = _AR_FEE_PERIOD.search(f)
+        if not (per or _AR_FEE_PAY.search(f)):
+            continue
+        money = [m for m in _money_ar(f)]
+        if not money:
+            continue
+        after = [m for m in money if m[0] >= lab.start()]
+        pick = (after or money)[0]
+        distinct = {(round(m[1], 2), m[2]) for m in money}
+        conf = 0.86 if per else 0.7
+        if len(distinct) > 1:
+            conf = min(conf, 0.55)                                  # several different amounts: ambiguous, suggest only
+        out.append(_cand(f"{pick[2]} {pick[1]:,.0f}", s, page, conf, (page, lab.start()), pick[1], pick[2]))
+    out.sort(key=lambda c: (-c["conf"], c["pos"]))
+    return out
+
+
+_AR_EXP = re.compile(_ar(r"ينتهي|تنتهي|انتهاء|ينقضي|تنقضي|انقضاء|نهاي[ةه]|حتي|حتى|الي غاي[ةه]|الى غاي[ةه]|يستمر[^.]{0,20}حتي|تاريخ الاستحقاق|استحقاق|ساري[^.]{0,30}حتي|يسري[^.]{0,30}حتي|اجل"))
+_AR_EXP_STRONG = re.compile(_ar(r"ينتهي|تنتهي|انتهاء|ينقضي|انقضاء|تاريخ الاستحقاق|نهاي[ةه]"))
+_AR_SUBJ = re.compile(_ar(r"عقد|اتفاقي|ايجار|مد[ةه]|تاجير|ترخيص|رخص[ةه]|تسهيل|قرض|وثيق|تمويل|سريان|استحقاق"))
+_AR_NEGEXP = re.compile(_ar(r"لا (?:ينتهي|تنتهي)|اشعار|اخطار|الاخطار"))
+
+
+def _expiry_ar(doc) -> list[dict]:
+    out = []
+    for page, s, f in _ar_prose(doc):
+        if not _AR_SUBJ.search(f):
+            continue
+        ds = _dates_ar(f)
+        if not ds:
+            continue
+        for tm in _AR_EXP.finditer(f):
+            after = [d for d in ds if d[0] >= tm.end() - 1]
+            if not after or after[0][0] - tm.end() > 60:
+                continue
+            d = after[0]
+            if _AR_NEGEXP.search(f[max(0, tm.start() - 12):tm.end()]) and not _AR_EXP_STRONG.search(f[tm.start():tm.end()]):
+                continue
+            strong = bool(_AR_EXP_STRONG.search(tm.group(0)))
+            out.append(_cand(d[3], s, page, 0.88 if strong else 0.68, (page, tm.start()), d[2], "date"))
+            break
+    out.sort(key=lambda c: (-c["conf"], c["pos"]))
+    return out
+
+
+_AR_EFF = re.compile(_ar(r"تاريخ (?:ال)?(?:سريان|نفاذ|بدء|بداي[ةه]|عقد|اتفاقي[ةه]|ابرام|توقيع|ايجار)|يبدا|تبدا|يسري|تسري|ساري[ةه]? (?:اعتبارا|من)|اعتبارا من|بدءا من|(?:ابرم|ابرمت|حرر|تحرر|وقع|وقعت|تم ابرام|تم توقيع)[^.]{0,60}?(?:بتاريخ|في)|التاريخ\s*:|بتاريخ"))
+_AR_EFF_NOT = re.compile(_ar(r"ينتهي|تنتهي|انتهاء|ينقضي|انقضاء|المنعقد|اجتماع|الجمع[يـ]ة|فسخ|انهاء"))
+
+
+def _effective_ar(doc) -> list[dict]:
+    out = []
+    for page, s, f in _ar_prose(doc):
+        m = _AR_EFF.search(f)
+        if not m:
+            continue
+        ds = [d for d in _dates_ar(f) if d[0] >= m.start()]
+        if not ds or ds[0][0] - m.end() > 40:
+            continue
+        conf = 0.8 if not _AR_EFF_NOT.search(f[:ds[0][0]]) else 0.5      # an expiry/meeting word BEFORE the date: it is not the start date
+        if re.fullmatch(_ar(r"بتاريخ"), m.group(0)):
+            conf -= 0.1
+        out.append(_cand(ds[0][3], s, page, conf, (page, m.start()), ds[0][2], "date"))
+    out.sort(key=lambda c: (-c["conf"], c["pos"]))
+    return out
+
+
+# clause key -> (positive cue regex, definition-only regex, negation regex removed before matching)
+_NEG_AR = _ar(r"(?:غير|ليس[ةت]?|بدون|دون|لا|عدم)\s+(?:\S+\s+)?(?:حصري[ةه]?|حصريا|الحصري[ةه]?|حصراً|الحصر)")
+_CLAUSES_AR = {
+    "change_of_control": (_ar(r"تغيير\s+(?:في\s+)?(?:ال)?(?:سيطر[ةه]|ملكي[ةه]|رقاب[ةه])|تغير\s+(?:في\s+)?(?:ال)?(?:سيطر[ةه]|ملكي[ةه])|تغيير\s+في\s+هيكل\s+الملكي[ةه]|"
+                          r"انتقال\s+(?:ال)?(?:سيطر[ةه]|ملكي[ةه])|(?:ال)?استحواذ\s+على\s+(?:اغلبي|غالبي|حص[ةه]\s+مسيطر|اكثر\s+من|نسب)|(?:ال)?استحواذ\s+(?:الكامل|الجزئي)?\s*(?:على|من قبل)\s+(?:الشرك|المقترض|المورد|المستاجر)|change of control"),
+                          _ar(r"يقصد\s+ب|يعني|المقصود\s+ب|تعريف"), None),
+    "mfn": (_ar(r"(?:دول[ةه]|عميل|مورد|مستاجر|مشتري|طرف|جه[ةه])\s+(?:ال)?اكثر\s+رعاي[ةه]|اكثر\s+رعاي[ةه]|افضل\s+(?:ال)?(?:شروط|اسعار|سعر|معامل[ةه])|لا\s+(?:تقل|يقل)\s+(?:افضلي|ملاءم|مواتا)"), None, None),
+    "exclusivity": (_ar(r"حصري|حصريا|حصراً|حصرا|الحصري|الحصري[ةه]|بشكل حصري|الاستئثار|عدم\s+(?:ال)?منافس|عدم\s+منافس|عدم\s+التعامل|"
+                       r"(?:لا\s+يجوز|يحظر|يمتنع|لا\s+يحق|يلتزم\s+بعدم|يحظر\s+علي)[^.؟]{0,110}?(?:اي|لاي|مع\s+اي|من\s+اي)\s+(?:مورد|مشتر|عميل|مصنع|منافس|موزع|طرف\s+ثالث|جه[ةه]|شخص)\s*(?:اخر|اخري|آخر)?"),
+                      None, _NEG_AR),
+    "assignment": (_ar(r"(?:التنازل|الحوال[ةه]|نقل\s+(?:ال)?(?:حقوق|التزامات|ملكي)|التاجير\s+من\s+الباطن)[^.؟]{0,90}(?:موافق|اذن|اقرار)|(?:موافق|اذن)[^.؟]{0,90}(?:التنازل|الحوال[ةه]|نقل\s+(?:ال)?حقوق)|لا\s+يجوز[^.؟]{0,60}(?:التنازل|الحوال[ةه]|نقل)"),
+                    None, None),
+}
+_AR_MODAL = re.compile(_ar(r"يجوز|يحق|يجب|يلتزم|يكون|يحظر|يتعين|يمتنع|للطرف|يعتبر|يحق|يتوجب|تعتبر|يستحق|ينتهي|يكون"))
+
+
+def _clause_ar(doc, key: str) -> list[dict]:
+    spec = _CLAUSES_AR.get(key)
+    if not spec:
+        return []
+    rx, neg, strip = spec
+    out = []
+    for page, s, f in _ar_prose(doc):
+        g = re.sub(strip, " ", f) if strip else f
+        if not re.search(rx, g, re.I):
+            continue
+        conf = 0.78
+        if neg and re.search(neg, g, re.I):
+            conf -= 0.25
+        if _AR_MODAL.search(g):
+            conf += 0.07
+        if len(s) > 500:
+            conf -= 0.1
+        out.append(_cand(s, s, page, conf, (page, 0)))
+    out.sort(key=lambda c: (-c["conf"], c["pos"]))
+    return out
+
+
+_AR_LAW_LABEL = re.compile(_ar(r"القانون\s+(?:الواجب\s+التطبيق|الحاكم|المطبق|المختص|الواجب\s+النفاذ)\s+(.+)"))
+_AR_LAW_VERB = re.compile(_ar(r"(?:يخضع|تخضع|يحكم|تحكم|يفسر|تفسر|يطبق|تطبق|ويخضع|وتخضع)[^.؟]{0,70}?(?:لقوانين|لقانون|بقوانين|بقانون|قوانين|قانون|للقانون|وفقا\s+ل(?:ـ)?قوانين|وفقا\s+لقانون|وفق\s+قوانين)\s+(.+)"))
+_AR_LAW_CUT = re.compile(_ar(r"\s+(?:و(?:تختص|تكون|تفسر|يفسر|يختص|تخضع|يخضع|تفض|يتم)|وتختص|حيث|بما|ما\s+عدا|دون)\b|[،,;.؛]"))
+
+
+def _law_ar(doc) -> list[dict]:
+    out = []
+    for page, s, f in _ar_prose(doc):
+        m = _AR_LAW_VERB.search(f)
+        conf = 0.85
+        if not m:
+            m = _AR_LAW_LABEL.search(f)
+            conf = 0.8
+        if not m:
+            continue
+        rest = _AR_LAW_CUT.split(m.group(1), 1)[0].strip()
+        rest = re.sub(_ar(r"^(?:ال)?(?:قوانين|قانون)\s+"), "", rest).strip(" :-")
+        if len(rest) < 3:
+            continue
+        out.append(_cand(_orig(s, f, rest), s, page, conf, (page, 0)))
+    out.sort(key=lambda c: (-c["conf"], c["pos"]))
+    return out
+
+
+_AR_PARTY_PAREN = re.compile(_ar(r"(?:ابرم|ابرمت|تم\s+ابرام|تحرر|حرر)\b[^.؟]{0,90}?\bبين\s+(.+?\((?:ال)?[^)]{2,30}\))\s*و\s*(.+?\((?:ال)?[^)]{2,30}\))"))
+_AR_PARTY_BARE = re.compile(_ar(r"(?:ابرم|ابرمت|تم\s+ابرام|تحرر|حرر)\b[^.؟]{0,90}?\bبين\s+(.{3,80}?)\s+و(?=\S{2})(.{3,80}?)(?:\s*[.;(،]|\s+(?:بتاريخ|في\s+تاريخ|ويخضع|حيث|وذلك))"))
+
+
+def _parties_ar(doc) -> list[dict]:
+    out = []
+    for pg in doc.pages[:2]:
+        text = " ".join(" ".join(ln.text for ln in pg.lines).split())
+        if not _AR_LET.search(text):
+            continue
+        f = _afold(text)
+        m = _AR_PARTY_PAREN.search(f) or _AR_PARTY_BARE.search(f)
+        if not m:
+            continue
+        a, b = (_orig(text, f, re.sub(r"\s+", " ", x).strip(" .،")) for x in m.groups())
+        # the sentence containing the cue, taken from the exact page text by locating its first words
+        cue = re.search(r"(?:[أإا]بر[مم]ت?|تم\s+[إأا]بر[اا]م|تحرر|حرر)\b[^.؟]{0,90}?\bبين", text)
+        end = text.find(".", m.end() - 3) if "." in text[m.end() - 3:] else len(text)
+        quote = " ".join(text[(cue.start() if cue else 0):(end + 1 if end >= 0 else len(text))].split())
+        if not quote or len(quote) > 400:
+            continue
+        out.append(_cand(f"{a} و {b}", quote, pg.number, 0.86, (pg.number, m.start())))
+        break
+    return out
+
+
+_AR_FIN = {
+    "revenue": r"(?:ال)?(?:ايرادات|مبيعات|ايراد)(?:\s+(?:ال)?(?:اجمالي[ةه]?|الكلي[ةه]?|صافي[ةه]?))?|اجمالي\s+(?:ال)?(?:ايرادات|مبيعات)|صافي\s+(?:ال)?(?:ايرادات|مبيعات)",
+    "net_income": r"صافي\s+(?:ال)?(?:ربح|دخل|ارباح)|صافي\s+الخسار[ةه]",
+    "total_assets": r"(?:اجمالي|مجموع)\s+(?:ال)?اصول",
+    "total_liabilities": r"(?:اجمالي|مجموع)\s+(?:ال)?(?:التزامات|خصوم|مطلوبات)",
+    "cash": r"(?:ال)?نقد(?:ي[ةه])?\s+وما\s+(?:في\s+حكمه|يعادله)|النقد\s+وما\s+يعادله",
+    "operating_income": r"(?:ال)?(?:ربح|دخل)\s+التشغيلي|ارباح\s+التشغيل",
+    "gross_profit": r"مجمل\s+(?:ال)?ربح|اجمالي\s+(?:ال)?ربح",
+}
+_AR_FIN = {k: re.compile(_ar(v)) for k, v in _AR_FIN.items()}
+_AR_FIN_VERB = re.compile(_ar(r"بلغ|بلغت|كان|كانت|وصل|وصلت|تبلغ|يبلغ|حقق|حققت|قدر|قدرت|مبلغ|بقيم[ةه]|بلغ\s+مجموع|هي|هو"))
+_AR_FIN_NOT = re.compile(_ar(r"قطاع|منطق[ةه]|فرع|الربع|نمو|ارتفع|انخفض|زياد|ارتفاع|انخفاض|مقارن|مقابل|توقع|متوقع|مستهدف|%|بالمئ"))
+
+
+def _prose_fin_ar(doc, key: str, question: dict) -> list[dict]:
+    lab = _AR_FIN.get(key)
+    if not lab:
+        return []
+    qyears = set(re.findall(r"(?:19|20)\d\d", _afold(question.get("text") or "")))
+    out = []
+    for page, s, f in _ar_prose(doc):
+        m = lab.search(f)
+        if not m or not _AR_FIN_VERB.search(f) or _AR_FIN_NOT.search(f):
+            continue
+        money = [x for x in _money_ar(f) if x[0] >= m.start() - 30]
+        if not money:
+            continue
+        gap = f[m.end():money[0][0]] if money[0][0] > m.end() else ""
+        if len(gap) > 90 or re.search(r"[.؛;]", gap):
+            continue
+        conf = 0.7
+        if qyears and not (qyears & set(re.findall(r"(?:19|20)\d\d", f))):
+            conf -= 0.2
+        cur = money[0][2]
+        out.append(_cand(f"{cur} {money[0][1]:,.0f}", s, page, conf, (page, m.start()), money[0][1], cur, rank=3, tier=0))
+    return out
+
+
+_AR_AUD = re.compile(_ar(r"مدقق(?:ا|ي|\s+)?(?:\s*ال)?(?:حسابات)?|مراجع(?:ا)?(?:\s+ال)?(?:حسابات|خارجي)?|مدققا\s+مستقلا|المراجع\s+الخارجي|مدقق\s+الحسابات"))
+_AR_AUD_NOT = re.compile(_ar(r"اقتراح|مقترح|يقترح|التوصي[ةه]|للنظر|ينظر|يوصي|تفويض"))
+_AR_AUD_NAME = re.compile(_ar(r"(?:شرك[ةه]|مكتب|مؤسس[ةه])\s+((?:[^\W\d_]+\s+){0,3}?[^\W\d_]+?)\s+(?:مدقق|كمدقق|مراجع|كمراجع|لتدقيق|للتدقيق|لمراجع)"))
+
+
+def _auditor_ar(doc) -> list[dict]:
+    out = []
+    for page, s, f in _ar_prose(doc):
+        if not _AR_AUD.search(f) or _AR_AUD_NOT.search(f):
+            continue
+        name = None
+        m = _AR_AUD_NAME.search(f)
+        if m:
+            name = m.group(1).strip()
+        else:
+            n, _mm = _firm_in(s)
+            name = n
+        if not name:
+            continue
+        strong = re.search(_ar(r"تعيين|اعتماد|الموافق[ةه]\s+علي|يكون\s+مدقق|هو\s+مدقق|هي\s+مدقق"), f)
+        out.append(_cand(_orig(s, f, name), s, page, 0.74 if strong else 0.62, (page, 0)))
+    return out
+
+
+_AR_NOTICE = re.compile(_ar(r"(?:اشعار|اخطار|اعلام)[^.؟]{0,40}?(?:مدته|لمد[ةه]|مد[ةه]|لا\s+تقل\s+عن|قبل|بمهل[ةه])\s*(?:ال)?(\d+|[^\W\d_]+)\s*\(?(?:\d+\)?)?\s*(يوم|ايام|يوما|شهر|اشهر|شهرا|اسبوع|اسابيع|اسبوعا|سن[ةه]|سنوات)"))
+
+
+def _notice_ar(doc) -> list[dict]:
+    out = []
+    for page, s, f in _ar_prose(doc):
+        if not re.search(_ar(r"انهاء|فسخ|الغاء|انتهاء|تنهي"), f):
+            continue
+        m = _AR_NOTICE.search(f)
+        if not m:
+            continue
+        out.append(_cand(f"{m.group(1)} {m.group(2)}", s, page, 0.8, (page, 0)))
+    return out
+
+
+def _extract_ar(doc, kind: str, arg, question: dict) -> list[dict]:
+    if kind == "expiry":
+        return _expiry_ar(doc)
+    if kind == "effective":
+        return _effective_ar(doc)
+    if kind == "fee":
+        return _fee_ar(doc)
+    if kind == "clause":
+        return _clause_ar(doc, arg)
+    if kind == "governing_law":
+        return _law_ar(doc)
+    if kind == "parties":
+        return _parties_ar(doc)
+    if kind == "fin":
+        return _prose_fin_ar(doc, arg, question)
+    if kind == "auditor":
+        return _auditor_ar(doc)
+    if kind == "notice":
+        return _notice_ar(doc)
+    return []
+
+
 # ------------------------------------------------------------------ routing
+_Q_AR = (("expiry", _ar(r"ينتهي|انتهاء|تاريخ النهاية|مد[ةه] العقد")), ("effective", _ar(r"تاريخ (?:ال)?(?:سريان|نفاذ|بدء)|يبدا")),
+         ("governing_law", _ar(r"القانون الواجب|القانون الحاكم|يخضع")), ("parties", _ar(r"الاطراف|اطراف العقد")),
+         ("notice", _ar(r"فترة الاشعار|مد[ةه] الاشعار|الاخطار")), ("fee", _ar(r"الايجار السنوي|الرسوم السنوي|الاجر[ةه] السنوي|المقابل السنوي")),
+         ("auditor", _ar(r"مدقق|المراجع الخارجي|مراجع الحسابات")))
+_Q_AR_CLAUSE = (("change_of_control", _ar(r"تغيير (?:في )?(?:ال)?سيطر|تغيير (?:ال)?ملكي|استحواذ")), ("mfn", _ar(r"رعاي|افضل الشروط")),
+                ("exclusivity", _ar(r"حصري|حصري[ةه]|عدم المنافس")), ("assignment", _ar(r"التنازل|الحوال")))
+_Q_AR_FIN = (("revenue", _ar(r"ايرادات|مبيعات")), ("net_income", _ar(r"صافي (?:ال)?(?:ربح|دخل)")), ("total_assets", _ar(r"اجمالي الاصول")),
+             ("total_liabilities", _ar(r"اجمالي (?:ال)?(?:التزامات|خصوم)")))
+
+
+def _route_ar(q: str):
+    f = _afold(q)
+    for k, rx in _Q_AR:
+        if re.search(rx, f):
+            return k, None
+    for k, rx in _Q_AR_CLAUSE:
+        if re.search(rx, f):
+            return "clause", k
+    for k, rx in _Q_AR_FIN:
+        if re.search(rx, f):
+            return "fin", k
+    return None
+
+
 def _route(question: dict):
     t = (question.get("text") or "").lower()
     typ = question.get("type") or "text"
+    if _AR_LET.search(t):
+        r = _route_ar(t)
+        if r:
+            return r
     if re.search(r"(?:leverage|coverage|fixed[- ]charge|debt[- ]service)[a-z ]*ratio|ratio[a-z ]*covenant|covenant[a-z ]*ratio", t):
         return "covenant", None
     if re.search(r"\bhow many\b.{0,40}(?:employees|associates|staff|team members|workers|people)|\bheadcount\b|\bfull[- ]time equivalent\b|\bnumber of (?:employees|associates|team members)\b|\bemployees does\b|\bworkforce size\b", t):
@@ -1217,6 +1665,16 @@ def _route(question: dict):
 
 def _extract(doc, question: dict) -> list[dict]:
     kind, arg = _route(question)
+    base = _extract_en(doc, question, kind, arg)
+    if kind in ('free', 'hq', 'headcount', 'fye', 'incorporation', 'covenant'):
+        return base
+    ar = _extract_ar(doc, kind, arg, question)
+    if not ar:
+        return base
+    return sorted(base + ar, key=lambda c: -c['conf'])           # stable: English first on ties
+
+
+def _extract_en(doc, question: dict, kind, arg) -> list[dict]:
     if kind == "fin":
         return _fin_candidates(doc, arg) + _prose_fin(doc, arg, question)
     if kind == "hq":

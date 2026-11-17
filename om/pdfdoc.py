@@ -127,9 +127,9 @@ def _group_lines(words, page):
     return [_line(sorted(ws, key=lambda w: w.bbox_norm[0]), page) for ws in lines]
 
 
-def _run(args, timeout=TIMEOUT):
+def _run(args, timeout=TIMEOUT, env=None):
     try:
-        return subprocess.run(args, capture_output=True, timeout=timeout, shell=False)
+        return subprocess.run(args, capture_output=True, timeout=timeout, shell=False, env=env)
     except subprocess.TimeoutExpired:
         raise PdfError(f"{args[0]} timed out after {timeout}s")
     except OSError as e:
@@ -230,6 +230,34 @@ def _png_size(b):
     return int.from_bytes(b[16:20], "big"), int.from_bytes(b[20:24], "big")
 
 
+_AR_CH = re.compile("[\u0600-\u06ff\u0750-\u077f\u08a0-\u08ff\ufb50-\ufdff\ufe70-\ufeff]")
+_LANG_OK = re.compile(r"^[A-Za-z0-9_]+(?:\+[A-Za-z0-9_]+)*$")
+_OCR_LANGS_CACHE = {}
+
+
+def _ocr_langs():
+    """Tesseract ``-l`` value. ``ACRETIA_OCR_LANGS`` overrides; default ``ara+eng`` when the ara model is
+    installed (measured: same speed as eng alone on CPU, and Latin text is unaffected), else ``eng``."""
+    env = (os.environ.get("ACRETIA_OCR_LANGS") or "").strip()
+    if env and _LANG_OK.match(env):
+        return env
+    if "d" not in _OCR_LANGS_CACHE:
+        have = set()
+        try:
+            out = subprocess.run(["tesseract", "--list-langs"], capture_output=True, timeout=20).stdout
+            have = set(out.decode("utf-8", "replace").split())
+        except (OSError, subprocess.SubprocessError):
+            pass
+        _OCR_LANGS_CACHE["d"] = "ara+eng" if "ara" in have and "eng" in have else "eng"
+    return _OCR_LANGS_CACHE["d"]
+
+
+def _ocr_env():
+    e = dict(os.environ)
+    e["OMP_THREAD_LIMIT"] = "1"
+    return e
+
+
 def _ocr_page(path, page):
     """OCR one page in place. Returns a warning string or None."""
     if not (shutil.which("tesseract") and shutil.which("pdftoppm")):
@@ -243,7 +271,7 @@ def _ocr_page(path, page):
             return f"page {page.number}: rasterisation failed"
         with open(png, "rb") as fh:
             pw, ph = _png_size(fh.read(32))
-        r = _run(["tesseract", png, "-", "tsv"])
+        r = _run(["tesseract", png, "-", "-l", _ocr_langs(), "tsv"], env=_ocr_env())
         if r.returncode != 0:
             return f"page {page.number}: tesseract failed"
     groups = {}
@@ -263,7 +291,12 @@ def _ocr_page(path, page):
         box = norm_bbox(l, t, l + w, t + h, pw, ph)
         groups.setdefault(tuple(c[2:5]), []).append(_word(text, page.number, box, ocr=True))
     page.words = [w for ws in groups.values() for w in ws]
-    page.lines = [_line(sorted(ws, key=lambda w: w.bbox_norm[0]), page.number) for ws in groups.values()]
+    # Tesseract emits each line's words in reading (logical) order: right-to-left for Arabic. Keep that order
+    # for lines that are mostly Arabic; sort Latin lines by x as before.
+    def _ordered(ws):
+        ar = sum(1 for w in ws if _AR_CH.search(w.text))
+        return ws if 2 * ar >= len(ws) else sorted(ws, key=lambda w: w.bbox_norm[0])
+    page.lines = [_line(_ordered(ws), page.number) for ws in groups.values()]
     page.lines.sort(key=lambda l: (l.bbox_norm[1], l.bbox_norm[0]))
     page.ocr = bool(page.words)
     return None if page.words else f"page {page.number}: OCR found no text"

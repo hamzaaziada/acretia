@@ -1,6 +1,6 @@
 # S5.4b eval report
 
-Generated 2026-11-17 09:20 (mode: offline (cached DB)). Engine: `ExtractiveEngine` grid-2 (deterministic, offline; no model calls).
+Generated 2026-11-17 09:37 (mode: fresh). Engine: `ExtractiveEngine` grid-3 (deterministic, offline; no model calls).
 LLM engine: not run live (D-021: no endpoint/keys in this session); no replay fixtures exist for these rooms.
 
 ## 10-K QA (10 real filings x 10 questions)
@@ -35,8 +35,8 @@ By question:
 |---|---|---|---|---|---|---|---|
 | tenk | 100 | 100/0 | 100 | 100.0 | 0 | 0 | 0 |
 | vdr_en | 174 | 109/65 | 170 | 97.7 | 0 | 4 | 0 |
-| vdr_scanned_arabic | 30 | 15/15 | 22 | 73.3 | 0 | 8 | 0 |
-| ALL | 304 | 224/80 | 292 | 96.0 | 0 | 12 | 0 |
+| vdr_scanned_arabic | 30 | 15/15 | 30 | 100.0 | 0 | 0 | 0 |
+| ALL | 304 | 224/80 | 300 | 98.7 | 0 | 4 | 0 |
 
 ## VDR first pass (50 documents, pdfdoc parser)
 
@@ -48,11 +48,11 @@ By question:
 | arabic_pages | 3 |
 | ingest_ok | 50 |
 | ingest_failed | 0 |
-| ingest_s | 24.862 |
-| grid_s | 4.978 |
-| risk_s | 18.526 |
-| total_s | 94.63 |
-| first_cell_s | 0.333945 |
+| ingest_s | 23.0 |
+| grid_s | 5.124 |
+| risk_s | 5.441 |
+| total_s | 79.732 |
+| first_cell_s | 0.866892 |
 | cells | 650 |
 | tokens_in | 0 |
 | tokens_out | 0 |
@@ -64,38 +64,25 @@ By question:
 
 ## Risk detector (vdr_risk.scan_documents)
 
-recall 0.7692 (20/26); precision 0.1825 (23/126 in-scope findings; legitimate extra findings: 0); false-positive classes {"spurious_period (year < 2000 parsed from 10-K text)": 65, "conflicting_figure on the real 10-Ks (mis-paired metrics)": 9, "clause finding on a synthetic doc without that clause": 0, "missing_document for a category the room holds": 0, "other": 29}; decoys flagged: 0; Arabic recall {'gold': 2, 'found': 0}; scanned recall {'gold': 1, 'found': 1}
+recall 1.0 (26/26); precision 0.9286 (26/28 in-scope findings; legitimate extra findings: 0); false-positive classes {"spurious_period (year < 2000 parsed from 10-K text)": 0, "conflicting_figure on the real 10-Ks (mis-paired metrics)": 0, "clause finding on a synthetic doc without that clause": 0, "missing_document for a category the room holds": 0, "other": 2}; decoys flagged: 0; Arabic recall {'gold': 2, 'found': 2}; scanned recall {'gold': 1, 'found': 1}
 
 | type | gold | found |
 |---|---|---|
 | change_of_control | 6 | 6 |
-| conflicting_figure | 1 | 0 |
+| conflicting_figure | 1 | 1 |
 | covenant | 4 | 4 |
-| exclusivity | 8 | 3 |
+| exclusivity | 8 | 8 |
 | mfn | 3 | 3 |
 | missing_document | 2 | 2 |
 | missing_period | 2 | 2 |
 
 Missed:
-- exclusivity 02 Legal/Material Contracts/Customers/Customer Agreement - Northwind.pdf
-- exclusivity 02 Legal/Material Contracts/Suppliers/Supplier Agreement - Tundra.pdf
-- exclusivity 04 Corporate/Board Minutes/Board Minutes - February 2025.pdf
-- exclusivity 04 Corporate/Board Minutes/Board Resolution - May 2024 (Arabic).pdf
-- exclusivity 02 Legal/Material Contracts/Suppliers/Supplier Agreement - Gulf Materials (Arabic).pdf
-- conflicting_figure 01 Financials/CIM/Confidential Information Memorandum - Excerpt.pdf
 
-False positives (in scope, no matching gold) by type: {"conflicting_figure": 9, "missing_period": 94}; first 40 non-period ones:
-- conflicting_figure | 01 Financials/10-K/COST 10-K.pdf p.6 | Debt (FY2026) differs: $69 vs $2.2 billion | Repayments of long-term debt in 2026 totaled $69, as compared to $103 in 2025.
-- conflicting_figure | 01 Financials/10-K/HD 10-K.pdf p.6 | Revenue (FY2025) differs: $307 million vs $79 million vs $164.7 billion vs $5.2 billion | A stronger U.S. dollar compared to fiscal 2024 negatively impacted net sales by $307 million in fisc
-- conflicting_figure | 01 Financials/10-K/AAPL 10-K.pdf p.9 | Gross margin (FY2024) differs: 233602% vs 225465% | Gross margin 233,602 195,201 180,683
-- conflicting_figure | 01 Financials/10-K/JNJ 10-K.pdf p.5 | Operating cash flow (FY2025) differs: $24.5 vs $24.5 billion vs $16.3 billion | $24.5 Cash flow from operations
-- conflicting_figure | 01 Financials/10-K/JNJ 10-K.pdf p.5 | Net income (FY2025) differs: $26.8 vs $79 million vs $14.2 billion | $26.8 Net Earnings
-- conflicting_figure | 01 Financials/10-K/JNJ 10-K.pdf p.11 | Net income (FY2023) differs: $26,804 vs $0.2 billion | Net earnings $26,804 14,066 35,153
-- conflicting_figure | 01 Financials/10-K/KO 10-K.pdf p.2 | Employees (FY2024) differs: 69,700 vs 1 vs 2 vs 355,000 | 2025 and 2024, our Company had approximately 65,900 and 69,700 employees, respectively, of which app
-- conflicting_figure | 01 Financials/10-K/MSFT 10-K.pdf p.7 | EPS (FY2025) differs: $17.95 vs $6.89 vs $14.23 vs $11.95 vs $0.43 | Diluted earnings per share 17.95 13.64 32%
-- conflicting_figure | 01 Financials/10-K/MSFT 10-K.pdf p.7 | Gross margin (FY2025) differs: 225465% vs 1485800% vs 1459200% vs 1565600% vs 1542800% vs 1630200% | Gross margin 225,465 193,893 16%
+False positives (in scope, no matching gold) by type: {"conflicting_figure": 2}; first 40 non-period ones:
+- conflicting_figure | 01 Financials/Audited/Audited Financial Statements FY2021.pdf p.2 | Meridian Components — Gross profit (FY2021) differs: $13.63m vs $13.27m | Gross profit 13,630,600 11,544,000
+- conflicting_figure | 01 Financials/Audited/Audited Financial Statements FY2021.pdf p.2 | Meridian Components — Net income (FY2021) differs: $3.01m vs $3.13m | Net income 3,011,000 2,589,460
 
-Spurious missing_period titles: Missing 2024-04, Missing 2024-05, Missing 2024-06, Missing 2024-07, Missing 2024-08, Missing 2024-09, Missing 2024-10, Missing 2024-12, Missing FY1935, Missing FY1936, Missing FY1937, Missing FY1938 ...
+Spurious missing_period titles:  ...
 
 ## opendataloader-bench
 
@@ -108,8 +95,8 @@ Spurious missing_period titles: Missing 2024-04, Missing 2024-05, Missing 2024-0
    "docs": 200,
    "pages": 200,
    "parse_failures": 0,
-   "seconds": 23.25,
-   "s_per_page": 0.1163,
+   "seconds": 22.23,
+   "s_per_page": 0.1111,
    "score": {
     "overall_mean": 0.6473,
     "nid_mean": 0.8268,
@@ -127,8 +114,8 @@ Spurious missing_period titles: Missing 2024-04, Missing 2024-05, Missing 2024-0
    "docs": 6,
    "pages": 6,
    "parse_failures": 0,
-   "seconds": 18.1,
-   "s_per_page": 3.0162,
+   "seconds": 18.0,
+   "s_per_page": 3.0006,
    "score": {
     "overall_mean": 0.9348,
     "nid_mean": 0.9348,
@@ -146,8 +133,8 @@ Spurious missing_period titles: Missing 2024-04, Missing 2024-05, Missing 2024-0
    "docs": 6,
    "pages": 6,
    "parse_failures": 0,
-   "seconds": 0.48,
-   "s_per_page": 0.08,
+   "seconds": 0.41,
+   "s_per_page": 0.0686,
    "score": {
     "overall_mean": 0.6382,
     "nid_mean": 0.9669,
@@ -208,14 +195,6 @@ Spurious missing_period titles: Missing 2024-04, Missing 2024-05, Missing 2024-0
 - `vdr_en:Budget and Forecast FY2025:v09` [missed] status not_found (gold p.1)
 - `vdr_en:Confidential Information Memorandum - Excerpt:v09` [missed] status not_found (gold p.1)
 
-### vdr_scanned_arabic (8)
+### vdr_scanned_arabic (0)
 
-- `vdr_scanned_arabic:Board Minutes - November 2024 (scanned):v10` [missed] status not_found (gold p.1)
-- `vdr_scanned_arabic:Lease Agreement - Jebel Ali (Arabic):v12` [missed] status not_found (gold p.1)
-- `vdr_scanned_arabic:Lease Agreement - Jebel Ali (Arabic):v02` [missed] status not_found (gold p.1)
-- `vdr_scanned_arabic:Board Resolution - May 2024 (Arabic):v09` [missed] status not_found (gold p.1)
-- `vdr_scanned_arabic:Board Resolution - May 2024 (Arabic):v05` [missed] status not_found (gold p.1)
-- `vdr_scanned_arabic:Supplier Agreement - Gulf Materials (Arabic):v12` [missed] status not_found (gold p.1)
-- `vdr_scanned_arabic:Supplier Agreement - Gulf Materials (Arabic):v02` [missed] status not_found (gold p.1)
-- `vdr_scanned_arabic:Supplier Agreement - Gulf Materials (Arabic):v05` [missed] status not_found (gold p.1)
 

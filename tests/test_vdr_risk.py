@@ -246,5 +246,151 @@ class RoomTests(unittest.TestCase):
                 self.assertRegex(f["sha256_span_hash"], r"^[0-9a-f]{64}$")
 
 
+def mk(name, *pages, doc_id=None):
+    return {"doc_id": doc_id or abs(hash(name)) % 10**8, "name": name, "pages": list(pages)}
+
+
+def scan(*docs, **kw):
+    return vr.scan_documents([dict(d, doc_id=i) for i, d in enumerate(docs, 1)], locate=lambda *a: None, **kw)
+
+
+def titles(res, t):
+    return sorted(f["title"] for f in by_type(res, t))
+
+
+class PeriodPrecisionTests(unittest.TestCase):
+    def test_narrative_years_are_not_coverage(self):
+        k = mk("Acme 10-K.pdf", "FORM 10-K\nFor the fiscal year ended December 31, 2024\nAcme Corporation\n(Exact name of registrant)",
+               "We were founded in 1935 and opened our first plant in FY1962. Our 2008 restructuring and the FY2011 recall are described below. "
+               "In March 2023 and in June 2020 we refinanced. Revenue for fiscal 2019 was lower than in fiscal 2016.")
+        res = scan(k, mk("Audited Financial Statements FY2024.pdf", "Acme Corporation\nAudited financial statements for the year ended 31 December 2024"))
+        self.assertEqual(titles(res, "missing_period"), [])
+
+    def test_years_outside_sane_window_ignored(self):
+        self.assertIsNone(vr.period_of("Annual accounts FY1935"))
+        self.assertIsNone(vr.period_of("Accounts FY2099"))
+        self.assertEqual(vr.period_of("Accounts FY2023"), ("annual", 2023))
+
+    def test_unrelated_filers_are_not_one_series(self):
+        docs = [mk(f"{t} 10-K.pdf", f"FORM 10-K\nFor the fiscal year ended December 31, {y}\n{n}\n(Exact name of registrant as specified in its charter)")
+                for t, y, n in (("AAA", 2018, "Alpha Dynamics, Inc."), ("BBB", 2022, "Bravo Foods Corporation"), ("CCC", 2025, "Charlie Motors Inc."))]
+        self.assertEqual(titles(scan(*docs), "missing_period"), [])
+
+    def test_gap_inside_one_companys_series_is_found(self):
+        docs = [mk(f"Zenith Corp 10-K FY{y}.pdf", f"FORM 10-K\nFor the fiscal year ended December 31, {y}\nZenith Corporation") for y in (2021, 2023)]
+        docs += [mk("Other 10-K FY2019.pdf", "FORM 10-K\nFor the fiscal year ended December 31, 2019\nOmega Industries Inc.")]
+        self.assertEqual(titles(scan(*docs), "missing_period"), ["Missing FY2022"])
+
+    def test_monthly_series_gap_and_no_body_months(self):
+        docs = [mk(f"Management Accounts {m} 2025.pdf", f"Nimbus Holdings, Inc. - management reporting pack\nManagement Accounts - {m} 2025",
+                   "Signed on 14 March 2019 and refinanced in September 2021.") for m in ("January", "February", "April")]
+        self.assertEqual(titles(scan(*docs), "missing_period"), ["Missing 2025-03"])
+
+
+STMT = ("{co}\n{co} - Audited financial statements\n{unit}\n{hdr}\n{row}\n")
+
+
+class ConflictPrecisionTests(unittest.TestCase):
+    def fs(self, co="Acme Holdings, Inc.", unit="(USD in thousands)", hdr="FY2024 FY2023", row="Total revenue 48,213 44,100", name="Audited FS FY2024.pdf"):
+        return mk(name, STMT.format(co=co, unit=unit, hdr=hdr, row=row))
+
+    def test_units_normalise_across_formats(self):
+        agree = [self.fs(), mk("CIM.pdf", "Project Acme - Information Memorandum", "Total revenue for the fiscal year ended 31 December 2024 was $48.2m.")]
+        self.assertEqual(by_type(scan(*agree), "conflicting_figure"), [])
+        for fig in ("$48.2 million", "USD 48,213,000", "$0.0482 billion"):
+            r = scan(self.fs(), mk("CIM.pdf", "Project Acme - Information Memorandum", f"Total revenue for FY2024 was {fig}."))
+            self.assertEqual(by_type(r, "conflicting_figure"), [], fig)
+
+    def test_cim_vs_audited_conflict_across_formats(self):
+        r = scan(self.fs(), mk("CIM.pdf", "Project Acme - Information Memorandum", "Total revenue for the fiscal year ended 31 December 2024 was $52.9m."))
+        c = by_type(r, "conflicting_figure")
+        self.assertEqual(len(c), 1)
+        involved = {c[0]["doc_name"]} | {x["doc_name"] for x in c[0]["related"]}
+        self.assertEqual(involved, {"Audited FS FY2024.pdf", "CIM.pdf"})
+        self.assertEqual(c[0]["period"], "FY2024")
+        self.assertIn("52.9m", c[0]["quote"] + c[0]["related"][0]["quote"])
+
+    def test_fx_effect_is_not_revenue(self):
+        a = mk("Acme annual report.pdf", "Acme Corporation Annual Report", "Revenue for FY2025 was $164.7 billion. A stronger dollar reduced revenue by $307 million in fiscal 2025. "
+               "The currency effect on revenue for FY2025 was $307 million. Revenue in the Americas segment for FY2025 was $79 million.")
+        b = mk("Acme investor deck.pdf", "Acme Corporation investor presentation", "Revenue for FY2025 was $164.7 billion.")
+        self.assertEqual(by_type(scan(a, b), "conflicting_figure"), [])
+
+    def test_different_companies_never_paired(self):
+        a = mk("A 10-K.pdf", "Alpha Dynamics, Inc.\n(USD in millions)\nFY2025 FY2024\nTotal revenue 900 850")
+        b = mk("B 10-K.pdf", "Bravo Foods Corporation\n(USD in millions)\nFY2025 FY2024\nTotal revenue 120 110")
+        self.assertEqual(by_type(scan(a, b), "conflicting_figure"), [])
+
+    def test_percent_mis_parse_rejected(self):
+        a = mk("Acme 10-K.pdf", "Acme Corporation\n(USD in millions)\nFY2025 FY2024 FY2023\nGross margin 225,465 193,893 180,683")
+        b = mk("Acme deck.pdf", "Acme Corporation investor presentation\nFY2025 FY2024\nGross margin 22546500% 41.2%")
+        self.assertEqual(vr._doc_facts(a), [])
+        self.assertEqual([f for f in vr._doc_facts(b) if f.value > 100], [])
+        self.assertEqual(by_type(scan(a, b), "conflicting_figure"), [])
+
+    def test_real_margin_conflict_still_found(self):
+        a = mk("Acme FS.pdf", "Acme Corporation\nFY2024 FY2023\nGross margin 41.2% 40.1%")
+        b = mk("Acme deck.pdf", "Acme Corporation investor presentation\nFY2024 FY2023\nGross margin 43.9% 40.1%")
+        c = by_type(scan(a, b), "conflicting_figure")
+        self.assertEqual(len(c), 1)
+        self.assertEqual(c[0]["period"], "FY2024")
+
+    def test_budget_and_projection_columns_skipped(self):
+        a = mk("Acme budget.pdf", "Acme Corporation\n(USD in thousands)\nFY2025 budget FY2025 forecast\nTotal revenue 51,400 50,900")
+        self.assertEqual(vr._doc_facts(a), [])
+
+
+class ClauseRecallTests(unittest.TestCase):
+    def kinds(self, text, typ="exclusivity"):
+        res = scan(mk("Contract.pdf", text))
+        return [f for f in by_type(res, typ)]
+
+    def test_prohibition_exclusivity(self):
+        for t in ("The Distributor shall not purchase the Products from any other supplier during the Term.",
+                  "Zeta will not appoint any other distributor for the Products in the Territory.",
+                  "4.1 Vendor shall not provide the services to any competing\nmanufacturer within the Territory during the term.",
+                  "The Company shall not sell to any competitor of the Customer in the Field.",
+                  "The Board authorised management to enter into exclusivity negotiations with a bidder for sixty days.",
+                  "Northwind is the exclusive customer for the Product Line."):
+            self.assertEqual(len(self.kinds(t)), 1, t)
+
+    def test_prohibition_decoys(self):
+        for t in ("Nothing in this Agreement prevents the Buyer from purchasing the Products from any other supplier.",
+                  "The Supplier shall not be required to supply any other customer on these terms.",
+                  "The Buyer shall not disclose Confidential Information to any third party.",
+                  "Meridian remains free to purchase polymers from other suppliers and this Agreement is non-exclusive.",
+                  "All amounts stated are exclusive of value added tax.",
+                  "Neither party shall assign this Agreement to any other person without consent."):
+            self.assertEqual(self.kinds(t), [], t)
+
+    def test_wrapped_line_quote_is_exact_substring(self):
+        page = "4. Dealing\n4.1 Vendor shall not provide the services to any other\nmanufacturer within the Territory.\n4.2 Fees are due monthly."
+        f = by_type(scan(mk("C.pdf", page)), "exclusivity")
+        self.assertEqual(len(f), 1)
+        self.assertIn(f[0]["quote"], page)
+        self.assertTrue(f[0]["quote"].startswith("4.1") and f[0]["quote"].endswith("Territory."))
+
+    def test_arabic_clauses(self):
+        pos = {"exclusivity": ["يلتزم المشتري بشراء المنتجات بشكل حصري من المورد ولا يجوز له الشراء من أي مورد آخر خلال مدة العقد.",
+                               "قرر المجلس تفويض الإدارة بالدخول في مفاوضات حصرية مع مستثمر محتمل لمدة ستين يوما.",
+                               "لا يجوز للمورد توريد المنتجات إلى أي موزع آخر داخل المنطقة."],
+               "change_of_control": ["في حال تغيير السيطرة على الشركة يحق للطرف الآخر إنهاء هذا العقد بإشعار كتابي."],
+               "mfn": ["يحصل العميل على شروط الدولة الأكثر رعاية طوال مدة العقد."],
+               "covenant": ["يجب على المقترض الحفاظ على نسبة الدين إلى الأرباح لا تزيد عن 3.5x في نهاية كل ربع."]}
+        for typ, sents in pos.items():
+            for t in sents:
+                self.assertEqual(len(self.kinds(t, typ)), 1, (typ, t))
+                self.assertIn(self.kinds(t, typ)[0]["quote"], t)
+
+    def test_arabic_decoys_and_negation(self):
+        for typ, t in (("exclusivity", "هذا العقد غير حصري ويجوز للمشتري الشراء من أي مورد آخر."),
+                       ("exclusivity", "لا يوجد في هذا العقد ما يمنح أي طرف حقا حصريا."),
+                       ("exclusivity", "تشمل الخدمات الاستشارات والتدريب على سبيل المثال لا الحصر."),
+                       ("change_of_control", "لا يوجد في هذا العقد أي تغيير في السيطرة يستوجب موافقة الطرف الآخر."),
+                       ("change_of_control", "تحدد هذه المادة مدة العقد وطريقة السداد بالدولار الأمريكي."),
+                       ("mfn", "تلتزم الشركة بدفع الأجور في موعدها المحدد.")):
+            self.assertEqual(self.kinds(t, typ), [], (typ, t))
+
+
 if __name__ == "__main__":
     unittest.main()

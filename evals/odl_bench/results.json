@@ -7,8 +7,8 @@
    "docs": 200,
    "pages": 200,
    "parse_failures": 0,
-   "seconds": 23.25,
-   "s_per_page": 0.1163,
+   "seconds": 22.23,
+   "s_per_page": 0.1111,
    "score": {
     "overall_mean": 0.6473,
     "nid_mean": 0.8268,
@@ -26,8 +26,8 @@
    "docs": 6,
    "pages": 6,
    "parse_failures": 0,
-   "seconds": 18.1,
-   "s_per_page": 3.0162,
+   "seconds": 18.0,
+   "s_per_page": 3.0006,
    "score": {
     "overall_mean": 0.9348,
     "nid_mean": 0.9348,
@@ -45,8 +45,8 @@
    "docs": 6,
    "pages": 6,
    "parse_failures": 0,
-   "seconds": 0.48,
-   "s_per_page": 0.08,
+   "seconds": 0.41,
+   "s_per_page": 0.0686,
    "score": {
     "overall_mean": 0.6382,
     "nid_mean": 0.9669,

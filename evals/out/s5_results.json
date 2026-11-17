@@ -3138,13 +3138,13 @@
   {
    "cell_id": "vdr_scanned_arabic:Board Minutes - November 2024 (scanned):v10",
    "expect": "found",
-   "outcome": "missed",
-   "page_ok": null,
-   "quote_ok": null,
+   "outcome": "success",
+   "page_ok": true,
+   "quote_ok": true,
    "room": "vdr_scanned_arabic",
    "silent": false,
-   "status": "not_found",
-   "value_ok": null
+   "status": "extracted",
+   "value_ok": true
   },
   {
    "cell_id": "vdr_scanned_arabic:Board Minutes - November 2024 (scanned):v07",
@@ -3171,24 +3171,24 @@
   {
    "cell_id": "vdr_scanned_arabic:Lease Agreement - Jebel Ali (Arabic):v12",
    "expect": "found",
-   "outcome": "missed",
-   "page_ok": null,
-   "quote_ok": null,
+   "outcome": "success",
+   "page_ok": true,
+   "quote_ok": true,
    "room": "vdr_scanned_arabic",
    "silent": false,
-   "status": "not_found",
-   "value_ok": null
+   "status": "extracted",
+   "value_ok": true
   },
   {
    "cell_id": "vdr_scanned_arabic:Lease Agreement - Jebel Ali (Arabic):v02",
    "expect": "found",
-   "outcome": "missed",
-   "page_ok": null,
-   "quote_ok": null,
+   "outcome": "success",
+   "page_ok": true,
+   "quote_ok": true,
    "room": "vdr_scanned_arabic",
    "silent": false,
-   "status": "not_found",
-   "value_ok": null
+   "status": "extracted",
+   "value_ok": true
   },
   {
    "cell_id": "vdr_scanned_arabic:Lease Agreement - Jebel Ali (Arabic):v08",
@@ -3226,24 +3226,24 @@
   {
    "cell_id": "vdr_scanned_arabic:Board Resolution - May 2024 (Arabic):v09",
    "expect": "found",
-   "outcome": "missed",
-   "page_ok": null,
-   "quote_ok": null,
+   "outcome": "success",
+   "page_ok": true,
+   "quote_ok": true,
    "room": "vdr_scanned_arabic",
    "silent": false,
-   "status": "not_found",
-   "value_ok": null
+   "status": "extracted",
+   "value_ok": true
   },
   {
    "cell_id": "vdr_scanned_arabic:Board Resolution - May 2024 (Arabic):v05",
    "expect": "found",
-   "outcome": "missed",
-   "page_ok": null,
-   "quote_ok": null,
+   "outcome": "success",
+   "page_ok": true,
+   "quote_ok": true,
    "room": "vdr_scanned_arabic",
    "silent": false,
-   "status": "not_found",
-   "value_ok": null
+   "status": "extracted",
+   "value_ok": true
   },
   {
    "cell_id": "vdr_scanned_arabic:Board Resolution - May 2024 (Arabic):v07",
@@ -3281,35 +3281,35 @@
   {
    "cell_id": "vdr_scanned_arabic:Supplier Agreement - Gulf Materials (Arabic):v12",
    "expect": "found",
-   "outcome": "missed",
-   "page_ok": null,
-   "quote_ok": null,
+   "outcome": "success",
+   "page_ok": true,
+   "quote_ok": true,
    "room": "vdr_scanned_arabic",
    "silent": false,
-   "status": "not_found",
-   "value_ok": null
+   "status": "extracted",
+   "value_ok": true
   },
   {
    "cell_id": "vdr_scanned_arabic:Supplier Agreement - Gulf Materials (Arabic):v02",
    "expect": "found",
-   "outcome": "missed",
-   "page_ok": null,
-   "quote_ok": null,
+   "outcome": "success",
+   "page_ok": true,
+   "quote_ok": true,
    "room": "vdr_scanned_arabic",
    "silent": false,
-   "status": "not_found",
-   "value_ok": null
+   "status": "extracted",
+   "value_ok": true
   },
   {
    "cell_id": "vdr_scanned_arabic:Supplier Agreement - Gulf Materials (Arabic):v05",
    "expect": "found",
-   "outcome": "missed",
-   "page_ok": null,
-   "quote_ok": null,
+   "outcome": "success",
+   "page_ok": true,
+   "quote_ok": true,
    "room": "vdr_scanned_arabic",
    "silent": false,
-   "status": "not_found",
-   "value_ok": null
+   "status": "extracted",
+   "value_ok": true
   },
   {
    "cell_id": "vdr_scanned_arabic:Supplier Agreement - Gulf Materials (Arabic):v08",
@@ -3347,16 +3347,16 @@
  ],
  "reliability": {
   "ALL": {
-   "missed": 12,
+   "missed": 4,
    "n": 304,
    "n_found": 224,
    "n_not_found": 80,
-   "page_match": 0.9152,
-   "quote_on_page": 0.9464,
+   "page_match": 0.9509,
+   "quote_on_page": 0.9821,
    "silent": 0,
-   "success": 292,
-   "success_rate": 0.9605,
-   "value_accuracy": 0.9464,
+   "success": 300,
+   "success_rate": 0.9868,
+   "value_accuracy": 0.9821,
    "wrong_but_confident": 0
   },
   "tenk": {
@@ -3386,22 +3386,22 @@
    "wrong_but_confident": 0
   },
   "vdr_scanned_arabic": {
-   "missed": 8,
+   "missed": 0,
    "n": 30,
    "n_found": 15,
    "n_not_found": 15,
-   "page_match": 0.4667,
-   "quote_on_page": 0.4667,
+   "page_match": 1.0,
+   "quote_on_page": 1.0,
    "silent": 0,
-   "success": 22,
-   "success_rate": 0.7333,
-   "value_accuracy": 0.4667,
+   "success": 30,
+   "success_rate": 1.0,
+   "value_accuracy": 1.0,
    "wrong_but_confident": 0
   }
  },
  "risk": {
   "arabic": {
-   "found": 0,
+   "found": 2,
    "gold": 2
   },
   "by_type": {
@@ -3410,7 +3410,7 @@
     "gold": 6
    },
    "conflicting_figure": {
-    "found": 0,
+    "found": 1,
     "gold": 1
    },
    "covenant": {
@@ -3418,7 +3418,7 @@
     "gold": 4
    },
    "exclusivity": {
-    "found": 3,
+    "found": 8,
     "gold": 8
    },
    "mfn": {
@@ -3437,813 +3437,56 @@
   "decoy_flagged": 0,
   "false_positive_classes": {
    "clause finding on a synthetic doc without that clause": 0,
-   "conflicting_figure on the real 10-Ks (mis-paired metrics)": 9,
+   "conflicting_figure on the real 10-Ks (mis-paired metrics)": 0,
    "missing_document for a category the room holds": 0,
-   "other": 29,
-   "spurious_period (year < 2000 parsed from 10-K text)": 65
+   "other": 2,
+   "spurious_period (year < 2000 parsed from 10-K text)": 0
   },
   "false_positive_counts": {
-   "conflicting_figure": 9,
-   "missing_period": 94
+   "conflicting_figure": 2
   },
   "false_positives": [
    {
-    "doc": null,
-    "page": null,
-    "quote": "",
-    "title": "Missing FY1935",
-    "type": "missing_period"
-   },
-   {
-    "doc": null,
-    "page": null,
-    "quote": "",
-    "title": "Missing FY1936",
-    "type": "missing_period"
-   },
-   {
-    "doc": null,
-    "page": null,
-    "quote": "",
-    "title": "Missing FY1937",
-    "type": "missing_period"
-   },
-   {
-    "doc": null,
-    "page": null,
-    "quote": "",
-    "title": "Missing FY1938",
-    "type": "missing_period"
-   },
-   {
-    "doc": null,
-    "page": null,
-    "quote": "",
-    "title": "Missing FY1939",
-    "type": "missing_period"
-   },
-   {
-    "doc": null,
-    "page": null,
-    "quote": "",
-    "title": "Missing FY1940",
-    "type": "missing_period"
-   },
-   {
-    "doc": null,
-    "page": null,
-    "quote": "",
-    "title": "Missing FY1941",
-    "type": "missing_period"
-   },
-   {
-    "doc": null,
-    "page": null,
-    "quote": "",
-    "title": "Missing FY1942",
-    "type": "missing_period"
-   },
-   {
-    "doc": null,
-    "page": null,
-    "quote": "",
-    "title": "Missing FY1943",
-    "type": "missing_period"
-   },
-   {
-    "doc": null,
-    "page": null,
-    "quote": "",
-    "title": "Missing FY1944",
-    "type": "missing_period"
-   },
-   {
-    "doc": null,
-    "page": null,
-    "quote": "",
-    "title": "Missing FY1945",
-    "type": "missing_period"
-   },
-   {
-    "doc": null,
-    "page": null,
-    "quote": "",
-    "title": "Missing FY1946",
-    "type": "missing_period"
-   },
-   {
-    "doc": null,
-    "page": null,
-    "quote": "",
-    "title": "Missing FY1947",
-    "type": "missing_period"
-   },
-   {
-    "doc": null,
-    "page": null,
-    "quote": "",
-    "title": "Missing FY1948",
-    "type": "missing_period"
-   },
-   {
-    "doc": null,
-    "page": null,
-    "quote": "",
-    "title": "Missing FY1949",
-    "type": "missing_period"
-   },
-   {
-    "doc": null,
-    "page": null,
-    "quote": "",
-    "title": "Missing FY1950",
-    "type": "missing_period"
-   },
-   {
-    "doc": null,
-    "page": null,
-    "quote": "",
-    "title": "Missing FY1951",
-    "type": "missing_period"
-   },
-   {
-    "doc": null,
-    "page": null,
-    "quote": "",
-    "title": "Missing FY1952",
-    "type": "missing_period"
-   },
-   {
-    "doc": null,
-    "page": null,
-    "quote": "",
-    "title": "Missing FY1953",
-    "type": "missing_period"
-   },
-   {
-    "doc": null,
-    "page": null,
-    "quote": "",
-    "title": "Missing FY1954",
-    "type": "missing_period"
-   },
-   {
-    "doc": null,
-    "page": null,
-    "quote": "",
-    "title": "Missing FY1955",
-    "type": "missing_period"
-   },
-   {
-    "doc": null,
-    "page": null,
-    "quote": "",
-    "title": "Missing FY1956",
-    "type": "missing_period"
-   },
-   {
-    "doc": null,
-    "page": null,
-    "quote": "",
-    "title": "Missing FY1957",
-    "type": "missing_period"
-   },
-   {
-    "doc": null,
-    "page": null,
-    "quote": "",
-    "title": "Missing FY1958",
-    "type": "missing_period"
-   },
-   {
-    "doc": null,
-    "page": null,
-    "quote": "",
-    "title": "Missing FY1959",
-    "type": "missing_period"
-   },
-   {
-    "doc": null,
-    "page": null,
-    "quote": "",
-    "title": "Missing FY1960",
-    "type": "missing_period"
-   },
-   {
-    "doc": null,
-    "page": null,
-    "quote": "",
-    "title": "Missing FY1961",
-    "type": "missing_period"
-   },
-   {
-    "doc": null,
-    "page": null,
-    "quote": "",
-    "title": "Missing FY1962",
-    "type": "missing_period"
-   },
-   {
-    "doc": null,
-    "page": null,
-    "quote": "",
-    "title": "Missing FY1963",
-    "type": "missing_period"
-   },
-   {
-    "doc": null,
-    "page": null,
-    "quote": "",
-    "title": "Missing FY1964",
-    "type": "missing_period"
-   },
-   {
-    "doc": null,
-    "page": null,
-    "quote": "",
-    "title": "Missing FY1965",
-    "type": "missing_period"
-   },
-   {
-    "doc": null,
-    "page": null,
-    "quote": "",
-    "title": "Missing FY1966",
-    "type": "missing_period"
-   },
-   {
-    "doc": null,
-    "page": null,
-    "quote": "",
-    "title": "Missing FY1967",
-    "type": "missing_period"
-   },
-   {
-    "doc": null,
-    "page": null,
-    "quote": "",
-    "title": "Missing FY1968",
-    "type": "missing_period"
-   },
-   {
-    "doc": null,
-    "page": null,
-    "quote": "",
-    "title": "Missing FY1969",
-    "type": "missing_period"
-   },
-   {
-    "doc": null,
-    "page": null,
-    "quote": "",
-    "title": "Missing FY1970",
-    "type": "missing_period"
-   },
-   {
-    "doc": null,
-    "page": null,
-    "quote": "",
-    "title": "Missing FY1971",
-    "type": "missing_period"
-   },
-   {
-    "doc": null,
-    "page": null,
-    "quote": "",
-    "title": "Missing FY1972",
-    "type": "missing_period"
-   },
-   {
-    "doc": null,
-    "page": null,
-    "quote": "",
-    "title": "Missing FY1973",
-    "type": "missing_period"
-   },
-   {
-    "doc": null,
-    "page": null,
-    "quote": "",
-    "title": "Missing FY1974",
-    "type": "missing_period"
-   },
-   {
-    "doc": null,
-    "page": null,
-    "quote": "",
-    "title": "Missing FY1975",
-    "type": "missing_period"
-   },
-   {
-    "doc": null,
-    "page": null,
-    "quote": "",
-    "title": "Missing FY1976",
-    "type": "missing_period"
-   },
-   {
-    "doc": null,
-    "page": null,
-    "quote": "",
-    "title": "Missing FY1977",
-    "type": "missing_period"
-   },
-   {
-    "doc": null,
-    "page": null,
-    "quote": "",
-    "title": "Missing FY1978",
-    "type": "missing_period"
-   },
-   {
-    "doc": null,
-    "page": null,
-    "quote": "",
-    "title": "Missing FY1979",
-    "type": "missing_period"
-   },
-   {
-    "doc": null,
-    "page": null,
-    "quote": "",
-    "title": "Missing FY1980",
-    "type": "missing_period"
-   },
-   {
-    "doc": null,
-    "page": null,
-    "quote": "",
-    "title": "Missing FY1981",
-    "type": "missing_period"
-   },
-   {
-    "doc": null,
-    "page": null,
-    "quote": "",
-    "title": "Missing FY1982",
-    "type": "missing_period"
-   },
-   {
-    "doc": null,
-    "page": null,
-    "quote": "",
-    "title": "Missing FY1983",
-    "type": "missing_period"
-   },
-   {
-    "doc": null,
-    "page": null,
-    "quote": "",
-    "title": "Missing FY1984",
-    "type": "missing_period"
-   },
-   {
-    "doc": null,
-    "page": null,
-    "quote": "",
-    "title": "Missing FY1985",
-    "type": "missing_period"
-   },
-   {
-    "doc": null,
-    "page": null,
-    "quote": "",
-    "title": "Missing FY1986",
-    "type": "missing_period"
-   },
-   {
-    "doc": null,
-    "page": null,
-    "quote": "",
-    "title": "Missing FY1987",
-    "type": "missing_period"
-   },
-   {
-    "doc": null,
-    "page": null,
-    "quote": "",
-    "title": "Missing FY1988",
-    "type": "missing_period"
-   },
-   {
-    "doc": null,
-    "page": null,
-    "quote": "",
-    "title": "Missing FY1989",
-    "type": "missing_period"
-   },
-   {
-    "doc": null,
-    "page": null,
-    "quote": "",
-    "title": "Missing FY1990",
-    "type": "missing_period"
-   },
-   {
-    "doc": null,
-    "page": null,
-    "quote": "",
-    "title": "Missing FY1991",
-    "type": "missing_period"
-   },
-   {
-    "doc": null,
-    "page": null,
-    "quote": "",
-    "title": "Missing FY1992",
-    "type": "missing_period"
-   },
-   {
-    "doc": null,
-    "page": null,
-    "quote": "",
-    "title": "Missing FY1993",
-    "type": "missing_period"
-   },
-   {
-    "doc": null,
-    "page": null,
-    "quote": "",
-    "title": "Missing FY1994",
-    "type": "missing_period"
-   },
-   {
-    "doc": null,
-    "page": null,
-    "quote": "",
-    "title": "Missing FY1995",
-    "type": "missing_period"
-   },
-   {
-    "doc": null,
-    "page": null,
-    "quote": "",
-    "title": "Missing FY1996",
-    "type": "missing_period"
-   },
-   {
-    "doc": null,
-    "page": null,
-    "quote": "",
-    "title": "Missing FY1997",
-    "type": "missing_period"
-   },
-   {
-    "doc": null,
-    "page": null,
-    "quote": "",
-    "title": "Missing FY1998",
-    "type": "missing_period"
-   },
-   {
-    "doc": null,
-    "page": null,
-    "quote": "",
-    "title": "Missing FY1999",
-    "type": "missing_period"
-   },
-   {
-    "doc": null,
-    "page": null,
-    "quote": "",
-    "title": "Missing FY2000",
-    "type": "missing_period"
-   },
-   {
-    "doc": null,
-    "page": null,
-    "quote": "",
-    "title": "Missing FY2001",
-    "type": "missing_period"
-   },
-   {
-    "doc": null,
-    "page": null,
-    "quote": "",
-    "title": "Missing FY2002",
-    "type": "missing_period"
-   },
-   {
-    "doc": null,
-    "page": null,
-    "quote": "",
-    "title": "Missing FY2003",
-    "type": "missing_period"
-   },
-   {
-    "doc": null,
-    "page": null,
-    "quote": "",
-    "title": "Missing FY2004",
-    "type": "missing_period"
-   },
-   {
-    "doc": null,
-    "page": null,
-    "quote": "",
-    "title": "Missing FY2005",
-    "type": "missing_period"
-   },
-   {
-    "doc": null,
-    "page": null,
-    "quote": "",
-    "title": "Missing FY2006",
-    "type": "missing_period"
-   },
-   {
-    "doc": null,
-    "page": null,
-    "quote": "",
-    "title": "Missing FY2007",
-    "type": "missing_period"
-   },
-   {
-    "doc": null,
-    "page": null,
-    "quote": "",
-    "title": "Missing FY2008",
-    "type": "missing_period"
-   },
-   {
-    "doc": null,
-    "page": null,
-    "quote": "",
-    "title": "Missing FY2009",
-    "type": "missing_period"
-   },
-   {
-    "doc": null,
-    "page": null,
-    "quote": "",
-    "title": "Missing FY2010",
-    "type": "missing_period"
-   },
-   {
-    "doc": null,
-    "page": null,
-    "quote": "",
-    "title": "Missing FY2011",
-    "type": "missing_period"
-   },
-   {
-    "doc": null,
-    "page": null,
-    "quote": "",
-    "title": "Missing FY2012",
-    "type": "missing_period"
-   },
-   {
-    "doc": null,
-    "page": null,
-    "quote": "",
-    "title": "Missing FY2013",
-    "type": "missing_period"
-   },
-   {
-    "doc": null,
-    "page": null,
-    "quote": "",
-    "title": "Missing FY2014",
-    "type": "missing_period"
-   },
-   {
-    "doc": null,
-    "page": null,
-    "quote": "",
-    "title": "Missing FY2015",
-    "type": "missing_period"
-   },
-   {
-    "doc": null,
-    "page": null,
-    "quote": "",
-    "title": "Missing FY2016",
-    "type": "missing_period"
-   },
-   {
-    "doc": null,
-    "page": null,
-    "quote": "",
-    "title": "Missing FY2017",
-    "type": "missing_period"
-   },
-   {
-    "doc": null,
-    "page": null,
-    "quote": "",
-    "title": "Missing FY2018",
-    "type": "missing_period"
-   },
-   {
-    "doc": null,
-    "page": null,
-    "quote": "",
-    "title": "Missing FY2019",
-    "type": "missing_period"
-   },
-   {
-    "doc": null,
-    "page": null,
-    "quote": "",
-    "title": "Missing FY2020",
-    "type": "missing_period"
-   },
-   {
-    "doc": null,
-    "page": null,
-    "quote": "",
-    "title": "Missing 2024-04",
-    "type": "missing_period"
-   },
-   {
-    "doc": null,
-    "page": null,
-    "quote": "",
-    "title": "Missing 2024-05",
-    "type": "missing_period"
-   },
-   {
-    "doc": null,
-    "page": null,
-    "quote": "",
-    "title": "Missing 2024-06",
-    "type": "missing_period"
-   },
-   {
-    "doc": null,
-    "page": null,
-    "quote": "",
-    "title": "Missing 2024-07",
-    "type": "missing_period"
-   },
-   {
-    "doc": null,
-    "page": null,
-    "quote": "",
-    "title": "Missing 2024-08",
-    "type": "missing_period"
-   },
-   {
-    "doc": null,
-    "page": null,
-    "quote": "",
-    "title": "Missing 2024-09",
-    "type": "missing_period"
-   },
-   {
-    "doc": null,
-    "page": null,
-    "quote": "",
-    "title": "Missing 2024-10",
-    "type": "missing_period"
-   },
-   {
-    "doc": null,
-    "page": null,
-    "quote": "",
-    "title": "Missing 2024-12",
-    "type": "missing_period"
-   },
-   {
-    "doc": "01 Financials/10-K/COST 10-K.pdf",
-    "page": 6,
-    "quote": "Repayments of long-term debt in 2026 totaled $69, as compared to $103 in 2025.",
-    "title": "Debt (FY2026) differs: $69 vs $2.2 billion",
-    "type": "conflicting_figure"
-   },
-   {
-    "doc": "01 Financials/10-K/HD 10-K.pdf",
-    "page": 6,
-    "quote": "A stronger U.S. dollar compared to fiscal 2024 negatively impacted net sales by $307 million in fisc",
-    "title": "Revenue (FY2025) differs: $307 million vs $79 million vs $164.7 billion vs $5.2 billion",
-    "type": "conflicting_figure"
-   },
-   {
-    "doc": "01 Financials/10-K/AAPL 10-K.pdf",
-    "page": 9,
-    "quote": "Gross margin 233,602 195,201 180,683",
-    "title": "Gross margin (FY2024) differs: 233602% vs 225465%",
-    "type": "conflicting_figure"
-   },
-   {
-    "doc": "01 Financials/10-K/JNJ 10-K.pdf",
-    "page": 5,
-    "quote": "$24.5 Cash flow from operations",
-    "title": "Operating cash flow (FY2025) differs: $24.5 vs $24.5 billion vs $16.3 billion",
-    "type": "conflicting_figure"
-   },
-   {
-    "doc": "01 Financials/10-K/JNJ 10-K.pdf",
-    "page": 5,
-    "quote": "$26.8 Net Earnings",
-    "title": "Net income (FY2025) differs: $26.8 vs $79 million vs $14.2 billion",
-    "type": "conflicting_figure"
-   },
-   {
-    "doc": "01 Financials/10-K/JNJ 10-K.pdf",
-    "page": 11,
-    "quote": "Net earnings $26,804 14,066 35,153",
-    "title": "Net income (FY2023) differs: $26,804 vs $0.2 billion",
-    "type": "conflicting_figure"
-   },
-   {
-    "doc": "01 Financials/10-K/KO 10-K.pdf",
+    "doc": "01 Financials/Audited/Audited Financial Statements FY2021.pdf",
     "page": 2,
-    "quote": "2025 and 2024, our Company had approximately 65,900 and 69,700 employees, respectively, of which app",
-    "title": "Employees (FY2024) differs: 69,700 vs 1 vs 2 vs 355,000",
+    "quote": "Gross profit 13,630,600 11,544,000",
+    "title": "Meridian Components \u2014 Gross profit (FY2021) differs: $13.63m vs $13.27m",
     "type": "conflicting_figure"
    },
    {
-    "doc": "01 Financials/10-K/MSFT 10-K.pdf",
-    "page": 7,
-    "quote": "Diluted earnings per share 17.95 13.64 32%",
-    "title": "EPS (FY2025) differs: $17.95 vs $6.89 vs $14.23 vs $11.95 vs $0.43",
-    "type": "conflicting_figure"
-   },
-   {
-    "doc": "01 Financials/10-K/MSFT 10-K.pdf",
-    "page": 7,
-    "quote": "Gross margin 225,465 193,893 16%",
-    "title": "Gross margin (FY2025) differs: 225465% vs 1485800% vs 1459200% vs 1565600% vs 1542800% vs 1630200%",
+    "doc": "01 Financials/Audited/Audited Financial Statements FY2021.pdf",
+    "page": 2,
+    "quote": "Net income 3,011,000 2,589,460",
+    "title": "Meridian Components \u2014 Net income (FY2021) differs: $3.01m vs $3.13m",
     "type": "conflicting_figure"
    }
   ],
-  "findings_in_scope": 126,
-  "findings_matching_gold": 23,
-  "findings_total_all_docs": 127,
+  "findings_in_scope": 28,
+  "findings_matching_gold": 26,
+  "findings_total_all_docs": 29,
   "gold": 26,
-  "gold_found": 20,
+  "gold_found": 26,
   "legit_extra_findings": 0,
-  "missed": [
-   {
-    "doc": "02 Legal/Material Contracts/Customers/Customer Agreement - Northwind.pdf",
-    "found": false,
-    "label": null,
-    "lang": "en",
-    "scanned": false,
-    "type": "exclusivity"
-   },
-   {
-    "doc": "02 Legal/Material Contracts/Suppliers/Supplier Agreement - Tundra.pdf",
-    "found": false,
-    "label": null,
-    "lang": "en",
-    "scanned": false,
-    "type": "exclusivity"
-   },
-   {
-    "doc": "04 Corporate/Board Minutes/Board Minutes - February 2025.pdf",
-    "found": false,
-    "label": null,
-    "lang": "en",
-    "scanned": false,
-    "type": "exclusivity"
-   },
-   {
-    "doc": "04 Corporate/Board Minutes/Board Resolution - May 2024 (Arabic).pdf",
-    "found": false,
-    "label": null,
-    "lang": "ar",
-    "scanned": false,
-    "type": "exclusivity"
-   },
-   {
-    "doc": "02 Legal/Material Contracts/Suppliers/Supplier Agreement - Gulf Materials (Arabic).pdf",
-    "found": false,
-    "label": null,
-    "lang": "ar",
-    "scanned": false,
-    "type": "exclusivity"
-   },
-   {
-    "doc": "01 Financials/CIM/Confidential Information Memorandum - Excerpt.pdf",
-    "found": false,
-    "label": null,
-    "lang": "en",
-    "scanned": false,
-    "type": "conflicting_figure"
-   }
-  ],
-  "precision": 0.1825,
-  "recall": 0.7692,
+  "missed": [],
+  "precision": 0.9286,
+  "recall": 1.0,
   "scanned": {
    "found": 1,
    "gold": 1
   },
   "summary": {
    "by_severity": {
-    "high": 104,
-    "medium": 23
+    "high": 23,
+    "medium": 6
    },
    "by_type": {
     "change_of_control": 6,
-    "conflicting_figure": 9,
+    "conflicting_figure": 3,
     "covenant": 4,
-    "exclusivity": 5,
-    "mfn": 5,
+    "exclusivity": 9,
+    "mfn": 3,
     "missing_document": 2,
-    "missing_period": 96
+    "missing_period": 2
    },
    "documents": 50
   }
