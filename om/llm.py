@@ -224,7 +224,10 @@ class OpenAICompatProvider:
     def _adapter(self):
         """The harness adapter that performs the HTTP call (key-host binding, redirect guard, retry/backoff)."""
         from src.harness.adapter import Adapter
-        return Adapter(self.base_url, self.key, self.model, key_host=self.key_host, timeout=self.timeout, mode="live",
+        # The operator chose this base_url (preset, OM_PROVIDER_<NAME>_BASE_URL, settings or constructor), so it is an
+        # explicit binding; the Adapter itself never derives key_host from an arbitrary base_url.
+        bound = self.key_host or ((urlparse(self.base_url).hostname or "").lower() if self.key else None)
+        return Adapter(self.base_url, self.key, self.model, key_host=bound, timeout=self.timeout, mode="live",
                        transport=self._injected, max_retries=0 if self._injected else 3, backoff=2.0, mask=False)
 
     def _post(self, url: str, body: dict, headers: dict) -> dict:
