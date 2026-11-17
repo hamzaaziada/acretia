@@ -1,0 +1,39 @@
+# Egyptian Accounting Standards: IFRS counterpart and what differs. Numbering outside the verified set is from the 2015 reissue as
+# recalled and must be confirmed against the FRA text (confidence unverified). Own words.
+urls:
+  fra_dec: &fradec "https://fra.gov.eg/en/?p=13760728"
+  fra_636: &fra636 "https://fra.gov.eg/wp-content/uploads/2024/07/Decree-no-636_.pdf"
+  fra_std: &frastd "https://fra.gov.eg/en/?p=13760752"
+  ifrs_egypt: &ifrsegypt "https://www.ifrs.org/use-around-the-world/use-of-ifrs-standards-by-jurisdiction/view-jurisdiction/egypt/"
+eas:
+- {id: eas-1, number: 1, title: "Presentation of financial statements", ifrs: "IAS 1", differs: "Same statement set; a single combined statement of comprehensive income is not available, so profit or loss is presented separately; employee profit sharing is treated as an equity distribution rather than an expense.", verified: true, source: *ifrsegypt}
+- {id: eas-2, number: 2, title: "Inventories", ifrs: "IAS 2", differs: "Broadly the same: lower of cost and net realisable value, FIFO or weighted average, no LIFO.", verified: false}
+- {id: eas-4, number: 4, title: "Statement of cash flows", ifrs: "IAS 7", differs: "Broadly aligned; indirect method is the norm.", verified: false}
+- {id: eas-5, number: 5, title: "Accounting policies, changes in accounting estimates and errors", ifrs: "IAS 8", differs: "Aligned in substance.", verified: false, source: *fra636}
+- {id: eas-10, number: 10, title: "Fixed assets (property, plant and equipment)", ifrs: "IAS 16", differs: "The revaluation model was not permitted until January 2023, when the review committee approved it; before that only cost.", verified: true, source: *frastd}
+- {id: eas-13, number: 13, title: "The effects of changes in foreign exchange rates", ifrs: "IAS 21", differs: "Special treatment appendices after the 2016 and 2022 devaluations (decisions 843/1378 of 2022, PM Decisions 1568 and 4706 of 2022) let entities capitalise or defer FX losses; the standard was replaced by PM Decree 636 of 2024 with an IAS 21 aligned text.", verified: false, source: *fra636}
+- {id: eas-14, number: 14, title: "Borrowing costs", ifrs: "IAS 23", differs: "Aligned: capitalise on qualifying assets.", verified: false}
+- {id: eas-15, number: 15, title: "Related party disclosures", ifrs: "IAS 24", differs: "Aligned.", verified: false}
+- {id: eas-17, number: 17, title: "Separate financial statements", ifrs: "IAS 27", differs: "Equity method was not an option in separate statements until the 2024 replacement (reported, unconfirmed); IAS 27 allows cost, IFRS 9 or equity method.", verified: false, source: *fra636}
+- {id: eas-18, number: 18, title: "Investments in associates", ifrs: "IAS 28", differs: "Aligned: equity method.", verified: false}
+- {id: eas-22, number: 22, title: "Earnings per share", ifrs: "IAS 33", differs: "Aligned; disclosure in the statement of profit or loss; employee profit share reduces distributable profit.", verified: false}
+- {id: eas-23, number: 23, title: "Intangible assets", ifrs: "IAS 38", differs: "Revaluation model introduced in the 2023 review; development capitalisation tests as IAS 38.", verified: true, source: *frastd}
+- {id: eas-24, number: 24, title: "Income taxes (deferred tax)", ifrs: "IAS 12", differs: "Aligned balance-sheet liability method; Egyptian rate 22.5 percent standard.", verified: false, source: *fra636}
+- {id: eas-28, number: 28, title: "Provisions, contingent liabilities and contingent assets", ifrs: "IAS 37", differs: "Aligned.", verified: false}
+- {id: eas-29, number: 29, title: "Business combinations", ifrs: "IFRS 3", differs: "Acquisition method; common-control practice varies.", verified: false}
+- {id: eas-30, number: 30, title: "Interim financial reporting", ifrs: "IAS 34", differs: "Aligned.", verified: false}
+- {id: eas-31, number: 31, title: "Impairment of assets", ifrs: "IAS 36", differs: "Aligned; reversals allowed except goodwill.", verified: false}
+- {id: eas-32, number: 32, title: "Non-current assets held for sale and discontinued operations", ifrs: "IFRS 5", differs: "Aligned.", verified: false}
+- {id: eas-34, number: 34, title: "Real estate investment (investment property)", ifrs: "IAS 40", differs: "Fair value model introduced in the 2023 review (decree 2115 of 2023 committee); replaced by PM Decree 636 of 2024.", verified: true, source: *frastd}
+- {id: eas-35, number: 35, title: "Agriculture", ifrs: "IAS 41", differs: "Fruit-tree treatments were moved out of this standard.", verified: true, source: *frastd}
+- {id: eas-36, number: 36, title: "Exploration for and evaluation of mineral resources", ifrs: "IFRS 6", differs: "Revaluation model introduced in 2023 review.", verified: true, source: *frastd}
+- {id: eas-38, number: 38, title: "Employee benefits", ifrs: "IAS 19", differs: "Aligned; statutory end-of-service obligations follow social insurance.", verified: false}
+- {id: eas-41, number: 41, title: "Operating segments", ifrs: "IFRS 8", differs: "Aligned.", verified: false}
+- {id: eas-42, number: 42, title: "Consolidated financial statements", ifrs: "IFRS 10", differs: "Control-based consolidation.", verified: false}
+- {id: eas-43, number: 43, title: "Joint arrangements", ifrs: "IFRS 11", differs: "Aligned.", verified: false}
+- {id: eas-44, number: 44, title: "Disclosure of interests in other entities", ifrs: "IFRS 12", differs: "Aligned.", verified: false}
+- {id: eas-45, number: 45, title: "Fair value measurement", ifrs: "IFRS 13", differs: "Aligned.", verified: false}
+- {id: eas-47, number: 47, title: "Financial instruments", ifrs: "IFRS 9", differs: "Issued 2019 on the IFRS 9 model (ECL, classification, hedge accounting); appendix C added in 2023; effective dates and postponements unconfirmed, so some years sit under the older incurred-loss rules.", verified: false, source: *fradec}
+- {id: eas-48, number: 48, title: "Revenue from contracts with customers", ifrs: "IFRS 15", differs: "Issued 2019 on the five-step model, replacing the older revenue standard; effective date unconfirmed.", verified: false, source: *fradec}
+- {id: eas-49, number: 49, title: "Lease contracts", ifrs: "IFRS 16", differs: "Issued 2019: lessee recognises a right-of-use asset and a lease liability, so EBITDA rises as rent leaves operating costs; before adoption operating lease rent was an expense; effective date and transition unconfirmed.", verified: false, source: *fradec}
+- {id: eas-50, number: 50, title: "Insurance contracts", ifrs: "IFRS 17", differs: "Issued to align with IFRS 17; effective for periods beginning on or after 1 July 2024 per the IFRS profile.", verified: true, source: *ifrsegypt}

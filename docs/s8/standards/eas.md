@@ -105,6 +105,8 @@ Not full IFRS. Lag in standards, some choices removed or added, and temporary sp
 - `diff-eas17-separate-fs` (associates_jvs): recipe `associates_share_strip`
 - `diff-business-combinations` (business_combinations): recipe `associates_share_strip`
 - `diff-provisions-ias37-asc450` (provisions): recipe `eosb_as_debt_like`
+- `diff-eas-fx-relief-comparatives` (fx_devaluation): recipe `devaluation_fx_loss_normalise`
+- `diff-eas49-ebitda-effect` (leases): recipe `ifrs16_to_pre16_ebitda`
 
 **Verified facts**
 - EAS issued 2015, amended 2019 and 2023; EAS not full IFRS; revaluation barred until January 2023: <https://www.ifrs.org/use-around-the-world/use-of-ifrs-standards-by-jurisdiction/view-jurisdiction/egypt/>
