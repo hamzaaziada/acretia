@@ -11,10 +11,10 @@ One row per active claim. Claim a packet before you touch its files, commit the 
 | S5 gate (session D) | gate-writer worker | main | 2026-11-17 | scripts/verify_s5.py |
 | S5 docs (session D) | Boss | main | 2026-11-16 | docs/s5/* |
 | S1 gate | Boss | claude/dreamy-ramanujan-k8p2xt | 2026-11-16 | scripts/verify_s1.py |
-| FP-S3-a renderer native shapes/connectors + chart plot layout | session B worker | claude/upbeat-mccarthy-viqjuo | 2026-11-16 | om/deck/render.py, om/deck/model.py, tests/test_deck_render.py |
-| FP-S3-b archetype keys, sourced examples, derived provenance, citation markers, positive token | session B worker | claude/upbeat-mccarthy-viqjuo | 2026-11-16 | om/deck/archetypes/*.py, om/deck/provenance.py, om/deck/theme.py, tests/test_deck_arch_*.py, tests/test_deck_engine.py |
-| S3.12 revisions: per-slide edit, annotations, versions, rollback | session B worker | claude/upbeat-mccarthy-viqjuo | 2026-11-16 | om/deck/revise.py, om/deck/versions.py, tests/test_deck_revise.py |
 | S3 gate script (independent writer) | session B gate worker | claude/upbeat-mccarthy-viqjuo | 2026-11-16 | scripts/verify_s3.py |
+| S3.10 corpus, reliability run, eval, scorecard, samples | session B worker | claude/upbeat-mccarthy-viqjuo | 2026-11-17 | evals/decks/**, om/deck/eval.py, scripts/eval_s3.py, scorecard.csv (S3 rows only), docs/samples/s3/**, tests/test_deck_eval.py |
+| FP-S3-c takeaway provenance, engine returns solved slides, revise without spy | session B worker | claude/upbeat-mccarthy-viqjuo | 2026-11-17 | om/deck/archetypes/*.py, om/deck/provenance.py, om/deck/engine.py, om/deck/revise.py, tests/test_deck_arch_*.py, tests/test_deck_engine.py, tests/test_deck_revise.py |
+| FP-S3-d procedural art polish + SVG designer quality | session B worker | claude/upbeat-mccarthy-viqjuo | 2026-11-17 | om/deck/visuals/procedural.py, om/deck/visuals/library.py, tests/test_deck_visuals.py |
 | S3 gate + docs | session B Boss | claude/upbeat-mccarthy-viqjuo | 2026-11-16 | docs/s3/*, docs/deck-engine.md, PROGRESS.md (S3 row only) |
 | S8.1 standards KB (session E) | worker | main | 2026-11-16 | om/intl/standards/**, docs/s8/standards/**, scripts/gen_standards_docs.py, tests/test_intl_standards.py |
 | S8.3a numbers + OCR service + synthetic fixtures (session E) | worker | main | 2026-11-16 | om/intl/numparse.py, om/intl/ocr.py, scripts/make_intl_fixtures.py, tests/fixtures/intl/**, tests/test_intl_numparse.py, tests/test_intl_ocr.py, license-and-repo-ledger.csv (S8 rows only) |
@@ -84,3 +84,4 @@ One row per active claim. Claim a packet before you touch its files, commit the 
 - 2026-11-16: session E: S8.2, S8.3a, S8.4, S8.6a landed (S8.4/S8.6a/S8.2 rows released; S8.3a row kept for the Eastern-digit fix). S8.3b claimed.
 - 2026-11-16: session A: FP-CI1 landed.
 - 2026-11-17: S5.5b verified on main and released; S5.5c, S5.6 claimed (session D).
+- 2026-11-17: session B: FP-S3-a, FP-S3-b, S3.12 merged and released; claimed S3.10 corpus, FP-S3-c, FP-S3-d.
