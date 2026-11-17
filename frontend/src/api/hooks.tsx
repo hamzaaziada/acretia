@@ -1,6 +1,6 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useReducer, useRef, useState } from 'react';
 import type { ReactNode } from 'react';
-import { api, ApiError, setCsrfToken } from './client';
+import { api, ApiError, networkError, setCsrfToken } from './client';
 import { openStream } from './sse';
 import type { StreamState } from './sse';
 import { JOB_EVENT_TYPES, TERMINAL_JOB } from './types';
@@ -9,6 +9,7 @@ import type {
   Deal,
   DeliverableData,
   Job,
+  JobEnvelope,
   JobEvent,
   JobStatus,
   Me,
@@ -16,6 +17,7 @@ import type {
   PlanStep,
   SourceData,
   StepState,
+  TimeSaved,
 } from './types';
 
 /* ---------- generic resource hook ---------- */
@@ -28,7 +30,7 @@ export interface Resource<T> {
 }
 
 export function toApiError(e: unknown): ApiError {
-  return e instanceof ApiError ? e : new ApiError(0, 'network_error', '', null);
+  return e instanceof ApiError ? e : networkError();
 }
 
 export function useResource<T>(fetcher: (signal: AbortSignal) => Promise<T>, deps: ReadonlyArray<unknown>): Resource<T> {
@@ -157,10 +159,14 @@ export interface RunStepState {
   detail?: string;
   started_at?: string | null;
   finished_at?: string | null;
+  /** Per-step wall seconds as measured by the server (`step` events). */
+  seconds?: number;
   cost_usd?: number;
   tokens?: number;
   tool?: string;
   engine?: string;
+  error?: string | null;
+  hint?: string | null;
 }
 
 export interface RunState {
@@ -179,6 +185,10 @@ export interface RunState {
   hint: string | null;
   lastSeq: number;
   firstAt: string | null;
+  /** The deal the run works in, once known (given at submit, or created by the run; arrives in `deliverable` and final `status` events). */
+  dealId: string | null;
+  timeSaved: TimeSaved | null;
+  wallSeconds: number | null;
 }
 
 const EMPTY_RUN: RunState = {
@@ -197,6 +207,9 @@ const EMPTY_RUN: RunState = {
   hint: null,
   lastSeq: 0,
   firstAt: null,
+  dealId: null,
+  timeSaved: null,
+  wallSeconds: null,
 };
 
 type RunAction = { kind: 'job'; job: Job } | { kind: 'event'; ev: JobEvent } | { kind: 'clear-approval' } | { kind: 'reset' };
@@ -215,6 +228,10 @@ export function foldRun(state: RunState, action: RunAction): RunState {
         status: state.lastSeq > 0 ? state.status : j.status,
         cost: state.lastSeq > 0 ? state.cost : { tokens: j.tokens, cost_usd: j.cost_usd },
         error: state.error ?? j.error,
+        hint: state.hint ?? j.hint ?? null,
+        dealId: j.deal_id ?? state.dealId,
+        timeSaved: j.time_saved ?? state.timeSaved,
+        wallSeconds: j.wall_seconds ?? state.wallSeconds,
       };
     }
     case 'event': {
@@ -243,10 +260,13 @@ export function foldRun(state: RunState, action: RunAction): RunState {
             detail: ev.data.detail ?? prev?.detail,
             started_at: ev.data.started_at ?? prev?.started_at,
             finished_at: ev.data.finished_at ?? prev?.finished_at,
+            seconds: ev.data.seconds ?? prev?.seconds,
             cost_usd: ev.data.cost_usd ?? prev?.cost_usd,
             tokens: ev.data.tokens ?? prev?.tokens,
             tool: prev?.tool,
-            engine: prev?.engine,
+            engine: ev.data.engine ?? prev?.engine,
+            error: ev.data.error ?? prev?.error,
+            hint: ev.data.hint ?? prev?.hint,
           };
           const order = base.order.includes(ev.data.id) ? base.order : [...base.order, ev.data.id];
           return { ...base, steps: { ...base.steps, [ev.data.id]: merged }, order };
@@ -258,7 +278,9 @@ export function foldRun(state: RunState, action: RunAction): RunState {
         case 'approval':
           return { ...base, approval: ev.data, status: 'awaiting_approval' };
         case 'deliverable':
-          return base.deliverables.some((d) => d.name === ev.data.name && d.version === ev.data.version) ? base : { ...base, deliverables: [...base.deliverables, ev.data] };
+          return base.deliverables.some((d) => d.name === ev.data.name && d.version === ev.data.version)
+            ? base
+            : { ...base, deliverables: [...base.deliverables, ev.data], dealId: base.dealId ?? ev.data.deal_id };
         case 'cost':
           return { ...base, cost: ev.data };
         case 'status':
@@ -267,6 +289,9 @@ export function foldRun(state: RunState, action: RunAction): RunState {
             status: ev.data.status,
             error: ev.data.error ?? base.error,
             hint: ev.data.hint ?? base.hint,
+            dealId: ev.data.deal_id ?? base.dealId,
+            timeSaved: ev.data.time_saved ?? base.timeSaved,
+            wallSeconds: ev.data.wall_seconds ?? base.wallSeconds,
             approval: ev.data.status === 'awaiting_approval' ? base.approval : null,
           };
       }
@@ -297,7 +322,8 @@ export function useJob(jobId: string | undefined): UseJob {
   const [connection, setConnection] = useState<StreamState>('connecting');
   const [now, setNow] = useState(() => Date.now());
   const [epoch, setEpoch] = useState(0);
-  const job = useResource<Job | null>((signal) => (jobId ? api.get<Job>(`/jobs/${jobId}`, { signal }) : Promise.resolve(null)), [jobId]);
+  // `GET /jobs/{id}` answers `{ job }` (SPEC section 4); the hook hands out the bare job.
+  const job = useResource<Job | null>(async (signal) => (jobId ? (await api.get<JobEnvelope>(`/jobs/${jobId}`, { signal })).job : null), [jobId]);
 
   useEffect(() => {
     dispatch({ kind: 'reset' });

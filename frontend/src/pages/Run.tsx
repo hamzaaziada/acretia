@@ -26,7 +26,7 @@ import {
   cx,
 } from '../ds';
 import type { StepItem } from '../ds';
-import { api, ApiError } from '../api/client';
+import { api } from '../api/client';
 import { useJob } from '../api/hooks';
 import type { RunState } from '../api/hooks';
 import { TERMINAL_JOB } from '../api/types';
@@ -34,7 +34,7 @@ import type { DeliverableData } from '../api/types';
 import { useI18n } from '../i18n';
 import { CitationChip } from '../features/citations';
 import { ApprovalCard } from '../features/Approvals';
-import { errorToast, statusTone, viewerPath } from '../app/lib';
+import { errorToast, savedEstimate, statusTone, viewerPath } from '../app/lib';
 
 export default function Run() {
   const { jobId } = useParams();
@@ -59,6 +59,7 @@ export default function Run() {
   if (run.error?.status === 404) {
     return (
       <div className="acr-page">
+        <h1 className="acr-sr-only">{t('run.notFound.title')}</h1>
         <EmptyState title={t('run.notFound.title')} body={t('run.notFound.body')} action={{ label: t('nav.home'), onClick: () => nav('/') }} />
       </div>
     );
@@ -66,6 +67,7 @@ export default function Run() {
   if (run.loading && !job) {
     return (
       <div className="acr-page" aria-busy="true">
+        <h1 className="acr-sr-only">{t('common.loading')}</h1>
         <Skeleton width={320} height={22} />
         <div className="acr-page__gap" />
         <SkeletonRows rows={6} label={t('common.loading')} />
@@ -99,6 +101,7 @@ export default function Run() {
 
   const stepSeconds = (id: string): number | null => {
     const s = state.steps[id];
+    if (s?.seconds != null && s.status !== 'running') return s.seconds;
     if (!s?.started_at) return null;
     const end = s.finished_at ? new Date(s.finished_at).getTime() : s.status === 'running' ? now : null;
     return end ? Math.max(0, (end - new Date(s.started_at).getTime()) / 1000) : null;
@@ -121,7 +124,8 @@ export default function Run() {
   });
   const orphanApproval = state.approval && !state.order.includes(state.approval.step_id);
 
-  const dealId = job?.deal_id ?? null;
+  // The deal id is known once the job has one (given, or created by the run). Never build a deal route without it.
+  const dealId = job?.deal_id ?? state.dealId ?? null;
   const title = job?.prompt ?? t('run.title');
   return (
     <div className="acr-page acr-run" data-testid="run-view" data-status={status} data-id={jobId}>
@@ -130,7 +134,7 @@ export default function Run() {
           <nav aria-label={t('common.breadcrumbs')} data-testid="breadcrumbs" className="acr-crumbs">
             <Link to="/">{t('nav.home')}</Link>
             <span aria-hidden="true">/</span>
-            {dealId ? <Link to={`/deals/${dealId}`}>{job?.deal_name ?? dealId}</Link> : <span>{t('run.noDeal')}</span>}
+            {dealId ? <Link to={`/deals/${dealId}`}>{job?.deal_name ?? t('run.deal')}</Link> : <span>{t('run.noDeal')}</span>}
             <span aria-hidden="true">/</span>
             <span aria-current="page">{t('run.crumb')}</span>
           </nav>
@@ -219,7 +223,7 @@ export default function Run() {
           <CostPanel state={state} />
           <TimeSavedPanel run={run.state} />
           <SourcesPanel state={state} dealId={dealId} jobId={jobId ?? ''} />
-          <DeliverablesPanel items={state.deliverables} />
+          <DeliverablesPanel items={state.deliverables} done={status === 'done'} />
           <FeedbackPanel jobId={jobId ?? ''} />
         </aside>
       </div>
@@ -272,25 +276,26 @@ function CostPanel({ state }: { state: RunState }) {
 
 function TimeSavedPanel({ run }: { run: RunState }) {
   const { t, fmt } = useI18n();
-  const ts = run.job?.time_saved;
-  const h = ts?.t_h_minutes;
-  const tip = t('run.saved.tip', { source: h?.source ?? ts?.baseline ?? t('run.saved.noSource') });
+  const ts = run.timeSaved ?? run.job?.time_saved ?? null;
+  const est = savedEstimate(ts);
+  const tip = t('run.saved.tip', { source: est?.source || ts?.baseline || t('run.saved.noSource') });
   let body: React.ReactNode;
-  if (!ts || (!h && !ts.baseline)) {
+  if (!ts) {
     body = <p className="acr-muted">{TERMINAL_JOB.includes(run.status) ? t('run.saved.none') : t('run.saved.pending')}</p>;
-  } else if (!h || ts.t_a_minutes == null) {
+  } else if (!est) {
     body = <p className="acr-muted">{ts.baseline ?? t('run.saved.noBaseline')}</p>;
   } else {
-    const saved = Math.max(0, h.mid - ts.t_a_minutes);
     body = (
       <>
-        <div className="acr-saved__big acr-num">{t('run.savedMin', { n: fmt.integer(Math.round(saved)) })}</div>
+        <div className="acr-saved__big acr-num" data-testid="run-time-saved-value">
+          {t('run.savedMin', { n: fmt.integer(Math.round(est.saved)) })}
+        </div>
         <div className="acr-muted acr-num">
-          {t('run.saved.range', { low: fmt.integer(Math.round(h.low)), high: fmt.integer(Math.round(h.high)) })}
-          {ts.pct != null && <> · {fmt.percent(ts.pct > 1 ? ts.pct / 100 : ts.pct, 0)}</>}
+          {t('run.saved.range', { low: fmt.integer(Math.round(est.low)), high: fmt.integer(Math.round(est.high)) })}
+          {est.pct != null && <> · {fmt.percent(est.pct, 0)}</>}
         </div>
         <div className="acr-saved__basis">
-          {t('run.saved.basis')}: <span className="acr-faint">{h.source}</span>
+          {t('run.saved.basis')}: <span className="acr-faint">{est.source}</span>
         </div>
       </>
     );
@@ -343,19 +348,19 @@ function SourcesPanel({ state, dealId, jobId }: { state: RunState; dealId: strin
   );
 }
 
-function DeliverablesPanel({ items }: { items: DeliverableData[] }) {
+function DeliverablesPanel({ items, done }: { items: DeliverableData[]; done: boolean }) {
   const { t } = useI18n();
   return (
     <Panel title={t('run.deliverables')}>
       {items.length === 0 ? (
-        <p className="acr-muted">{t('run.deliverables.empty')}</p>
+        <p className="acr-muted">{done ? t('run.deliverables.none') : t('run.deliverables.empty')}</p>
       ) : (
         <ul className="acr-list">
           {items.map((d) => {
             const v = viewerPath(d.deal_id, d);
             const dl = d.url || `/api/v1/deals/${d.deal_id}/deliverables/${encodeURIComponent(d.name)}/versions/${d.version}/download`;
             return (
-              <li key={`${d.name}-${d.version}`} className="acr-list__row">
+              <li key={`${d.name}-${d.version}`} className="acr-list__row" data-testid="deliverable-row-run" data-id={`${d.deal_id}/${d.name}`}>
                 <div className="acr-list__main">
                   <span className="acr-list__title acr-truncate">{d.name}</span>
                   <span className="acr-list__sub">
@@ -372,7 +377,7 @@ function DeliverablesPanel({ items }: { items: DeliverableData[] }) {
                   </a>
                 )}
                 {v && (
-                  <a className="acr-linkbtn" href={dl} download aria-label={`${t('common.download')} ${d.name}`}>
+                  <a className="acr-linkbtn" href={dl} download data-testid="deliverable-download" aria-label={`${t('common.download')} ${d.name}`}>
                     <IconDownload size={13} />
                   </a>
                 )}
@@ -394,11 +399,11 @@ function FeedbackPanel({ jobId }: { jobId: string }) {
 
   async function post(r: 'up' | 'down', c?: string): Promise<boolean> {
     try {
+      // POST /jobs/{id}/feedback {rating: 'up'|'down', comment?} (parity item 69); one row per (run, user), posting again replaces it.
       await api.post(`/jobs/${jobId}/feedback`, { rating: r, comment: c || undefined });
       return true;
     } catch (e) {
-      if (e instanceof ApiError && (e.status === 404 || e.status === 405)) toast.push({ kind: 'info', title: t('feedback.unavailable'), hint: t('feedback.unavailableHint') });
-      else toast.push(errorToast(e, t('feedback.failed')));
+      toast.push(errorToast(e, t('feedback.failed')));
       return false;
     }
   }

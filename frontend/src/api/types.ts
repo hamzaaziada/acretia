@@ -142,6 +142,24 @@ export interface PlanStep {
   title: string;
   tool?: string;
   engine?: string;
+  task?: string;
+}
+
+/** One step as `GET /jobs/{id}` reports it (checkpointed in steps_json). */
+export interface JobStep {
+  id: string;
+  task?: string;
+  title: string;
+  engine?: string;
+  status: 'pending' | StepState;
+  detail?: string | null;
+  started_at?: string | null;
+  finished_at?: string | null;
+  seconds?: number | null;
+  tokens?: number | null;
+  cost_usd?: number | null;
+  error?: string | null;
+  hint?: string | null;
 }
 
 export interface Job {
@@ -150,6 +168,7 @@ export interface Job {
   user_id?: string | null;
   agent_id: string | null;
   agent_name?: string | null;
+  /** Resolved name of the deal (set once the run has created or been given one). */
   deal_name?: string | null;
   kind: string;
   prompt: string;
@@ -164,16 +183,36 @@ export interface Job {
   time_saved?: TimeSaved | null;
   /** Wall-clock seconds, when the server reports it. */
   wall_seconds?: number | null;
+  hint?: string | null;
+  resume_from?: number;
+  /** Detail view only (`GET /jobs/{id}` and the POST responses). */
+  plan?: { steps: PlanStep[]; estimate?: { cost_usd: number; seconds: number } } | null;
+  steps?: JobStep[];
+  deliverables?: Array<{ deal_id: string; name: string; version: number; kind: DeliverableKind }>;
+  pending_approval?: { step_id: string; kind: string } | null;
+  feedback?: { up: number; down: number };
+}
+
+/** Every job response is wrapped: `{ job }` (SPEC section 4). */
+export interface JobEnvelope {
+  job: Job;
 }
 
 /** Estimate (D-032). Never human-validated until `status` says so. */
 export interface TimeSaved {
-  task_id: string;
-  t_h_minutes?: { low: number; mid: number; high: number; source: string } | null;
+  /** Single-task runs. */
+  task_id?: string;
+  /** Multi-task runs (chains): one `TimeSaved` per task. */
+  task_ids?: string[];
+  per_task?: TimeSaved[];
+  basis?: string;
+  t_h_minutes?: { low: number; mid: number; high: number; source: string; confidence?: string } | null;
   t_a_minutes?: number | null;
-  pct?: number | null;
+  /** Fraction of the human baseline saved, at the low / mid / high baseline. */
+  pct?: { low: number; mid: number; high: number } | number | null;
   status?: string;
   baseline?: string;
+  error?: string;
 }
 
 export interface Citation {
@@ -216,7 +255,7 @@ export interface EventBase {
 }
 export interface PlanEvent extends EventBase {
   type: 'plan';
-  data: { steps: PlanStep[]; estimate?: { cost_usd: number; seconds: number } };
+  data: { steps: PlanStep[]; estimate?: { cost_usd: number; seconds: number; tokens?: number }; method?: string; tasks?: Array<{ task_id: string }> };
 }
 export interface StepEvent extends EventBase {
   type: 'step';
@@ -229,6 +268,11 @@ export interface StepEvent extends EventBase {
     finished_at?: string | null;
     cost_usd?: number;
     tokens?: number;
+    seconds?: number;
+    engine?: string;
+    error?: string | null;
+    hint?: string | null;
+    notes?: unknown;
   };
 }
 export interface SourceData {
@@ -239,6 +283,8 @@ export interface SourceData {
   url?: string | null;
   as_of?: string | null;
   doc_id?: string | null;
+  kind?: string | null;
+  xbrl_concept?: string | null;
 }
 export interface SourceEvent extends EventBase {
   type: 'source';
@@ -250,9 +296,10 @@ export interface LogEvent extends EventBase {
 }
 export interface ApprovalPayload {
   /** ghost_deck: slide titles to approve or edit. */
-  titles?: string[];
-  /** source_review: sources the run proposes to read. */
-  sources?: Array<{ id?: string; name?: string; doc_name?: string; kind?: string; detail?: string }>;
+  titles?: Array<{ id: string; title: string; archetype_hint?: string }>;
+  /** sources (step source_review): sources the run proposes to read. */
+  sources?: Array<{ id: string; label: string; kind?: string; detail?: string; available?: boolean; task?: string }>;
+  note?: string;
   slides?: Array<{ title: string; bullets?: string[] }>;
   /** assumptions: key/value rows. */
   assumptions?: Array<{ key: string; label?: string; value: string | number }>;
@@ -260,7 +307,8 @@ export interface ApprovalPayload {
 }
 export interface ApprovalData {
   step_id: string;
-  kind: 'ghost_deck' | 'assumptions' | 'source_review';
+  /** `sources` is the pre-run source review (step_id `source_review`). */
+  kind: 'ghost_deck' | 'assumptions' | 'sources';
   payload: ApprovalPayload;
 }
 export interface ApprovalEvent extends EventBase {
@@ -284,12 +332,38 @@ export interface CostEvent extends EventBase {
 }
 export interface StatusEvent extends EventBase {
   type: 'status';
-  data: { status: JobStatus; error?: string | null; hint?: string | null };
+  data: {
+    status: JobStatus;
+    error?: string | null;
+    hint?: string | null;
+    step_id?: string;
+    deal_id?: string | null;
+    wall_seconds?: number;
+    time_saved?: TimeSaved | null;
+    failed_steps?: string[];
+  };
 }
 
 export type JobEvent = PlanEvent | StepEvent | SourceEvent | LogEvent | ApprovalEvent | DeliverableEvent | CostEvent | StatusEvent;
 export type JobEventType = JobEvent['type'];
 export const JOB_EVENT_TYPES: JobEventType[] = ['plan', 'step', 'source', 'log', 'approval', 'deliverable', 'cost', 'status'];
+
+/** `GET /api/v1/library` row: latest version of one deliverable across the org's deals. */
+export interface LibraryRow {
+  deal_id: string;
+  deal_name: string;
+  name: string;
+  kind: DeliverableKind;
+  latest_version: number;
+  versions: number;
+  size?: number;
+  sha256?: string;
+  note?: string | null;
+  updated_at: string;
+}
+export interface LibraryPage extends Page<LibraryRow> {
+  kinds?: string[];
+}
 
 export interface Notification {
   id: string;
@@ -316,6 +390,9 @@ export interface Agent {
   task_id?: string;
   /** Admins can disable an agent org-wide (item 58). Absent means enabled. */
   enabled?: boolean;
+  pinned?: boolean;
+  prompt?: string;
+  prompts?: string[];
   created_by?: string | null;
   owner_name?: string | null;
 }

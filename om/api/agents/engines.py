@@ -800,6 +800,12 @@ def approve_outline(cx):
         titles = {t["id"]: t["title"] for t in titles if isinstance(t, dict) and t.get("id") and t.get("title")}
     g = dict(gd["ghost"])
     g["slides"] = [{**s, "title": str(titles.get(s["id"], s["title"]))[:200]} for s in g["slides"]]
+    order = (ap or {}).get("order")                  # optional: ids of the slides to keep, in the approved order (reorder / remove)
+    if isinstance(order, list) and order:
+        by_id = {s["id"]: s for s in g["slides"]}
+        kept = [by_id[i] for i in dict.fromkeys(order) if isinstance(i, str) and i in by_id]
+        if kept:
+            g["slides"] = kept
     edited = [s["id"] for s in gd["ghost"]["slides"] if titles.get(s["id"]) and titles[s["id"]] != s["title"]]
     return {"ghost": g, "approved_by": cx.user_id, "edited": edited, "detail": f"approved by {cx.user_id}" + (f", edited {len(edited)} titles" if edited else "")}
 

@@ -22,6 +22,7 @@ function PageFallback() {
   const { t } = useI18n();
   return (
     <div className="acr-page" aria-busy="true">
+      <h1 className="acr-sr-only">{t('common.loading')}</h1>
       <Skeleton width={220} height={22} />
       <div className="acr-page__gap" />
       <SkeletonRows rows={6} label={t('common.loading')} />
@@ -38,6 +39,7 @@ function RequireAuth() {
       <div className="acr-boot" role="status" aria-label={t('common.loading')}>
         <div className="acr-boot__side" />
         <div className="acr-boot__main">
+          <h1 className="acr-sr-only">{t('common.loading')}</h1>
           <Skeleton width={260} height={22} />
           <div className="acr-page__gap" />
           <SkeletonRows rows={5} label={t('common.loading')} />

@@ -32,12 +32,14 @@ export default function Deal() {
   if (res.error?.status === 404)
     return (
       <div className="acr-page">
+        <h1 className="acr-sr-only">{t('deal.notFound.title')}</h1>
         <EmptyState title={t('deal.notFound.title')} body={t('deal.notFound.body')} action={{ label: t('nav.deals'), onClick: () => nav('/deals') }} />
       </div>
     );
   if (res.loading && !deal)
     return (
       <div className="acr-page" aria-busy="true">
+        <h1 className="acr-sr-only">{t('common.loading')}</h1>
         <Skeleton width={300} height={22} />
         <div className="acr-page__gap" />
         <SkeletonRows rows={6} label={t('common.loading')} />
@@ -46,6 +48,7 @@ export default function Deal() {
   if (!deal)
     return (
       <div className="acr-page">
+        <h1 className="acr-sr-only">{t('deal.loadFailed')}</h1>
         <EmptyState title={t('deal.loadFailed')} body={res.error?.hint ?? res.error?.message} action={{ label: t('common.retry'), onClick: res.reload }} />
       </div>
     );

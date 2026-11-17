@@ -35,12 +35,13 @@ import {
   useToast,
 } from '../ds';
 import type { PaletteGroup } from '../ds';
+import { setFallbackResolver } from '../api/client';
 import { useMe, OrgEventsProvider, useOrgEvents, items, useDeals, useResource } from '../api/hooks';
 import { api } from '../api/client';
 import type { Notification, Page, Deal } from '../api/types';
 import { useI18n } from '../i18n';
 import { useTheme } from './theme';
-import { createJob, errorToast, recentPrompts, rememberPrompt, useAgents, useAllDeliverables, viewerPath } from './lib';
+import { createJob, errorToast, recentPrompts, rememberPrompt, useAgents, useOrgLibrary, viewerPath } from './lib';
 import type { Agent } from '../api/types';
 
 interface ShellApi {
@@ -93,6 +94,14 @@ function ShellInner() {
   const goPending = useRef<number | null>(null);
 
   useEffect(() => setNavOpen(false), [loc.pathname]);
+
+  // Every error toast carries message + next step, even when the server sent none (e.g. an unknown-route 404).
+  useEffect(() => {
+    setFallbackResolver((status) => {
+      const k = status === 0 ? 'net' : [401, 403, 404, 409, 429].includes(status) ? String(status) : status >= 500 ? '5xx' : 'other';
+      return { message: t(`error.${k}.message`), hint: t(`error.${k}.hint`) };
+    });
+  }, [t]);
 
   const api_ = useMemo<ShellApi>(
     () => ({
@@ -519,7 +528,7 @@ function Palette({ prefill, onClose }: { prefill: string; onClose: () => void })
   const { me } = useMe();
   const deals = useDeals();
   const agents = useAgents();
-  const lib = useAllDeliverables(deals.data);
+  const lib = useOrgLibrary();
   const [value, setValue] = useState(prefill);
   const [dealId, setDealId] = useState('');
   const [agent, setAgent] = useState<Agent | null>(null);
