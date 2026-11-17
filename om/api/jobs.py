@@ -31,6 +31,10 @@ CREATE INDEX IF NOT EXISTS jobs_org ON jobs(org_id, kind, created_at);
 CREATE INDEX IF NOT EXISTS jobs_deal ON jobs(org_id, deal_id);
 CREATE TABLE IF NOT EXISTS job_events(
   job_id TEXT NOT NULL, seq INTEGER NOT NULL, at TEXT NOT NULL, type TEXT NOT NULL, data_json TEXT NOT NULL, PRIMARY KEY(job_id, seq));
+CREATE TABLE IF NOT EXISTS job_feedback(
+  id TEXT PRIMARY KEY, org_id TEXT NOT NULL, job_id TEXT NOT NULL, user_id TEXT NOT NULL, rating TEXT NOT NULL CHECK(rating IN ('up','down')),
+  comment TEXT, created_at TEXT NOT NULL, updated_at TEXT NOT NULL, UNIQUE(job_id, user_id));
+CREATE INDEX IF NOT EXISTS job_feedback_org ON job_feedback(org_id, job_id);
 """
 
 TERMINAL = ("done", "failed", "cancelled")
@@ -124,14 +128,15 @@ class JobService:
         return [{"seq": r["seq"], "at": r["at"], "type": r["type"], "data": _l(r["data_json"], {})} for r in rows]
 
     def stream(self, job_id: str, last_id: int = 0, wait: float = 15.0):
-        """Generator of (event, data) pairs: replay after `last_id`, then tail until the terminal status event."""
+        """Generator of (seq, event, data) triples (the SSE `id:` is the per-job seq, so EventSource resends Last-Event-ID on reconnect);
+        replays after `last_id`, then tails until the terminal status event. Keep-alive pings are (event, data) pairs without an id."""
         def gen():
             seq = last_id
             while not self._stop.is_set():
                 evs = self.events_after(job_id, seq)
                 for e in evs:
                     seq = e["seq"]
-                    yield e["type"], {**e["data"], "seq": e["seq"], "at": e["at"]}
+                    yield e["seq"], e["type"], {**e["data"], "seq": e["seq"], "at": e["at"]}
                     if e["type"] == "status" and e["data"].get("status") in TERMINAL:
                         return
                 if evs:
@@ -188,7 +193,22 @@ class JobService:
 
     def view(self, r, detail: bool = True) -> dict:
         steps = _l(r["steps_json"], []) or []
-        v = {"id": r["id"], "status": r["status"], "prompt": r["prompt"], "deal_id": r["deal_id"], "agent_id": r["agent_id"], "source": r["source"],
+        ins = _l(r["inputs_json"], {}) or {}
+        plan0 = _l(r["plan_json"])
+        agent_name = (ins.get("_agent") or {}).get("name")
+        if not agent_name and plan0 and plan0.get("tasks"):
+            try:
+                from .agents import catalogue as _cat
+                agent_name = _cat.CATALOGUE[plan0["tasks"][0]["task_id"]]["name"]
+            except Exception:                               # noqa: BLE001
+                agent_name = None
+        deal_name = None
+        if r["deal_id"]:
+            try:
+                deal_name = self.state.deal_store(self._db(), r["org_id"]).get(r["deal_id"]).name
+            except Exception:                               # noqa: BLE001
+                deal_name = None
+        v = {"id": r["id"], "kind": "run", "agent_name": agent_name, "deal_name": deal_name, "status": r["status"], "prompt": r["prompt"], "deal_id": r["deal_id"], "agent_id": r["agent_id"], "source": r["source"],
              "created_at": r["created_at"], "started_at": r["started_at"], "finished_at": r["finished_at"], "tokens": r["tokens"], "cost_usd": round(r["cost_usd"], 6),
              "wall_seconds": round(r["wall_seconds"], 3), "error": r["error"], "hint": r["hint"], "time_saved": _l(r["time_saved_json"]),
              "resume_from": r["resume_from"], "user_id": r["user_id"]}
@@ -198,8 +218,32 @@ class JobService:
             v["steps"] = [{k: s.get(k) for k in ("id", "task", "title", "engine", "status", "detail", "started_at", "finished_at", "seconds", "tokens",
                                                  "cost_usd", "error", "hint", "notes")} for s in steps]
             v["deliverables"] = [d for s in steps for d in ((s.get("output") or {}).get("deliverables") or [])]
-            v["pending_approval"] = (_l(r["inputs_json"], {}) or {}).get("_pending")
+            v["pending_approval"] = ins.get("_pending")
+            v["feedback"] = self._feedback_summary(r["id"])
         return v
+
+    def _feedback_summary(self, job_id: str) -> dict:
+        rows = self._q("SELECT user_id, rating, comment FROM job_feedback WHERE job_id=?", (job_id,))
+        return {"up": sum(1 for x in rows if x["rating"] == "up"), "down": sum(1 for x in rows if x["rating"] == "down")}
+
+    def feedback(self, org_id: str, user_id: str, job_id: str, rating, comment) -> dict:
+        """Parity item 69: thumbs up/down plus an optional comment on a run. One row per (job, user); posting again replaces it."""
+        self.get(org_id, job_id)                            # 404 across orgs
+        if rating not in ("up", "down"):
+            raise ApiError(400, "bad_rating", "Rating must be 'up' or 'down'.", "Send {\"rating\": \"up\", \"comment\": \"optional\"}.")
+        if comment is not None and not isinstance(comment, str):
+            raise ApiError(400, "bad_comment", "The comment must be text.", "Send comment as a string of up to 2,000 characters.")
+        comment = (comment or "").strip()[:2000] or None
+        t = now()
+        self._x("INSERT INTO job_feedback(id, org_id, job_id, user_id, rating, comment, created_at, updated_at) VALUES(?,?,?,?,?,?,?,?) "
+                "ON CONFLICT(job_id, user_id) DO UPDATE SET rating=excluded.rating, comment=COALESCE(excluded.comment, job_feedback.comment), updated_at=excluded.updated_at",
+                (new_id("fb"), org_id, job_id, user_id, rating, comment, t, t))
+        try:
+            self.state.audit(self._db(), org_id, user_id, "job.feedback", job_id, {"rating": rating, "has_comment": bool(comment)})
+        except Exception:                                   # noqa: BLE001
+            pass
+        row = self._q("SELECT rating, comment, updated_at FROM job_feedback WHERE job_id=? AND user_id=?", (job_id, user_id))[0]
+        return {"job_id": job_id, "rating": row["rating"], "comment": row["comment"], "updated_at": row["updated_at"], **self._feedback_summary(job_id)}
 
     # ------------------------------------------------------------------ API operations
     def submit(self, org_id: str, user_id: str, prompt: str, deal_id: str | None = None, agent_id: str | None = None, inputs: dict | None = None,
@@ -495,7 +539,7 @@ class JobService:
         r = self._row(job_id)
         ts = self._time_saved(r, plan)
         self._x("UPDATE jobs SET time_saved_json=? WHERE id=?", (_j(ts), job_id))
-        self._finish(job_id, "done", extra={"wall_seconds": round(r["wall_seconds"], 3), "time_saved": ts})
+        self._finish(job_id, "done", extra={"wall_seconds": round(r["wall_seconds"], 3), "time_saved": ts, "deal_id": r["deal_id"]})
 
     def _time_saved(self, r, plan: dict) -> dict:
         from eval.tsb import baselines
@@ -725,7 +769,21 @@ def _approve(ctx):
         raise ApiError(400, "missing_step", "Say which step you are approving.", "Send {\"step\": \"<step_id>\", \"payload\": {...}}; the step id is in the approval event.")
     if b.get("payload") is not None and not isinstance(b["payload"], dict):
         raise ApiError(400, "bad_payload", "payload must be an object.", "Send e.g. {\"titles\": {\"s2\": \"New title\"}}.")
-    return {"job": svc().approve(ctx.org_id, ctx.params["job_id"], b["step"], b.get("payload"), ctx.user["id"])}
+    pl = b.get("payload")
+    if b["step"] == "source_review" and pl is not None:
+        # Source review approval body (SPEC section 5, kind "sources"): {"step": "source_review", "payload": {"selected": [<source id>...], "skip_next_time": bool}}.
+        # `selected` ids come from approval.payload.sources[].id; omitted means "all of them".
+        if "selected" in pl and not (isinstance(pl["selected"], list) and all(isinstance(x, str) for x in pl["selected"])):
+            raise ApiError(400, "bad_payload", "selected must be a list of source ids.", "Send {\"selected\": [\"<id from the approval event>\"], \"skip_next_time\": false}.")
+        if "skip_next_time" in pl and not isinstance(pl["skip_next_time"], bool):
+            raise ApiError(400, "bad_payload", "skip_next_time must be true or false.", "Send {\"skip_next_time\": false}.")
+    return {"job": svc().approve(ctx.org_id, ctx.params["job_id"], b["step"], pl, ctx.user["id"])}
+
+
+def _feedback(ctx):
+    ctx.require("viewer")                                   # every role may rate a run it can see
+    b = _body(ctx)
+    return 201, {"feedback": svc().feedback(ctx.org_id, ctx.user["id"], ctx.params["job_id"], b.get("rating"), b.get("comment"))}
 
 
 def _sched_create(ctx):
@@ -760,6 +818,7 @@ ROUTES = [
     Route("POST", "/api/v1/jobs/{job_id}/cancel", _cancel, role="member"),
     Route("POST", "/api/v1/jobs/{job_id}/resume", _resume, role="member"),
     Route("POST", "/api/v1/jobs/{job_id}/approve", _approve, role="member"),
+    Route("POST", "/api/v1/jobs/{job_id}/feedback", _feedback, role="viewer"),
     Route("POST", "/api/v1/schedules", _sched_create, role="member"),
     Route("GET", "/api/v1/schedules", _sched_list, role="viewer"),
     Route("DELETE", "/api/v1/schedules/{schedule_id}", _sched_delete, role="member"),

@@ -1,8 +1,7 @@
-import { useMemo } from 'react';
 import { api, ApiError } from '../api/client';
-import { items, useResource } from '../api/hooks';
+import { items, useMe, useResource } from '../api/hooks';
 import type { Resource } from '../api/hooks';
-import type { Agent, Deal, Deliverable, Job, JobCreate, Page } from '../api/types';
+import type { Agent, Deliverable, Job, JobCreate, JobEnvelope, LibraryPage, Page, TimeSaved } from '../api/types';
 import type { ToastInput } from '../ds';
 
 export type SourceKey = 'deal' | 'filings' | 'firm' | 'web';
@@ -26,7 +25,8 @@ export const STARTERS: Starter[] = [
   { task: 'earnings_update', titleKey: 'starter.earnings.title', promptKey: 'starter.earnings.prompt', icon: 'history' },
 ];
 
-export function viewerPath(dealId: string, d: { name: string; kind: string; view?: string | null }): string | null {
+export function viewerPath(dealId: string | null | undefined, d: { name: string; kind: string; view?: string | null }): string | null {
+  if (!dealId) return null;
   const n = encodeURIComponent(d.name);
   const v = d.view ?? (d.kind === 'xlsx' ? 'model' : d.kind === 'pptx' ? 'deck' : d.kind === 'grid' ? 'grid' : null);
   if (v === 'model') return `/deals/${dealId}/models/${n}`;
@@ -45,8 +45,14 @@ export function errorToast(e: unknown, title: string): ToastInput {
   return { kind: 'error', title };
 }
 
+/** Owners also get the disabled agents back (`include_disabled=1`) so they can turn them on again. */
 export function useAgents(): Resource<Agent[]> {
-  return useResource<Agent[]>(async (signal) => items(await api.get<Page<Agent> | Agent[]>('/agents', { query: { limit: 200 }, signal })), []);
+  const { me } = useMe();
+  const owner = me?.role === 'owner';
+  return useResource<Agent[]>(
+    async (signal) => items(await api.get<Page<Agent> | Agent[]>('/agents', { query: { limit: 200, include_disabled: owner ? 1 : undefined }, signal })),
+    [owner],
+  );
 }
 
 export interface DealDeliverable extends Deliverable {
@@ -54,32 +60,51 @@ export interface DealDeliverable extends Deliverable {
   deal_name: string;
 }
 
-/** The Library has no org-wide endpoint in the contract, so it is assembled from each deal. */
-export function useAllDeliverables(deals: Deal[] | null): Resource<DealDeliverable[]> {
-  const key = useMemo(() => (deals ?? []).map((d) => d.id).join(','), [deals]);
-  return useResource<DealDeliverable[]>(
-    async (signal) => {
-      const list = deals ?? [];
-      const out = await Promise.all(
-        list.map(async (d) => {
-          try {
-            const r = await api.get<Page<Deliverable> | Deliverable[]>(`/deals/${d.id}/deliverables`, { signal });
-            return items(r).map((x) => ({ ...x, deal_id: d.id, deal_name: d.name }));
-          } catch (e) {
-            if (e instanceof DOMException && e.name === 'AbortError') throw e;
-            return [];
-          }
-        }),
-      );
-      return out.flat().sort((a, b) => (b.updated_at ?? '').localeCompare(a.updated_at ?? ''));
-    },
-    [key],
-  );
+/** Org-wide library: `GET /api/v1/library` (latest version of every deliverable across the deals the caller can see). */
+export function useOrgLibrary(limit = 200): Resource<DealDeliverable[]> {
+  return useResource<DealDeliverable[]>(async (signal) => {
+    const r = await api.get<LibraryPage>('/library', { query: { limit }, signal });
+    return r.items.map((x) => ({ ...x, deal_id: x.deal_id, deal_name: x.deal_name }));
+  }, [limit]);
 }
 
 export async function createJob(body: JobCreate): Promise<Job> {
-  const r = await api.post<{ job: Job } | Job>('/jobs', body);
-  return 'job' in r ? r.job : r;
+  return (await api.post<JobEnvelope>('/jobs', body)).job;
+}
+
+/** Time saved as one estimate: sums per-task baselines for chains. All numbers are minutes; `null` when no credible baseline exists. */
+export interface SavedEstimate {
+  saved: number;
+  low: number;
+  high: number;
+  pct: number | null;
+  source: string;
+}
+export function savedEstimate(ts: TimeSaved | null | undefined): SavedEstimate | null {
+  if (!ts) return null;
+  const parts = ts.per_task && ts.per_task.length > 0 ? ts.per_task : [ts];
+  let tA = 0;
+  let mid = 0;
+  let low = 0;
+  let high = 0;
+  const sources: string[] = [];
+  for (const p of parts) {
+    const h = p.t_h_minutes;
+    if (!h || p.t_a_minutes == null) return null;
+    tA += p.t_a_minutes;
+    mid += h.mid;
+    low += h.low;
+    high += h.high;
+    if (!sources.includes(h.source)) sources.push(h.source);
+  }
+  const pctMid = typeof ts.pct === 'number' ? ts.pct : ts.pct?.mid ?? (mid > 0 ? 1 - tA / mid : null);
+  return {
+    saved: Math.max(0, mid - tA),
+    low: Math.max(0, low - tA),
+    high: Math.max(0, high - tA),
+    pct: pctMid == null ? null : pctMid > 1 ? pctMid / 100 : pctMid,
+    source: sources.join('; '),
+  };
 }
 
 /* ---- recent prompts (per browser) ---- */

@@ -1,11 +1,19 @@
 import { useState } from 'react';
-import { Button, Checkbox, IconChevronDown, IconChevronUp, IconPlus, IconX, IconButton, Input, useToast } from '../ds';
+import { Button, Checkbox, IconChevronDown, IconChevronUp, IconX, IconButton, Input, useToast } from '../ds';
 import { api } from '../api/client';
 import type { ApprovalData } from '../api/types';
 import { useT } from '../i18n';
 import { errorToast } from '../app/lib';
 
 type Done = () => void;
+
+/*
+ * Approval contract (SPEC section 5; om/api/jobs.py). The run pauses with an `approval` event {step_id, kind, payload}; the UI answers
+ *   POST /jobs/{id}/approve  {step: <step_id>, payload: {...}}
+ * kind "sources"     (step_id "source_review"): payload {selected: [source id, ...], skip_next_time: boolean}; ids come from approval.payload.sources[].id
+ * kind "ghost_deck"  (step_id "approve_outline"): payload {titles: {<slide id>: <title>}, order: [<slide id> kept, in order]}; ids come from approval.payload.titles[].id
+ * kind "assumptions": payload {assumptions: [{key, value}]}
+ */
 
 export function ApprovalCard({ jobId, approval, onDone }: { jobId: string; approval: ApprovalData; onDone: Done }) {
   const t = useT();
@@ -27,7 +35,7 @@ export function ApprovalCard({ jobId, approval, onDone }: { jobId: string; appro
     <section className="acr-approval" data-testid="approval-card" data-kind={approval.kind} aria-label={t(`approval.${approval.kind}.title`)}>
       <h3 className="acr-approval__title">{t(`approval.${approval.kind}.title`)}</h3>
       <p className="acr-muted acr-approval__lead">{t(`approval.${approval.kind}.lead`)}</p>
-      {approval.kind === 'source_review' && <SourceReview approval={approval} busy={busy} onApprove={send} />}
+      {approval.kind === 'sources' && <SourceReview approval={approval} busy={busy} onApprove={send} />}
       {approval.kind === 'ghost_deck' && <GhostDeck approval={approval} busy={busy} onApprove={send} />}
       {approval.kind === 'assumptions' && <Assumptions approval={approval} busy={busy} onApprove={send} />}
     </section>
@@ -43,38 +51,35 @@ interface Inner {
 function SourceReview({ approval, busy, onApprove }: Inner) {
   const t = useT();
   const sources = approval.payload.sources ?? [];
-  const keyOf = (s: (typeof sources)[number], i: number) => s.id ?? s.name ?? s.doc_name ?? String(i);
-  const [picked, setPicked] = useState<Set<string>>(new Set(sources.map(keyOf)));
+  const [picked, setPicked] = useState<Set<string>>(new Set(sources.filter((x) => x.available !== false).map((x) => x.id)));
   const [skip, setSkip] = useState(false);
   return (
     <>
-      <ul className="acr-approval__list">
-        {sources.map((s, i) => {
-          const k = keyOf(s, i);
-          return (
-            <li key={k}>
-              <Checkbox
-                label={s.name ?? s.doc_name ?? k}
-                hint={[s.kind, s.detail].filter(Boolean).join(' · ') || undefined}
-                checked={picked.has(k)}
-                onChange={(e) =>
-                  setPicked((p) => {
-                    const n = new Set(p);
-                    if (e.target.checked) n.add(k);
-                    else n.delete(k);
-                    return n;
-                  })
-                }
-              />
-            </li>
-          );
-        })}
-        {sources.length === 0 && <li className="acr-muted">{t('approval.source_review.none')}</li>}
+      <ul className="acr-approval__list" data-testid="source-review-list">
+        {sources.map((s) => (
+          <li key={s.id} data-testid="source-review-item" data-id={s.id}>
+            <Checkbox
+              label={s.label}
+              hint={[s.kind, s.detail, s.available === false ? t('approval.sources.unavailable') : null].filter(Boolean).join(' · ') || undefined}
+              checked={picked.has(s.id)}
+              disabled={s.available === false}
+              onChange={(e) =>
+                setPicked((p) => {
+                  const n = new Set(p);
+                  if (e.target.checked) n.add(s.id);
+                  else n.delete(s.id);
+                  return n;
+                })
+              }
+            />
+          </li>
+        ))}
+        {sources.length === 0 && <li className="acr-muted">{t('approval.sources.none')}</li>}
       </ul>
       <div className="acr-approval__foot">
-        <Checkbox label={t('approval.source_review.skip')} checked={skip} onChange={(e) => setSkip(e.target.checked)} />
+        <Checkbox label={t('approval.sources.skip')} checked={skip} onChange={(e) => setSkip(e.target.checked)} />
         <span className="acr-spacer-flex" />
-        <Button variant="primary" loading={busy} data-testid="approval-approve" onClick={() => onApprove({ selected: sources.map(keyOf).filter((k) => picked.has(k)), skip_next_time: skip })}>
+        <Button variant="primary" loading={busy} data-testid="approval-approve" onClick={() => onApprove({ selected: sources.map((x) => x.id).filter((k) => picked.has(k)), skip_next_time: skip })}>
           {t('approval.approve')}
         </Button>
       </div>
@@ -84,9 +89,8 @@ function SourceReview({ approval, busy, onApprove }: Inner) {
 
 function GhostDeck({ approval, busy, onApprove }: Inner) {
   const t = useT();
-  const initial = approval.payload.titles ?? (approval.payload.slides ?? []).map((s) => s.title);
-  const [titles, setTitles] = useState<Array<{ k: number; v: string }>>(initial.map((v, k) => ({ k, v })));
-  const [next, setNext] = useState(initial.length);
+  const initial = (approval.payload.titles ?? []).map((x) => (typeof x === 'string' ? { id: '', title: x } : x));
+  const [titles, setTitles] = useState<Array<{ k: number; v: string; id: string }>>(initial.map((x, k) => ({ k, v: x.title, id: x.id })));
   function move(i: number, d: -1 | 1) {
     setTitles((l) => {
       const j = i + d;
@@ -123,18 +127,8 @@ function GhostDeck({ approval, busy, onApprove }: Inner) {
         ))}
       </ol>
       <div className="acr-approval__foot">
-        <Button
-          variant="ghost"
-          icon={<IconPlus size={14} />}
-          onClick={() => {
-            setTitles((l) => [...l, { k: next, v: '' }]);
-            setNext((n) => n + 1);
-          }}
-        >
-          {t('approval.addSlide')}
-        </Button>
         <span className="acr-spacer-flex" />
-        <Button variant="primary" loading={busy} disabled={titles.every((x) => !x.v.trim())} data-testid="approval-approve" onClick={() => onApprove({ titles: titles.map((x) => x.v.trim()).filter(Boolean) })}>
+        <Button variant="primary" loading={busy} disabled={titles.every((x) => !x.v.trim())} data-testid="approval-approve" onClick={() => onApprove({ titles: Object.fromEntries(titles.filter((x) => x.id && x.v.trim()).map((x) => [x.id, x.v.trim()])), order: titles.filter((x) => x.id && x.v.trim()).map((x) => x.id) })}>
           {t('approval.approve')}
         </Button>
       </div>

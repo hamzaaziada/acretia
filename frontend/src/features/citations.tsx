@@ -25,6 +25,12 @@ export function citationHref(dealId: string, c: { doc_id: string; page: number |
   return `/deals/${dealId}/docs/${c.doc_id}?${q.toString()}`;
 }
 
+/** Chips in one run mostly share a document, so the label is the line item the source backs (the trailing "(Revenue)" of the quote). */
+export function chipLabel(s: SourceData): string {
+  const m = /\(([^()]{2,48})\)\s*$/.exec(s.quote ?? '');
+  return m ? `${m[1]} · ${s.doc_name.replace(/\s*\(.*$/, '')}` : s.doc_name;
+}
+
 /**
  * A citation chip. Hover or focus opens a preview built from the data already streamed with the source, then
  * refined by the resolved citation. Click opens the document at the page with the span highlighted (item 16).
@@ -79,7 +85,9 @@ export function CitationChip({ source, dealId }: { source: SourceData; dealId: s
         onClick={go}
       >
         <IconDoc size={12} />
-        <span className="acr-cite__doc acr-truncate">{source.doc_name}</span>
+        <span className="acr-cite__doc acr-truncate" title={source.doc_name}>
+          {chipLabel(source)}
+        </span>
         {page != null && <span className="acr-cite__page acr-num">{t('cite.page', { n: fmt.integer(page) })}</span>}
       </button>
       {open && (

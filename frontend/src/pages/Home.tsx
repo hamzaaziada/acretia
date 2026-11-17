@@ -9,16 +9,13 @@ import { useI18n } from '../i18n';
 import { PromptBox } from '../features/PromptBox';
 import { NewDealDialog } from '../features/NewDealDialog';
 import { SAMPLE_DEAL } from '../features/NewDealDialog';
-import { STARTERS, createJob, errorToast, jobDuration, rememberPrompt, statusTone, useAgents, useAllDeliverables, viewerPath } from '../app/lib';
+import { STARTERS, createJob, errorToast, jobDuration, rememberPrompt, savedEstimate, statusTone, useAgents, useOrgLibrary, viewerPath } from '../app/lib';
 
 const ICON = { model: IconModel, grid: IconGrid, deck: IconDeck, doc: IconDoc, deal: IconDeal, history: IconHistory } as const;
 
 export function timeSavedLabel(j: Job, fmt: { number: (n: number) => string }, t: (k: string, v?: Record<string, string | number>) => string): string {
-  const ts = j.time_saved;
-  const h = ts?.t_h_minutes;
-  if (!ts || !h || ts.t_a_minutes == null) return '—';
-  const saved = Math.max(0, h.mid - ts.t_a_minutes);
-  return t('run.savedMin', { n: fmt.number(Math.round(saved)) });
+  const est = savedEstimate(j.time_saved);
+  return est ? t('run.savedMin', { n: fmt.number(Math.round(est.saved)) }) : '—';
 }
 
 export default function Home() {
@@ -28,7 +25,7 @@ export default function Home() {
   const deals = useDeals();
   const agents = useAgents();
   const jobs = useResource<Job[]>(async (signal) => items(await api.get<Page<Job> | Job[]>('/jobs', { query: { limit: 10 }, signal })), []);
-  const lib = useAllDeliverables(deals.data);
+  const lib = useOrgLibrary(12);
   const [prompt, setPrompt] = useState('');
   const [dealId, setDealId] = useState('');
   const [busy, setBusy] = useState(false);
@@ -54,7 +51,7 @@ export default function Home() {
   const dealList = deals.data ?? [];
   const firstRun = !jobs.loading && rows.length === 0;
   const columns: Column<Job>[] = [
-    { key: 'prompt', header: t('runs.prompt'), render: (j) => <Link to={`/runs/${j.id}`} className="acr-truncate acr-runlink">{j.prompt}</Link> },
+    { key: 'prompt', header: t('runs.prompt'), render: (j) => <Link to={`/runs/${j.id}`} className="acr-truncate acr-runlink" dir="auto">{j.prompt}</Link> },
     { key: 'status', header: t('runs.status'), render: (j) => <Badge tone={statusTone(j.status)} dot>{t(`status.${j.status}`)}</Badge>, sortValue: (j) => j.status },
     { key: 'agent', header: t('runs.agent'), render: (j) => j.agent_name ?? j.kind, sortValue: (j) => j.agent_name ?? j.kind },
     { key: 'deal', header: t('runs.deal'), render: (j) => j.deal_name ?? '—' },

@@ -4,7 +4,7 @@ import { IconSearch, Input, PageHeader, Select, SkeletonRows } from '../ds';
 import { useDeals } from '../api/hooks';
 import { useI18n } from '../i18n';
 import { DeliverablesTable } from '../features/Deliverables';
-import { useAllDeliverables } from '../app/lib';
+import { useOrgLibrary } from '../app/lib';
 
 const KINDS = ['xlsx', 'pptx', 'docx', 'pdf', 'grid'];
 
@@ -12,7 +12,7 @@ export default function Library() {
   const { t, fmt } = useI18n();
   const nav = useNavigate();
   const deals = useDeals();
-  const all = useAllDeliverables(deals.data);
+  const all = useOrgLibrary();
   const [q, setQ] = useState('');
   const [kind, setKind] = useState('');
   const [deal, setDeal] = useState('');

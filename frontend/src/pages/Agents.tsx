@@ -4,9 +4,9 @@ import { useNavigate } from 'react-router-dom';
 import { Badge, Button, Checkbox, Dialog, EmptyState, IconAgent, IconButton, IconChevronDown, IconChevronUp, IconPin, IconPlay, IconPlus, IconSearch, IconX, Input, PageHeader, Select, SkeletonRows, Textarea, useToast, cx } from '../ds';
 import { api } from '../api/client';
 import { useDeals, useMe } from '../api/hooks';
-import type { Agent, Job } from '../api/types';
+import type { Agent, JobEnvelope } from '../api/types';
 import { useI18n } from '../i18n';
-import { errorToast, readPins, useAgents, writePins } from '../app/lib';
+import { errorToast, useAgents } from '../app/lib';
 
 export default function Agents() {
   const { t } = useI18n();
@@ -15,7 +15,6 @@ export default function Agents() {
   const agents = useAgents();
   const [q, setQ] = useState('');
   const [tag, setTag] = useState('');
-  const [pins, setPins] = useState<string[]>(readPins);
   const [runTarget, setRunTarget] = useState<Agent | null>(null);
   const [creating, setCreating] = useState(false);
   const owner = me?.role === 'owner';
@@ -26,18 +25,23 @@ export default function Agents() {
     const words = q.toLowerCase().split(/\s+/).filter(Boolean);
     return all
       .filter((a) => (!tag || (a.tags ?? []).includes(tag)) && words.every((w) => `${a.name} ${a.description} ${(a.tags ?? []).join(' ')}`.toLowerCase().includes(w)))
-      .sort((a, b) => Number(pins.includes(b.id)) - Number(pins.includes(a.id)) || a.name.localeCompare(b.name));
-  }, [all, q, tag, pins]);
+      .sort((a, b) => Number(b.pinned === true) - Number(a.pinned === true) || a.name.localeCompare(b.name));
+  }, [all, q, tag]);
 
-  function togglePin(id: string) {
-    const next = pins.includes(id) ? pins.filter((p) => p !== id) : [...pins, id];
-    setPins(next);
-    writePins(next);
+  /** POST /agents/{id}/pin {pinned} keeps pins per user on the server, so they follow the person across browsers. */
+  async function togglePin(a: Agent) {
+    try {
+      await api.post(`/agents/${a.id}/pin`, { pinned: a.pinned !== true });
+      agents.reload();
+    } catch (e) {
+      toast.push(errorToast(e, t('agents.pinFailed')));
+    }
   }
   async function toggleEnabled(a: Agent) {
     const enabled = a.enabled === false;
     try {
-      await api.patch(`/agents/${a.id}`, { enabled });
+      // Owner-only org-wide switch: POST /agents/{id}/enabled {enabled}.
+      await api.post(`/agents/${a.id}/enabled`, { enabled });
       agents.reload();
       toast.push({ kind: 'success', title: t(enabled ? 'agents.enabledToast' : 'agents.disabledToast', { name: a.name }) });
     } catch (e) {
@@ -78,13 +82,13 @@ export default function Agents() {
       ) : (
         <ul className="acr-agentgrid">
           {rows.map((a) => {
-            const pinned = pins.includes(a.id);
+            const pinned = a.pinned === true;
             const disabled = a.enabled === false;
             return (
               <li key={a.id} className={cx('acr-agent', disabled && 'is-disabled')} data-testid="agent-card" data-id={a.id} data-agent={a.task_id ?? (a.builtin ? a.kind : a.id)}>
                 <div className="acr-agent__head">
                   <h2 className="acr-agent__name">{a.name}</h2>
-                  <IconButton aria-label={pinned ? t('agents.unpin', { name: a.name }) : t('agents.pin', { name: a.name })} aria-pressed={pinned} className={cx(pinned && 'is-on')} data-testid="agent-pin" onClick={() => togglePin(a.id)}>
+                  <IconButton aria-label={pinned ? t('agents.unpin', { name: a.name }) : t('agents.pin', { name: a.name })} aria-pressed={pinned} className={cx(pinned && 'is-on')} data-testid="agent-pin" onClick={() => togglePin(a)}>
                     <IconPin size={14} />
                   </IconButton>
                 </div>
@@ -127,7 +131,7 @@ function RunDialog({ agent, onClose }: { agent: Agent | null; onClose: () => voi
   const [seed, setSeed] = useState<string | null>(null);
   if (agent && seed !== agent.id) {
     setSeed(agent.id);
-    setPrompt(agent.prompt_template ?? '');
+    setPrompt(agent.prompt ?? agent.prompts?.[0] ?? '');
     setBusy(false);
   }
   if (!agent && seed) setSeed(null);
@@ -137,8 +141,7 @@ function RunDialog({ agent, onClose }: { agent: Agent | null; onClose: () => voi
     if (!agent) return;
     setBusy(true);
     try {
-      const r = await api.post<{ job: Job } | Job>(`/agents/${agent.id}/run`, { prompt: prompt.trim(), deal_id: dealId || null });
-      const job = 'job' in r ? r.job : r;
+      const job = (await api.post<JobEnvelope>(`/agents/${agent.id}/run`, { prompt: prompt.trim(), deal_id: dealId || null })).job;
       onClose();
       nav(`/runs/${job.id}`);
     } catch (x) {
@@ -213,12 +216,11 @@ function NewAgentDialog({ open, onClose, onSaved }: { open: boolean; onClose: ()
     if (prompts.length === 0) return setErr(t('agents.new.promptRequired'));
     setBusy(true);
     try {
+      // One prompt is a "prompt" agent, several are a "chain" run in order (SPEC section 5).
       await api.post('/agents', {
         name: name.trim(),
         description: description.trim(),
-        kind: 'custom',
-        steps: prompts.map((p, i) => ({ id: `s${i + 1}`, title: p })),
-        prompt_template: prompts.join('\n\n'),
+        ...(prompts.length === 1 ? { kind: 'prompt', prompt: prompts[0] } : { kind: 'chain', prompts }),
         shared,
       });
       toast.push({ kind: 'success', title: t('agents.new.saved', { name: name.trim() }) });

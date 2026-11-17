@@ -9,6 +9,7 @@ export default function NotFound() {
   const { openPalette } = useShell();
   return (
     <div className="acr-page">
+      <h1 className="acr-sr-only">{t('notfound.title')}</h1>
       <EmptyState
         icon={<IconSearch size={22} />}
         title={t('notfound.title')}
