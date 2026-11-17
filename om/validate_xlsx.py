@@ -2,6 +2,7 @@
 
 validate(xlsx_bytes) -> {"passed", "findings", "stats", "modelcheck"}. `passed` is False iff any finding is critical.
 Finding ids are stable: modelcheck.<grader>, units, sensitivity.table, sensitivity.live, links.green, hardcode.calc,
+hardcode.typed, hardcode.isolated, consistency.columns, consistency.rows, sources.missing (require_sources=True only),
 circularity, noise.merged, noise.volatile, noise.gridlines, errors.
 
 No LLM and no network. Builds on om.modelcheck (grading), om.xlsx (reading) and om.formula (cycles / convergence);
@@ -16,7 +17,7 @@ import xml.etree.ElementTree as ET
 
 from . import formula as fx
 from . import modelcheck as mc
-from .xlsx import CROSS_SHEET, col_index, col_letter, read, ref
+from .xlsx import CROSS_SHEET, col_index, col_letter, read, ref, relative
 
 NS = "{http://schemas.openxmlformats.org/spreadsheetml/2006/main}"
 RNS = "{http://schemas.openxmlformats.org/officeDocument/2006/relationships}"
@@ -119,6 +120,24 @@ def _refs(formula: str, default_sheet: str, names: dict) -> list[tuple[str, tupl
     return out
 
 
+SHAPE_REF = re.compile(r"(?<![\w.$])\$?[A-Z]{1,3}\$?\d+(?![\w(])")
+
+
+def _shape(formula: str) -> str:
+    """The formula with every cell reference replaced by #: equal for cells that do the same thing on different rows/columns."""
+    return SHAPE_REF.sub("#", formula)
+
+
+def _tokens(shape: str) -> set:
+    return set(re.findall(r"[A-Za-z_][\w.]*!?", STRINGS.sub('""', shape)))
+
+
+def _similarity(a: str, b: str) -> float:
+    """Share of the smaller formula's tokens found in the other (1.0 when one formula is the other with a piece added or removed)."""
+    ta, tb = _tokens(a), _tokens(b)
+    return len(ta & tb) / max(min(len(ta), len(tb)), 1)
+
+
 def _uses_name(formula: str, names: dict) -> bool:
     body = STRINGS.sub('""', formula)
     return any(re.search(rf"(?<![\w.]){re.escape(n)}(?![\w(!])", body) for n in names if not n.startswith("_xlnm"))
@@ -185,7 +204,8 @@ def _sens_blocks(book) -> list[dict]:
 
 
 # --------------------------------------------------------------------------- the validator
-def validate(data: bytes, *, circ_policy: str = "breaker", require_green_links: bool = True, units: str | None = None) -> dict:
+def validate(data: bytes, *, circ_policy: str = "breaker", require_green_links: bool = True, units: str | None = None,
+             require_sources: bool = False) -> dict:
     if circ_policy not in ("breaker", "forbid"):
         raise ValueError("circ_policy must be 'breaker' or 'forbid'")
     book = read(data)
@@ -257,6 +277,7 @@ def validate(data: bytes, *, circ_policy: str = "breaker", require_green_links: 
 
     # ---- hardcode.calc
     hardcoded = 0
+    flagged: set = set()
     for s in book.order:
         if mc.INPUT_SHEET.search(s):
             continue
@@ -275,7 +296,83 @@ def validate(data: bytes, *, circ_policy: str = "breaker", require_green_links: 
                 if sourced:
                     continue
                 hardcoded += 1
+                flagged.add((s, (r, cc)))
                 F.add("hardcode.calc", "critical", s, ref(r, cc), f"typed number {c.value:g} in a calculation row that is otherwise formulas")
+
+    # ---- hardcode.typed / hardcode.isolated: a typed number disguised as a calculation
+    for s in book.order:
+        g = book.sheets[s]
+        input_sheet = bool(mc.INPUT_SHEET.search(s))
+        for (r, cc), c in sorted(g.items()):
+            if c.formula or not isinstance(c.value, float) or (s, (r, cc)) in flagged or (s, r, cc) in grid_cells:
+                continue
+            if c.color not in mc.BLUES and c.color != "FFFFFF":
+                flagged.add((s, (r, cc)))
+                F.add("hardcode.typed", "critical", s, ref(r, cc), f"typed number {c.value:g} in black (calculation) font: a hard-coded value where a formula belongs")
+            elif not input_sheet and cc > 2 and (r, cc) not in book.comments.get(s, {}) and (r, cc) not in book.links.get(s, {}):
+                above = next((g.get((rr, cc)) for rr in range(r - 1, max(r - 4, 0), -1) if g.get((rr, cc)) is not None), None)
+                below = next((g.get((rr, cc)) for rr in range(r + 1, r + 4) if g.get((rr, cc)) is not None), None)
+                if above is not None and below is not None and above.formula and below.formula:
+                    flagged.add((s, (r, cc)))
+                    F.add("hardcode.isolated", "critical", s, ref(r, cc),
+                          f"typed number {c.value:g} with no source sits between formulas in its column: looks like a plug")
+
+    hdr_rows = {(b["sheet"], b["hr"]) for b in blocks}
+    already = {(f["sheet"], f["cell"]) for f in F.items}
+    # ---- consistency.columns / consistency.rows: one cell breaks the formula pattern shared by the others in its line
+    # (a row of per-company or per-year columns, or a column of stacked per-company rows). Edge cells are covered, which the
+    # modelcheck consistency grader (needs a neighbour each side) cannot see. The first cell of a line may differ (opening balance).
+    for s in book.order:
+        g = book.sheets[s]
+        for axis, fid in (("row", "consistency.columns"), ("col", "consistency.rows")):
+            lines: dict[int, dict] = {}
+            for (r, cc), c in g.items():
+                if cc >= 3 and c.formula:
+                    lines.setdefault(r if axis == "row" else cc, {})[cc if axis == "row" else r] = c
+            for key, cells in sorted(lines.items()):
+                run: list[int] = []
+                runs = []
+                for k in sorted(cells):
+                    if run and k != run[-1] + 1:
+                        runs.append(run)
+                        run = []
+                    run.append(k)
+                runs.append(run)
+                for run in runs:
+                    if len(run) < (3 if axis == "row" else 4):
+                        continue
+                    pos = (lambda k: (key, k)) if axis == "row" else (lambda k: (k, key))
+                    forms = {k: relative(cells[k].formula, *pos(k)) if axis == "row" else _shape(cells[k].formula) for k in run}
+                    counts: dict[str, int] = {}
+                    for f in forms.values():
+                        counts[f] = counts.get(f, 0) + 1
+                    top = max(counts, key=counts.get)
+                    if counts[top] < max(2, len(run) - 1) or len(run) - counts[top] != 1:
+                        continue
+                    odd = next(k for k in run if forms[k] != top)
+                    if (axis == "row" and odd == run[0]) or (s, pos(odd)) in flagged or (s, ref(*pos(odd))) in already or (s, *pos(odd)) in grid_cells or (s, pos(odd)[0]) in hdr_rows:
+                        continue
+                    if axis == "col" or len(run) < 4:
+                        # a different line item (a total under its parts, a header row) is not a broken copy of the pattern: the odd
+                        # formula must share names/functions and at least one cell reference with the others
+                        mates = [relative(cells[k].formula, *pos(k)) for k in run if k != odd]
+                        mine = set(re.findall(r"R\[?-?\d+\]?C\[?-?\d+\]?", relative(cells[odd].formula, *pos(odd))))
+                        if _similarity(forms[odd], top) < 0.6 or not any(mine & set(re.findall(r"R\[?-?\d+\]?C\[?-?\d+\]?", m)) for m in mates):
+                            continue
+                    flagged.add((s, pos(odd)))
+                    F.add(fid, "critical", s, ref(*pos(odd)),
+                          f"formula breaks the pattern of the other {counts[top]} cells in its {'row' if axis == 'row' else 'column'}: "
+                          f"{cells[odd].formula[:50]}")
+
+    # ---- sources.missing (parity item 20): every typed historical number outside input sheets must cite its source
+    if require_sources:
+        for s in book.order:
+            if mc.INPUT_SHEET.search(s):
+                continue
+            for rc, c in sorted(book.sheets[s].items()):
+                if c.formula or not isinstance(c.value, float) or rc in book.comments.get(s, {}) or rc in book.links.get(s, {}):
+                    continue
+                F.add("sources.missing", "critical", s, ref(*rc), f"typed number {c.value:g} has no source comment or filing link")
 
     # ---- circularity
     eng = fx.from_book(book)
