@@ -22,6 +22,9 @@ SCHEMA_MODULES: tuple[str, ...] = (
     "om.api.viewers",
     "om.api.firm",
     "om.api.mail",
+    "om.api.grid",
+    "om.api.decks",
+    "om.api.watch",
 )
 
 
