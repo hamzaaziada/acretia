@@ -312,7 +312,12 @@ def run_all(n: int | None = None, out_dir: Path = HERE, mode: str = "replay", wr
             if budget_s and time.perf_counter() - t0 > budget_s:
                 stopped = f"Stopped after {i - 1} of {len(chosen)} briefs because the time budget ({budget_s:.0f}s) ran out."
                 break
-            rows.append(run_one(h, b))
+            try:
+                rows.append(run_one(h, b))
+            except TimeoutError as e:                       # a hung job is a finding, not a crash of the whole run
+                rows.append({**{k: "" for k in CSV_COLS}, "brief_id": b["id"], "task_id": b["task_id"], "perturbation": b.get("perturbation", ""),
+                             "ticker": b.get("ticker") or "", "region": b.get("region", ""), "data": b["data"], "lang": b.get("lang", "en"),
+                             "outcome": "failed", "success": False, "notes": f"HUNG: {e}"[:400]})
             if progress:
                 progress(i, len(chosen), rows[-1])
     s = summarise(rows)

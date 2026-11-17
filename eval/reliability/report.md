@@ -1,6 +1,6 @@
 # Reliability report, first replay run
 
-Generated 2026-11-17 04:38 UTC by `eval/reliability/run.py` in **replay** mode; harness wall time 123s. Ran 126 briefs (`--n 130`).
+Generated 2026-11-17 09:21 UTC by `eval/reliability/run.py` in **replay** mode; harness wall time 114s. Ran 126 briefs (`--n 130`).
 
 Everything below is from fixtures: one real company (AAPL), three labelled synthetic companies (DEMOA, DEMOB, DEMOT) and two seeded synthetic deals. It tests the product's plumbing and number discipline on offline data. It says **nothing** yet about live-data reliability, MENA/IFRS filings or live model drafting; those briefs are in the corpus and are skipped here (listed at the end).
 
@@ -12,7 +12,7 @@ Everything below is from fixtures: one real company (AAPL), three labelled synth
 | Silent wrong numbers | 0 | **0** of 24241 numbers checked (15655 sourced, 8586 flagged) | MET |
 | Determinism (two runs, identical numbers) | 100% | 100.0% (118/118) | MET |
 | Failed jobs resume cleanly | 100% | 100.0% (118/118) | MET |
-| p95 latency (job wall seconds, replay) | published | p50 0.22 s, p95 0.65 s, max 0.86 s | published; no live-model latency included |
+| p95 latency (job wall seconds, replay) | published | p50 0.20 s, p95 0.66 s, max 0.92 s | published; no live-model latency included |
 | Cost per deliverable | published | **not a live measurement.** Replay books the recorded token usage of the canned fixtures at ledger rates: $0.0487 over 118 deliverables = $0.0004 each on average; the 7 prose runs (5600 replayed tokens) account for all of it (about $0.0070 per prose deliverable); engine-only deliverables cost $0.00 | not measured |
 
 Briefs run: 126 of 142 in the corpus (16 need live data/model and are skipped). Supported briefs run: 118; engine blocked: 4; Arabic-only probes (planner has no Arabic rules): 4.
@@ -28,43 +28,43 @@ Briefs run: 126 of 142 in the corpus (16 need live data/model and are skipped). 
 
 | task_id | briefs | done | success | blocked/unsupported | silent numbers | deterministic | resume ok | p50 s | p95 s |
 |---|---|---|---|---|---|---|---|---|---|
-| buyer_list | 2 | 2 | 2/2 | 0 | 0 | 2/2 | 2/2 | 0.03 | 0.03 |
-| comps | 12 | 11 | 11/11 | 1 | 0 | 11/11 | 11/11 | 0.10 | 0.17 |
-| dcf | 30 | 29 | 29/29 | 1 | 0 | 29/29 | 29/29 | 0.51 | 0.69 |
-| earnings_recap | 2 | 2 | 2/2 | 0 | 0 | 2/2 | 2/2 | 0.03 | 0.03 |
-| earnings_update | 8 | 8 | 8/8 | 0 | 0 | 8/8 | 8/8 | 0.61 | 0.84 |
-| ic_memo | 3 | 3 | 3/3 | 0 | 0 | 3/3 | 3/3 | 0.03 | 0.05 |
-| lbo | 10 | 10 | 10/10 | 0 | 0 | 10/10 | 10/10 | 0.23 | 0.40 |
-| merger | 9 | 9 | 9/9 | 0 | 0 | 9/9 | 9/9 | 0.15 | 0.18 |
-| pitchbook_section | 8 | 8 | 8/8 | 0 | 0 | 8/8 | 8/8 | 0.16 | 0.24 |
+| buyer_list | 2 | 2 | 2/2 | 0 | 0 | 2/2 | 2/2 | 0.03 | 0.04 |
+| comps | 12 | 11 | 11/11 | 1 | 0 | 11/11 | 11/11 | 0.10 | 0.15 |
+| dcf | 30 | 29 | 29/29 | 1 | 0 | 29/29 | 29/29 | 0.47 | 0.74 |
+| earnings_recap | 2 | 2 | 2/2 | 0 | 0 | 2/2 | 2/2 | 0.04 | 0.04 |
+| earnings_update | 8 | 8 | 8/8 | 0 | 0 | 8/8 | 8/8 | 0.55 | 0.91 |
+| ic_memo | 3 | 3 | 3/3 | 0 | 0 | 3/3 | 3/3 | 0.04 | 0.04 |
+| lbo | 10 | 10 | 10/10 | 0 | 0 | 10/10 | 10/10 | 0.21 | 0.26 |
+| merger | 9 | 9 | 9/9 | 0 | 0 | 9/9 | 9/9 | 0.11 | 0.15 |
+| pitchbook_section | 8 | 8 | 8/8 | 0 | 0 | 8/8 | 8/8 | 0.15 | 0.20 |
 | precedents | 4 | 0 | 0/0 | 4 | 0 | 0/0 | 0/0 | n/a | n/a |
-| profile | 11 | 10 | 10/10 | 1 | 0 | 10/10 | 10/10 | 0.19 | 0.34 |
-| teaser | 10 | 10 | 10/10 | 0 | 0 | 10/10 | 10/10 | 0.13 | 0.19 |
-| three_statement | 10 | 10 | 10/10 | 0 | 0 | 10/10 | 10/10 | 0.29 | 0.45 |
-| vdr_review | 7 | 6 | 6/6 | 1 | 0 | 6/6 | 6/6 | 0.03 | 0.04 |
+| profile | 11 | 10 | 10/10 | 1 | 0 | 10/10 | 10/10 | 0.19 | 0.29 |
+| teaser | 10 | 10 | 10/10 | 0 | 0 | 10/10 | 10/10 | 0.12 | 0.18 |
+| three_statement | 10 | 10 | 10/10 | 0 | 0 | 10/10 | 10/10 | 0.32 | 0.43 |
+| vdr_review | 7 | 6 | 6/6 | 1 | 0 | 6/6 | 6/6 | 0.04 | 0.05 |
 
 ## By perturbation
 
 | perturbation | briefs | done | success | blocked/unsupported | silent numbers | deterministic | resume ok | p50 s | p95 s |
 |---|---|---|---|---|---|---|---|---|---|
-| arabic_mixed | 6 | 6 | 6/6 | 0 | 0 | 6/6 | 6/6 | 0.19 | 0.51 |
+| arabic_mixed | 6 | 6 | 6/6 | 0 | 0 | 6/6 | 6/6 | 0.21 | 0.64 |
 | arabic_only | 4 | 0 | 0/0 | 4 | 0 | 0/0 | 0/0 | n/a | n/a |
-| base | 43 | 39 | 39/39 | 4 | 0 | 39/39 | 39/39 | 0.22 | 0.59 |
-| deal_context | 16 | 16 | 16/16 | 0 | 0 | 16/16 | 16/16 | 0.15 | 0.45 |
-| override | 18 | 18 | 18/18 | 0 | 0 | 18/18 | 18/18 | 0.56 | 0.70 |
-| phrasing | 39 | 39 | 39/39 | 0 | 0 | 39/39 | 39/39 | 0.18 | 0.59 |
+| base | 43 | 39 | 39/39 | 4 | 0 | 39/39 | 39/39 | 0.18 | 0.54 |
+| deal_context | 16 | 16 | 16/16 | 0 | 0 | 16/16 | 16/16 | 0.09 | 0.36 |
+| override | 18 | 18 | 18/18 | 0 | 0 | 18/18 | 18/18 | 0.51 | 0.73 |
+| phrasing | 39 | 39 | 39/39 | 0 | 0 | 39/39 | 39/39 | 0.19 | 0.53 |
 
 ## By data kind and region
 
 | data | briefs | done | success | blocked/unsupported | silent numbers | deterministic | resume ok | p50 s | p95 s |
 |---|---|---|---|---|---|---|---|---|---|
-| real | 41 | 37 | 37/37 | 4 | 0 | 37/37 | 37/37 | 0.21 | 0.74 |
-| synthetic | 85 | 81 | 81/81 | 4 | 0 | 81/81 | 81/81 | 0.22 | 0.59 |
+| real | 41 | 37 | 37/37 | 4 | 0 | 37/37 | 37/37 | 0.20 | 0.78 |
+| synthetic | 85 | 81 | 81/81 | 4 | 0 | 81/81 | 81/81 | 0.20 | 0.53 |
 
 | region | briefs | done | success | blocked/unsupported | silent numbers | deterministic | resume ok | p50 s | p95 s |
 |---|---|---|---|---|---|---|---|---|---|
-| MENA | 4 | 3 | 3/3 | 1 | 0 | 3/3 | 3/3 | 0.03 | 0.05 |
-| US | 122 | 115 | 115/115 | 7 | 0 | 115/115 | 115/115 | 0.22 | 0.65 |
+| MENA | 4 | 3 | 3/3 | 1 | 0 | 3/3 | 3/3 | 0.04 | 0.06 |
+| US | 122 | 115 | 115/115 | 7 | 0 | 115/115 | 115/115 | 0.20 | 0.67 |
 
 ## Failures
 
@@ -97,7 +97,7 @@ None. Every injected failure resumed to a result identical to the clean run, wit
 
 ## Product observations from this run (not fixed here)
 
-- **Override cells lose the input styling.** In 19 of 18 DCF override runs the overridden WACC / growth cell is a plain constant that is not blue and has no comment, so the workbook alone does not show it is a user override. The job's step note does disclose it ("Overrides applied: ..."), so the number is counted as flagged here, but a reader who only opens the xlsx sees an unmarked hard-code (19 cells).
+- **Override cells lose the input styling.** In 19 of 19 runs that applied a WACC / growth override from the prompt, the overridden cell is a plain constant that is not blue and has no comment, so the workbook alone does not show it is a user override. The job's step note does disclose it ("Overrides applied: ..."), so the number is counted as flagged here, but a reader who only opens the xlsx sees an unmarked hard-code (19 cells).
 
 ## Deterministic gate observations (not counted in success)
 
@@ -129,3 +129,7 @@ None. Every injected failure resumed to a result identical to the clean run, wit
 - `rel-140` lbo NVDA (US)
 - `rel-141` lbo SWDY (MENA)
 - `rel-142` lbo SAP (IFRS)
+
+## Unreproduced hang (honest note)
+
+One earlier full run of this harness aborted at about brief 61 because a determinism re-run of a deck brief had not finished after 180 s. It happened while the full unit-test suite was running in a second process on the same machine. The harness had no diagnostics then (it now records job status, worker-set membership and step states, and a hang becomes a failed row instead of a crash). It did not recur in three further full runs without concurrent load, nor in 80 back-to-back approve-immediately trials. Cause unknown; treat as a possible intermittent job-runtime stall under CPU contention, not a confirmed bug.

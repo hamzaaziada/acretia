@@ -156,7 +156,9 @@ class Harness:
                     self.svc.approve(self.org, jid, pend["step_id"], {}, self.uid)
                     approvals += 1
             time.sleep(0.01)
-        raise TimeoutError(f"job {jid} did not finish within {timeout}s")
+        r = self.svc._row(jid)
+        raise TimeoutError(f"job {jid} did not finish within {timeout}s (status={r['status']}, in worker set={jid in self.svc._active}, "
+                           f"steps={[(x['id'], x['status']) for x in json.loads(r['steps_json'] or '[]')]})")
 
     def run(self, prompt: str, deal: str | None = None, inputs: dict | None = None, timeout: float = 180.0) -> Run:
         t0 = time.perf_counter()
