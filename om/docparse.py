@@ -21,6 +21,7 @@ import subprocess
 import tempfile
 import threading
 import unicodedata
+import xml.etree.ElementTree as ET
 from collections import Counter
 from dataclasses import dataclass, field
 
@@ -61,6 +62,7 @@ class ParsedPage:
     raw_text: str = ""
     completeness: float = 1.0
     completeness_before_recovery: float = 1.0
+    threshold: float = COMPLETENESS_MIN
 
 
 @dataclass
@@ -79,6 +81,10 @@ class ParsedDoc:
     def text(self):
         return "\f".join("\n".join(b.text for b in p.blocks) for p in self.pages)
 
+    def incomplete_pages(self):
+        """Pages still below the completeness threshold after recovery: [(page, completeness)]."""
+        return [(p.number, p.completeness) for p in self.pages if p.completeness < p.threshold]
+
     def to_dict(self):
         def blk(b):
             return {"kind": b.kind, "text": b.text, "page": b.page, "bbox_norm": list(b.bbox_norm),
@@ -95,7 +101,8 @@ class ParsedDoc:
                 "pages": [{"number": p.number, "width": p.width, "height": p.height,
                            "blocks": [blk(b) for b in p.blocks], "lines": [line(l) for l in p.lines],
                            "raw_text": p.raw_text, "completeness": p.completeness,
-                           "completeness_before_recovery": p.completeness_before_recovery}
+                           "completeness_before_recovery": p.completeness_before_recovery,
+                           "threshold": p.threshold}
                           for p in self.pages]}
 
     @classmethod
@@ -111,7 +118,8 @@ class ParsedDoc:
                             [Block(b["kind"], b["text"], b["page"], tuple(b["bbox_norm"]),
                                    b["sha256_span_hash"], b["source"]) for b in p["blocks"]],
                             [line(l) for l in p["lines"]], p["raw_text"], p["completeness"],
-                            p["completeness_before_recovery"]) for p in d["pages"]]
+                            p["completeness_before_recovery"], p.get("threshold", COMPLETENESS_MIN))
+                 for p in d["pages"]]
         return cls(d["doc_id"], d["backend"], pages, list(d.get("warnings", [])))
 
 
@@ -135,22 +143,54 @@ def _threshold(threshold):
         return COMPLETENESS_MIN
 
 
+_ARABIC = re.compile("[\u0600-\u06ff\u0750-\u077f\u08a0-\u08ff\ufb50-\ufdff\ufe70-\ufeff]")
+_AR_STRIP = re.compile("[\u0640\u064b-\u065f\u0670\u06d6-\u06ed]")  # tatweel + harakat/quranic marks
+
+
+_RUN = re.compile(r"[\u0600-\u06ff\u0750-\u077f\u08a0-\u08ff\ufb50-\ufdff\ufe70-\ufeff]+|[^\u0600-\u06ff\u0750-\u077f\u08a0-\u08ff\ufb50-\ufdff\ufe70-\ufeff]+")
+
+
+def _clean(t):
+    t = unicodedata.normalize("NFKC", t)
+    if _ARABIC.search(t):
+        t = _AR_STRIP.sub("", t)
+    return "".join(c for c in t.casefold() if unicodedata.category(c)[0] not in "PSC")
+
+
 def _norm_token(t):
-    t = unicodedata.normalize("NFKC", t).casefold()
-    return "".join(c for c in t if unicodedata.category(c)[0] not in "PSC")
+    """Canonical token. Arabic-script tokens compare direction-agnostically (visual vs logical order)."""
+    t = _clean(t)
+    if t and _ARABIC.search(t):
+        t = min(t, t[::-1])
+    return t
 
 
-def _tokens(text):
-    return [t for t in (_norm_token(x) for x in (text or "").split()) if t]
+def _tokens(text, bidi=None):
+    """Normalised tokens. Bidi text mixes scripts inside one whitespace token (``2300000درهم``,
+    ``Marchالتاريخ``) depending on extractor, so Arabic-bearing tokens are split into script runs."""
+    text = text or ""
+    if bidi is None:
+        bidi = bool(_ARABIC.search(text))
+    out = []
+    for x in text.split():
+        c = _clean(x)
+        if not c:
+            continue
+        if bidi:   # RTL page: digit runs come out reversed too in visual-order extractors
+            out += [min(run, run[::-1]) for run in _RUN.findall(c)]
+        else:
+            out.append(c)
+    return out
 
 
 def completeness(parsed_text, raw_text):
     """Multiset token recall of ``raw_text`` tokens found in ``parsed_text``."""
-    raw = Counter(_tokens(raw_text))
+    bidi = bool(_ARABIC.search(raw_text or "") or _ARABIC.search(parsed_text or ""))
+    raw = Counter(_tokens(raw_text, bidi))
     n = sum(raw.values())
     if n == 0:
         return 1.0
-    got = Counter(_tokens(parsed_text))
+    got = Counter(_tokens(parsed_text, bidi))
     return sum(min(c, got[t]) for t, c in raw.items()) / n
 
 
@@ -339,6 +379,57 @@ def _recover(page_blocks, lines, page_no, source):
     return rec
 
 
+def _poppler_words(data, page_no):
+    """Word geometry for one page from poppler (``pdftotext -bbox-layout``, subprocess only)."""
+    if not shutil.which("pdftotext"):
+        return []
+    with tempfile.TemporaryDirectory(prefix="acretia_bbox_") as td:
+        p, out = os.path.join(td, "in.pdf"), os.path.join(td, "o.html")
+        with open(p, "wb") as fh:
+            fh.write(data)
+        try:
+            r = subprocess.run(["pdftotext", "-bbox-layout", "-f", str(page_no), "-l", str(page_no), p, out],
+                               capture_output=True, timeout=120)
+            if r.returncode != 0 or not os.path.exists(out):
+                return []
+            root = ET.parse(out).getroot()
+        except (subprocess.TimeoutExpired, OSError, ET.ParseError):
+            return []
+    words = []
+    for el in root.iter():
+        if el.tag.rsplit("}", 1)[-1] != "page":
+            continue
+        W, H = float(el.get("width")), float(el.get("height"))
+        for w in el.iter():
+            if w.tag.rsplit("}", 1)[-1] == "word" and (w.text or "").strip():
+                box = norm_bbox(float(w.get("xMin")), float(w.get("yMin")),
+                                float(w.get("xMax")), float(w.get("yMax")), W, H)
+                words.append(pdfdoc._word(w.text.strip(), page_no, box))
+        break
+    return words
+
+
+def _recover_poppler(blocks, raw, data, page_no):
+    """Add poppler words whose tokens are missing from the parsed text -> (blocks, lines)."""
+    btxt = " ".join(b.text for b in blocks)
+    bidi = bool(_ARABIC.search(raw) or _ARABIC.search(btxt))
+    missing = Counter(_tokens(raw, bidi))
+    missing.subtract(Counter(_tokens(btxt, bidi)))
+    missing = +missing
+    if not missing:
+        return [], []
+    picked = []
+    for w in _poppler_words(data, page_no):
+        ts = _tokens(w.text, bidi)
+        if ts and all(missing[t] > 0 for t in ts):
+            for t in ts:
+                missing[t] -= 1
+            picked.append(w)
+    lines = pdfdoc._group_lines(picked, page_no)
+    recs = [_block("recovered", l.text, page_no, l.bbox_norm, "pdftotext") for l in lines]
+    return recs, lines
+
+
 # -------------------------------------------------------------------- parse
 def _resolve_backend(backend):
     b = (backend or os.environ.get("ACRETIA_PARSER") or "auto").strip().lower()
@@ -388,9 +479,24 @@ def parse(path_or_bytes, backend=None, *, ocr="auto", threshold=None):
             rec = _recover(blocks, pg.lines, pg.number, name)
             blocks += rec
             after = completeness(" ".join(b.text for b in blocks), raw)
+            n_pop = 0
+            lines = list(pg.lines)
+            if after < thr:
+                prec, plines = _recover_poppler(blocks, raw, data, pg.number)
+                if prec:
+                    blocks += prec
+                    lines = sorted(lines + plines, key=lambda l: (l.bbox_norm[1], l.bbox_norm[0]))
+                    n_pop = len(prec)
+                    after = completeness(" ".join(b.text for b in blocks), raw)
             doc.warnings.append(f"page {pg.number}: {name} dropped {round((1 - before) * 100, 1)}% of raw "
-                                f"tokens; recovered {len(rec)} lines from the text layer")
-        doc.pages.append(ParsedPage(pg.number, pg.width, pg.height, blocks, pg.lines, raw, after, before))
+                                f"tokens; recovered {len(rec)} lines from the text layer"
+                                + (f" and {n_pop} lines from poppler word geometry" if n_pop else ""))
+            if after < thr:
+                doc.warnings.append(f"page {pg.number}: INCOMPLETE after recovery "
+                                    f"(completeness {after:.3f} < {thr}); text may be unreadable or scanned")
+        else:
+            lines = pg.lines
+        doc.pages.append(ParsedPage(pg.number, pg.width, pg.height, blocks, lines, raw, after, before, thr))
     return doc
 
 

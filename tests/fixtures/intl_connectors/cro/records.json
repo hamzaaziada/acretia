@@ -1,0 +1,26 @@
+{
+ "success": true,
+ "result": {
+  "records": [
+   {
+    "_id": 1,
+    "file_name": "126144250.pdf",
+    "company_num": "93416",
+    "company_name": "BALNAGOWAN ESTATES DESIGNATED ACTIVITY COMPANY",
+    "submission_num": "SR1974547",
+    "submission_rec_date": "2023-09-22T00:00:00",
+    "submission_eff_date": "2023-08-27T00:00:00",
+    "submissions_accounts_to_date": "2023-01-31T00:00:00"
+   },
+   {
+    "_id": 2,
+    "file_name": "126144251.pdf",
+    "company_num": "93417",
+    "company_name": "SYNTHETIC IRISH LIMITED",
+    "submission_num": "SR1974548",
+    "submission_rec_date": "2023-09-23T00:00:00",
+    "submissions_accounts_to_date": "2023-03-31T00:00:00"
+   }
+  ]
+ }
+}

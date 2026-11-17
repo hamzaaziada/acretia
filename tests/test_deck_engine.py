@@ -522,5 +522,53 @@ class Cli(NoNetwork):
         self.assertIn("job", rep)
 
 
+class TakeawayProvenanceAndSolve(NoNetwork):
+    """FP-S3-c: singular `takeaway` is prose (never a source); engine returns solved slides without a render spy."""
+
+    def _deck(self, aid, **over):
+        sl = {"id": "e1", "archetype": aid, **copy.deepcopy(archetypes.examples()[aid])}
+        sl.update(over)
+        return {"deck_id": "ex", "title": "Examples", "lang": "en", "as_of": "2026-09-30", "slides": [sl]}
+
+    def test_takeaway_is_a_prose_key(self):
+        for k in ("takeaway", "so_what", "callout", "verdict", "rationale", "note", "caption"):
+            self.assertIn(k, provenance.PROSE_KEYS)
+
+    def test_planted_unsourced_number_in_takeaway_is_critical(self):
+        for aid in ("waterfall", "doughnut_split", "stacked_bar", "tombstones"):
+            d = self._deck(aid)
+            d["slides"][0]["blocks"]["takeaway"] = "Value rises 987% on the new plan"
+            with self.subTest(archetype=aid):
+                hits = [f for f in engine.build(d, seed=1, critic=False).findings if f["rule"] == "unsourced_number"]
+                self.assertTrue(any("callout" in h["shape_name"] and "987" in h["message"] for h in hits), hits)
+                self.assertTrue(all(h["severity"] == "critical" for h in hits))
+
+    def test_takeaway_cannot_vouch_for_itself(self):
+        d = self._deck("waterfall")
+        d["slides"][0]["blocks"]["takeaway"] = "Savings add $777m"
+        d["slides"][0]["blocks"]["steps"][1]["note"] = "also $777m"      # prose-ish key inside data: not a source
+        hits = [f for f in engine.build(d, seed=1, critic=False).findings if f["rule"] == "unsourced_number"]
+        self.assertTrue(hits)
+
+    def test_return_slides_and_solve(self):
+        d = self._deck("waterfall")
+        rep = engine.build(d, seed=1, critic=False)
+        self.assertIsNone(rep.solved)
+        rep2 = engine.build(d, seed=1, critic=False, return_slides=True)
+        self.assertEqual(len(rep2.solved), 1)
+        self.assertIsInstance(rep2.solved[0], SolvedSlide)
+        self.assertNotIn("solved", rep2.to_dict())
+        self.assertEqual(len(rep2.to_dict(include_solved=True)["solved"]), 1)
+        slides, rep3 = engine.solve(d, seed=1, critic=False)
+        self.assertEqual(len(slides), 1)
+        self.assertIsNone(rep3.data)                                     # nothing rendered
+        self.assertEqual(rep3.error, "")
+        self.assertEqual(slides[0].to_dict(), rep2.solved[0].to_dict())
+
+    def test_revise_has_no_mock(self):
+        src = (Path(__file__).resolve().parents[1] / "om" / "deck" / "revise.py").read_text()
+        self.assertNotIn("mock", src)
+
+
 if __name__ == "__main__":
     unittest.main()
