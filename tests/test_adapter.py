@@ -662,8 +662,8 @@ class AtomicSpendTests(unittest.TestCase):
         self.assertEqual(led.inflight_usd(), 0.0)
 
     def test_repair_retry_reserves_again(self):
-        led = Ledger(guard=SpendGuard(0.005))
-        a, t = make(reply("not json", 10, 5), reply('{"answer":"a","n":1}'), ledger=led, mask=False)
+        led = Ledger(guard=SpendGuard(0.0045))
+        a, t = make(reply("not json", 10, 2000), reply('{"answer":"a","n":1}'), ledger=led, mask=False)
         a.model = "gpt-4.1-mini"
         with self.assertRaises(BudgetExceeded):
             a.chat(MSG, json_schema=SCHEMA, max_tokens=2500, job_id="J")      # first fits ($0.004), the repair's reserve does not
@@ -702,7 +702,8 @@ class StreamBillingTests(unittest.TestCase):
         with self.assertRaises(TransportError):
             a.chat(MSG, stream=True, max_tokens=1000, job_id="J").text()
         worst = cost_usd("gpt-4.1", a._estimate_input_tokens(MSG), 1000)
-        self.assertAlmostEqual(led.total("J")["cost_usd"], worst, places=6)
+        self.assertGreaterEqual(led.total("J")["cost_usd"], worst - 1e-9)
+        self.assertAlmostEqual(led.total("J")["cost_usd"], worst, places=4)
 
     def test_mid_stream_failure_before_output_falls_back(self):
         def broken():

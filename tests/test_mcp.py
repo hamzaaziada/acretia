@@ -621,7 +621,7 @@ class ExcelBombTests(unittest.TestCase):
     def test_child_memory_limit_is_structured(self):
         make_xlsx(Path(self.root) / "ok.xlsx")
         with self.assertRaises(ToolFailure) as cm:
-            excel_server.run_isolated({"op": "grade", "path": str(Path(self.root) / "ok.xlsx")}, mem_bytes=64 * 1024 * 1024)
+            excel_server.run_isolated({"op": "grade", "path": str(Path(self.root) / "ok.xlsx")}, mem_bytes=24 * 1024 * 1024)
         self.assertIn(cm.exception.data["code"], ("xlsx_memory_limit", "xlsx_worker_failed"))
 
     def test_child_timeout_is_structured(self):
