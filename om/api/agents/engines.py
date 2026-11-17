@@ -167,6 +167,10 @@ class StepCtx:
     def blob(self, sha: str) -> bytes:
         return self.state.blobs.get(sha)
 
+    def excluded(self) -> list[dict]:
+        """Sources the user unticked in the source review (SF.7). Empty when no review happened or all were kept."""
+        return excluded_sources(self.svc, self.job)
+
     def check_cancel(self):
         if self.svc.is_cancelled(self.job["id"]):
             raise Cancelled()
@@ -285,6 +289,24 @@ def step(name):
     return deco
 
 
+def excluded_sources(svc, job: dict) -> list[dict]:
+    """Sources (as `describe_sources` lists them) that the approve payload's `selected` list left out."""
+    try:
+        row = svc._row(job["id"])
+        inputs = json.loads(row["inputs_json"] or "{}")
+        sel = ((inputs.get("_approvals") or {}).get("source_review") or {}).get("selected")
+        if not isinstance(sel, list) or not row["plan_json"]:
+            return []
+        plan = json.loads(row["plan_json"])
+        return [s for s in describe_sources(svc, dict(row), plan, svc._db()) if s["id"] not in set(sel)]
+    except Exception:                                   # noqa: BLE001
+        return []
+
+
+def _excluded_kind(cx: "StepCtx", kind: str) -> bool:
+    return any(s["kind"] == kind and s.get("task") == cx.task for s in cx.excluded())
+
+
 @step("resolve")
 def resolve(cx: StepCtx) -> dict:
     t = (cx.inputs.get("ticker") or "").strip().upper()
@@ -300,6 +322,9 @@ def resolve(cx: StepCtx) -> dict:
         t = tk[0] if tk else ""
     if not t:
         raise StepFailed("No company was named.", "Name a company, e.g. 'DCF for Apple', or open a deal that has one.")
+    if any(s["kind"] == "filings" and s.get("ticker") == t and not s.get("peer") for s in cx.excluded()):
+        raise StepFailed(f"The {t} filings were left out in the source review.",
+                         "Run it again and keep the company's filings ticked, or pick a different source.")
     found = load_cf(cx.state, t)
     if found is None:
         raise StepFailed(f"No filings are available for {t}.", _no_data_hint(t))
@@ -423,6 +448,8 @@ def peers_step(cx):
         _missing("S4 comps", "om.comps")
     r = cx.prior("resolve")
     want = [p.upper() for p in (cx.inputs.get("peers") or DEFAULT_PEERS.get(r["ticker"], []))]
+    left_out = {s.get("ticker") for s in cx.excluded() if s["kind"] == "filings" and s.get("peer")}
+    want = [p for p in want if p not in left_out]
     have, missing, notes = [], [], []
     for p in want:
         if load_cf(cx.state, p):
@@ -505,7 +532,7 @@ def build_merger(cx):
 
 
 def _latest_deliverable(cx: StepCtx, kinds=("xlsx",), name_hint: str | None = None):
-    if not cx.deal_id:
+    if not cx.deal_id or _excluded_kind(cx, "deliverables"):
         return None
     store = cx.store()
     best = None
@@ -599,14 +626,14 @@ def football_field(cx):
     title = f"DCF values {r['ticker']} at ${min(lows.values()):,.0f} to ${max(highs.values()):,.0f} per share across a 2-point WACC range"
     spec = {"id": "s1", "title": title, "source": _source_line(s, r), "as_of": _asof(s, info, r),
             "blocks": {"subtitle": "Value per share, USD, WACC +/- 1 point", "chart": chart, "takeaways": takeaways}}
-    data, badges = _render_deck(r["entity"], [("chart_takeaways", spec)], title=f"{r['ticker']} football field")
+    data, badges = _render_deck(r["entity"], [("chart_takeaways", spec)], title=f"{r['ticker']} football field", profile=house_profile_for(cx))
     art = cx.put(f"{r['ticker']}_football_field.pptx", "pptx", data, badges=badges)
     return {"artefacts": [art], "facts": {"ranges": {c: [lows[c], highs[c]] for c in cats}}, "detail": "football field slide, 2 methods", "badges": badges}
 
 
 # ---- documents (VDR / grid)
 def _documents(cx: StepCtx) -> list[dict]:
-    if not cx.deal_id:
+    if not cx.deal_id or _excluded_kind(cx, "documents"):
         return []
     try:
         rows = cx.conn.execute("SELECT id, name, folder, kind FROM documents WHERE org_id=? AND deal_id=? ORDER BY name, id", (cx.org_id, cx.deal_id)).fetchall()
@@ -693,6 +720,8 @@ def grid_answer(cx):
 def load_deliverables(cx):
     if not cx.deal_id:
         raise StepFailed("There is no deal to check.", "Open a deal that has a deck or model, or run this from the deal workspace.")
+    if _excluded_kind(cx, "deliverables"):
+        raise StepFailed("The deal's decks and models were left out in the source review.", "Run it again and keep them ticked.")
     store = cx.store()
     out = []
     for n in store.deliverables(cx.deal_id):
@@ -810,8 +839,17 @@ def approve_outline(cx):
     return {"ghost": g, "approved_by": cx.user_id, "edited": edited, "detail": f"approved by {cx.user_id}" + (f", edited {len(edited)} titles" if edited else "")}
 
 
-def _render_deck(client: str, slides: list[tuple[str, dict]], title: str):
-    """slides: [(archetype_id, spec)] -> (pptx bytes, badges)."""
+def house_profile_for(cx: "StepCtx") -> dict | None:
+    """The firm's cloned house profile (default template), or None. Never fails a deck over a bad template (SF.7)."""
+    try:
+        from .. import firm
+        return firm.house_profile(cx.conn, cx.org_id)
+    except Exception:                                   # noqa: BLE001
+        return None
+
+
+def _render_deck(client: str, slides: list[tuple[str, dict]], title: str, profile: dict | None = None):
+    """slides: [(archetype_id, spec)] -> (pptx bytes, badges). `profile` is a firm HouseProfile dict: its theme replaces the Acretia house theme."""
     if not _has("om.deck.render") or not _has("pptx"):
         _missing("deck", "om.deck.render")
     from om.deck import archetypes
@@ -820,6 +858,11 @@ def _render_deck(client: str, slides: list[tuple[str, dict]], title: str):
     from om.deck.theme import Theme
     from om.deck import validate as V
     theme = Theme.house()
+    if profile and isinstance(profile.get("theme"), dict):
+        try:
+            theme = Theme.from_dict(profile["theme"])
+        except (TypeError, ValueError, KeyError):
+            theme = Theme.house()
     solved = []
     for i, (aid, spec) in enumerate(slides, 1):
         ctx = BuildContext(theme, i, len(slides), title)
@@ -881,12 +924,13 @@ def deck_render(cx):
         ch, tk, sub = _chart_for(s, sl["purpose"] if sl["purpose"] in ("growth", "margin", "cash", "balance") else "growth")
         slides.append(("chart_takeaways", {"title": sl["title"], "source": _source_line(s, r), "as_of": _asof(s, info, r),
                                            "blocks": {"subtitle": sub, "chart": ch, "takeaways": tk}}))
-    data, badges = _render_deck(r["entity"], slides, title=gd["slides"][0]["title"])
+    prof = house_profile_for(cx)
+    data, badges = _render_deck(r["entity"], slides, title=gd["slides"][0]["title"], profile=prof)
     nm = {"profile": "company_profile", "pitchbook_section": "pitchbook_section", "teaser": "teaser", "ic_memo": "ic_deck"}.get(cx.task, cx.task)
     art = cx.put(f"{r['ticker']}_{nm}.pptx", "pptx", data, badges=badges)
     return {"artefacts": [art], "badges": badges, "detail": f"{len(slides)} slides; validator {'clean' if badges['ok'] else str(badges['critical']) + ' critical'}, "
             f"{badges['major']} major, {badges['minor']} minor",
-            "notes": ["Layout is the house theme; the vision critic and art direction (om.deck pipeline) are not part of this step."]}
+            "notes": [("Layout follows the firm's template" if prof else "Layout is the house theme") + "; the vision critic and art direction (om.deck pipeline) are not part of this step."]}
 
 
 @step("load_deck")
@@ -1049,10 +1093,11 @@ def describe_sources(svc, job: dict, plan: dict, conn) -> list[dict]:
         needs = {s["fn"] for s in plan["steps"] if s["task"] == tid}
         if "statements" in needs and tk:
             found = load_cf(svc.state, tk)
-            out.append({"label": f"SEC EDGAR company facts for {tk}", "kind": "filings", "task": tid,
+            out.append({"label": f"SEC EDGAR company facts for {tk}", "kind": "filings", "task": tid, "ticker": tk,
                         "detail": (f"{found[1]['basis']}, as of {found[1].get('as_of') or 'cache date'}" if found else "not available offline"), "available": bool(found)})
         for p in ins.get("peers") or []:
-            out.append({"label": f"SEC EDGAR company facts for {p.upper()} (peer)", "kind": "filings", "task": tid, "available": bool(load_cf(svc.state, p.upper())),
+            out.append({"label": f"SEC EDGAR company facts for {p.upper()} (peer)", "kind": "filings", "task": tid, "ticker": p.upper(), "peer": True,
+                    "available": bool(load_cf(svc.state, p.upper())),
                         "detail": "peer filings"})
         if needs & {"load_documents", "vdr_scan", "grid_answer"}:
             n = 0
@@ -1069,3 +1114,34 @@ def describe_sources(svc, job: dict, plan: dict, conn) -> list[dict]:
         seen[base] = seen.get(base, 0) + 1
         o["id"] = base if seen[base] == 1 else f"{base}-{seen[base]}"
     return out
+
+
+# --------------------------------------------------------------------------- deal resolution (SF.7)
+def match_deal(conn, org_id: str, plan: dict) -> str | None:
+    """The existing deal a prompt without a deal is about: the first task's ticker or company name against each active deal's
+    name and target (case-insensitive). None when nothing matches, so the run creates a deal of its own."""
+    from .planner import KNOWN
+    tasks = (plan or {}).get("tasks") or []
+    tickers = [str((t.get("inputs") or {}).get("ticker") or "").upper() for t in tasks]
+    tickers = [t for t in tickers if t]
+    if not tickers:
+        return None
+    tk = tickers[0]
+    nm, alias = KNOWN.get(tk, (None, None))
+    pats = [rf"\b{re.escape(tk.lower())}\b"] + ([rf"\b(?:{alias})\b"] if alias else []) + ([re.escape(nm.lower())] if nm else [])
+    try:
+        rows = conn.execute("SELECT d.deal_id, d.name, m.target, m.status FROM deals d LEFT JOIN deal_meta m ON m.org_id=d.org_id AND m.deal_id=d.deal_id "
+                            "WHERE d.org_id=? ORDER BY d.created_at DESC, d.deal_id", (org_id,)).fetchall()
+    except Exception:                                   # noqa: BLE001
+        return None
+    best = None
+    for r in rows:
+        if (r["status"] or "active") not in ("active",):
+            continue
+        for rank, text in ((0, r["target"] or ""), (1, r["name"] or "")):
+            low = text.lower()
+            if low and any(re.search(p, low) for p in pats):
+                if best is None or rank < best[0]:
+                    best = (rank, r["deal_id"])
+                break
+    return best[1] if best else None

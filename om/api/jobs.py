@@ -35,6 +35,8 @@ CREATE TABLE IF NOT EXISTS job_feedback(
   id TEXT PRIMARY KEY, org_id TEXT NOT NULL, job_id TEXT NOT NULL, user_id TEXT NOT NULL, rating TEXT NOT NULL CHECK(rating IN ('up','down')),
   comment TEXT, created_at TEXT NOT NULL, updated_at TEXT NOT NULL, UNIQUE(job_id, user_id));
 CREATE INDEX IF NOT EXISTS job_feedback_org ON job_feedback(org_id, job_id);
+CREATE TABLE IF NOT EXISTS job_user_prefs(
+  user_id TEXT NOT NULL, key TEXT NOT NULL, value TEXT NOT NULL, updated_at TEXT NOT NULL, PRIMARY KEY(user_id, key));
 """
 
 TERMINAL = ("done", "failed", "cancelled")
@@ -267,6 +269,8 @@ class JobService:
             source = "app"
         if source in ("schedule", "email") and "source_review" not in inputs:
             inputs["source_review"] = False
+        if source in ("app", "api") and "source_review" not in inputs and user_id and self.pref(user_id, "skip_source_review") == "1":
+            inputs["source_review"] = False                 # the user ticked "skip next time" in an earlier review (SF.7)
         jid = new_id("job")
         self._x("INSERT INTO jobs(id, org_id, deal_id, user_id, agent_id, kind, prompt, status, inputs_json, created_at, source) VALUES(?,?,?,?,?,?,?,?,?,?,?)",
                 (jid, org_id, deal_id, user_id, agent_id, "run", prompt, "queued", _j({**inputs, "_agent": agent}), now(), source))
@@ -276,6 +280,29 @@ class JobService:
             pass
         self._enqueue(jid)
         return self.view(self._row(jid))
+
+    def pref(self, user_id: str, key: str) -> str | None:
+        rows = self._q("SELECT value FROM job_user_prefs WHERE user_id=? AND key=?", (user_id, key))
+        return rows[0]["value"] if rows else None
+
+    def set_pref(self, user_id: str, key: str, value: str):
+        self._x("INSERT INTO job_user_prefs(user_id,key,value,updated_at) VALUES(?,?,?,?) ON CONFLICT(user_id,key) DO UPDATE SET value=excluded.value, updated_at=excluded.updated_at",
+                (user_id, key, value, now()))
+
+    def _spend_stop(self, job_id: str, r, t0: float) -> bool:
+        """Firm spend limits (firm.spend_limit): over a limit the run ends as failed with the limit's own hint. -> True when stopped."""
+        try:
+            from . import firm
+            lim = firm.spend_limit(self._db(), r["org_id"], self.deal_of(job_id))
+        except Exception:                                   # noqa: BLE001  (firm module missing or settings unreadable: do not block)
+            return False
+        if lim.get("allowed", True):
+            return False
+        msg = {"org_limit": "The firm's monthly spend limit has been reached.", "deal_limit": "This deal's spend limit has been reached."}.get(lim.get("reason"), "A spend limit has been reached.")
+        self.emit(job_id, "step", {"id": "spend_limit", "status": "failed", "title": "Spend limit", "detail": msg, "hint": lim.get("hint")})
+        self._add_wall(job_id, t0)
+        self._finish(job_id, "failed", error=msg, hint=lim.get("hint") or "An owner can raise the limit in Settings.", extra={"spend_limit": lim.get("reason")})
+        return True
 
     def _enqueue(self, job_id: str):
         self._cancel.setdefault(job_id, threading.Event()).clear()
@@ -318,6 +345,8 @@ class JobService:
         if step != pend["step_id"]:
             raise ApiError(409, "wrong_step", f"The run is waiting on '{pend['step_id']}', not '{step}'.", f"Approve step '{pend['step_id']}'.")
         ap = self.approvals(job_id)
+        if step == "source_review" and isinstance(payload, dict) and isinstance(payload.get("skip_next_time"), bool) and user_id:
+            self.set_pref(user_id, "skip_source_review", "1" if payload["skip_next_time"] else "0")
         ap[step] = {**(payload or {}), "by": user_id, "at": now()}
         self._set_inputs(job_id, _approvals=ap, _pending=None)
         self._x("UPDATE jobs SET status='queued' WHERE id=?", (job_id,))
@@ -410,6 +439,8 @@ class JobService:
         inputs = _l(r["inputs_json"], {}) or {}
         if not r["started_at"]:
             self._x("UPDATE jobs SET started_at=? WHERE id=?", (now(), job_id))
+        if self._spend_stop(job_id, r, t0):
+            return
         # ---- planning (once)
         if not r["plan_json"]:
             self._x("UPDATE jobs SET status='planning' WHERE id=?", (job_id,))
@@ -431,6 +462,12 @@ class JobService:
                                        "estimate": plan["estimate"], "tasks": [{"task_id": t["task_id"]} for t in plan["tasks"]], "method": plan["method"],
                                        "overrides": plan["overrides"], "review_minutes_estimate": plan["review_minutes_estimate"]})
             r = self._row(job_id)
+            if not r["deal_id"]:                            # a prompt about a company the firm already has a deal for goes into that deal (SF.7)
+                hit = engines.match_deal(self._db(), r["org_id"], plan)
+                if hit:
+                    self.set_deal(job_id, hit)
+                    r = self._row(job_id)
+                    self.emit(job_id, "log", {"level": "info", "message": "Attached to the existing deal for this company."})
         plan = _l(r["plan_json"])
         steps = _l(r["steps_json"], [])
         # ---- pre-run source review (parity item 24; default on, off with inputs.source_review=false)
@@ -465,6 +502,9 @@ class JobService:
                 self.emit(job_id, "step", {"id": st["id"], "status": "skipped", "title": st["title"], "detail": st["detail"], "engine": st["engine"]})
                 self._persist_steps(job_id, steps)
                 continue
+            if self._spend_stop(job_id, r, t0):
+                self._persist_steps(job_id, steps)
+                return
             task = plan["tasks"][st["task_index"]]
             before = self.ledger.total(job_id)
             st.update(status="running", started_at=now())

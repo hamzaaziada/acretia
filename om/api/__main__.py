@@ -32,7 +32,10 @@ def main(argv=None) -> int:
     c.add_argument("--password", default=None, help="or set ACRETIA_OWNER_PASSWORD, or you will be prompted")
     m = sub.add_parser("poll-mail", help="poll the configured mailbox once")
     m.add_argument("--data", default="data/app")
+    argv_rest = list(sys.argv[1:] if argv is None else argv)
     args = ap.parse_args(argv)
+    if args.cmd == "poll-mail":
+        argv_rest = argv_rest[argv_rest.index("poll-mail") + 1:]
 
     if args.cmd == "serve":
         from . import demo, server
@@ -65,13 +68,7 @@ def main(argv=None) -> int:
         except ModuleNotFoundError:
             print("Mail polling is not available in this build yet (om.api.mail is missing).", file=sys.stderr)
             return 2
-        st = state_mod.create(args.data)
-        fn = getattr(mail, "poll_once", None) or getattr(mail, "poll", None)
-        if fn is None:
-            print("om.api.mail has no poll_once(state) entry point.", file=sys.stderr)
-            return 2
-        fn(st)
-        return 0
+        return mail.main(argv_rest)          # starts the job service, polls once, waits for the runs it started
     return 1
 
 

@@ -415,6 +415,56 @@ def model_get(ctx):
     return _view(ctx, ctx.params["deal_id"], ctx.params["name"], data, v, latest)
 
 
+def _diff_versions(ctx):
+    q = ctx.query
+    try:
+        hist = _store(ctx).history(ctx.params["deal_id"], ctx.params["name"])
+    except Exception:
+        hist = []
+    latest = hist[-1]["version"] if hist else 1
+    try:
+        vb = int(q.get("b") or latest)
+        va = int(q.get("a") or max(1, vb - 1))
+    except (TypeError, ValueError):
+        raise ApiError(400, "bad_version", "a and b must be whole version numbers.", "Send ?a=1&b=2.") from None
+    return va, vb
+
+
+def _cell_sig(c):
+    v = c.value
+    if isinstance(v, float):
+        v = round(v, 9)
+    return (c.formula or None, v if v != "" else None)
+
+
+def model_diff(ctx):
+    """Cell-level difference between two versions of a workbook (SF.7): keys match the model view's `sheet!A1` cell keys."""
+    from ..xlsx import col_letter
+    deal_id, name = ctx.params["deal_id"], ctx.params["name"]
+    va, vb = _diff_versions(ctx)
+    da, _, _ = _load(ctx, deal_id, name, va)
+    db_, _, latest = _load(ctx, deal_id, name, vb)
+    ba, bb = _bundle(da)["book"], _bundle(db_)["book"]
+    changed, per_sheet = [], {}
+    for sh in list(bb.order) + [x for x in ba.order if x not in bb.sheets]:
+        ga, gb = ba.sheets.get(sh, {}), bb.sheets.get(sh, {})
+        for rc in sorted(set(ga) | set(gb)):
+            ca, cb = ga.get(rc), gb.get(rc)
+            sa = _cell_sig(ca) if ca else (None, None)
+            sb = _cell_sig(cb) if cb else (None, None)
+            if sa == sb:
+                continue
+            ref = f"{col_letter(rc[1])}{rc[0]}"
+            changed.append({"key": f"{sh}!{ref}", "sheet": sh, "ref": ref,
+                            "old": _num(ca.value) if ca else None, "new": _num(cb.value) if cb else None,
+                            "old_formula": (ca.formula if ca else None), "new_formula": (cb.formula if cb else None)})
+            per_sheet[sh] = per_sheet.get(sh, 0) + 1
+    changed.sort(key=lambda d: (list(bb.order).index(d["sheet"]) if d["sheet"] in bb.order else 99, int(re.sub(r"\D", "", d["ref"].split("!")[-1]) or 0), d["ref"]))
+    cap = 5000
+    return {"deal_id": deal_id, "name": name, "a": va, "b": vb, "latest": latest, "count": len(changed), "truncated": len(changed) > cap,
+            "sheets": per_sheet, "changed": changed[:cap]}
+
+
 def _clean_changes(raw, book) -> dict:
     if not isinstance(raw, dict) or not raw:
         raise ApiError(422, "no_changes", "changes must be an object like {\"Assumptions!F20\": 0.08}.",
@@ -750,5 +800,6 @@ ROUTES = [
     Route("POST", "/api/v1/models/{deal_id}/{name}/save", model_save, role="member"),
     Route("GET", "/api/v1/models/{deal_id}/{name}/explain", model_explain, role="viewer"),
     Route("GET", "/api/v1/models/{deal_id}/{name}/audit", model_audit, role="viewer"),
+    Route("GET", "/api/v1/models/{deal_id}/{name}/diff", model_diff, role="viewer"),
     Route("POST", "/api/v1/models/{deal_id}/{name}/ask", model_ask, role="viewer"),
 ]

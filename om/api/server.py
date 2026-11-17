@@ -457,6 +457,13 @@ class AcretiaServer(ThreadingHTTPServer):
     def server_close(self):
         try:
             jobs = _import_tolerant("om.api.jobs")
+            for name in ("om.api.watch", "om.api.mail"):         # stop the pollers before the job service they submit to
+                mod = _import_tolerant(name)
+                if mod is not None and hasattr(mod, "shutdown"):
+                    try:
+                        mod.shutdown()
+                    except Exception:
+                        traceback.print_exc(file=sys.stderr)
             if jobs is not None and hasattr(jobs, "shutdown"):
                 jobs.shutdown()
         except Exception:
@@ -492,6 +499,17 @@ def make_server(state, host: str = "127.0.0.1", port: int = 8791) -> AcretiaServ
     jobs = _import_tolerant("om.api.jobs")
     if jobs is not None and hasattr(jobs, "init"):
         jobs.init(state)
+    # Background services (SF.7): mailbox poller and filing watcher. Each is import-tolerant and has its own off switch
+    # (ACRETIA_MAIL_POLL=0, ACRETIA_WATCH_INTERVAL=0); ACRETIA_BACKGROUND=0 turns both off. The mail poller only touches orgs
+    # that configured a mailbox and the watcher only deals with an enabled watch, so a fresh data dir stays idle.
+    if os.environ.get("ACRETIA_BACKGROUND", "1") != "0":
+        for name in ("om.api.mail", "om.api.watch"):
+            mod = _import_tolerant(name)
+            if mod is not None and hasattr(mod, "init"):
+                try:
+                    mod.init(state)
+                except Exception:
+                    traceback.print_exc(file=sys.stderr)
     from . import deals
     deals.resume_indexing(state)
     return srv
