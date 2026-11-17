@@ -1,0 +1,10 @@
+From: Ana Analyst <ana@fund.test>
+To: research@acretia.test
+Message-ID: <ok@example.test>
+Subject: Revenue for $TSTA
+Authentication-Results: mx.fund.test; dkim=pass header.d=fund.test; spf=pass
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: 7bit
+MIME-Version: 1.0
+
+Please pull FY2024 revenue.

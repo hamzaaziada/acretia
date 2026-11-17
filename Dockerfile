@@ -8,7 +8,9 @@ ARG PYTHON_IMAGE=python:3.12-slim-bookworm@sha256:935c3c5b12357a7e10caa9c1e6ca56
 FROM ${NODE_IMAGE} AS frontend
 WORKDIR /build/frontend
 COPY frontend/package.json frontend/package-lock.json ./
-RUN --mount=type=cache,target=/root/.npm npm ci --no-audit --no-fund
+RUN --mount=type=cache,target=/root/.npm --mount=type=secret,id=cabundle,required=false \
+    if [ -s /run/secrets/cabundle ]; then export NODE_EXTRA_CA_CERTS=/run/secrets/cabundle; fi \
+ && npm ci --no-audit --no-fund
 COPY frontend/ ./
 RUN npm run build
 
@@ -34,14 +36,18 @@ RUN apt-get update \
 WORKDIR /app
 # Dependencies first so code edits do not bust the layer cache.
 COPY requirements.txt requirements-extras.txt ./
+# Optional BuildKit secret `cabundle` (never stored in a layer): extra CA certificates for builds behind a TLS-inspecting proxy.
+#   docker build --secret id=cabundle,src=/path/ca-bundle.crt .
 RUN --mount=type=cache,target=/root/.cache/pip \
-    pip install --no-cache-dir -r requirements.txt \
+    --mount=type=secret,id=cabundle,required=false \
+    if [ -s /run/secrets/cabundle ]; then export PIP_CERT=/run/secrets/cabundle SSL_CERT_FILE=/run/secrets/cabundle; fi \
+ && pip install -r requirements.txt \
  && if [ "$WITH_EXTRAS" = "1" ]; then \
       if grep -qi '^docling' requirements-extras.txt; then \
-        pip install --no-cache-dir torch torchvision --index-url https://download.pytorch.org/whl/cpu; \
+        pip install torch torchvision --index-url https://download.pytorch.org/whl/cpu; \
       fi; \
-      grep -v '^#' requirements-extras.txt | sed 's/#.*//' | grep -v '^\s*$' > /tmp/extras.txt \
-      && pip install --no-cache-dir -r /tmp/extras.txt && rm /tmp/extras.txt; \
+      sed 's/#.*//' requirements-extras.txt | grep -v '^[[:space:]]*$' > /tmp/extras.txt \
+      && pip install -r /tmp/extras.txt && rm /tmp/extras.txt; \
     fi
 
 # Unprivileged user; writable state lives only in /data and /tmp (the root filesystem can be read-only).

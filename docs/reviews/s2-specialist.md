@@ -100,3 +100,91 @@ Evidence and storage:
 - Storage and queue: 6. Atomic dequeue is right; no fencing or dead-letter.
 
 Minimum to reach PASS WITH FIXES: F1, F2, F3, F4, F5, F6, F7. The gate should add adversarial cases for each: comma join and `query()` SQL, recursive CTE with a time budget, concurrent spend, truncate-and-reverify, concurrent `DealStore` writers, an overlapping-chain `.msg`, and an over-ratio xlsx.
+
+---
+
+# Re-review (2026-11-17)
+
+Method: every reproduction script from the first pass was re-run unchanged against the current tree (offline; fake transports, a local `http.server`, stdio MCP subprocesses, SIGKILLed workers), then I hunted for regressions and new defects. Verification of the fix packets: `scripts/verify_s2.py` gives 32/32; `unittest` over adapter, evidence, mcp, storage, connectors_harness, router and deals gives 294 tests, OK (1 skipped). `test_research_tools` was ignored as instructed. The gate passing does not cover the new findings below.
+
+## Verdict: PASS WITH FIXES   Score: 7/10 (was 5/10)
+
+The Critical is closed with engine-level controls, not a longer blacklist: DuckDB runs with `enable_external_access=false` and `lock_configuration=true`, and the earlier file-read and `query()` bypasses now return a `PermissionException`. The spend guard is now atomic across threads and processes. DealStore, the fenced queue, unpack atomicity, the SSRF forms, the Excel worker and the MCP client respawn all behave. What still stops a clean PASS:
+
+- The grid server's 512 MB memory cap does not hold. One query takes the process past 2.5 GB and it is OOM-killed (N1).
+- Evidence anchoring exists but nothing in the research or MCP path calls `seal()`, it is opt-in on verify, and the key sits next to the data (F4 PARTIAL, N3).
+- A provider can drive the ledger negative, and truncated stream replies are still accepted and recorded (F10, F29).
+- The torn-tail repair is not wired into any resume path (F20).
+- Several Medium/Low items are untouched (F23 stubs, F24, F25, F26, F27, F28).
+
+Counts of the original 31: 16 FIXED, 7 PARTIAL, 8 OPEN. New: 1 High, 2 Medium, 4 Low.
+
+## Original findings, re-tested
+
+| id | status | result of the same reproduction |
+|---|---|---|
+| F1 grid SQL guard | FIXED | Comma join, `read_ndjson_auto`, `query('sel'\|\|'ect ... read_'\|\|'csv(...)')`, `"/etc/passwd"` sub-select: all refused, either by the guard or by the engine (`PermissionException: file system operations are disabled by configuration`). `information_schema`, `current_database()` and `version()` still answer, which is harmless. |
+| F2 grid DoS | FIXED for time, see N1 for memory | Recursive CTE stopped at 5.0 s with `query exceeded the 5s timeout`; the next `select 1` and a `limit=5` query answered. `repeat('a',1e9)` and a 1e9 x 1e6 cross join also time out. |
+| F3 spend guard | FIXED | 8 threads against a $0.05 limit: 1 sent, 7 blocked, total $0.033 (was $0.264). 4 processes on one ledger (both `.jsonl` and `.sqlite` paths): 1 sent, 3 blocked. |
+| F4 evidence anchoring | PARTIAL | With `seal()` and `verify(path, "auto")`: truncation to 55 of 60 anchored records is detected; a deleted anchor log is detected ("missing anchor"); a re-chained forgery with a wrong head is detected. `DealStore.save_deliverable(evidence_anchor=...)` plus `verify_deliverable_evidence` detected a truncation from 5 to 3 records and a bogus signature. Remaining: plain `verify(path)` is unchanged and still passes truncation; no caller in `research/`, `mcp/server.py` or `deck/engine.py` calls `seal()`; the HMAC key lives at `storage/keys/evidence.key` beside the data, so anyone who can write the bundle can read it and forge (reproduced: a forged chain plus a self-signed anchor verifies); rolling back to an older anchor while truncating the anchor log verifies. See N4. |
+| F5 DealStore | FIXED | 4 processes x 40 `save_deliverable`: 160 of 160 stored, no errors. 4 x 30 `set_definition`: 120 of 120 persisted. |
+| F6 `.msg` amplification | FIXED | The 1.1 MB, 400-attachment CFB is rejected with `ArchiveBombError: overlapping sector chains`; peak 24 MB (was 510 MB). Cyclic data and directory chains and a huge `n_dif` still rejected. |
+| F7 Excel zip bomb | FIXED | Through the server the 1.5 GB xlsx returns `xlsx_limit_exceeded: uncompressed content is 1572865337 bytes; the limit is 209715200` in 0.1 s; the server stays alive and the next call works. Formula attacks (`SUM(A1:XFD1048576)`, 20,000-deep parens, 200k-term sum, `REPT` 1e9) return `memory_limit`, `RecursionError` or `#NAME?` in 5 s or less and the parent never exceeded 23 MB RSS (worker isolation). |
+| F8 unpack failures | FIXED | `a` then `a/b` raises `UnpackError: name clash`, and the destination is left empty after a mid-archive failure. MIME nesting beyond 20 and the 3000-deep cases raise `ArchiveBombError`. A symlink in the destination and a symlinked destination are refused. |
+| F9 key-host binding | FIXED | `Adapter("https://evil.com/v1","k")` and `from_env` with `ACRETIA_LLM_BASE_URL=https://evil.com` are refused ("not a known provider host"). A known host (`api.openai.com`) works; an explicit `key_host` is honoured by design. |
+| F10 streaming | PARTIAL | Mid-stream reset now raises `StreamInterrupted ... retry the whole call` (explicit, no silent loss, but still no resume or fallback after the first delta). Aborted and abandoned streams are now billed in the ledger (1 call, 7 in / 1 out). Still open: a stream with no `[DONE]` or `finish_reason` returns `'half an ans'` as success and is saved as a fixture in record mode; `finish_reason: "length"` with `{"a":` is returned and recorded. |
+| F11 PII message shapes | FIXED | `name`, `tool_calls[].function.arguments`, `input_text` parts and dict content no longer leak the email. |
+| F12 PII regex gaps | PARTIAL | Fixed: fullwidth `＠`, NBSP-separated card, lowercase IBAN. Still open: `b​ob@corp.com` masks only the tail and leaves `b` plus the zero-width character; `bob (at) corp.com` is not matched (acceptable, not an address). |
+| F13 fixtures carry PII | FIXED | A reply of `... bob＠corp.com and real jane@x.org` is stored as `[EMAIL_2] ... [EMAIL_3]`; no raw address or card in the fixture. |
+| F14 key in errors | FIXED | A 401 body echoing the Authorization header now reads `bad key Bearer [REDACTED]`. |
+| F15 prices | PARTIAL | `gemini-2.5-pro` is $2.50/$15, `gpt-5-pro` and `o3-pro` $15/$120, unknown models $15/$120. Still: any id containing `local` or `ollama` is $0 (`my-local-model` gives (0.0, 0.0)), regardless of the base URL. |
+| F16 router log | FIXED | The row is `'=HYPERLINK(... for [EMAIL_1] card [CARD_1]`: masked and formula-quoted. |
+| F17 MCP crash and respawn | FIXED | A 100,000-deep line returns `-32600 nesting deeper than 64 levels` and the server lives. After `SIGKILL` of the child, `list_tools()` respawns and answers on the next call (3 tools). |
+| F18 env inheritance | FIXED | A child spawned with `ACRETIA_LLM_API_KEY` set in the parent printed `None`. |
+| F19 queue fencing | PARTIAL | A stale `ack(lease)` returns False and the live lease survives; `max_attempts` and a `<name>.dlq` exist; 4 workers SIGKILLed 5 times: 600 of 600, 0 duplicates. But `ack(lease.id)` with the raw integer still deletes the live lease (see N2). |
+| F20 torn tail | PARTIAL | `EvidenceBundle(path, repair=True)` truncates the torn line and appends a `recovery` record; the chain then verifies (records `t t t recovery t`). The default still refuses to append, and none of the five construction sites (`research/api.py`, `workflows/base.py`, `workflows/__init__.py`, `mcp/server.py`, `deck/engine.py`) passes `repair=True`, so a real resume still hits the wall. |
+| F21 SSRF IPv6 forms | FIXED | `64:ff9b::7f00:1`, `64:ff9b::a9fe:a9fe`, `::7f00:1`, `::127.0.0.1` and `::ffff:0:7f00:1` are now refused. |
+| F22 crawler | PARTIAL | Crawl-delay above 30 s now raises `HostSkipped` (no sleep). Still open: with a real transport and a real 10 MB robots.txt (`Content-Length` set) the whole site is still treated as disallowed; an https to http redirect is still followed; there is no overall deadline (a 1 byte per 50 ms trickle with `timeout=2` held the fetch for 50.1 s). The rebinding and loop cases still hold. |
+| F23 MCP tools stubs | OPEN | `xlsx_recalc` returns `exposes no recalc entry point`; `pptx_validate` returns `no validate_pptx module is installed`; `deck_render` returns `exposes none of ['render','render_deck']`. |
+| F24 same-host other port | OPEN | A 302 from `127.0.0.1:A` to `http://127.0.0.1:B/` still forwards `Authorization`. |
+| F25 `_ident` newline | OPEN | `_ident("tbl\n")` still returns `'tbl\n'`. |
+| F26 `id: Infinity` | OPEN | `{"id":1e999}` still echoes `"id":Infinity`. |
+| F27 retry policy | OPEN | No `Retry-After` handling and no jitter in `adapter.py` (code and string search). |
+| F28 masker lifetime | OPEN | No `end_job()` on the adapter; per-job maskers still accumulate. |
+| F29 ledger inputs | OPEN, and worse than first reported | `precheck` with `max_tokens=-1e9` returns -$74,999. A provider reply with `usage.prompt_tokens = completion_tokens = -1e9` was accepted through the adapter and drove `ledger.total().cost_usd` to -$153,000 after two calls, which defeats any spend cap. Now Medium. |
+| F30 replay trust | FIXED | Corrupt and null-data fixtures now raise `ReplayMiss`. |
+| F31 FS races and caps | OPEN | `resolve_in_root` still defaults to `os.getcwd()`; a 405 MB eml with a 300 MB base64 part still peaked near 4 GB RSS (same as before). TOCTOU and S3 size-cap items were not changed (code-read). |
+
+## New findings
+
+| id | sev | component | file | reproduction | expected vs actual | suggested fix |
+|---|---|---|---|---|---|---|
+| N1 | High | Grid MCP memory cap | `src/harness/mcp/grid_server.py:28-29` (`max_memory: 512MB`) | [REPRODUCED] fresh server, one call each: `select * from (select 1) t, unnest(range(1000000000))`, `select unnest(range(100000000)) limit 5`, `select list(range(100000000))`. RSS went past 2.5 GB within the 5 s budget (I killed it at 2.5 GB); the server returned nothing and, left alone, died with SIGKILL (rc -9, kernel OOM). `array_agg` over 3e8 rows and `string_agg` stopped cleanly with `OutOfMemoryException`. | Expected: the 512 MB cap holds and the query fails with an error. Actual: list and unnest materialisation is not accounted by DuckDB's buffer manager, so one query can exhaust the host and kill co-located processes. The Excel worker already shows the right pattern (isolated child plus memory limit). | Run grid queries in a child process with `RLIMIT_AS` and a watchdog that kills it on RSS above the cap (as the Excel worker does), and cap `unnest`/`list` input by rejecting those functions or bounding with a row-count pre-check. |
+| N2 | Medium | SQLiteKV fencing bypass | `om/storage.py` `ack`/`nack` (`getattr(item_id, "id", item_id)`) | [REPRODUCED] A leases with a 0.05 s lease, B leases the same item. `kv.ack(a)` returns False (fenced). `kv.ack(a.id)` returns True and `qsize` drops to 0 while B is still working. | The fence only applies when a Lease object is passed; an integer id (the previous API) removes the job. | Make `ack`/`nack` require a Lease (or a token) and reject bare ints, or treat an int as unfenced only through an explicitly named admin method. |
+| N3 | Medium | Evidence anchoring trust model | `src/harness/evidence.py:170-196`; callers | [REPRODUCED] (a) Key at `storage/keys/evidence.key` (0600) is in the same trust domain as the bundle, so a writer reads it and forges (a re-chained history with a self-signed anchor verified True). (b) Truncating both the bundle and the tail of `anchors.jsonl` back to an earlier anchor verifies. (c) `seal()` is not called by any research, MCP or deck code path, and plain `verify()` ignores anchors. (d) `save_deliverable` accepts an anchor with a bad signature (caught only later at verify). | Expected: an anchor an attacker with file access cannot forge or roll back, created by default on delivery. Actual: opt-in, symmetric key beside the data. | Seal at job end and at delivery by default, store the anchor head in an external append-only place (KMS or a signed object store), prefer an asymmetric signature (the verifier holds only the public key), and verify the key signature at `save_deliverable`. |
+| N4 | Low | Reservation leak on crash | `src/harness/ledger.py:55` (`RESERVATION_TTL = 3600`) | [REPRODUCED] A process reserves $0.033 against a $0.05 limit and is SIGKILLed; a new process is blocked (inflight $0.033) until the one-hour TTL passes. | A dead worker should not hold budget for an hour. | Record the owner pid and host in the reservation and expire it when the pid is gone; shorten the default TTL to the call timeout plus a margin. |
+| N5 | Low | Guard false positive | `grid_server.py` `_FORBIDDEN_FUNC` | [REPRODUCED] `SELECT * FROM (SELECT 1) AS read_csv` is refused ("file, system and meta table functions are not allowed"). | Alias or column names that happen to match a function name are blocked. Safe direction; the engine settings are the real control. | Match function-call syntax (`name(`) rather than the bare word. |
+| N6 | Low | Anchor accepted unchecked at save | `om/deals.py` `save_deliverable` | [REPRODUCED] A bogus signature is stored; `verify_deliverable_evidence` later reports `anchor signature mismatch`. | Verify the signature when storing, or at least mark it unverified. | See N3. |
+| N7 | Low | Key path is cwd-relative | `evidence.py:178` | [CODE-READ ONLY] `storage/keys/evidence.key` is resolved against the current directory; `seal()` creates a key where it runs and `verify` (which uses `create=False`) cannot find one from another cwd and fails closed. | Anchors silently unverifiable from another working directory. | Resolve against a configured data root. |
+
+## What was re-tested and still holds
+
+Everything in the first pass's "Tested and held" list was re-run where it touches changed code and still holds: path confinement over stdio (symlink, `..`, NUL, `/proc/self/root`), notification handling, oversize framing, batch and bad-params errors, key-host lookalikes and mutation, replay with sockets disabled, SSRF resolver rebinding and numeric forms, zip traversal and ratio checks, CFB cycles, 2-process evidence append, `AnalyticsDB` identifier handling. The new engine settings did not break the existing tools: `grid_cell`, `grid_schema`, `limit` handling and `xlsx_evaluate` on a clean workbook all work.
+
+## Reliability SLOs after the fixes
+
+| SLO | Result |
+|---|---|
+| Retries and fallback never lose a job | Non-stream chat: holds. Streaming: no longer silent (`StreamInterrupted`) and billed, but not resumed. |
+| 100% resume after kill | Queue: holds (600 of 600; fenced for Lease objects, not for raw ids). MCP client: holds (respawn). DealStore: holds. Evidence: the repair mechanism works but no resume path enables it. Grid server: one query can still kill the process (N1). |
+| Spend guard | Holds under threads and processes. Open: negative `max_tokens` and negative provider usage (F29), `local` substring price, and a one-hour reservation leak (N4). |
+
+## Score: 7/10
+
+- Adapter and PII: 7 (was 6). Atomic spend, redaction, masked fixtures, key binding. Truncated-stream acceptance and negative usage remain.
+- MCP and data engines: 7 (was 3). Engine-enforced SQL safety, timeouts, worker isolation, respawn. The memory cap (N1) and stub tools (F23) remain.
+- Connectors and unpacking: 8 (was 6). Overlap detection, transactional unpack, MIME limits, IPv6 forms. Crawler deadline and downgrade, and eml memory, remain.
+- Evidence and tenancy: 6 (was 4). DealStore is correct and anchors work end to end. Wiring, key custody and rollback remain.
+- Storage and queue: 8 (was 6). Fencing, DLQ and cross-process guard; the raw-id bypass remains.
+
+Required before a clean PASS: N1, F10 (truncated stream and `length` not recorded), F29, N2, and wiring of `seal()` plus `repair=True` into the research and MCP paths (F4, F20, N3). Suggested gate additions: `unnest(range(1e9))` and `list(range(1e8))` against the grid server with an RSS ceiling; a provider reply with negative usage; `ack(lease.id)` after expiry; a truncated SSE stream in record mode; seal-then-truncate through the research result.
