@@ -28,7 +28,7 @@ REPO = Path(__file__).resolve().parents[2]
 if str(REPO) not in sys.path:
     sys.path.insert(0, str(REPO))
 
-from eval.reliability import (Harness, audit_run, deliverables_identical, fmt, gate_result, median, pct)  # noqa: E402
+from eval.reliability import (INPUT_BLUE, Harness, audit_run, override_cells, deliverables_identical, fmt, gate_result, median, pct)  # noqa: E402
 
 HERE = Path(__file__).resolve().parent
 TARGETS = {"success": 0.97, "silent": 0, "determinism": 1.0, "resume": 1.0}
@@ -91,7 +91,7 @@ def test_resume(h: Harness, b: dict, clean) -> dict:
         restore_inj()
     if resumed.status != "done":
         return {"tested": True, "ok": False, "detail": f"resume ended {resumed.status}: {resumed.error}"}
-    reran = [f for f in earlier if calls_cnt[f] != pre[f] or calls_cnt[f] != 1]
+    reran = [f for f in earlier if calls_cnt[f] != pre[f]]       # no earlier step may run again during the resume
     same, k, notes = deliverables_identical(clean, resumed)
     n_del = len(resumed.deliverables)
     ok = same and not reran and n_del == len(clean.deliverables)
@@ -123,6 +123,20 @@ def run_one(h: Harness, b: dict, do_resume: bool = True, do_determinism: bool = 
     silent = aud.silent + (1 if ov is False else 0)
     row.update(success=success, kinds="+".join(kinds), numbers_checked=aud.total, numbers_sourced=aud.sourced, numbers_flagged=aud.flagged,
                silent_numbers=silent, override_ok=ov if ov is not None else "", gates_pass=gates["pass"], model_score=gates["model_score"] or "")
+    unstyled = 0
+    oc_cells = override_cells(run)
+    if oc_cells:
+        from om import xlsx
+        for d in run.deliverables:
+            if d["kind"] == "xlsx":
+                bk = xlsx.read(d["data"])
+                for ref in oc_cells:
+                    sh, cell = ref.split("!")
+                    rc = xlsx.split_ref(cell)
+                    c = bk.sheets.get(sh, {}).get(rc)
+                    if c is not None and c.color != INPUT_BLUE:
+                        unstyled += 1
+    row["_override_unstyled"] = unstyled
     row["_audit_examples"] = aud.examples + (["DCF override was not applied to the workbook"] if ov is False else [])
     row["_gate_blocking"] = gates["blocking"]
     row["_cost"] = run.cost_usd
@@ -248,6 +262,12 @@ def write_report(path: Path, rows: list[dict], s: dict, corpus: list[dict], mode
     nr = [r for r in rows if r["outcome"] == "done" and r["resume_tested"] is True and r["resume_ok"] is not True]
     L += ["", "## Resume failures", ""]
     L += [f"- `{r['brief_id']}` ({r['task_id']}): {r['resume_detail']}" for r in nr[:15]] or ["None. Every injected failure resumed to a result identical to the clean run, without re-running finished steps."]
+    uo = sum(r.get("_override_unstyled", 0) for r in rows if r["outcome"] == "done")
+    n_ov = sum(1 for r in rows if r["outcome"] == "done" and r["perturbation"] == "override")
+    L += ["", "## Product observations from this run (not fixed here)", "",
+          f"- **Override cells lose the input styling.** In {sum(1 for r in rows if r['outcome'] == 'done' and r.get('_override_unstyled'))} of {n_ov} DCF override runs the overridden WACC / growth cell is a plain "
+          f"constant that is not blue and has no comment, so the workbook alone does not show it is a user override. The job's step note does disclose it (\"Overrides applied: ...\"), "
+          f"so the number is counted as flagged here, but a reader who only opens the xlsx sees an unmarked hard-code ({uo} cells)."]
     gf = s["gate_fail"]
     L += ["", "## Deterministic gate observations (not counted in success)", ""]
     if gf:

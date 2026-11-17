@@ -342,13 +342,14 @@ class Audit:
             self.examples.append(f"{where} = {what}")
 
 
-def audit_xlsx(data: bytes, name: str = "") -> Audit:
+def audit_xlsx(data: bytes, name: str = "", flagged_cells: frozenset = frozenset()) -> Audit:
     """Every hard-coded number must carry a source (cell comment or link) or a flag.
 
     - On a filings/historical sheet, or in an actual-period column (FY2024A, Actual) of a time-series row (3+ numbers across), an
       unsourced constant is SILENT (a lone control cell such as a scenario switch is an input, not a historical).
     - Elsewhere a constant is flagged when it uses the blue input-cell convention (a declared assumption); a constant that is
       neither sourced nor blue is SILENT.
+    - `flagged_cells` ("Sheet!A1") are cells the job itself disclosed as user overrides in its step notes; they count as flagged.
     Years used as period labels (1990-2100 in the first 12 rows) are labels, not figures.
     """
     from om import xlsx
@@ -373,6 +374,8 @@ def audit_xlsx(data: bytes, name: str = "") -> Audit:
             a.total += 1
             if b.comments.get(sh, {}).get((r, c)) or (b.links.get(sh, {}).get((r, c)) or "").startswith("http"):
                 a.sourced += 1
+            elif f"{sh}!{xlsx.col_letter(c)}{r}" in flagged_cells:
+                a.flagged += 1
             elif not filings and not (c in hist_cols and row_nums.get(r, 0) >= 3) and cell.color == INPUT_BLUE:
                 a.flagged += 1
             else:
@@ -442,16 +445,30 @@ def audit_json(data: bytes, name: str = "") -> Audit:
     return a
 
 
-def audit_deliverable(d: dict) -> Audit:
+def override_cells(run: Run) -> frozenset:
+    """Cells a job disclosed as overridden by the user's prompt ("Overrides applied: DCF!C30=0.09, ..." in a step note)."""
+    out = set()
+    for s in run.steps:
+        for n in ((s.get("output") or {}).get("notes") or []):
+            m = re.match(r"Overrides applied:\s*(.*)", str(n))
+            if m:
+                out |= {x.split("=")[0].strip() for x in m.group(1).split(",") if "!" in x}
+    return frozenset(out)
+
+
+def audit_deliverable(d: dict, flagged_cells: frozenset = frozenset()) -> Audit:
     k = d["kind"]
-    fn = {"xlsx": audit_xlsx, "pptx": audit_pptx, "docx": audit_docx, "json": audit_json}.get(k)
+    if k == "xlsx":
+        return audit_xlsx(d["data"], d["name"], flagged_cells)
+    fn = {"pptx": audit_pptx, "docx": audit_docx, "json": audit_json}.get(k)
     return fn(d["data"], d["name"]) if fn else Audit()
 
 
 def audit_run(h: Harness, run: Run) -> Audit:
     a = Audit()
+    fc = override_cells(run)
     for d in run.deliverables:
-        a.add(audit_deliverable(d))
+        a.add(audit_deliverable(d, fc))
     for tok in h.unresolved_citations(run):
         a.silent_at(run.job_id, f"citation token {tok} does not resolve")
     return a
