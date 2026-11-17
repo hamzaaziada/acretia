@@ -719,6 +719,7 @@ def _resume(ctx):
 
 def _approve(ctx):
     ctx.require("member")
+    svc().get(ctx.org_id, ctx.params["job_id"])               # 404 across orgs before any body validation
     b = _body(ctx)
     if not b.get("step"):
         raise ApiError(400, "missing_step", "Say which step you are approving.", "Send {\"step\": \"<step_id>\", \"payload\": {...}}; the step id is in the approval event.")
