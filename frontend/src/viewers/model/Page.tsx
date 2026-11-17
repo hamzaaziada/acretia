@@ -101,7 +101,15 @@ function Model({ data, onVersion, onSaved }: { data: ModelView; onVersion: (v: n
   const firstSheet = data.sheets.find((s) => s.name === 'IS')?.name ?? data.sheets[0]?.name ?? '';
   const [sel, setSel] = useState<Sel>(() => {
     const s = data.sheets.find((x) => x.name === firstSheet);
-    return { sheet: firstSheet, r: (s?.freeze.rows ?? 0) + 1, c: (s?.freeze.cols ?? 0) + 1 };
+    const fr = s?.freeze.rows ?? 0;
+    // open on the first number a reader cares about, not on an empty corner
+    let best: { r: number; c: number } | null = null;
+    for (const [ref, cell] of Object.entries(data.cells)) {
+      const p = parseRef(ref);
+      if (!p || p.sheet !== firstSheet || typeof cell.v !== 'number' || p.r <= fr || p.c < 3) continue;
+      if (!best || p.r < best.r || (p.r === best.r && p.c < best.c)) best = { r: p.r, c: p.c };
+    }
+    return { sheet: firstSheet, r: best?.r ?? fr + 1, c: best?.c ?? (s?.freeze.cols ?? 0) + 1 };
   });
   const lastSel = useRef<Record<string, { r: number; c: number }>>({});
   const [overlay, setOverlay] = useState(false);
@@ -211,11 +219,11 @@ function Model({ data, onVersion, onSaved }: { data: ModelView; onVersion: (v: n
   /* ---- navigation inside the model ---- */
   const sheet = data.sheets.find((s) => s.name === sel.sheet) ?? data.sheets[0];
   const jump = useCallback(
-    (ref: string) => {
+    (ref: string, focus = true) => {
       const p = parseRef(ref);
       if (!p || !data.sheets.some((s) => s.name === p.sheet)) return;
       setSel(p);
-      setFocusToken((n) => n + 1);
+      if (focus) setFocusToken((n) => n + 1);
     },
     [data.sheets],
   );
@@ -388,7 +396,7 @@ function Model({ data, onVersion, onSaved }: { data: ModelView; onVersion: (v: n
 
   const left = (
     <div className="mv__left">
-      <div className="mv__fbar" data-testid="formula-bar">
+      <div className="mv__fbar" data-testid="formula-bar" dir="ltr">
         <span className="mv__fbar-ref acr-mono" dir="ltr">
           {selRef}
         </span>
@@ -417,7 +425,7 @@ function Model({ data, onVersion, onSaved }: { data: ModelView; onVersion: (v: n
           focusToken={focusToken}
         />
       )}
-      <div className="mv__sheets" role="tablist" aria-label={t('viewers.model.sheets')}>
+      <div className="mv__sheets" dir="ltr" role="tablist" aria-label={t('viewers.model.sheets')}>
         {data.sheets.map((s) => (
           <button
             key={s.name}
@@ -446,7 +454,7 @@ function Model({ data, onVersion, onSaved }: { data: ModelView; onVersion: (v: n
         <Tabs items={railItems} value={rail} onChange={setRail} label={t('viewers.model.rail')} idPrefix="mv" />
         <TabPanel idPrefix="mv" id={rail}>
           {rail === 'assumptions' && (
-            <AssumptionsPanel items={data.assumptions} edits={edits} editable={data.editable && !stale} onChange={setInput} onReset={reset} onJump={jump} />
+            <AssumptionsPanel items={data.assumptions} edits={edits} editable={data.editable && !stale} onChange={setInput} onReset={reset} onJump={(r) => jump(r, false)} />
           )}
           {rail === 'checks' && <ChecksPanel checks={checks} onJump={jump} />}
           {rail === 'ask' && <AskPanel history={qa} busy={asking} onAsk={ask} onJump={jump} suggestions={suggestions} dirty={nEdits > 0} valueOf={valueOf} />}

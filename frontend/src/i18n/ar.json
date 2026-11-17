@@ -585,6 +585,7 @@
   "viewers.pdf.next": "الصفحة التالية",
   "viewers.pdf.nextHit": "النتيجة التالية",
   "viewers.pdf.nocites": "لا توجد استشهادات تشير إلى هذا المستند بعد.",
+  "viewers.pdf.nocurrent": "لم يُحدَّد أي استشهاد.",
   "viewers.pdf.nohits": "لا توجد نتائج",
   "viewers.pdf.nosource": "لا يوجد رابط خارجي",
   "viewers.pdf.notfound": "المستند غير موجود",

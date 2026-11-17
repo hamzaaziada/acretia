@@ -74,6 +74,7 @@ export interface ModelCell {
   bt?: 1;
   bb?: 1;
   ind?: number;
+  al?: 'left' | 'right' | 'center';
   note?: string;
   url?: string;
   citation_token?: string;

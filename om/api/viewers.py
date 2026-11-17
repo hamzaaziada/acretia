@@ -38,10 +38,12 @@ _BUILTIN_FMT = {0: "General", 1: "0", 2: "0.00", 3: "#,##0", 4: "#,##0.00", 9: "
 def _store(ctx):
     try:
         from .state import STATE  # type: ignore
-        return STATE.deal_store(ctx.conn, ctx.org_id)
     except ImportError:
-        from ..deals import DealStore
-        return DealStore(ctx.conn, ctx.blobs, ctx.org_id)
+        STATE = None
+    if STATE is not None:
+        return STATE.deal_store(ctx.conn, ctx.org_id)
+    from ..deals import DealStore
+    return DealStore(ctx.conn, ctx.blobs, ctx.org_id)
 
 
 def _not_found(what: str, hint: str | None = None) -> ApiError:

@@ -1083,3 +1083,8 @@
     transition: none;
   }
 }
+
+.mv__toolbar .acr-btn {
+  flex: none;
+  white-space: nowrap;
+}

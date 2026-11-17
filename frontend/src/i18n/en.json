@@ -585,6 +585,7 @@
   "viewers.pdf.next": "Next page",
   "viewers.pdf.nextHit": "Next match",
   "viewers.pdf.nocites": "No citations point into this document yet.",
+  "viewers.pdf.nocurrent": "No citation selected.",
   "viewers.pdf.nohits": "No matches",
   "viewers.pdf.nosource": "No external link",
   "viewers.pdf.notfound": "Document not found",

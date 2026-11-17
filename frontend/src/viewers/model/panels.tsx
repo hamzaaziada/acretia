@@ -44,7 +44,9 @@ function RefRow({ label, refKey, value, fmt, onJump, range }: { label: string; r
 export function CellInspector({ refKey, cell, explain, loading, valueOf, fmtOf, onJump, edited }: InspectorProps) {
   const { t, arabicDigits } = useI18n();
   const [more, setMore] = useState(false);
-  useEffect(() => setMore(false), [refKey]);
+  useEffect(() => {
+    setMore(false);
+  }, [refKey]);
   const v = valueOf(refKey);
   const cls = cell?.cls ?? 'label';
   const prec = (explain?.precedents ?? []).filter((p) => !p.empty);
@@ -315,7 +317,9 @@ export function AskPanel({ history, busy, onAsk, onJump, suggestions, dirty, val
   const { t, arabicDigits } = useI18n();
   const [q, setQ] = useState('');
   const end = useRef<HTMLDivElement>(null);
-  useEffect(() => end.current?.scrollIntoView({ block: 'nearest' }), [history.length, busy]);
+  useEffect(() => {
+    end.current?.scrollIntoView({ block: 'nearest' });
+  }, [history.length, busy]);
   const submit = (e: FormEvent) => {
     e.preventDefault();
     const s = q.trim();

@@ -49,7 +49,7 @@ export function Inspector({ info, current, onSelect, page, onJump }: Props) {
             {info.doc.lang ? ` · ${info.doc.lang.toUpperCase()}` : ''}
           </p>
         </div>
-        {info.doc.status && info.doc.status !== 'ready' && <Badge tone="warning">{info.doc.status}</Badge>}
+        {info.doc.status && !['ready', 'indexed'].includes(info.doc.status) && <Badge tone="warning">{info.doc.status}</Badge>}
       </header>
 
       {c ? (
@@ -107,7 +107,7 @@ export function Inspector({ info, current, onSelect, page, onJump }: Props) {
         <section className="pdfv__cite pdfv__cite--none">
           <h3 className="pdfv__label">{t('viewers.pdf.citation')}</h3>
           <p data-testid="inspector-quote" className="pdfv__dim">
-            {info.citations.length ? t('viewers.pdf.pick') : t('viewers.pdf.nocites')}
+            {info.citations.length ? t('viewers.pdf.pick') : t('viewers.pdf.nocurrent')}
           </p>
           <dl className="pdfv__facts">
             <div>

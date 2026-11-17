@@ -196,7 +196,9 @@ function Viewer({ info, sp, setSp, dealId }: { info: DocInspect; sp: URLSearchPa
   const last = Math.min(total, pageAt(scrollTop + ch) + OVERSCAN);
   const currentPage = total ? pageAt(scrollTop + ch * 0.3) : 1;
 
-  useEffect(() => setPageInput(String(currentPage)), [currentPage]);
+  useEffect(() => {
+    setPageInput(String(currentPage));
+  }, [currentPage]);
 
   const goPage = useCallback(
     (n: number, yFrac = 0, center = false) => {

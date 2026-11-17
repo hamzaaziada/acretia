@@ -128,7 +128,7 @@ function CellEditor({ init, onEnd }: { init: string; onEnd: CellProps['onEditEnd
   const done = useRef(false);
   useEffect(() => {
     ref.current?.focus();
-    ref.current?.setSelectionRange(init.length, init.length);
+    ref.current?.select(); // typing replaces the old value, like a spreadsheet's type-over
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
   const end = (commit: boolean, move?: 'right' | 'down') => {
