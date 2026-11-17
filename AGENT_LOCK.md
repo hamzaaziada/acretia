@@ -43,7 +43,6 @@ One row per active claim. Claim a packet before you touch its files, commit the 
 | FP-S2b adapter/ledger/PII/router | worker (session A) | claude/dreamy-ramanujan-k8p2xt | 2026-11-17 | src/harness/adapter.py, src/harness/ledger.py, src/harness/router.py, src/harness/profiles/*, om/pii.py, om/replay.py, tests/test_adapter.py, tests/test_harness_router.py, tests/test_llm_router.py |
 | FP-S2c evidence/deals/queue | worker (session A) | claude/dreamy-ramanujan-k8p2xt | 2026-11-17 | src/harness/evidence.py, om/deals.py, om/storage.py, tests/test_evidence.py, tests/test_deal_memory.py, tests/test_storage.py |
 | S4.10 rendered samples | worker (session C) | claude/busy-knuth-i3ewp5 | 2026-11-17 | docs/samples/s4/**, scripts/render_samples_s4.py |
-| FP-CI2 CI suite env | worker (session A) | claude/dreamy-ramanujan-k8p2xt | 2026-11-17 | .github/workflows/ci.yml |
 
 ## Log
 - 2026-11-16: created; no active claims.
@@ -86,3 +85,4 @@ One row per active claim. Claim a packet before you touch its files, commit the 
 - 2026-11-17: S4.7c, S4.6a, S4.8, S4.9 merged and released; S4.10 samples claimed.
 - 2026-11-17: S5 gate script landed; Fix Packets S5.F1, S5.F2 claimed (session D).
 - 2026-11-16: session A: FP-S2d done; FP-CI2 claimed (CI forced replay mode broke 12 fake-provider tests).
+- 2026-11-16: session A: FP-CI2 landed (8619648).
