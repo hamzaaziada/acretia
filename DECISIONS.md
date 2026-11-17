@@ -111,3 +111,16 @@ Newest last. Each entry gives the choice and why. Agents add entries here instea
   - **Elsewedy:** has one consolidated annual FS (FY2024) plus FY2024 separate FS and the FY2025 / Q3-2026 earnings releases.
 
   Each gap is recorded in `sources.json` with the hosts checked. The user can close them by supplying the PDFs (e.g. SWDY FY2025 consolidated FS) under `data/raw/intl/anchors/<ticker>/`. The fetcher then verifies them by sha256 like any other source.
+
+## Session C (S4, Excel engine)
+
+- **D-S4-01 (2026-11-16) Share prices.** Models never invent a price. They use a caller-supplied quote (`om.prices`) if there is one, else a proxy from the 10-K cover: dei:EntityPublicFloat ÷ dei:EntityCommonStockSharesOutstanding, cited with accession and date and labelled PROXY wherever it appears. If neither exists, a model that needs a price refuses to build (`no_market_price`). The proxy understates the price, because the float excludes affiliates. It is replaced the moment a real quote source is connected.
+- **D-S4-02 (2026-11-16) Sensitivities are closed-form live grids.** No `{=TABLE()}` data tables and no array formulas. Every grid cell is a formula on the header inputs and the model's cells. The LBO entry-multiple grid is exact because debt is sized on EBITDA, not price. Any grid that holds something constant says so in its title.
+- **D-S4-03 (2026-11-16) LBO IRR.** With sponsor flows only at entry and exit, IRR = MoM^(1/n) − 1 (closed form). `IRR()` over a cash-flow strip is a cross-check, and the two must agree on the Checks sheet.
+- **D-S4-04 (2026-11-16) Three engines plus cached values.** `om.recalc.compare` compares om.formula, LibreOffice (persistent UNO daemon), formulon 0.18.0 (Apache-2.0, WASM) and the file's own cached values. LibreOffice is excluded only on cells that are actually in a cycle at run time (D-006).
+- **D-S4-05 (2026-11-16) Green links are required in our deliverables.** `validate_xlsx` makes a black cross-sheet link critical. `om.modelcheck` still only reports it for third-party workbooks.
+- **D-S4-06 (2026-11-17) Roll-forward carries every forecast-year input.** The user's assumptions for overlapping forecast years are carried over, mapped by fiscal year and not column. Inputs for a year that has become an actual are dropped and listed.
+- **D-S4-07 (2026-11-17) Comps calendarisation.** The weight on the prior fiscal year is MOD(FYE month − CalMonth, 12)/12. With actuals only, a December filer's CY is its FY. The CY+1 forward figure comes from Acretia's own three-statement forecast, labelled "model estimate, not consensus" (FP-S4-E).
+- **D-S4-08 (2026-11-17) Template fit pastes model values.** `om.templatefit` links projections to a `Model` sheet of pasted model values with source comments, not to cross-workbook links. Reference rows not found in the filings stay empty and flagged, never guessed.
+- **D-S4-09 (2026-11-17) Infeasible deals are flagged, not hidden.** LBO and merger outputs that fail a hurdle or a credit test show a visible feasibility flag on the Cover. They do not raise a Checks ERROR, so the workbook stays mechanically production-ready while telling the truth about the deal (IB VP review round 1).
+

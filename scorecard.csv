@@ -1,3 +1,12 @@
 stage,eval,n,score,notes
 S8,standards_qa,50,0.980,"live_model=no; deterministic retrieval; key-point rubric >=75%, cite match, url on every citation"
 S8,standards_qa_heldout,25,0.880,"live_model=no; deterministic retrieval; key-point rubric >=75%, cite match, url on every citation"
+S4,sbench_formula_cells_reproduced,32850,0.716,"live_model=no; om.formula vs Excel-saved values, SpreadsheetBench verified-400 golden workbooks (CC BY-SA, local only), pre-FP-S4.fix2"
+S4,sbench_formula_cells_reproduced_supported_wb,17743,0.750,"live_model=no; workbooks using only supported functions; gate threshold 0.95 NOT MET, S4.fix2 in progress"
+S4,sbench_workbooks_fully_reproduced,286,0.332,"live_model=no; formula workbooks fully reproduced"
+S4,sbench_llm_solving,0,,"not run live (no keys; D-021); replay harness om.sbench.solve"
+S4,ombench_three_statement_critical_pass,10,0.900,"live SEC; GOOGL fails calculates (missing diluted shares) -> FP-S4-A/B"
+S4,ombench_planted_error_audit,19,1.000,"10 three-statement + 9 LBO/merger/comps plants, caught and located"
+S4,reliability_critical_pass,119,0.521,"live SEC, 100 US + 19 IFRS 20-F; target 0.97 NOT MET; IFRS 0/19 -> FP-S4-A/B"
+S4,earnings_update_p95_seconds,119,10.9,"roll-forward incl. rebuild and grade; target < 300 s"
+S4,ib_vp_specialist_review,5,0.62,"round 1, docs/s4/reviews/ib-vp-round1.md; target >= 0.85 NOT MET"
