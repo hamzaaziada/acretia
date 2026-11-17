@@ -5,7 +5,7 @@ One row per active claim. Claim a packet before you touch its files, commit the 
 | Packet | Agent / session | Branch | Claimed (UTC) | Files |
 |---|---|---|---|---|
 | S5.F4 Arabic OCR + extraction (session D) | worker | main | 2026-11-17 | om/pdfdoc.py, om/grid.py, tests/test_pdfdoc.py, tests/test_grid_arabic.py |
-| S5.5c Matrix Chat (session D) | worker | main | 2026-11-17 | om/grid_chat.py, tests/test_grid_chat.py, tests/fixtures/grid_chat/* |
+| S5.F3b risk detector precision + Arabic (session D) | worker | main | 2026-11-17 | om/vdr_risk.py, tests/test_vdr_risk.py |
 | S5.6 grid interfaces doc (session D) | worker | main | 2026-11-17 | docs/interfaces.md ("Document grid (S5)" section only) |
 | S5 docs (session D) | Boss | main | 2026-11-16 | docs/s5/* |
 | S1 gate | Boss | claude/dreamy-ramanujan-k8p2xt | 2026-11-16 | scripts/verify_s1.py |
@@ -100,3 +100,4 @@ One row per active claim. Claim a packet before you touch its files, commit the 
 - 2026-11-17: session B: S3.10, FP-S3-c/d, S3 gate script merged and released; verify_s3 47/51; claimed FP-S3-e, FP-S3-f, specialist review r1.
 - 2026-11-17: S5.F2 verified on main and released (session D).
 - 2026-11-17: S5.4b verified on main and released; S5.F4 claimed (session D).
+- 2026-11-17: S5.5c verified on main and released; S5.F3b claimed (session D).
