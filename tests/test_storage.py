@@ -201,6 +201,21 @@ class KVTests(unittest.TestCase):
         self.assertTrue(self.kv.ack(b))
         self.assertEqual(self.kv.qsize("q"), 0)
 
+    def test_bare_int_ack_nack_raises_and_keeps_live_lease(self):
+        self.kv.enqueue("q", b"job")
+        a = self.kv.dequeue("q", lease=10)
+        self.now[0] += 11
+        b = self.kv.dequeue("q", lease=10)            # B now holds the item
+        for bad in (a.id, str(a.id), None, (a.id,), (a.id, None)):
+            with self.assertRaises(TypeError) as cm:
+                self.kv.ack(bad)
+            self.assertIn("Lease", str(cm.exception))
+            with self.assertRaises(TypeError):
+                self.kv.nack(bad)
+        self.assertEqual(self.kv.qsize("q"), 1)       # still there, still leased by B
+        self.assertTrue(self.kv.ack((b.id, b.token)))  # explicit (id, token) is fenced and allowed
+        self.assertEqual(self.kv.qsize("q"), 0)
+
     def test_dead_letter_after_max_attempts_and_requeue(self):
         i = self.kv.enqueue("q", b"poison", max_attempts=3)
         for n in range(3):
@@ -285,6 +300,11 @@ class KVTests(unittest.TestCase):
         self.assertIn(lease.token, sent[-1])
         with self.assertRaises(st.StorageError):
             r.ack(st.Lease(7, b"", 1, "q"))  # no token -> refused
+        for bad in (7, "7", (7, "tok")):
+            with self.assertRaises(TypeError):
+                r.ack(bad)
+            with self.assertRaises(TypeError):
+                r.nack(bad)
 
     def test_redis_unreachable_is_clear(self):
         with self.assertRaises(st.StorageError):

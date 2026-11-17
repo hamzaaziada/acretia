@@ -25,10 +25,13 @@ _DASHES = {c: "-" for c in "\u2010\u2011\u2012\u2013\u2014\u2015\u2212\ufe58\ufe
 
 def _fold(text: str) -> tuple[str, list[int]]:
     """NFKC-fold a copy of `text` for detection (fullwidth '@' and digits, NBSP / thin / narrow spaces, unicode
-    dashes) and return it with, for each folded char, the index of the original char it came from (+ a sentinel)."""
+    dashes; zero-width and other Cf format characters are dropped) and return it with, for each folded char, the index of the original char it came from (+ a sentinel)."""
     out, idx = [], []
     for i, ch in enumerate(text):
+        if unicodedata.category(ch) == "Cf":          # zero-width / format characters (U+200B-200D, U+2060, U+FEFF...)
+            continue
         f = unicodedata.normalize("NFKC", ch).translate(_DASHES)
+        f = "".join(c for c in f if unicodedata.category(c) != "Cf")
         if f and f.isspace() and f != " ":
             f = " "
         out.append(f)
@@ -43,7 +46,9 @@ def _sub(rx: re.Pattern, fn, text: str) -> str:
     folded, idx = _fold(text)
     out, last = [], 0
     for m in rx.finditer(folded):
-        a, b = idx[m.start()], idx[m.end()]
+        if m.end() == m.start():
+            continue
+        a, b = idx[m.start()], idx[m.end() - 1] + 1      # original span, interleaved zero-width chars included
         if a < last:
             continue
         out.append(text[last:a])
@@ -85,7 +90,8 @@ class Masker:
         self._lock = threading.Lock()
 
     def _ph(self, kind: str, value: str) -> str:
-        key = (kind, re.sub(r"\W", "", value).lower() if kind in ("PHONE", "CARD", "IBAN", "NINO", "SSN") else value.lower())
+        plain = "".join(c for c in value if unicodedata.category(c) != "Cf")
+        key = (kind, re.sub(r"\W", "", plain).lower() if kind in ("PHONE", "CARD", "IBAN", "NINO", "SSN") else plain.lower())
         if key not in self._by_value:
             self._count[kind] = self._count.get(kind, 0) + 1
             ph = f"[{kind}_{self._count[kind]}]"
@@ -117,7 +123,7 @@ class Masker:
             return orig
         # the original span may use odd spaces: cut it where the folded candidate ends
         _, idx = _fold(orig)
-        cut = idx[len(cand)] if len(cand) < len(idx) else len(orig)
+        cut = idx[len(cand) - 1] + 1 if 0 < len(cand) <= len(idx) - 1 else len(orig)
         return self._ph("IBAN", orig[:cut]) + orig[cut:]
 
     def _phone(self, m, orig):

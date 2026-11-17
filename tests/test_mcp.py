@@ -406,6 +406,47 @@ class EngineHardeningTests(unittest.TestCase):
             grid_server.run_select(db, "select repeat('a', 1000000000)", timeout=2)
         self.assertLess(time.time() - t, 6)
 
+    N1_QUERIES = ["select * from (select 1) t, unnest(range(1000000000))",
+                  "select unnest(range(100000000)) limit 5",
+                  "select list(range(100000000))"]
+
+    @staticmethod
+    def _rss_mb():
+        with open("/proc/self/status") as f:
+            for line in f:
+                if line.startswith("VmRSS:"):
+                    return int(line.split()[1]) / 1024
+        return 0.0
+
+    def test_list_and_unnest_allocations_are_bounded(self):
+        """N1: DuckDB max_memory does not bound list/unnest; the child's RLIMIT_AS must."""
+        db = self.db("duckdb")
+        grid_server.run_select(db, "select 1")  # warm imports so the parent baseline is stable
+        before = self._rss_mb()
+        for q in self.N1_QUERIES:
+            with self.subTest(q=q):
+                t = time.time()
+                with self.assertRaises(ToolFailure) as cm:
+                    grid_server.run_select(db, q, check=False)
+                self.assertLess(time.time() - t, 10)
+                self.assertIn(cm.exception.data.get("code"), ("grid_memory_limit", "grid_timeout"))
+        self.assertLess(self._rss_mb() - before, 100)
+
+    def test_simple_select_latency(self):
+        db = self.db("duckdb")
+        grid_server.run_select(db, "select 1")
+        t = time.time()
+        for _ in range(3):
+            grid_server.run_select(db, "SELECT COUNT(*) AS n FROM grid_cells")
+        self.assertLess((time.time() - t) / 3, 1.0)  # measured about 0.13 s; generous bound for loaded CI
+
+    def test_timeout_has_code(self):
+        db = self.db("duckdb")
+        with self.assertRaises(ToolFailure) as cm:
+            grid_server.run_select(db, "with recursive r(n) as (select 1 union all select n+1 from r) "
+                                       "select count(*) from r", timeout=1)
+        self.assertEqual(cm.exception.data.get("code"), "grid_timeout")
+
     def test_row_and_byte_caps(self):
         db = self.db("duckdb")
         r = grid_server.run_select(db, "select * from range(5000)", limit=5000)
@@ -448,6 +489,32 @@ class ServerResponsivenessTests(unittest.TestCase):
         self.assertEqual(second["id"], 1)
         self.assertTrue(second["result"]["isError"])
         self.assertIn("timeout", second["result"]["content"][0]["text"])
+        proc.stdin.close()
+        proc.wait(timeout=10)
+
+
+class GridServerSurvivesMemoryAttackTests(unittest.TestCase):
+    def test_ping_and_query_after_n1_queries(self):
+        env = {"ACRETIA_MCP_ROOT": os.path.realpath(tempfile.gettempdir()), "ACRETIA_GRID_BACKEND": "duckdb"}
+        proc = subprocess.Popen([sys.executable, "-m", "src.harness.mcp.grid_server"], stdin=subprocess.PIPE,
+                                stdout=subprocess.PIPE, stderr=subprocess.DEVNULL, cwd=str(REPO),
+                                env=mcp_client.child_env(env))
+        self.addCleanup(proc.kill)
+
+        def call(i, method, params=None):
+            proc.stdin.write(P.encode({"jsonrpc": "2.0", "id": i, "method": method, **({"params": params} if params else {})}))
+            proc.stdin.flush()
+            return json.loads(proc.stdout.readline())
+        for i, q in enumerate(EngineHardeningTests.N1_QUERIES, 1):
+            t = time.time()
+            r = call(i, "tools/call", {"name": "grid_query", "arguments": {"sql": q}})
+            self.assertLess(time.time() - t, 10)
+            self.assertTrue(r["result"]["isError"])
+            self.assertIn("memory limit", r["result"]["content"][0]["text"])
+        self.assertEqual(call(10, "ping")["result"], {})
+        r = call(11, "tools/call", {"name": "grid_query", "arguments": {"sql": "select 1 as x"}})
+        self.assertFalse(r["result"].get("isError"))
+        self.assertIsNone(proc.poll())
         proc.stdin.close()
         proc.wait(timeout=10)
 

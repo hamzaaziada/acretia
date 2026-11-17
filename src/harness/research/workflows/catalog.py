@@ -9,6 +9,8 @@ from . import steps as S
 
 _STATEMENTS = dict(id="statements", kind="tool", tool="sec_statements", foreach="request.tickers",
                    args_template={"ticker": "{{item}}", "years": "{{request.options.years|5}}"})
+_Q_STATEMENTS = dict(id="quarterly_statements", kind="tool", tool="sec_statements", foreach="request.tickers",
+                     args_template={"ticker": "{{item}}", "years": 2, "period": "quarterly"})
 _REVIEW = dict(id="review", kind="review_gate")
 _TITLES = dict(id="titles", kind="llm_text", tool="action_titles", optional=True)
 _VERIFY = dict(id="verify", kind="verify")
@@ -34,15 +36,17 @@ def _build() -> dict:
              dict(id="assemble_company_profile", kind="assemble", tool="company_profile", depends_on=("statements",)),
              _TITLES, _VERIFY], requires=("tickers",)),
         _wf("earnings_recap", "Earnings recap",
-            "Earnings recap: latest fiscal period against the prior period for revenue, margins and diluted EPS where "
-            "tagged, plus management guidance only when it is sourced.",
+            "Earnings recap: latest quarter against the prior quarter and the year-ago quarter for revenue, margins and "
+            "diluted EPS where tagged (derived Q4 labelled), plus management guidance only when it is sourced.",
             ("earnings", "recap", "results", "quarter", "eps", "margin", "guidance"),
-            [_REVIEW, _STATEMENTS,
+            [_REVIEW, _Q_STATEMENTS,
              dict(id="eps", kind="tool", tool="sec_facts", optional=True,
-                  args_template={"ticker": "{{request.tickers[0]}}", "concepts": [S.EPS_CONCEPT], "periods": 3}),
+                  args_template={"ticker": "{{request.tickers[0]}}", "concepts": [S.EPS_CONCEPT], "periods": 8,
+                                 "period": "quarterly"}),
              dict(id="guidance", kind="tool", tool="web_facts", optional=True, when="request.options.guidance_url",
                   args_template={"url": "{{request.options.guidance_url}}"}),
-             dict(id="assemble_earnings_recap", kind="assemble", tool="earnings_recap", depends_on=("statements",)),
+             dict(id="assemble_earnings_recap", kind="assemble", tool="earnings_recap",
+                  depends_on=("quarterly_statements",)),
              _TITLES, _VERIFY], requires=("tickers",)),
         _wf("buyer_list", "Buyer list",
             "Strategic and financial buyer list ranked by a deterministic score on sourced cash capacity, leverage "

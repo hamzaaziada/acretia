@@ -45,6 +45,7 @@ class Base(unittest.TestCase):
             p.start()
             self.addCleanup(p.stop)
         self.reg = T.build_registry(sec=FakeSec(facts(5)), web=FakeWeb())
+        self.qreg = T.build_registry(sec=FakeSec(load("companyfacts_testco_quarterly.json")), web=FakeWeb())
 
     def run_wf(self, wf, tickers=("TEST",), tools=None, job="job1", options=None, **kw):
         opts = {"source_review": False}
@@ -83,15 +84,20 @@ class Workflows(Base):
             self.assertFalse(re.search(r"\d", re.sub(r"FY\d{4}", "", s["action_title"])), s["action_title"])
 
     def test_earnings_recap(self):
-        r = self.run_wf("earnings_recap")
+        r = self.run_wf("earnings_recap", tools=self.qreg)
         self.check(r, 2)
         labels = {f.label for f in r.figures}
-        self.assertIn("TEST EarningsPerShareDiluted", labels)
-        self.assertIn("TEST Revenue change vs prior year", labels)
+        self.assertIn("TEST Revenue change vs prior quarter", labels)
+        self.assertIn("TEST Revenue change vs year-ago quarter", labels)
         self.assertFalse([s for s in r.slide_specs if s["id"].endswith("guidance")])     # no sourced guidance
 
+    def test_earnings_recap_without_quarterly_data_has_no_slides(self):
+        r = self.run_wf("earnings_recap")            # annual-only facts: no 10-Q quarters, so nothing is invented
+        self.assertEqual(r.status, "succeeded", r.error)
+        self.assertEqual(r.slide_specs, [])
+
     def test_earnings_recap_guidance_only_when_sourced(self):
-        r = self.run_wf("earnings_recap", options={"guidance_url": "https://example.com/guide"})
+        r = self.run_wf("earnings_recap", tools=self.qreg, options={"guidance_url": "https://example.com/guide"})
         self.check(r, 2)
         self.assertTrue(any(s["id"].endswith("guidance") for s in r.slide_specs))
         self.assertTrue(any(f.citation.url == "https://example.com/guide" or "example.com" in (f.citation.url or "")
@@ -170,6 +176,139 @@ class Workflows(Base):
         r = self.run_wf("company_profile", tickers=())
         self.assertEqual(r.status, "failed")
         self.assertIn("tickers is required", r.error)
+
+
+
+class QuarterlyRecap(Base):
+    """S6.1d: earnings_recap compares the latest quarter with the prior and the year-ago quarter (10-Q data)."""
+
+    def recap(self, tools=None, **kw):
+        r = self.run_wf("earnings_recap", tools=tools or self.qreg, **kw)
+        self.assertEqual(r.status, "succeeded", r.error)
+        r.validate()
+        self.chain_ok()
+        return r, {s["id"]: s for s in r.slide_specs}
+
+    @staticmethod
+    def rows(slide):
+        return {x["label"]: x for x in slide["blocks"][0]["rows"]}
+
+    @staticmethod
+    def num(cell):
+        return float(re.sub(r"[^0-9.\-]", "", cell["value"].replace("+", "")))
+
+    def test_comparisons_equal_hand_computed_values(self):
+        r, slides = self.recap()
+        rows = self.rows(slides["earnings_recap_test_compare"])
+        # fixture (USD m): Q4 2024 revenue = 1100 - 800 = 300 (derived), Q3 2024 = 280, Q4 2023 = 1000 - 710 = 290
+        rev = rows["Revenue"]
+        self.assertEqual([self.num(rev[k]) for k in ("latest", "prior", "year_ago")], [300, 280, 290])
+        self.assertAlmostEqual(self.num(rev["change_prior"]), 100 * (300 / 280 - 1), delta=0.01)      # +7.14%
+        self.assertAlmostEqual(self.num(rev["change_year_ago"]), 100 * (300 / 290 - 1), delta=0.01)    # +3.45%
+        ni = rows["Net income"]       # Q4 2024 = 205.4 - 150 = 55.4; Q3 2024 = 52; Q4 2023 = 185.65 - 133 = 52.65
+        for got, exp in zip([self.num(ni[k]) for k in ("latest", "prior", "year_ago")], [55.4, 52, 52.65]):
+            self.assertAlmostEqual(got, exp, delta=0.06)           # display keeps 0.3% precision
+        self.assertAlmostEqual(self.num(ni["change_prior"]), 100 * (55.4 / 52 - 1), delta=0.01)
+        om_ = rows["Operating margin"]          # 77/300, 70/280, 73/290 (Q4 2023: 250 - 177)
+        self.assertEqual(
+            [round(self.num(om_[k]), 1) for k in ("latest", "prior", "year_ago")],
+            [round(100 * 77 / 300, 1), round(100 * 70 / 280, 1), round(100 * 73 / 290, 1)])
+        self.assertAlmostEqual(self.num(om_["change_prior"]), (77 / 300 - 70 / 280) * 1e4, delta=0.1)   # bps
+        self.assertIn("bps", om_["change_prior"]["value"])
+        figs = {f.label: f for f in r.figures}
+        self.assertAlmostEqual(figs["TEST Revenue change vs prior quarter"].value, 100 * (300 / 280 - 1), places=3)
+        self.assertEqual(figs["TEST Revenue change vs prior quarter"].period, "quarter ending 2024-12-31")
+
+    def test_q4_is_labelled_derived_and_cites_both_inputs(self):
+        r, slides = self.recap()
+        cmp_ = slides["earnings_recap_test_compare"]
+        rev = self.rows(cmp_)["Revenue"]
+        self.assertIn("derived", rev["latest"]["label"])
+        self.assertNotIn("derived", rev["prior"]["label"])                  # Q3 is tagged directly in a 10-Q
+        self.assertTrue(any("Derived fourth-quarter" in b for b in cmp_["bullets"]))
+        quotes = " | ".join(c["quote"] for c in cmp_["citations"])
+        self.assertIn("revenue = 1100.0 USD millions, FY ending 2024-12-31", quotes)       # input 1: the fiscal year
+        self.assertIn("revenue = 800.0 USD millions, 9M ending 2024-09-30", quotes)        # input 2: nine months
+        derived_fig = next(f for f in r.figures if f.label == "TEST Revenue fourth quarter, derived from fiscal year less nine months"
+                           and f.period == "quarter ending 2024-12-31")
+        self.assertIn("1100", derived_fig.citation.quote)                   # both inputs are in the figure's own quote
+        self.assertIn("800", derived_fig.citation.quote)
+        labels = {f.label for f in r.figures}
+        self.assertIn("TEST Revenue", labels)                               # the FY input stays a verified figure
+        self.assertIn("TEST Revenue 9M YTD", labels)
+
+    def test_missing_inputs_are_said_not_zeroed(self):
+        r, slides = self.recap()
+        cmp_ = slides["earnings_recap_test_compare"]
+        gp = self.rows(cmp_)["Gross profit"]        # Q4 2024 gross profit needs 9M 2024 GP, which is not tagged
+        self.assertEqual((gp["latest"], gp["change_prior"], gp["change_year_ago"]),
+                         ("not available",) * 3)
+        self.assertEqual(self.num(gp["prior"]), 126)
+        text = " ".join(cmp_["bullets"])
+        self.assertIn("Gross profit: latest quarter not available", text)
+        self.assertIn("Diluted EPS: not tagged", text)                      # no quarterly EPS in the fixture
+        self.assertNotIn("Diluted EPS", self.rows(cmp_))
+        self.assertNotIn("$0", json.dumps(cmp_["blocks"]))
+
+    def test_missing_comparison_quarter_is_said(self):
+        cf = copy.deepcopy(load("companyfacts_testco_quarterly.json"))
+        for node in [cf["facts"]["us-gaap"]["Revenues"], cf["facts"]["us-gaap"]["GrossProfit"],
+                     cf["facts"]["us-gaap"]["OperatingIncomeLoss"], cf["facts"]["us-gaap"]["NetIncomeLoss"]]:
+            rows = node["units"]["USD"]
+            rows[:] = [x for x in rows if not (x["end"] == "2023-12-31" and x.get("form") == "10-K")
+                       and not x["end"].startswith("2023")]
+        reg = T.build_registry(sec=FakeSec(cf), web=FakeWeb())
+        r, slides = self.recap(tools=reg)
+        cmp_ = slides["earnings_recap_test_compare"]
+        rev = self.rows(cmp_)["Revenue"]
+        self.assertEqual(rev["year_ago"], "not available")
+        self.assertEqual(rev["change_year_ago"], "not available")
+        self.assertEqual(self.num(rev["change_prior"]) > 0, True)
+        self.assertIn("Revenue: year-ago quarter not available", " ".join(cmp_["bullets"]))
+
+    def test_tampered_quarterly_figure_is_rejected_and_not_shown(self):
+        reg = self.qreg
+
+        class Tamper:
+            def call(self, name, args=None):
+                res = reg.call(name, args)
+                if name == "sec_statements":
+                    res = json.loads(json.dumps(res))
+                    for f in res["figures"]:
+                        if f["label"] == "TEST Revenue" and f["period"] == "quarter ending 2024-09-30":
+                            f["value"] = 777.0
+                return res
+        r, slides = self.recap(tools=Tamper())
+        self.assertNotIn(777.0, [f.value for f in r.figures])
+        self.assertIn("777", json.dumps(r.rejected))
+        self.assertNotIn("$777", json.dumps(r.slide_specs))
+        self.assertNotIn("777.0", json.dumps(r.slide_specs))
+        rev = self.rows(slides["earnings_recap_test_compare"])["Revenue"]
+        self.assertEqual((rev["prior"], rev["change_prior"]), ("not available", "not available"))
+        self.assertEqual(self.num(rev["latest"]), 300)                       # the untouched comparison survives
+
+    def test_tampered_q4_input_rejects_the_derived_figure(self):
+        reg = self.qreg
+
+        class Tamper:
+            def call(self, name, args=None):
+                res = reg.call(name, args)
+                if name == "sec_statements":
+                    res = json.loads(json.dumps(res))
+                    for f in res["figures"]:
+                        if f["label"] == "TEST Revenue 9M YTD":
+                            f["value"] = 900.0
+                return res
+        r, slides = self.recap(tools=Tamper())
+        self.assertNotIn(900.0, [f.value for f in r.figures])
+        rev = self.rows(slides["earnings_recap_test_compare"])["Revenue"]
+        self.assertEqual(rev["latest"], "not available")         # Q4 derived from an unverifiable 9M is not shown
+
+    def test_annual_company_profile_still_works(self):
+        r = self.run_wf("company_profile")
+        self.assertEqual(r.status, "succeeded", r.error)
+        self.assertTrue([s for s in r.slide_specs if s["id"].endswith("kpis")])
+        self.assertTrue(any(f.period.startswith("FY ending") for f in r.figures))
 
 
 class Verification(Base):
@@ -340,7 +479,7 @@ class Execution(Base):
         self.assertTrue([s for s in r.steps if s.name == "eps" and s.status == "failed"])
         r = self.run_wf("earnings_recap", tools=Flaky("sec_statements"), job="job2")
         self.assertEqual(r.status, "failed")
-        self.assertIn("step statements", r.error)
+        self.assertIn("step quarterly_statements", r.error)
         self.chain_ok("job2")
 
     def test_tool_timeout(self):
@@ -410,11 +549,12 @@ class Composition(Base):
     def test_slash_command_through_run_research(self):
         req = ResearchRequest(question="/company_profile /earnings_recap TEST", options={"source_review": False},
                               as_of="2025-06-01")
-        r = run_research(req, tools=self.reg, evidence_dir=self.ev, job_id="c1")
+        r = run_research(req, tools=self.qreg, evidence_dir=self.ev, job_id="c1")
         self.assertEqual(r.status, "succeeded", r.error)
         ids = {s["id"] for s in r.slide_specs}
         self.assertTrue({"company_profile_test_kpis", "earnings_recap_test_compare"} <= ids)
         self.assertEqual(len([s for s in r.steps if s.name == "statements"]), 1)
+        self.assertEqual(len([s for s in r.steps if s.name == "quarterly_statements"]), 1)
 
     def test_unknown_workflow_is_a_contract_error(self):
         from om.contracts import ContractError

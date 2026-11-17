@@ -4,9 +4,10 @@ from __future__ import annotations
 import json
 import sys
 import threading
+from pathlib import Path
 from concurrent.futures import ThreadPoolExecutor
 
-from ..evidence import EvidenceBundle
+from ..evidence import EvidenceBundle, check_custody
 from ..router import ToolError
 from . import protocol as P
 
@@ -23,7 +24,12 @@ class ToolFailure(Exception):
 class MCPServer:
     def __init__(self, name: str, registry, evidence_path=None, version: str = "0.1.0"):
         self.name, self.version, self.registry = name, version, registry
-        self.evidence = EvidenceBundle(evidence_path) if evidence_path else None
+        self.evidence = None
+        if evidence_path:
+            check_custody(Path(evidence_path).parent)       # N3: refuse to start with an unsafe evidence key
+            self.evidence = EvidenceBundle(evidence_path, repair=True)     # F20: resume past a torn tail
+        self.anchor = None          # last Anchor dict sealed by this server (evidence/seal or close)
+        self.seal_error = None
         self.initialized = False
         self.max_concurrency = 4
         self._ev_lock = threading.Lock()
@@ -56,6 +62,8 @@ class MCPServer:
             return {"tools": self.registry.list()}
         if method == "tools/call":
             return self._call(params)
+        if method == "evidence/seal":
+            return self._seal_rpc()
         raise P.ProtocolError(P.METHOD_NOT_FOUND, f"method not found: {method}")
 
     def _call(self, params: dict):
@@ -134,6 +142,31 @@ class MCPServer:
             pool.shutdown(wait=True)
             self.close()
 
+    def seal_evidence(self) -> dict | None:
+        """Sign the evidence bundle's current head into the anchor log (F4/N3) and return the Anchor dict
+        (None when this server records no evidence). Safe to call repeatedly; each call adds a higher ``seq``."""
+        if not self.evidence:
+            return None
+        with self._ev_lock:
+            self.anchor = self.evidence.seal().as_dict()
+        return self.anchor
+
+    def _seal_rpc(self) -> dict:
+        if not self.evidence:
+            raise P.ProtocolError(P.INVALID_REQUEST, "this server records no evidence; nothing to seal")
+        try:
+            return {"anchor": self.seal_evidence(), "evidence_head": self.evidence.head_hash()}
+        except Exception as e:
+            raise P.ProtocolError(P.INTERNAL_ERROR, f"evidence seal failed: {type(e).__name__}: {e}") from None
+
     def close(self) -> None:
+        """Seal the evidence bundle (so a later truncation is detectable), then close it. Idempotent; a seal failure
+        is kept in ``seal_error`` and reported on stderr instead of raising out of shutdown."""
         if self.evidence:
+            if not self.evidence._fh.closed:
+                try:
+                    self.seal_evidence()
+                except Exception as e:      # noqa: BLE001
+                    self.seal_error = f"{type(e).__name__}: {e}"
+                    print(f"mcp server {self.name}: evidence seal failed: {self.seal_error}", file=sys.stderr)
             self.evidence.close()

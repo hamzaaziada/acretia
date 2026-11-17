@@ -443,7 +443,8 @@ class LedgerTests(unittest.TestCase):
         self.assertAlmostEqual(cost_usd("claude-sonnet-5-5", 0, 1_000_000), 10.0)      # verified 2026-11-16
         self.assertAlmostEqual(cost_usd("claude-sonnet-4-5", 0, 1_000_000), 15.0)
         self.assertAlmostEqual(cost_usd("gpt-4.1", 1_000_000, 0, 1_000_000), 0.2)
-        self.assertEqual(cost_usd("ollama:qwen", 10**6, 10**6), 0.0)
+        self.assertEqual(cost_usd("ollama:qwen", 10**6, 10**6, local=True), 0.0)
+        self.assertGreater(cost_usd("ollama:qwen", 10**6, 10**6), 0.0)      # remote host: never free (F15)
 
     def test_spend_guard_blocks_before_the_call(self):
         led = Ledger(guard=SpendGuard(limit_usd=0.01))
@@ -688,7 +689,8 @@ class StreamBillingTests(unittest.TestCase):
         a, _ = make([TransportError("reset")] and iter(()), ledger=led, mask=False)   # empty stream, no usage
         a.model = "gpt-4.1"
         s = a.chat(MSG, stream=True, max_tokens=1000, job_id="J")
-        self.assertEqual(s.text(), "")
+        with self.assertRaises(StreamInterrupted):          # an empty stream without [DONE] is incomplete, not "empty text"
+            s.text()
         self.assertGreater(led.total("J")["cost_usd"], 0)
 
     def test_unknown_usage_aborted_stream_is_worst_case(self):
@@ -872,6 +874,230 @@ class PriceTests(unittest.TestCase):
             for m, p in d["prices_per_mtok_by_model"].items():
                 if d["family"] != "local":
                     self.assertEqual(tuple(p.values()), price_for(m), f"{f.name}:{m}")
+
+
+# ---------------------------------------------------------------------------------------------------- FP-S2e2
+from src.harness.ledger import LedgerError, price_for  # noqa: E402
+from om import pii as _pii  # noqa: E402
+
+_MSGS = [{"role": "user", "content": "hello"}]
+
+
+def _sse_events(deltas, finish=None, done=True, usage=None):
+    out = ["data: " + json.dumps({"choices": [{"delta": {"content": d}}]}) + "\n" for d in deltas]
+    if finish:
+        out.append("data: " + json.dumps({"choices": [{"delta": {}, "finish_reason": finish}]}) + "\n")
+    if usage:
+        out.append("data: " + json.dumps({"choices": [], "usage": usage}) + "\n")
+    if done:
+        out.append("data: [DONE]\n")
+    return out
+
+
+class TruncationTests(unittest.TestCase):
+    def test_stream_without_done_is_interrupted_not_complete(self):
+        a, _ = make(_sse_events(["half an ans"], done=False), mask=False)
+        with self.assertRaises(StreamInterrupted) as cm:
+            a.chat(_MSGS, stream=True).text()
+        self.assertTrue(cm.exception.retryable)
+        self.assertEqual(cm.exception.partial_text, "half an ans")
+
+    def test_stream_finish_length_and_content_filter_are_interrupted(self):
+        for fin in ("length", "content_filter"):
+            a, _ = make(_sse_events(["abc"], finish=fin), mask=False)
+            with self.assertRaises((StreamInterrupted, LLMRefusal)):
+                a.chat(_MSGS, stream=True).text()
+
+    def test_complete_stream_still_ok(self):
+        a, _ = make(_sse_events(["ab", "c"], finish="stop"), mask=False)
+        self.assertEqual(a.chat(_MSGS, stream=True).text(), "abc")
+
+    def test_truncated_stream_is_not_recorded(self):
+        with tempfile.TemporaryDirectory() as d, mock.patch.dict(os.environ, {"ACRETIA_LLM_FIXTURES": d}):
+            a, _ = make(_sse_events(["half"], done=False), mode="record", mask=False)
+            with self.assertRaises(StreamInterrupted):
+                a.chat(_MSGS, stream=True).text()
+            self.assertEqual(list(Path(d).rglob("*.json")), [])
+
+    def test_stream_truncation_is_still_billed(self):
+        led = Ledger(guard=SpendGuard(10.0))
+        a, _ = make(_sse_events(["half"], done=False), ledger=led, mask=False)
+        with self.assertRaises(StreamInterrupted):
+            a.chat(_MSGS, stream=True, job_id="J").text()
+        self.assertEqual(led.total("J")["calls"], 1)
+        self.assertEqual(led.inflight_usd(), 0.0)
+
+    def test_plain_nonstream_length_raises_with_partial_text(self):
+        a, _ = make(reply("partial reply", finish="length"), mask=False)
+        with self.assertRaises(StreamInterrupted) as cm:
+            a.chat(_MSGS)
+        self.assertTrue(cm.exception.retryable)
+        self.assertEqual(cm.exception.partial_text, "partial reply")
+
+    def test_schema_length_repairs_once_with_higher_max_tokens(self):
+        a, t = make(reply('{"answer": "x', finish="length"), reply('{"answer": "ok", "n": 1}'), mask=False)
+        r = a.chat(_MSGS, json_schema=SCHEMA, max_tokens=100)
+        self.assertEqual(r.data, {"answer": "ok", "n": 1})
+        self.assertEqual(len(t.calls), 2)
+        self.assertGreater(t.calls[1]["body"]["max_tokens"], t.calls[0]["body"]["max_tokens"])
+
+    def test_schema_length_twice_falls_through_to_next_adapter(self):
+        fb, ft = make(reply('{"answer": "fb", "n": 2}'), mask=False)
+        a, t = make(reply('{"a":', finish="length"), reply('{"a":', finish="length"), fallbacks=[fb], mask=False)
+        r = a.chat(_MSGS, json_schema=SCHEMA)
+        self.assertEqual(r.data, {"answer": "fb", "n": 2})
+        self.assertEqual(len(t.calls), 2)
+        self.assertEqual(len(ft.calls), 1)
+
+    def test_truncated_reply_never_recorded(self):
+        with tempfile.TemporaryDirectory() as d, mock.patch.dict(os.environ, {"ACRETIA_LLM_FIXTURES": d}):
+            a, _ = make(reply("cut", finish="length"), mode="record", mask=False)
+            with self.assertRaises(StreamInterrupted):
+                a.chat(_MSGS)
+            a2, _ = make(reply('{"a":', finish="length"), reply('{"a":', finish="length"), mode="record", mask=False)
+            with self.assertRaises(InvalidJSON):
+                a2.chat(_MSGS, json_schema=SCHEMA)
+            self.assertEqual(list(Path(d).rglob("*.json")), [])
+
+
+class UntrustedUsageTests(unittest.TestCase):
+    def test_negative_provider_usage_never_lowers_totals(self):
+        led = Ledger(guard=SpendGuard(10.0))
+        a, _ = make(reply("a", prompt=-10**9, completion=-10**9), reply("b", prompt=-10**9, completion=-10**9),
+                    ledger=led, mask=False)
+        seen = [led.total()["cost_usd"]]
+        for _ in range(2):
+            a.chat(_MSGS, job_id="J")
+            seen.append(led.total()["cost_usd"])
+        self.assertEqual(seen, sorted(seen))
+        self.assertGreaterEqual(min(seen), 0.0)
+        self.assertGreater(seen[-1], 0.0)                 # at least the input estimate was billed
+        tot = led.total("J")
+        self.assertGreaterEqual(tot["input_tokens"], 0)
+        self.assertGreaterEqual(tot["output_tokens"], 0)
+
+    def test_absurd_and_nan_usage_bills_worst_case(self):
+        led = Ledger(guard=SpendGuard(1000.0))
+        for bad in (10**12, float("nan"), "lots"):
+            res = led.reserve("J", "gpt-4.1", 0.5, est_input_tokens=7)
+            row = led.settle(res, {"input_tokens": bad, "output_tokens": 5})
+            self.assertGreaterEqual(row["cost_usd"], 0.5 - 1e-6)
+            self.assertIn("rejected", row["note"])
+
+    def test_settle_bills_at_least_the_input_estimate(self):
+        led = Ledger()
+        res = led.reserve("J", "gpt-4.1", 1.0, est_input_tokens=1000)
+        row = led.settle(res, {"input_tokens": 0, "output_tokens": 0})
+        self.assertEqual(row["input_tokens"], 1000)
+
+    def test_precheck_negative_max_tokens_is_not_negative(self):
+        led = Ledger(guard=SpendGuard(10.0))
+        self.assertGreaterEqual(led.precheck("J", "gpt-4.1", 10, -10**9), 0.0)
+
+    def test_record_rejects_negative_and_nan_cost(self):
+        led = Ledger(prices={"x": (-1.0, -1.0)})
+        with self.assertRaises(LedgerError):
+            led.record("J", "x", 10, 10)
+        self.assertEqual(led.total()["calls"], 0)
+        led2 = Ledger(prices={"x": (float("nan"), 1.0)})
+        with self.assertRaises(LedgerError):
+            led2.record("J", "x", 10, 10)
+        self.assertEqual(led2.total()["calls"], 0)
+        with self.assertRaises(LedgerError):
+            Ledger().record("J", "gpt-4.1", 10**9, 1)
+
+    def test_record_clamps_negative_tokens(self):
+        led = Ledger()
+        row = led.record("J", "gpt-4.1", -5, -5, -5)
+        self.assertEqual((row["input_tokens"], row["output_tokens"], row["cost_usd"]), (0, 0, 0.0))
+
+    def test_file_backed_negative_usage_monotonic(self):
+        with tempfile.TemporaryDirectory() as d:
+            led = Ledger(Path(d) / "l.jsonl", guard=SpendGuard(10.0))
+            last = 0.0
+            for _ in range(3):
+                res = led.reserve("J", "gpt-4.1", 0.01, est_input_tokens=5)
+                led.settle(res, {"input_tokens": -10**9, "output_tokens": -10**9})
+                cur = led.total()["cost_usd"]
+                self.assertGreaterEqual(cur, last)
+                last = cur
+
+
+class LocalPriceTests(unittest.TestCase):
+    def test_local_model_free_only_on_local_host(self):
+        self.assertEqual(price_for("my-local-model", local=True), (0.0, 0.0))
+        from src.harness.ledger import DEFAULT_PRICE
+        self.assertEqual(price_for("my-local-model"), DEFAULT_PRICE)
+        self.assertEqual(price_for("local-llm"), DEFAULT_PRICE)
+
+    def test_adapter_is_local(self):
+        self.assertTrue(Adapter("http://localhost:11434/v1", None, "m").is_local)
+        self.assertTrue(Adapter("http://127.0.0.1:11434/v1", None, "m").is_local)
+        self.assertTrue(Adapter("http://[::1]:11434/v1", None, "m").is_local)
+        self.assertFalse(Adapter("https://llm.meshpool.ai/v1", KEY, "m").is_local)
+        self.assertTrue(Adapter("https://gpu.internal/v1", None, "m", local_hosts=["gpu.internal"]).is_local)
+        self.assertFalse(Adapter("https://gpu.internal/v1", None, "m").is_local)
+
+    def test_remote_host_with_local_model_id_is_billed_at_default_price(self):
+        led = Ledger()
+        a, _ = make(reply("x", prompt=1000, completion=1000), ledger=led, mask=False)
+        a.model = "my-local-model"
+        a.chat(_MSGS, job_id="J")
+        self.assertGreater(led.total("J")["cost_usd"], 0.0)
+
+    def test_local_host_local_model_is_free(self):
+        led = Ledger()
+        t = FakeTransport(reply("x", prompt=1000, completion=1000))
+        a = Adapter("http://localhost:11434/v1", None, "ollama:qwen", transport=t, mode="live", ledger=led, mask=False)
+        a.chat(_MSGS, job_id="J")
+        self.assertEqual(led.total("J")["cost_usd"], 0.0)
+        self.assertEqual(led.total("J")["calls"], 1)
+
+    def test_configured_local_host_is_free(self):
+        led = Ledger()
+        t = FakeTransport(reply("x", prompt=1000, completion=1000))
+        a = Adapter("https://gpu.internal/v1", None, "my-local-model", transport=t, mode="live", ledger=led, mask=False,
+                    local_hosts=["gpu.internal"])
+        a.chat(_MSGS, job_id="J")
+        self.assertEqual(led.total("J")["cost_usd"], 0.0)
+
+
+class ZeroWidthPiiTests(unittest.TestCase):
+    def _check(self, text, secret_fragments):
+        m = _pii.Masker()
+        out, _ = m.mask(text)
+        for frag in secret_fragments:
+            self.assertNotIn(frag, out)
+        for ch in "\u200b\u200c\u200d\u2060\ufeff":
+            self.assertNotIn(ch, out)
+        self.assertEqual(m.unmask(out), text)             # round trip restores the original, zero-width chars included
+        return out
+
+    def test_email_split_by_zwsp(self):
+        out = self._check("mail b\u200bob@corp.com now", ["ob@corp.com", "corp.com"])
+        self.assertEqual(out, "mail [EMAIL_1] now")
+        out = self._check("x bo\u200b\u200bb@co\u200brp.com. y", ["bob", "corp.com"])
+        self.assertIn("[EMAIL_1]", out)
+
+    def test_card_split_by_word_joiner(self):
+        out = self._check("card 4111\u20601111 1111\u20601111 end", ["4111", "1111"])
+        self.assertEqual(out, "card [CARD_1] end")
+
+    def test_phone_with_bom(self):
+        out = self._check("call (415)\ufeff555-0132 or +1\u200b 415 555 0132 now", ["555-0132", "0132"])
+        self.assertIn("[PHONE_1]", out)
+
+    def test_same_email_with_and_without_zero_width_shares_placeholder(self):
+        m = _pii.Masker()
+        out, _ = m.mask("bob@corp.com and b\u200bob@corp.com")
+        self.assertEqual(out, "[EMAIL_1] and [EMAIL_1]")
+
+    def test_adapter_outbound_has_no_fragment(self):
+        a, t = make(reply("ok"))
+        a.chat([{"role": "user", "content": "write to b\u200bob@corp.com"}])
+        sent = json.dumps(t.calls[0]["body"], ensure_ascii=False)
+        self.assertNotIn("corp.com", sent)
+        self.assertNotIn("\u200b", sent)
 
 
 if __name__ == "__main__":

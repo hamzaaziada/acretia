@@ -46,3 +46,9 @@
 		format json
 	}
 }
+
+# Any other Host / SNI (direct IP, wrong name) gets 421, never the app.
+:443 {
+	tls internal
+	respond "Misdirected request" 421
+}

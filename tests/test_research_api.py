@@ -264,9 +264,10 @@ class ReviewJobTests(Base):
 
     def setUp(self):
         super().setUp()
-        p = mock.patch.object(jobs, "REVIEW_POLL_S", 0.02)
+        p = mock.patch.object(jobs, "SWEEP_S", 0.05)
         p.start()
         self.addCleanup(p.stop)
+        self.calls = []
 
     def submit(self, org="local", **opts):
         return jobs.submit(api.ResearchRequest(question="x", tickers=["TEST"], org_id=org, workflow="company_profile",
@@ -278,13 +279,25 @@ class ReviewJobTests(Base):
             time.sleep(0.02)
         self.assertTrue(cond(), "condition not reached")
 
-    def in_worker(self, fn):
+    def registry(self):
         from src.harness.research import tools as T
         from tests.test_research_tools import FakeSec
+        reg, calls = T.build_registry(sec=FakeSec()), self.calls
+
+        class Counting:
+            def call(self, name, args=None):
+                calls.append(name)
+                return reg.call(name, args)
+        return Counting()
+
+    def start_worker(self):
         stop = threading.Event()
-        t = threading.Thread(target=jobs.worker_loop, args=(stop,),
-                             kwargs=dict(poll=0.02, tools=T.build_registry(sec=FakeSec())))
+        t = threading.Thread(target=jobs.worker_loop, args=(stop,), kwargs=dict(poll=0.02, tools=self.registry()))
         t.start()
+        return stop, t
+
+    def in_worker(self, fn):
+        stop, t = self.start_worker()
         try:
             fn()
         finally:
@@ -349,42 +362,102 @@ class ReviewJobTests(Base):
         self.in_worker(go)
         self.assertNotEqual(jobs.result(jid, org_id="acme").status, "cancelled")
 
-    def leave_crashed_in_review(self, jid):
-        """What a worker that died inside the gate leaves behind: lease held, status awaiting_review, no result."""
+    def kill_worker_mid_run(self, jid):
+        """What a worker that died before reaching the gate leaves behind: lease held, status running, no plan."""
         kv = jobs._kv()
         lost = kv.dequeue(jobs.QUEUE, lease=0.2)
         self.assertIsNotNone(lost)
         row = jobs._load(kv, jid, "local")
-        row["job"].update(status="awaiting_review", attempts=1)
+        row["job"].update(status="running", attempts=1)
         jobs._save(kv, "local", row)
-        jobs._persist_event(kv, "local", {"v": 1, "type": "source_review", "job_id": jid, "ts": "t",
-                                          "data": {"status": "awaiting_review", "sources": []}})
         time.sleep(0.3)
 
-    def test_crash_during_awaiting_review_resumes_waiting(self):
+    def test_crash_before_the_gate_redelivers_then_parks(self):
         jid = self.submit()
-        self.leave_crashed_in_review(jid)
-        self.assertEqual(jobs.status(jid).status, "awaiting_review")
+        self.kill_worker_mid_run(jid)
 
         def go():
-            self.wait(lambda: jobs.status(jid).attempts == 2)
-            self.assertEqual(jobs.status(jid).status, "awaiting_review")     # redelivered run keeps waiting
+            self.wait(lambda: jobs.status(jid).status == "awaiting_review")
+            self.assertEqual(jobs.status(jid).attempts, 2)
             self.assertIsNone(jobs.result(jid))
+            self.wait(lambda: jobs._kv().qsize(jobs.QUEUE) == 0)             # the lease was acked: nothing held
             self.assertTrue(jobs.approve(jid, approver="usr_2"))
             self.wait(lambda: jobs.result(jid) is not None)
         self.in_worker(go)
         self.assertNotEqual(jobs.result(jid).status, "cancelled")
-        self.assertEqual(jobs.status(jid).attempts, 2)
         self.assertEqual(jobs._kv().qsize(jobs.QUEUE), 0)
         self.assertTrue(evidence.verify(Path(self.ev) / f"{jid}.jsonl").ok)
 
-    def test_approved_before_redelivery_finishes_without_second_wait(self):
+    def test_park_releases_the_worker(self):
+        a, b = self.submit(), self.submit(source_review=False)
+        stop, t = self.start_worker()                                        # ONE worker, one job waiting for review
+        try:
+            self.wait(lambda: jobs.status(a).status == "awaiting_review")
+            self.wait(lambda: jobs.result(b) is not None)                    # the second job ran while the first waits
+            self.assertEqual(jobs.result(b).status, "succeeded")
+            self.assertEqual(jobs.status(a).status, "awaiting_review")
+            self.wait(lambda: jobs._kv().qsize(jobs.QUEUE) == 0)             # no lease is held for the parked job
+            plan = json.loads(jobs._kv().get(f"plan:local:{a}"))
+            self.assertEqual(plan["sources"], jobs.review_sources(a))
+            self.assertEqual(plan["workflow"], "company_profile")
+            self.assertTrue(jobs.approve(a, approver="usr_1"))
+            self.wait(lambda: jobs.result(a) is not None)
+        finally:
+            stop.set()
+            t.join(5)
+        self.assertEqual(jobs.result(a).status, "succeeded")
+
+    def test_approve_after_the_original_worker_is_gone_completes_exactly_once(self):
         jid = self.submit()
-        self.leave_crashed_in_review(jid)
-        self.assertTrue(jobs.approve(jid, approver="usr_3"))                 # approver acts while no worker is alive
-        self.assertEqual(jobs.status(jid).status, "running")
+        stop, t = self.start_worker()
+        self.wait(lambda: jobs.status(jid).status == "awaiting_review")
+        stop.set()
+        t.join(5)                                                            # the worker that parked the job is gone
+        self.assertFalse(t.is_alive())
+        self.assertEqual(self.calls, [])                                     # nothing ran before approval
+        self.assertTrue(jobs.approve(jid, approver="usr_9"))
+        self.assertEqual(jobs.status(jid).status, "queued")
+        self.in_worker(lambda: self.wait(lambda: jobs.result(jid) is not None))      # a different worker
+        self.assertEqual(jobs.result(jid).status, "succeeded", jobs.result(jid).error)
+        self.assertEqual(jobs.status(jid).status, "succeeded")
+        self.assertEqual(self.calls.count("sec_statements"), 1)              # steps were not run twice
+        evs = jobs.events(jid)
+        self.assertEqual([e["data"]["status"] for e in evs if e["type"] == "done"], ["succeeded"])
+        self.assertEqual(len([e for e in evs if e["type"] == "source_review"
+                              and e["data"]["status"] == "awaiting_review"]), 1)       # never asked twice
+        self.assertEqual(jobs._kv().qsize(jobs.QUEUE), 0)
+        self.assertFalse(jobs.approve(jid))
+        self.assertTrue(evidence.verify(Path(self.ev) / f"{jid}.jsonl").ok)
+        n = len(self.calls)
+        self.in_worker(lambda: time.sleep(0.2))                              # nothing left to run
+        self.assertEqual(len(self.calls), n)
+
+    def test_approve_with_no_worker_alive_queues_the_job(self):
+        jid = self.submit()
+        self.in_worker(lambda: self.wait(lambda: jobs.status(jid).status == "awaiting_review"))
+        self.assertTrue(jobs.approve(jid, approver="usr_3"))
+        self.assertEqual(jobs.status(jid).status, "queued")
         self.in_worker(lambda: self.wait(lambda: jobs.result(jid) is not None))
         self.assertNotEqual(jobs.result(jid).status, "cancelled")
+
+    def test_reject_with_no_worker_alive_then_a_worker_cancels(self):
+        jid = self.submit()
+        self.in_worker(lambda: self.wait(lambda: jobs.status(jid).status == "awaiting_review"))
+        self.assertTrue(jobs.reject(jid, "no", org_id="local"))
+        self.assertEqual(self.calls, [])
+        self.in_worker(lambda: self.wait(lambda: jobs.result(jid) is not None))
+        self.assertEqual(jobs.result(jid).status, "cancelled")
+        self.assertEqual(self.calls, [])                                     # rejected sources were never read
+
+    def test_timeout_without_any_worker_is_seen_on_status_read(self):
+        jid = self.submit(review_timeout_s=0.1)
+        self.in_worker(lambda: self.wait(lambda: jobs.status(jid).status == "awaiting_review"))
+        time.sleep(0.2)
+        self.assertEqual(jobs.status(jid).status, "queued")                  # lazily rejected, waits for a worker
+        self.assertEqual(json.loads(jobs._kv().get(f"review:local:{jid}"))["reason"], "review timeout")
+        self.in_worker(lambda: self.wait(lambda: jobs.result(jid) is not None))
+        self.assertEqual(jobs.status(jid).status, "cancelled")
+        self.assertEqual(self.calls, [])
 
     def test_source_review_disabled_skips_the_gate(self):
         jid = self.submit(source_review=False)

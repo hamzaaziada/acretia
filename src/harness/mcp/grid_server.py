@@ -8,17 +8,15 @@ from __future__ import annotations
 import json
 import os
 import re
-import sqlite3
+import subprocess
 import sys
-import threading
-import time
-import urllib.parse
+from pathlib import Path
 
 from om.storage import AnalyticsDB, ensure_grid_schema
 
 from ..router import ToolRegistry
 from .paths import resolve_in_root
-from .server import MCPServer, ToolFailure
+from .server import MCPServer, ToolFailure  # noqa: F401
 
 MAX_ROWS = 1000
 MAX_RESULT_BYTES = 4 * 1024 * 1024
@@ -71,83 +69,54 @@ def check_select(sql) -> str:
     return sql.strip()
 
 
-# ------------------------------------------------------------------------------------------------ hardened engine
-class _Shim:
-    """Just enough of AnalyticsDB for ensure_grid_schema."""
-
-    def __init__(self, backend, conn):
-        self.backend, self._conn = backend, conn
-
-    def execute(self, sql, params=()):
-        self._conn.execute(sql, list(params or ()))
-
-
-def _cursor_rows(cur, n):
-    cols = [d[0] for d in (cur.description or [])]
-    return [dict(zip(cols, r)) for r in cur.fetchmany(n)]
+# ------------------------------------------------------------------------------------------ isolated execution
+# The engine hardening (external access off, read-only, authorizer, caps) lives in grid_worker.py, which runs in a
+# child process under RLIMIT_AS / RLIMIT_CPU: DuckDB's max_memory does not bound list or unnest allocations.
+_REPO_ROOT = Path(__file__).resolve().parents[3]
+# DuckDB reserves about 1.2 GB of address space at start-up (measured), so RLIMIT_AS below ~1.3 GB cannot even open it;
+# 2 GB leaves about 0.8 GB for data. Configurable through ACRETIA_GRID_MEM_MB.
+CHILD_MEM_BYTES = int(os.environ.get("ACRETIA_GRID_MEM_MB", "2048")) * 1024 * 1024
+KILL_GRACE_S = 2.0
 
 
-def _open_duckdb(db):
-    import duckdb
-    path = getattr(db, "path", ":memory:")
-    if path != ":memory:" and os.path.exists(path) and getattr(db, "_conn", None) is None:
+def _preexec(mem_bytes, cpu_s):
+    def fn():
         try:
-            return duckdb.connect(path, read_only=True, config=dict(DUCKDB_CONFIG))
+            import resource
+            resource.setrlimit(resource.RLIMIT_AS, (mem_bytes, mem_bytes))
+            resource.setrlimit(resource.RLIMIT_CPU, (cpu_s, cpu_s + 1))
         except Exception:
-            pass  # file held open with another configuration in this process: fall back to a snapshot
-    conn = duckdb.connect(":memory:", config=dict(DUCKDB_CONFIG))
-    ensure_grid_schema(_Shim("duckdb", conn))
-    for t in GRID_TABLES:
-        rows = db.query(f"SELECT * FROM {t}")
-        if rows:
-            cols = list(rows[0])
-            conn.executemany(f"INSERT INTO {t} ({', '.join(cols)}) VALUES ({', '.join('?' * len(cols))})",
-                             [[r[c] for c in cols] for r in rows])
-    return conn
+            pass
+    return fn
 
 
-_SQLITE_BAD_FUNCS = {"load_extension", "readfile", "writefile", "edit", "fts3_tokenizer"}
+def _snapshot(db):
+    return {t: db.query(f"SELECT * FROM {t}") for t in GRID_TABLES}
 
 
-def _sqlite_authorizer(action, a1, a2, dbname, source):
-    ok = {sqlite3.SQLITE_SELECT, sqlite3.SQLITE_READ, sqlite3.SQLITE_RECURSIVE}
-    if action in ok:
-        return sqlite3.SQLITE_OK
-    if action == sqlite3.SQLITE_PRAGMA and a1 == "table_info":  # schema metadata only (grid_schema)
-        return sqlite3.SQLITE_OK
-    if action == sqlite3.SQLITE_FUNCTION and str(a2).lower() not in _SQLITE_BAD_FUNCS:
-        return sqlite3.SQLITE_OK
-    return sqlite3.SQLITE_DENY
-
-
-def _open_sqlite(db):
-    path = getattr(db, "path", ":memory:")
-    conn = None
-    if path != ":memory:" and os.path.exists(path):
-        try:
-            uri = "file:" + urllib.parse.quote(os.path.abspath(path)) + "?mode=ro"
-            conn = sqlite3.connect(uri, uri=True, check_same_thread=False, timeout=5)
-            conn.execute("SELECT 1 FROM sqlite_master LIMIT 1").fetchall()
-        except Exception:
-            if conn is not None:
-                conn.close()
-            conn = None
-    if conn is None:
-        with db._lock:
-            src = db._c()
-            conn = sqlite3.connect(":memory:", check_same_thread=False)
-            src.backup(conn)
+def _run_child(job: dict, secs: float, mem_bytes: int) -> dict:
+    from .client import child_env
+    env = child_env({"PYTHONPATH": str(_REPO_ROOT) + os.pathsep + os.environ.get("PYTHONPATH", "")})
+    cpu_s = int(secs * 2 + 3)
     try:
-        conn.enable_load_extension(False)
-    except (AttributeError, sqlite3.Error):
-        pass
-    conn.execute("PRAGMA query_only=1")
-    try:
-        conn.setlimit(sqlite3.SQLITE_LIMIT_LENGTH, MAX_RESULT_BYTES)
-    except (AttributeError, sqlite3.Error):
-        pass
-    conn.set_authorizer(_sqlite_authorizer)
-    return conn
+        proc = subprocess.run([sys.executable, "-m", "src.harness.mcp.grid_worker"], input=json.dumps(job, default=str),
+                              capture_output=True, text=True, timeout=secs + KILL_GRACE_S, env=env, cwd=str(_REPO_ROOT),
+                              preexec_fn=_preexec(mem_bytes, cpu_s) if os.name == "posix" else None)
+    except subprocess.TimeoutExpired:
+        raise ToolFailure(f"query exceeded the {secs:g}s timeout", {"code": "grid_timeout", "limit": "seconds"}) from None
+    marker = "@@RESULT@@"
+    out = proc.stdout or ""
+    if marker not in out:
+        err = (proc.stderr or "")
+        if proc.returncode == -24:  # SIGXCPU
+            raise ToolFailure(f"query exceeded the {secs:g}s timeout", {"code": "grid_timeout", "limit": "cpu"})
+        oom = proc.returncode in (-9, -11, -6) or "MemoryError" in err or "bad_alloc" in err or "out of memory" in err.lower()
+        if proc.returncode == -9 and not oom:
+            oom = True
+        raise ToolFailure("query exceeded the memory limit" if oom else f"grid worker failed (exit {proc.returncode})",
+                          {"code": "grid_memory_limit" if oom else "grid_worker_failed",
+                           "limit": "memory" if oom else None})
+    return json.loads(out.rsplit(marker, 1)[1].strip().splitlines()[0])
 
 
 def _timeout_value(timeout):
@@ -160,71 +129,31 @@ def _timeout_value(timeout):
 
 
 def run_select(db, sql: str, params=None, limit: int = 200, timeout=None, check: bool = True) -> dict:
-    """Run one read-only SELECT on a hardened, throw-away connection: engine-level no external access, read-only,
-    wall-clock timeout, row and byte caps. Raises ToolFailure."""
+    """Run one read-only SELECT in a resource-limited child process (RLIMIT_AS, RLIMIT_CPU, wall-clock kill) on a
+    hardened throw-away connection: no external access, read-only, row and byte caps. Raises ToolFailure with code
+    grid_memory_limit or grid_timeout on a breach."""
     q = check_select(sql) if check else sql
     limit = max(1, min(int(limit), MAX_ROWS))
     params = [] if params is None else params
     if not isinstance(params, list) or not all(p is None or isinstance(p, (str, int, float, bool)) for p in params):
         raise ToolFailure("params must be a list of scalars")
     secs = _timeout_value(timeout)
-    wrapped = f"SELECT * FROM ({q}) AS _q LIMIT {limit + 1}"
-    conn = None
-    timed_out = threading.Event()
-    timer = None
-    try:
-        try:
-            conn = _open_duckdb(db) if db.backend == "duckdb" else _open_sqlite(db)
-        except Exception as e:
-            raise ToolFailure(f"cannot open grid database read-only: {type(e).__name__}") from None
-        if db.backend == "duckdb":
-            def fire():
-                timed_out.set()
-                try:
-                    conn.interrupt()
-                except Exception:
-                    pass
-            timer = threading.Timer(secs, fire)
-            timer.daemon = True
-            timer.start()
-        else:
-            deadline = time.monotonic() + secs
+    job = {"backend": db.backend, "sql": f"SELECT * FROM ({q}) AS _q LIMIT {limit + 1}", "params": params,
+           "limit": limit, "timeout": secs}
+    path = getattr(db, "path", ":memory:")
+    if path != ":memory:" and os.path.exists(path) and getattr(db, "_conn", None) is None:
+        res = _run_child(dict(job, path=os.path.abspath(path)), secs, CHILD_MEM_BYTES)
+        if res.get("code") != "open_failed":
+            return _finish(res)
+    # in-memory or open handle: hand the child a snapshot of the grid tables
+    return _finish(_run_child(dict(job, snapshot=_snapshot(db)), secs, CHILD_MEM_BYTES))
 
-            def progress():
-                if time.monotonic() > deadline:
-                    timed_out.set()
-                    return 1
-                return 0
-            conn.set_progress_handler(progress, 1000)
-        try:
-            cur = conn.execute(wrapped, params)
-            rows = _cursor_rows(cur, limit + 1)
-        except Exception as e:
-            if timed_out.is_set():
-                raise ToolFailure(f"query exceeded the {secs:g}s timeout") from None
-            raise ToolFailure(f"query failed: {type(e).__name__}: {str(e)[:300]}") from None
-        if timed_out.is_set():
-            raise ToolFailure(f"query exceeded the {secs:g}s timeout")
-    finally:
-        if timer is not None:
-            timer.cancel()
-        if conn is not None:
-            try:
-                conn.close()
-            except Exception:
-                pass
-    out, size, byte_trunc = [], 0, False
-    for r in rows[:limit]:
-        n = len(json.dumps(r, ensure_ascii=False, default=str))
-        if size + n > MAX_RESULT_BYTES:
-            if not out:
-                raise ToolFailure(f"a single row exceeds the {MAX_RESULT_BYTES} byte result cap")
-            byte_trunc = True
-            break
-        size += n
-        out.append(r)
-    return {"rows": out, "row_count": len(out), "truncated": len(rows) > limit or byte_trunc,
-            "bytes_truncated": byte_trunc}
+
+def _finish(res: dict) -> dict:
+    if "failure" in res:
+        code = res.get("code")
+        raise ToolFailure(res["failure"], {"code": code} if code else None)
+    return res
 
 
 def build_registry(db: AnalyticsDB, timeout=None) -> ToolRegistry:

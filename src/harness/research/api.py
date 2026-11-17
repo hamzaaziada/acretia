@@ -17,7 +17,7 @@ from typing import Any, Callable, ClassVar
 
 from om.contracts import (STATUS, Citation, Contract, ContractError, JobStep, SlideSpec, _err, enum, integer,
                           iso_date, json_value, listing, mapping, nested, number, optional, string, utc_timestamp)
-from src.harness.evidence import EvidenceBundle, head_hash
+from src.harness.evidence import EvidenceBundle, check_custody, head_hash
 
 API_VERSION = 1
 OUTPUT_KINDS = ("slide_specs", "excel_inputs", "grid_answers")
@@ -150,12 +150,15 @@ class ResearchResult(Contract):
     error: str | None = None
     v: int = API_VERSION
     timings: dict = field(default_factory=dict)     # additive (S6.1): step id -> wall_clock_s (TSB harness input)
+    evidence_anchor: dict | None = None             # additive (FP-S2e3): signed Anchor dict sealed at the end of the run
+    evidence_recovery: list = field(default_factory=list)   # additive: torn-tail repairs made when resuming (F20)
     SCHEMA: ClassVar = {
         "job_id": _ID, "status": enum(*STATUS), "evidence_head": _HASH, "slide_specs": _dicts_of(SlideSpec),
         "excel_inputs": listing(nested(ExcelInputPayload)), "figures": listing(nested(SourcedFigure)),
         "rejected": listing(nested(RejectedFigure)), "cost_usd": number(0), "tokens": integer(0),
         "steps": listing(nested(JobStep)), "error": optional(string(0)), "v": _V,
-        "timings": mapping(string(), number(0))}
+        "timings": mapping(string(), number(0)), "evidence_anchor": optional(mapping(string(), json_value)),
+        "evidence_recovery": listing(mapping(string(), json_value))}
 
     @classmethod
     def _parse(cls, d, path):
@@ -166,6 +169,10 @@ class ResearchResult(Contract):
         d = super().to_dict()
         if not d.get("timings"):
             d.pop("timings", None)
+        if d.get("evidence_anchor") is None:
+            d.pop("evidence_anchor", None)
+        if not d.get("evidence_recovery"):
+            d.pop("evidence_recovery", None)
         return d
 
 
@@ -198,6 +205,22 @@ def partition_figures(candidates) -> tuple[list, list]:
     return ok, bad
 
 
+def _seal_result(result: ResearchResult, bundle_path) -> ResearchResult:
+    """Seal the job's evidence bundle (F4/N3) and attach the signed anchor. Runs for every status, including failed
+    and cancelled. A seal failure never loses the result: it is reported in ``error`` (a succeeded run becomes
+    failed, since its evidence cannot be proved)."""
+    try:
+        with EvidenceBundle(bundle_path) as b:
+            result.evidence_anchor = b.seal().as_dict()
+            result.evidence_head = b.head_hash()
+    except Exception as e:      # noqa: BLE001 - reported, never raised past the result
+        msg = f"evidence seal failed: {type(e).__name__}: {e}"[:300]
+        result.error = f"{result.error}; {msg}"[:500] if result.error else msg
+        if result.status == "succeeded":
+            result.status = "failed"
+    return result
+
+
 _PLAN_SCHEMA = {"type": "object", "properties": {"tool": {"type": "string"}, "args": {"type": "object"}},
                 "required": ["tool"]}
 
@@ -218,10 +241,16 @@ def run_research(request: ResearchRequest, *, adapter=None, tools=None, evidence
         wf, request = workflows.route(request)
     except workflows.WorkflowError as e:
         raise ContractError(f"workflow: {e}") from None
+    check_custody(evidence_dir)         # N3: refuse to start with an unsafe evidence key
     if wf is not None:
         request.validate()
-        return workflows.run_request(wf, request, adapter=adapter, tools=tools, evidence_dir=evidence_dir,
-                                     job_id=job_id, on_event=on_event, cancel=cancel, resolver=resolver, review=review)
+        res = workflows.run_request(wf, request, adapter=adapter, tools=tools, evidence_dir=evidence_dir,
+                                    job_id=job_id, on_event=on_event, cancel=cancel, resolver=resolver, review=review)
+        bundle_path = Path(evidence_dir) / f"{job_id}.jsonl"
+        if res.evidence_anchor is None and bundle_path.exists():
+            _seal_result(res, bundle_path)
+            res.validate()
+        return res
     steps: list[JobStep] = []
     cost, tokens = 0.0, 0
     state = {"status": "succeeded", "error": None}
@@ -236,7 +265,8 @@ def run_research(request: ResearchRequest, *, adapter=None, tools=None, evidence
     def cancelled() -> bool:
         return cancel is not None and cancel.is_set()
 
-    bundle = EvidenceBundle(Path(evidence_dir) / f"{job_id}.jsonl")
+    # F20: a resumed job (same job_id) may have a torn last line from a crash; repair it and record the recovery
+    bundle = EvidenceBundle(Path(evidence_dir) / f"{job_id}.jsonl", repair=True)
 
     def step(name, fn):
         """Run one step: events, JobStep row, cancellation checked before it starts."""
@@ -304,7 +334,10 @@ def run_research(request: ResearchRequest, *, adapter=None, tools=None, evidence
             emit("done", {"status": "succeeded"})
         result = ResearchResult(job_id=job_id, status=state["status"], evidence_head=head_hash(bundle.path),
                                 figures=figures, rejected=rejected, cost_usd=cost, tokens=tokens, steps=steps,
-                                error=state["error"])
-        return result.validate()
+                                error=state["error"],
+                                evidence_recovery=[bundle.recovery] if bundle.recovery else [])
+        result.validate()
+        bundle.close()
+        return _seal_result(result, bundle.path).validate()
     finally:
         bundle.close()

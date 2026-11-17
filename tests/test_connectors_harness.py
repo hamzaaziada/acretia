@@ -7,6 +7,8 @@ import struct
 import sys
 import tempfile
 import threading
+import time
+import urllib.parse
 import unittest
 import zipfile
 from email.message import EmailMessage
@@ -1079,6 +1081,159 @@ class CrawlerLimitTests(unittest.TestCase):
             for i in range(10):
                 c2.fetch(f"https://a.example/{i}")
 
+
+    # ---- FP-S2e4: crawler residuals -------------------------------------------------------------------------
+    def _serve(self, handler):
+        srv = http.server.ThreadingHTTPServer(("127.0.0.1", 0), handler)
+        srv.daemon_threads = True
+        threading.Thread(target=srv.serve_forever, daemon=True).start()
+        self.addCleanup(srv.server_close)
+        self.addCleanup(srv.shutdown)
+        return f"http://localhost:{srv.server_address[1]}"
+
+    def test_real_10mb_robots_txt_parsed_partially_over_a_socket(self):
+        rules = b"User-agent: *\nDisallow: /private\n"
+        body = rules + b"# pad\n" * (10 * 1024 * 1024 // 6) + b"Disallow: /late\n"
+
+        class H(http.server.BaseHTTPRequestHandler):
+            def do_GET(self):
+                self.send_response(200)
+                if self.path == "/robots.txt":
+                    self.send_header("Content-Type", "text/plain")
+                    self.send_header("Content-Length", str(len(body) + 1024))
+                    self.end_headers()
+                    try:
+                        self.wfile.write(body)
+                    except OSError:
+                        pass                      # client stopped reading at 512 KiB
+                else:
+                    self.send_header("Content-Type", "text/html")
+                    self.end_headers()
+                    self.wfile.write(b"<title>ok</title>")
+
+            def log_message(self, *a):
+                pass
+        base = self._serve(H)
+        s, h, b = web.default_transport("GET", base + "/robots.txt", {"User-Agent": "t"}, "127.0.0.1", 5,
+                                        web.ROBOTS_MAX_BYTES, truncate=True)
+        self.assertEqual((s, len(b)), (200, web.ROBOTS_MAX_BYTES))
+        with self.assertRaises(web.ResponseTooLarge):           # default behaviour is unchanged
+            web.default_transport("GET", base + "/robots.txt", {"User-Agent": "t"}, "127.0.0.1", 5, 1000)
+        # through the Crawler with the real transport (loopback allowed only by a stub resolver)
+        c = web.Crawler(lambda h, p: ["127.0.0.1"], web.default_transport, web.RateLimiter(1.0, lambda: 0.0, lambda s: None))
+        with mock.patch.object(web, "validate_url", lambda url, resolver=None: (urllib.parse.urlsplit(url), ["127.0.0.1"])):
+            self.assertTrue(c.allowed(base + "/news"))          # site not blocked
+            self.assertTrue(c.allowed(base + "/late"))          # rule past 512 KiB ignored
+            self.assertFalse(c.allowed(base + "/private"))      # rule in the first 512 KiB applies
+
+    def test_legacy_six_arg_transport_still_works(self):
+        seen = []
+
+        def old(method, url, headers, ip, timeout, max_bytes):
+            seen.append(max_bytes)
+            if url.endswith("robots.txt"):
+                return 200, {}, b"User-agent: *\nAllow: /\n"
+            return 200, {"content-type": "text/html"}, b"<title>t</title>"
+        c = web.Crawler(lambda h, p: ["93.184.216.34"], old, web.RateLimiter(1.0, lambda: 0.0, lambda s: None))
+        c.fetch("https://x.example/p")
+        self.assertEqual(seen[0], web.ROBOTS_MAX_BYTES)          # robots asked for at most 512 KiB
+
+    def test_https_to_http_redirect_refused_but_http_to_https_ok(self):
+        net = FakeNet({"ir.example": ["93.184.216.34"]}, {
+            "https://ir.example/robots.txt": (404, {}, b""),
+            "https://ir.example/down": (302, {"Location": "http://ir.example/x"}, b""),
+            "http://ir.example/robots.txt": (404, {}, b""),
+            "http://ir.example/up": (302, {"Location": "https://ir.example/ok"}, b""),
+            "https://ir.example/ok": (200, HTML, b"<title>ok</title>")})
+        c, _ = crawler(net)
+        with self.assertRaises(web.DowngradeRefused):
+            c.fetch("https://ir.example/down")
+        self.assertNotIn("http://ir.example/x", [r[0] for r in net.requests])
+        c.fetch("http://ir.example/up")                           # upgrade is fine
+
+    def test_robots_redirect_downgrade_refused(self):
+        net = FakeNet({"ir.example": ["93.184.216.34"]}, {
+            "https://ir.example/robots.txt": (301, {"Location": "http://ir.example/robots.txt"}, b""),
+            "http://ir.example/robots.txt": (200, {}, b"User-agent: *\nAllow: /\n"),
+            "https://ir.example/p": (200, HTML, b"x")})
+        c, _ = crawler(net)
+        with self.assertRaises(web.RobotsDisallowed):             # fail closed, the http robots.txt was never used
+            c.fetch("https://ir.example/p")
+        self.assertNotIn("http://ir.example/robots.txt", [r[0] for r in net.requests])
+
+    def test_downgrade_to_private_host_still_reports_ssrf(self):
+        net = FakeNet({"ir.example": ["93.184.216.34"]}, {
+            "https://ir.example/robots.txt": (404, {}, b""),
+            "https://ir.example/go": (302, {"Location": "http://169.254.169.254/latest"}, b"")})
+        c, _ = crawler(net)
+        with self.assertRaises(web.SsrfError):
+            c.fetch("https://ir.example/go")
+
+    def _trickle_server(self, interval=0.5, header_first=True):
+        class H(http.server.BaseHTTPRequestHandler):
+            def do_GET(self):
+                self.send_response(200)
+                self.send_header("Content-Type", "text/html")
+                self.send_header("Content-Length", "100000")
+                self.end_headers()
+                self.wfile.flush()
+                try:
+                    for _ in range(100000):
+                        self.wfile.write(b"x")
+                        self.wfile.flush()
+                        time.sleep(interval)
+                except OSError:
+                    pass
+
+            def log_message(self, *a):
+                pass
+        return self._serve(H)
+
+    def test_slow_trickle_aborted_within_total_deadline(self):
+        base = self._trickle_server(0.5)
+        t0 = time.monotonic()
+        with self.assertRaises(web.SlowResponse):
+            # window longer than the deadline: only the total deadline can stop it
+            web.default_transport("GET", base + "/", {"User-Agent": "t"}, "127.0.0.1", 30, 10_000_000,
+                                  deadline=2.0, window=60.0)
+        self.assertLess(time.monotonic() - t0, 4.0)
+
+    def test_slow_trickle_aborted_by_minimum_throughput(self):
+        base = self._trickle_server(0.5)
+        t0 = time.monotonic()
+        with self.assertRaises(web.SlowResponse) as cm:
+            web.default_transport("GET", base + "/", {"User-Agent": "t"}, "127.0.0.1", 30, 10_000_000,
+                                  deadline=30.0, window=1.5)
+        self.assertIn("B/s", str(cm.exception))
+        self.assertLess(time.monotonic() - t0, 4.0)
+
+    def test_crawler_passes_read_deadline_and_defaults_are_spec(self):
+        self.assertEqual((web.READ_DEADLINE, web.MIN_BPS, web.RATE_WINDOW), (20.0, 1024, 5.0))
+        got = {}
+
+        def tr(method, url, headers, ip, timeout, max_bytes, truncate=False, deadline=None):
+            got.setdefault("d", deadline)
+            return (404, {}, b"") if url.endswith("robots.txt") else (200, {"content-type": "text/html"}, b"x")
+        c = web.Crawler(lambda h, p: ["93.184.216.34"], tr, web.RateLimiter(1.0, lambda: 0.0, lambda s: None),
+                        read_deadline=7.0)
+        c.fetch("https://x.example/p")
+        self.assertEqual(got["d"], 7.0)
+
+    def test_fast_large_body_not_flagged_as_slow(self):
+        payload = b"y" * 3_000_000
+
+        class H(http.server.BaseHTTPRequestHandler):
+            def do_GET(self):
+                self.send_response(200)
+                self.send_header("Content-Length", str(len(payload)))
+                self.end_headers()
+                self.wfile.write(payload)
+
+            def log_message(self, *a):
+                pass
+        base = self._serve(H)
+        s, h, b = web.default_transport("GET", base + "/", {"User-Agent": "t"}, "127.0.0.1", 5, 10_000_000)
+        self.assertEqual(len(b), len(payload))
 
 
 if __name__ == "__main__":

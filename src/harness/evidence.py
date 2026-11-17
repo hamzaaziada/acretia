@@ -88,12 +88,17 @@ def _read_lines(path) -> list[bytes]:
 def verify(path, anchor=None, *, key=None, anchor_dir=None) -> VerifyResult:
     """Check the whole chain. ``first_bad_seq`` is the zero-based position of the first offending line.
 
-    ``anchor`` (F4) pins the chain to a signed external head: ``None`` checks the chain only; ``"auto"`` requires
-    and checks every anchor sealed for this job in ``<anchor_dir or path.parent>/anchors.jsonl``; an ``Anchor``
-    or its dict is checked directly. Catches truncation, re-chained forgery, a bad signature, a missing anchor."""
+    ``anchor`` (F4) pins the chain to a signed external head. The default (``None``) is ``"auto"`` whenever an
+    ``anchors.jsonl`` exists in ``anchor_dir`` (default: next to the bundle), so a truncated or rolled-back bundle
+    cannot pass by accident. ``"auto"`` requires and checks every anchor sealed for this job; an ``Anchor`` or its
+    dict is checked directly. Plain chain-only checking needs an explicit ``anchor=False``."""
     res, hashes = _verify_chain(path)
-    if not res.ok or anchor is None:
+    if not res.ok or anchor is False:
         return res
+    if anchor is None:
+        if not anchor_log_path(anchor_dir or Path(path).parent).exists():
+            return res
+        anchor = "auto"
     return _check_anchors(Path(path), res, hashes, anchor, key, anchor_dir)
 
 
@@ -145,43 +150,85 @@ def _verify_chain(path) -> tuple[VerifyResult, list[str]]:
 
 _ANCHOR_FIELDS = ("job_id", "n_records", "head_hash", "sealed_at")
 
+KEY_FILE_DEFAULT = "storage/keys/evidence.key"   # deliberately NOT under storage/evidence (N3 key custody)
+
 
 @dataclass(frozen=True)
 class Anchor:
-    """A signed claim "job ``job_id`` had ``n_records`` records ending in ``head_hash`` at ``sealed_at``"."""
+    """A signed claim "job ``job_id`` had ``n_records`` records ending in ``head_hash`` at ``sealed_at``".
+
+    ``seq`` is monotonic per job (1, 2, ...) and is covered by the signature: ``verify`` rejects a bundle that only
+    matches an older anchor than the latest one (rollback). ``None`` marks a legacy anchor sealed before ``seq``."""
     job_id: str
     n_records: int
     head_hash: str
     sealed_at: str
     signature: str
+    seq: int | None = None
 
     def as_dict(self) -> dict:
-        return asdict(self)
+        d = asdict(self)
+        if d["seq"] is None:
+            del d["seq"]
+        return d
 
     @classmethod
     def from_dict(cls, d) -> "Anchor":
         if isinstance(d, Anchor):
             return d
-        if not isinstance(d, dict) or set(d) != set(_ANCHOR_FIELDS) | {"signature"}:
+        base = set(_ANCHOR_FIELDS) | {"signature"}
+        if not isinstance(d, dict) or set(d) not in (base, base | {"seq"}):
             raise ContractError("anchor: missing or unexpected fields")
-        return cls(d["job_id"], d["n_records"], d["head_hash"], d["sealed_at"], d["signature"])
+        seq = d.get("seq")
+        if "seq" in d and (isinstance(seq, bool) or not isinstance(seq, int) or seq < 1):
+            raise ContractError("anchor: seq must be an int >= 1")
+        return cls(d["job_id"], d["n_records"], d["head_hash"], d["sealed_at"], d["signature"], seq)
 
 
-def _key_bytes(key=None, *, create: bool = True) -> bytes | None:
+def _is_under(path: Path, parent: Path) -> bool:
+    try:
+        path.resolve().relative_to(parent.resolve())
+        return True
+    except ValueError:
+        return False
+
+
+def _key_file_path() -> Path:
+    return Path(os.environ.get("ACRETIA_EVIDENCE_KEY_FILE") or KEY_FILE_DEFAULT)
+
+
+def _check_key_file(kp: Path, data_dir) -> None:
+    """Key custody (N3): refuse a key file inside the evidence data dir or readable by group/others."""
+    if data_dir is not None and _is_under(kp, Path(data_dir)):
+        raise ContractError(f"evidence key file {kp} lives under the evidence data dir {data_dir}; anyone who can "
+                            "write the bundle could read it and forge anchors. Keep it in storage/keys/ (or set "
+                            "ACRETIA_EVIDENCE_KEY from a secret store)")
+    if os.name == "posix" and kp.exists() and kp.stat().st_mode & 0o077:
+        raise ContractError(f"evidence key file {kp} is group- or world-accessible (mode "
+                            f"{kp.stat().st_mode & 0o777:03o}); run chmod 600 {kp}. Refusing to use it")
+
+
+def _key_bytes(key=None, *, create: bool = True, data_dir=None) -> bytes | None:
     """Per-deployment HMAC key: explicit ``key`` > ``ACRETIA_EVIDENCE_KEY`` > ``storage/keys/evidence.key``
-    (created 0600 on first use when ``create``). The key is never logged or written into a bundle."""
+    (``ACRETIA_EVIDENCE_KEY_FILE`` overrides the path; created 0600 in a 0700 dir on first use when ``create``).
+    The key file must not be under ``data_dir`` and must not be group/world readable. Production should set
+    ``ACRETIA_EVIDENCE_KEY`` from a secret store so no key file exists at all. Never logged or written to a bundle."""
     if key is not None:
         return key if isinstance(key, bytes) else str(key).encode("utf-8")
     env = os.environ.get("ACRETIA_EVIDENCE_KEY")
     if env:
         return env.encode("utf-8")
-    kp = Path(os.environ.get("ACRETIA_EVIDENCE_KEY_FILE") or "storage/keys/evidence.key")
+    kp = _key_file_path()
+    _check_key_file(kp, data_dir)
     if kp.exists():
         data = kp.read_bytes().strip()
         return data or None
     if not create:
         return None
-    kp.parent.mkdir(parents=True, exist_ok=True)
+    if not kp.parent.exists():
+        kp.parent.mkdir(parents=True, exist_ok=True, mode=0o700)
+        if os.name == "posix":
+            os.chmod(kp.parent, 0o700)
     try:
         fd = os.open(kp, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600)
     except FileExistsError:  # lost a creation race: read the winner's key
@@ -196,9 +243,45 @@ def _key_bytes(key=None, *, create: bool = True) -> bytes | None:
     return kp.read_bytes().strip()
 
 
-def _sign(key: bytes, job_id, n_records, head, sealed_at) -> str:
-    msg = _canon_str({"job_id": job_id, "n_records": n_records, "head_hash": head, "sealed_at": sealed_at})
-    return hmac.new(key, msg.encode("utf-8"), hashlib.sha256).hexdigest()
+def _state_dir() -> Path | None:
+    """Where per-job anchor high-water marks live (rollback guard): ``ACRETIA_EVIDENCE_STATE_DIR``, else the key
+    file's directory when a key file (not an env key) is in use. Outside the evidence data dir by construction."""
+    env = os.environ.get("ACRETIA_EVIDENCE_STATE_DIR")
+    if env:
+        return Path(env)
+    if os.environ.get("ACRETIA_EVIDENCE_KEY"):
+        return None
+    return _key_file_path().parent
+
+
+def _hw_path(job_id: str) -> Path | None:
+    d = _state_dir()
+    return None if d is None else d / "anchor-heads" / f"{job_id}.seq"
+
+
+def _read_hw(job_id: str) -> int:
+    p = _hw_path(job_id)
+    try:
+        return int(p.read_text().split()[0]) if p and p.exists() else 0
+    except (OSError, ValueError, IndexError):
+        return 0
+
+
+def _write_hw(job_id: str, seq: int) -> None:
+    p = _hw_path(job_id)
+    if p is None:
+        return
+    p.parent.mkdir(parents=True, exist_ok=True, mode=0o700)
+    tmp = p.with_name(p.name + f".{os.getpid()}.tmp")
+    tmp.write_text(f"{seq}\n")
+    os.replace(tmp, p)
+
+
+def _sign(key: bytes, job_id, n_records, head, sealed_at, seq=None) -> str:
+    body = {"job_id": job_id, "n_records": n_records, "head_hash": head, "sealed_at": sealed_at}
+    if seq is not None:
+        body["seq"] = seq
+    return hmac.new(key, _canon_str(body).encode("utf-8"), hashlib.sha256).hexdigest()
 
 
 def anchor_log_path(directory) -> Path:
@@ -231,16 +314,21 @@ def _read_anchor_log(directory) -> tuple[list[Anchor], str | None]:
     return out, None
 
 
-def _append_anchor(directory, anchor: Anchor) -> None:
+def _append_anchor(directory, make) -> Anchor:
+    """Append the anchor returned by ``make(next_seq)`` under the log's exclusive lock, so seqs are gap-free and
+    monotonic per job even across processes."""
     p = anchor_log_path(directory)
     p.parent.mkdir(parents=True, exist_ok=True)
     with open(p, "ab+") as fh:
         if fcntl:
             fcntl.flock(fh.fileno(), fcntl.LOCK_EX)
         try:
-            _, err = _read_anchor_log(directory)
+            existing, err = _read_anchor_log(directory)
             if err:
                 raise ContractError(f"{p}: {err}; refusing to append")
+            probe = make(None)
+            seqs = [a.seq or 0 for a in existing if a.job_id == probe.job_id]
+            anchor = make(max(seqs + [_read_hw(probe.job_id)]) + 1)
             fh.seek(0)
             lines = [ln for ln in fh.read().split(b"\n") if ln]
             prev = json.loads(lines[-1])["entry_hash"] if lines else GENESIS_HASH
@@ -250,6 +338,8 @@ def _append_anchor(directory, anchor: Anchor) -> None:
             fh.write((_canon_str(e) + "\n").encode("utf-8"))
             fh.flush()
             os.fsync(fh.fileno())
+            _write_hw(anchor.job_id, anchor.seq)
+            return anchor
         finally:
             if fcntl:
                 fcntl.flock(fh.fileno(), fcntl.LOCK_UN)
@@ -259,7 +349,8 @@ def _check_anchors(path: Path, res: VerifyResult, hashes: list[str], anchor, key
     def fail(reason):
         return VerifyResult(False, res.n_records, None, reason)
     job_id = path.stem
-    if anchor == "auto":
+    auto = anchor == "auto"
+    if auto:
         anchors, err = _read_anchor_log(anchor_dir or path.parent)
         if err:
             return fail(err)
@@ -271,23 +362,42 @@ def _check_anchors(path: Path, res: VerifyResult, hashes: list[str], anchor, key
             anchors = [Anchor.from_dict(anchor)]
         except ContractError as e:
             return fail(str(e))
-    k = _key_bytes(key, create=False)
+    try:
+        k = _key_bytes(key, create=False, data_dir=anchor_dir or path.parent)
+    except ContractError as e:
+        return fail(str(e))
     if k is None:
         return fail("cannot check anchor signature: no evidence key available")
     for a in anchors:
         if not isinstance(a.n_records, int) or isinstance(a.n_records, bool) or a.n_records < 0:
             return fail("anchor n_records is invalid")
         if not isinstance(a.signature, str) or not hmac.compare_digest(
-                a.signature, _sign(k, a.job_id, a.n_records, a.head_hash, a.sealed_at)):
+                a.signature, _sign(k, a.job_id, a.n_records, a.head_hash, a.sealed_at, a.seq)):
             return fail("anchor signature mismatch")
         if a.job_id != job_id:
             return fail(f"anchor is for job {a.job_id!r}, not {job_id!r}")
+    if auto:
+        latest = max(a.seq or 0 for a in anchors)
+        floor = _read_hw(job_id)
+        if floor > latest:
+            return fail(f"rollback: the anchor log ends at seq {latest} but seq {floor} was sealed "
+                        "(anchor log truncated)")
+    for a in anchors:
         if res.n_records < a.n_records:
-            return fail(f"truncated: bundle has {res.n_records} records but {a.n_records} were anchored")
+            return fail(_trunc_reason(res, a, anchors, hashes))
         expect = GENESIS_HASH if a.n_records == 0 else hashes[a.n_records - 1]
         if expect != a.head_hash:
             return fail(f"head differs from anchor at record {a.n_records} (re-chained or rewritten history)")
     return res
+
+
+def _trunc_reason(res, a, anchors, hashes) -> str:
+    older = [o for o in anchors if o.n_records == res.n_records and o.seq != a.seq
+             and (GENESIS_HASH if o.n_records == 0 else hashes[o.n_records - 1]) == o.head_hash]
+    if older:
+        return (f"rollback: bundle matches anchor seq {older[0].seq} but anchor seq {a.seq} sealed "
+                f"{a.n_records} records")
+    return f"truncated: bundle has {res.n_records} records but {a.n_records} were anchored"
 
 
 def head_hash(path) -> str:
@@ -296,9 +406,15 @@ def head_hash(path) -> str:
     return json.loads(lines[-1])["record_hash"] if lines else GENESIS_HASH
 
 
+def check_custody(data_dir=None) -> None:
+    """Refuse to run with an unsafe evidence key (file under ``data_dir``, or group/world accessible). A no-op when
+    the key comes from ``ACRETIA_EVIDENCE_KEY``. Call at process/job start; raises ``ContractError``."""
+    _key_bytes(create=False, data_dir=data_dir)
+
+
 def export(path) -> list[dict]:
     """All records, parsed. Raises ``ContractError`` if the chain does not verify."""
-    res = verify(path)
+    res = verify(path, False)
     if not res.ok:
         raise ContractError(f"{path}: seq {res.first_bad_seq}: {res.reason}")
     return [json.loads(line) for line in _read_lines(path)]
@@ -311,6 +427,7 @@ class EvidenceBundle:
         self.path = Path(path)
         self.job_id = self.path.stem
         self.store_payloads = store_payloads
+        self.recovery: dict | None = None   # set when repair=True found and cut a torn tail (F20)
         self.payload_dir = self.path.with_name(self.path.stem + ".payloads")
         self.path.parent.mkdir(parents=True, exist_ok=True)
         self._lock = threading.Lock()
@@ -342,7 +459,8 @@ class EvidenceBundle:
             finally:
                 if fcntl:
                     fcntl.flock(self._fh.fileno(), fcntl.LOCK_UN)
-        self.append("recovery", info, source="evidence.repair", output=info)
+        rec = self.append("recovery", info, source="evidence.repair", output=info)
+        self.recovery = {**info, "seq": rec["seq"], "record_hash": rec["record_hash"]}
 
     # -- lifecycle -------------------------------------------------------------------------------------------
     def close(self) -> None:
@@ -440,16 +558,19 @@ class EvidenceBundle:
         return verify(self.path, anchor, key=key, anchor_dir=anchor_dir)
 
     def seal(self, anchor_dir=None, *, key=None) -> Anchor:
-        """Sign ``(job_id, n_records, head_hash, sealed_at)`` with the deployment key and append it to the
-        hash-chained ``anchors.jsonl`` in ``anchor_dir`` (default: the bundle's directory). Refuses a bad chain."""
-        res = verify(self.path)
+        """Sign ``(job_id, n_records, head_hash, sealed_at, seq)`` with the deployment key and append it to the
+        hash-chained ``anchors.jsonl`` in ``anchor_dir`` (default: the bundle's directory). ``seq`` is monotonic per
+        job. Refuses a bad chain, and refuses a key file inside the data dir or readable by others."""
+        res = verify(self.path, False)
         if not res.ok:
             raise ContractError(f"{self.path}: cannot seal a chain that does not verify: {res.reason}")
-        k = _key_bytes(key)
-        head, ts = head_hash(self.path), _now()
-        a = Anchor(self.job_id, res.n_records, head, ts, _sign(k, self.job_id, res.n_records, head, ts))
-        _append_anchor(anchor_dir or self.path.parent, a)
-        return a
+        data_dir = anchor_dir or self.path.parent
+        k = _key_bytes(key, data_dir=data_dir)
+        head, ts, n = head_hash(self.path), _now(), res.n_records
+
+        def make(seq):
+            return Anchor(self.job_id, n, head, ts, _sign(k, self.job_id, n, head, ts, seq), seq)
+        return _append_anchor(data_dir, make)
 
     def export(self) -> list[dict]:
         return export(self.path)

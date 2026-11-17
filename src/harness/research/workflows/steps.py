@@ -94,7 +94,7 @@ def add_figure(ctx, fig: dict, *, ingest: bool = True) -> dict:
     return fig
 
 
-def derived(ctx, label, value, units, end, quote_expr, inputs, tag):
+def derived(ctx, label, value, units, end, quote_expr, inputs, tag, period=None):
     """A figure computed from verified inputs; the quote spells out the arithmetic."""
     if not all(usable(ctx, i) for i in inputs) or not math.isfinite(value):
         return None
@@ -107,7 +107,7 @@ def derived(ctx, label, value, units, end, quote_expr, inputs, tag):
         "quote": quote, "as_of": end, "url": base.get("url") or base.get("source_url")}
     if not cit["url"]:
         return None
-    fig = {"label": label, "value": v, "units": units, "period": _fp(end), "citation": cit, "v": 1}
+    fig = {"label": label, "value": v, "units": units, "period": period or _fp(end), "citation": cit, "v": 1}
     add_figure(ctx, fig)
     return fig if usable(ctx, fig) else None
 
@@ -116,31 +116,93 @@ def _pct(num, den):
     return 100.0 * num["value"] / den["value"]
 
 
+_DER_LABEL = re.compile(r"^(?P<base>.+?) derived: FY")
+_FY_IN = re.compile(r"FY ending (\d{4}-\d{2}-\d{2})")
+_YTD_IN = re.compile(r"9M ending (\d{4}-\d{2}-\d{2})")
+
+
+def _qper(end: str) -> str:
+    return f"quarter ending {end}"
+
+
+def _make_q4(ctx, idx, tk, f):
+    """Replace a tool-derived Q4 figure (FY - 9M; its label carries braces and dates) by a figure with a clean label
+    that says it is derived and cites both verified inputs (fiscal year, nine months). -> (fig, inputs, base, name,
+    end) or None."""
+    m = _DER_LABEL.match(f["label"])
+    if not m:
+        return None
+    base, lab = m.group("base"), f["label"]
+    fe, ye = _FY_IN.search(lab), _YTD_IN.search(lab)
+    fy_f = idx.get((base, f"FY ending {fe.group(1)}")) if fe else None
+    y_f = idx.get((f"{base} 9M YTD", f"9M ending {ye.group(1)}")) if ye else None
+    if not (fy_f and y_f) or abs(fy_f["value"] - y_f["value"] - f["value"]) > 1e-6:
+        return None
+    name = base[len(tk) + 1:]
+    end = f["period"][len("quarter ending "):]
+    d = derived(ctx, f"{base} fourth quarter, derived from fiscal year less nine months", f["value"], f["units"], end,
+                f"{name} fiscal year - {name} nine months = {fy_f['value']:g} - {y_f['value']:g}",
+                [fy_f, y_f], "q4", period=f["period"])
+    return (d, (fy_f, y_f), base, name, end) if d else None
+
+
 class Series:
-    """Per-ticker view over statement figures and the ratios derived from them."""
+    """Per-ticker view over statement figures and the ratios derived from them. Annual statements are keyed by
+    ``FY ending <date>``; quarterly ones (``period="quarterly"``) by ``quarter ending <date>``, with a Q4 derived as
+    FY minus 9M indexed under the plain line name (``is_derived`` tells them apart)."""
 
     def __init__(self, ctx, tk, res):
-        st = (res.get("data") or {}).get("statements") or {}
+        data = res.get("data") or {}
+        st = data.get("statements") or {}
         self.tk, self.ends = tk, [str(y) for y in st.get("years", [])]
-        self.idx = {(f["label"], f["period"]): f for f in res.get("figures", [])}
+        self.quarterly = st.get("period") == "quarterly"
+        self.comp = data.get("comparisons") or {}
+        self.derived_q, self.q4_inputs = set(), {}
+        self.idx = {}
+        for f in res.get("figures", []):
+            self.idx[(f["label"], f["period"])] = f
         self.ctx = ctx
+        if self.quarterly:
+            self._q4_figures(res)
         for end in self.ends:
             for name, n, d in RATIOS:
                 a, b = self.get(n, end), self.get(d, end)
                 if a and b and b["value"] > 0 and usable(ctx, a) and usable(ctx, b):
                     derived(ctx, f"{tk} {name}", _pct(a, b), "%", end,
-                            f"{a['label']} / {b['label']} = {a['value']:g} / {b['value']:g}", [a, b], name)
-        for prev, cur in zip(self.ends, self.ends[1:]):
-            a, b = self.get("Revenue", prev), self.get("Revenue", cur)
-            if a and b and a["value"] > 0:
-                derived(ctx, f"{tk} Revenue growth", 100.0 * (b["value"] / a["value"] - 1.0), "%", cur,
-                        f"{b['label']} / {a['label']} - 1 = {b['value']:g} / {a['value']:g} - 1", [a, b], "growth")
+                            f"{a['label']} / {b['label']} = {a['value']:g} / {b['value']:g}",
+                            [a, b], name, period=self.per(end))
+        if not self.quarterly:
+            for prev, cur in zip(self.ends, self.ends[1:]):
+                a, b = self.get("Revenue", prev), self.get("Revenue", cur)
+                if a and a["value"] > 0 and b:
+                    derived(ctx, f"{tk} Revenue growth", 100.0 * (b["value"] / a["value"] - 1.0), "%", cur,
+                            f"{b['label']} / {a['label']} - 1 = {b['value']:g} / {a['value']:g} - 1", [a, b], "growth")
         for f in list(ctx.figures):          # derived figures were appended to ctx.figures: index them too
             self.idx.setdefault((f["label"], f["period"]), f)
 
+    def per(self, end):
+        return _qper(end) if self.quarterly else _fp(end)
+
     def get(self, name, end):
-        f = self.idx.get((f"{self.tk} {name}", _fp(end)))
+        f = self.idx.get((f"{self.tk} {name}", self.per(end)))
         return f if f and usable(self.ctx, f) else None
+
+    def is_derived(self, name, end) -> bool:
+        """True for a Q4 line derived as FY minus 9M (quarterly statements only)."""
+        return (f"{self.tk} {name}", self.per(end)) in self.derived_q
+
+    def inputs(self, name, end) -> list:
+        """The two cited inputs (FY, 9M YTD) of a derived Q4 line; empty for a directly tagged figure."""
+        return list(self.q4_inputs.get((name, end), ()))
+
+    def _q4_figures(self, res):
+        for f in res.get("figures", []):
+            r = _make_q4(self.ctx, self.idx, self.tk, f)
+            if r:
+                d, ins, base, name, end = r
+                self.idx[(base, f["period"])] = d
+                self.derived_q.add((base, f["period"]))
+                self.q4_inputs[(name, end)] = ins
 
     def series(self, name):
         return [(e, self.get(name, e)) for e in self.ends if self.get(name, e)]
@@ -150,8 +212,8 @@ class Series:
         return s[-1] if s else (None, None)
 
 
-def statements(ctx) -> list:
-    out = ctx.outputs.get("statements")
+def statements(ctx, step="statements") -> list:
+    out = ctx.outputs.get(step)
     items = out if isinstance(out, list) else ([out] if out else [])
     res = []
     for r in items:
@@ -171,11 +233,12 @@ def _cites(figs, n=4):
     return out[:n]
 
 
-def _slide(ctx, wf, sid, archetype, layout, title, figs, *, data=None, blocks=None, bullets=None, facts=()):
+def _slide(ctx, wf, sid, archetype, layout, title, figs, *, data=None, blocks=None, bullets=None, facts=(),
+           cites=4):
     figs = [f for f in figs if f]
     as_of = max((f["citation"]["as_of"] for f in figs), default=None)
     s = {"id": sid, "layout": layout, "title": title, "action_title": title, "bullets": bullets or [],
-         "sources": _cites(figs), "citations": _cites(figs), "data": data or {}, "blocks": blocks or []}
+         "sources": _cites(figs, cites), "citations": _cites(figs, cites), "data": data or {}, "blocks": blocks or []}
     if archetype:
         s["archetype"] = archetype
     if as_of:
@@ -335,7 +398,14 @@ def asm_company_profile(ctx):
 @assembler("earnings_recap")
 def asm_earnings_recap(ctx):
     eps_res = ctx.outputs.get("eps")
-    eps_figs = [f for f in ((eps_res or {}).get("figures") or []) if f["label"].endswith("EarningsPerShareDiluted")]
+    eps_all = (eps_res or {}).get("figures") or []
+    qs = statements(ctx, "quarterly_statements")
+    if qs:
+        for s in qs:
+            _recap_quarterly(ctx, s, eps_all)
+        _recap_guidance(ctx)
+        return {}
+    eps_figs = [f for f in eps_all if f["label"].endswith("EarningsPerShareDiluted")]
     for s in statements(ctx):
         tk, k = s.tk, s.tk.lower()
         if len(s.ends) < 2:
@@ -406,6 +476,11 @@ def asm_earnings_recap(ctx):
                             "periods": {"latest": fy(cur), "prior": fy(prior)}}],
                    facts=[r["label"] for r in rows])
         _excel(ctx, s)
+    _recap_guidance(ctx)
+    return {}
+
+
+def _recap_guidance(ctx):
     g = ctx.outputs.get("guidance")
     if g and g.get("figures"):
         gf = [f for f in g["figures"] if usable(ctx, f)]
@@ -416,7 +491,157 @@ def asm_earnings_recap(ctx):
                    blocks=[{"type": "table", "columns": ["Item", "Value", "Source"], "rows": rows}])
     else:
         ctx.notes.append("no sourced guidance: slide omitted")
-    return {}
+
+
+# ------------------------------------------------------------------------------------------------ quarterly recap
+_Q_LINES = ("Revenue", "Gross profit", "Operating income", "Net income")
+_Q_MARGINS = (("Gross margin", "Gross profit"), ("Operating margin", "Operating income"))
+_NA = "not available"
+_WHICH = (("latest", "latest quarter"), ("prior", "prior quarter"), ("year_ago", "year-ago quarter"))
+_EPS_RX = re.compile(r"^(?P<base>.+?EarningsPerShareDiluted)(?: derived: FY.*)?$")
+
+
+def _q_eps(ctx, s, eps_all):
+    """Diluted EPS per quarter end from the quarterly ``sec_facts`` output: {end: (figure, derived?)}, verified only.
+    A Q4 EPS derived as FY less 9M is re-issued with a clean label and both inputs cited."""
+    pool = {(f["label"], f["period"]): f for f in eps_all}
+    want = f"{s.tk} EarningsPerShareDiluted"
+    out, inputs = {}, {}
+    for f in eps_all:
+        if not f["period"].startswith("quarter ending"):
+            continue
+        end, fig, der = f["period"][len("quarter ending "):], f, False
+        m = _DER_LABEL.match(f["label"])
+        if m:
+            r = _make_q4(ctx, pool, s.tk, f) if m.group("base") == want else None
+            if not r:
+                continue
+            fig, ins, _, _, _ = r
+            der = True
+            inputs[end] = ins
+        elif f["label"] != want:
+            continue
+        if usable(ctx, fig):
+            out[end] = (fig, der)
+    return out, inputs
+
+
+def _chg(ctx, s, name, a, b, end, tag, margin):
+    """Change of the latest figure against a comparison figure, computed in code from verified inputs."""
+    if margin:
+        return derived(ctx, f"{s.tk} {name} change vs {tag}", (a["value"] - b["value"]) * 100, "bps", end,
+                       f"({name} latest - {name} {tag}) x 100 = ({a['value']:g} - {b['value']:g}) x 100",
+                       [a, b], "bps", period=_qper(end))
+    if a["value"] > 0 and b["value"] > 0:
+        return derived(ctx, f"{s.tk} {name} change vs {tag}", 100 * (a["value"] / b["value"] - 1), "%", end,
+                       f"{name} latest / {name} {tag} - 1 = {a['value']:g} / {b['value']:g} - 1",
+                       [a, b], "chg", period=_qper(end))
+    return None
+
+
+def _recap_quarterly(ctx, s, eps_all):
+    tk, k = s.tk, s.tk.lower()
+    comp = s.comp or {}
+    ends = {w: comp.get({"prior": "prior_quarter"}.get(w, w)) for w, _ in _WHICH}
+    cur = ends["latest"]
+    if not cur:
+        ctx.notes.append(f"{tk}: no quarters in the data; no comparison")
+        return
+    eps, eps_inputs = _q_eps(ctx, s, eps_all)
+    notes, used, rows, derived_cells = [], [], [], []
+    names = [(n, False) for n in _Q_LINES] + [(n, True) for n, _ in _Q_MARGINS]
+    comp_of = dict(_Q_MARGINS)
+
+    def support(name, end, margin):
+        base = [comp_of[name], "Revenue"] if margin else [name]
+        out = []
+        for b in base:
+            out += s.inputs(b, end)
+        return out
+
+    def is_der(name, end, margin):
+        return any(s.is_derived(b, end) for b in ([comp_of[name], "Revenue"] if margin else [name]))
+
+    def row_for(name, get, margin, eps_row=False):
+        figs = {w: (get(ends[w]) if ends[w] else None) for w, _ in _WHICH}
+        if not any(figs.values()):
+            notes.append(f"{name}: not available for any compared quarter, row omitted")
+            return
+        row = {"label": name}
+        for w, human in _WHICH:
+            f = figs[w]
+            if f:
+                row[w] = {"label": f["label"], "value": fmt(f)}
+                used.append(f)
+                if eps_row:
+                    der = eps[ends[w]][1]
+                    used.extend(eps_inputs.get(ends[w], ()))
+                else:
+                    der = is_der(name, ends[w], margin)
+                    used.extend(support(name, ends[w], margin))
+                if der:
+                    derived_cells.append(f"{name}, {human}")
+            else:
+                row[w] = _NA
+                notes.append(f"{name}: {human} {_NA} "
+                             + ("(comparison quarter not found in the filings)" if not ends[w]
+                                else "(not tagged or not verifiable)"))
+        for key, w, tag in (("change_prior", "prior", "prior quarter"), ("change_year_ago", "year_ago", "year-ago quarter")):
+            b = figs[w]
+            ch = _chg(ctx, s, name, figs["latest"], b, cur, tag, margin) if b and figs["latest"] else None
+            if ch:
+                row[key] = {"label": ch["label"], "value": fmt(ch, signed=True)}
+                used.append(ch)
+            else:
+                row[key] = _NA
+        rows.append(row)
+
+    for name, margin in names:
+        row_for(name, (lambda e, n=name: s.get(n, e)), margin)
+    if eps:
+        row_for("Diluted EPS", lambda e: (eps.get(e) or (None,))[0], False, eps_row=True)
+    else:
+        notes.append("Diluted EPS: not tagged for the quarters in the data")
+    if not rows:
+        ctx.notes.append(f"{tk}: no verified quarterly lines; no recap")
+        return
+    cols = ["Metric", "Latest quarter", "Prior quarter", "Year-ago quarter", "Change vs prior quarter",
+            "Change vs year-ago quarter"]
+    bullets = list(dict.fromkeys(notes))
+    if derived_cells:
+        bullets.append("Derived fourth-quarter figures (fiscal year minus nine months, both inputs cited): "
+                       + "; ".join(dict.fromkeys(derived_cells)))
+    # KPI slide: latest quarter
+    kfigs = [r for r in (s.get(n, cur) for n in _Q_LINES) if r]
+    if eps.get(cur):
+        kfigs.append(eps[cur][0])
+    kfigs = kfigs[:5]
+    rev, rev_p = s.get("Revenue", cur), (s.get("Revenue", ends["prior"]) if ends["prior"] else None)
+    if len(kfigs) >= 3:
+        kp = [{"label": f["label"], "value": fmt(f), "context": "latest quarter, as reported"} for f in kfigs]
+        d = _dir(rev_p["value"] if rev_p else None, rev["value"] if rev else None)
+        t = {"up": f"{tk} revenue increased versus the prior quarter",
+             "down": f"{tk} revenue decreased versus the prior quarter",
+             "flat": f"{tk} revenue was unchanged versus the prior quarter"}.get(d, f"{tk} reported its latest quarter")
+        sup = [x for f in kfigs for x in (s.inputs(n, cur) for n in _Q_LINES if s.get(n, cur) is f) for x in x]
+        _slide(ctx, "earnings_recap", f"earnings_recap_{k}_kpis", "kpi_row", "table", t, kfigs + sup,
+               data={"archetype_blocks": {"kpis": kp, "highlight": 0, "subtitle": "Latest quarter, USD millions"}},
+               cites=12)
+    ni, nip = s.get("Net income", cur), (s.get("Net income", ends["prior"]) if ends["prior"] else None)
+    d = _dir(nip["value"], ni["value"]) if ni and nip else None
+    t = {"up": f"{tk} net income increased versus the prior quarter and the year-ago quarter",
+         "down": f"{tk} net income decreased versus the prior quarter",
+         "flat": f"{tk} net income was unchanged versus the prior quarter"}.get(
+        d, f"{tk} reported its latest quarter against the prior quarter and the year-ago quarter")
+    if d == "up":
+        ya = s.get("Net income", ends["year_ago"]) if ends["year_ago"] else None
+        if not (ya and ni["value"] > ya["value"]):
+            t = f"{tk} net income increased versus the prior quarter"
+    _slide(ctx, "earnings_recap", f"earnings_recap_{k}_compare", None, "table", t, used,
+           blocks=[{"type": "table", "columns": cols, "rows": rows,
+                    "periods": {w: _qper(e) for w, e in ends.items() if e}}],
+           bullets=bullets, facts=[r["label"] for r in rows], cites=40)
+
 
 
 # ------------------------------------------------------------------------------------------------ buyer_list

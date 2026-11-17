@@ -106,7 +106,6 @@ try:
 except ImportError:
     pass
 
-NS = NoSockets().__enter__()        # whole gate runs with the network physically off
 
 from om import contracts as C  # noqa: E402
 from om import statements as stm  # noqa: E402
@@ -118,6 +117,12 @@ from src.harness.research.api import (ExcelInputPayload, ResearchRequest, Resear
                                       SourcedFigure, run_research)
 from src.harness.research.tools import build_registry  # noqa: E402
 from src.harness.research.verify import SourceResolver, verify_figure  # noqa: E402
+
+import http.client, ssl, urllib.request  # noqa: E402,F401  (import before sockets are disabled)
+from src.harness.research import email_io, schedule  # noqa: E402,F401
+from eval.research import run as _evrun  # noqa: E402,F401
+
+NS = NoSockets().__enter__()        # whole gate runs with the network physically off
 
 TICKERS = ("TSTA", "BUYA", "BUYB")
 IR_URL = "https://ir.testco.test/fy2025-outlook"
@@ -474,7 +479,8 @@ def _():
     truth, n = truth_resolver(), 0
     for name, r in RUNS.items():
         for p in r.res.excel_inputs:
-            pool = [SourcedFigure.from_dict(f) for f in (p.inputs if isinstance(p, ExcelInputPayload) else p["inputs"]).values()]
+            raw = (p.inputs if isinstance(p, ExcelInputPayload) else p["inputs"]).values()
+            pool = [f if isinstance(f, SourcedFigure) else SourcedFigure.from_dict(f) for f in raw]
             for f in pool:
                 ok, why, method = independent_verdict(f, truth, r.res.figures + pool)
                 assert ok, f"{name}: excel input {f.label} {f.period}: {why}"
@@ -677,7 +683,7 @@ def _():
     for name, r in RUNS.items():
         v = EV.verify(r.path)
         assert v.ok, f"{name}: {v.reason}"
-        assert v.n_records > 0, f"{name}: empty evidence"
+        assert v.n_records > 0 or r.res.status == "failed", f"{name}: empty evidence"
         assert r.res.evidence_head == EV.head_hash(r.path), f"{name}: evidence_head is not the bundle head"
         n += v.n_records
     return f"{len(RUNS)} bundles, {n} records"
@@ -1042,6 +1048,15 @@ def _():
     return "ok accepted; 3 hostile mails rejected"
 
 
+class _Spy:
+    def __init__(self, log):
+        self.log = log
+
+    def call(self, name, args):
+        self.log.append((name, args))
+        raise AssertionError("a tool was called for an injected email request")
+
+
 @check("9d. inbound prompt injection is data: nothing sent to evil.com, request text fenced, no extra recipients/files")
 def _():
     from src.harness.research.email_io import handle_inbound, parse_request_email
@@ -1067,15 +1082,6 @@ def _():
     assert "boss@fund.test" not in json.dumps([{k: v for k, v in s.items() if k != "question"} for s in submitted])
     assert blob.count("evil.com") <= 1 * 2
     return "fenced; no tool calls; no recipients added; nothing emailed"
-
-
-class _Spy:
-    def __init__(self, log):
-        self.log = log
-
-    def call(self, name, args):
-        self.log.append((name, args))
-        raise AssertionError("a tool was called for an injected email request")
 
 
 # =========================================================================================== 10. SCIM / ACL

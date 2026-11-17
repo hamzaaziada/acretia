@@ -9,9 +9,17 @@ one org can never address another org's rows::
     ev:{org}:{id}:{n}   persisted event n (1-based);  evn:{org}:{id} is the counter
     review:{org}:{id}   source-review decision {decision, approver|reason, at}; written by approve / reject only
 
-Source review (S6.1c, parity item 24): when a workflow reaches its review gate the job status becomes
-``awaiting_review`` and the planned sources are persisted as the ``source_review`` event. ``approve`` / ``reject``
-write the decision key (so it survives a worker crash: the redelivered run finds it and carries on).
+Source review (S6.1c, D-S6-07, parity item 24): when a workflow reaches its review gate the worker does not wait.
+It persists the plan (``plan:{org}:{id}``: planned sources, deadline, workflow), sets the status to
+``awaiting_review`` and ACKs the queue lease, so no worker is held and no lease can expire into a duplicate run.
+``approve`` records the decision (``review:{org}:{id}``) and re-enqueues the job; a worker that dequeues it resumes
+from the persisted plan: the gate passes at once (the replanned sources must equal the approved ones, otherwise the
+job parks again) and the run continues from there. The review gate is the first step, so no completed step is ever
+re-run. ``reject``, ``cancel`` and ``review_timeout_s`` (default 86400, checked on every status read and by
+``worker_loop`` over the parked-job index) re-enqueue the job with a rejection so a worker ends it ``cancelled``.
+
+    plan:{org}:{id}     {"workflow", "sources", "parked_at", "deadline", "review_timeout_s"}  written when parked
+    parked:{n}          "org:id" index of parked jobs (``parkedn`` is the counter); swept by worker_loop
 """
 from __future__ import annotations
 
@@ -24,12 +32,12 @@ import uuid
 from om.contracts import Job, JobStep
 from om.storage import SQLiteKV
 from .api import API_VERSION, ResearchRequest, ResearchResult, run_research
-from .workflows import review as _review
+from .workflows.base import Cancelled
 
 QUEUE = "research"
 MAX_ATTEMPTS = 3
 _TERMINAL = ("succeeded", "failed", "cancelled")
-REVIEW_POLL_S = 0.1
+SWEEP_S = 1.0
 _kvs: dict[str, SQLiteKV] = {}
 _kv_lock = threading.Lock()
 
@@ -87,7 +95,11 @@ def submit(request, *, org_id: str | None = None) -> str:
 
 
 def status(job_id: str, *, org_id: str = "local") -> Job:
-    return Job.from_dict(_load(_kv(), job_id, org_id)["job"])
+    kv = _kv()
+    row = _load(kv, job_id, org_id)
+    if row["job"]["status"] == "awaiting_review" and _expire(kv, org_id, job_id):
+        row = _load(kv, job_id, org_id)
+    return Job.from_dict(row["job"])
 
 
 def result(job_id: str, *, org_id: str = "local") -> ResearchResult | None:
@@ -104,24 +116,27 @@ def cancel(job_id: str, *, org_id: str = "local") -> bool:
     if row["job"]["status"] in _TERMINAL:
         return False
     kv.set(f"cancel:{org_id}:{job_id}", "1")
+    if row["job"]["status"] == "awaiting_review":       # parked: no worker holds it, so queue it to be ended
+        _decide(job_id, org_id, "rejected", "reason", "cancelled")
     return True
 
 
 def _decide(job_id, org_id, decision, who_key, who) -> bool:
+    """Record the review decision of a parked job and put the job back on the queue (a worker finishes it)."""
     kv = _kv()
     row = _load(kv, job_id, org_id)                     # JobNotFound for an unknown job or another org's job
     if row["job"]["status"] != "awaiting_review" or kv.get(f"review:{org_id}:{job_id}") is not None:
         return False
     rec = {"decision": decision, who_key: who, "at": _now()}
     kv.set(f"review:{org_id}:{job_id}", json.dumps(rec, sort_keys=True))
-    if decision == "approved":
-        row["job"]["status"] = "running"
-    else:
-        kv.set(f"cancel:{org_id}:{job_id}", "1")        # the waiting (or redelivered) worker ends it as cancelled
+    if decision != "approved":
+        kv.set(f"cancel:{org_id}:{job_id}", "1")        # the worker that picks it up ends it as cancelled
+    row["job"]["status"] = "queued"
     row["review"] = rec
     _save(kv, org_id, row)
     _persist_event(kv, org_id, {"v": API_VERSION, "type": "source_review", "job_id": job_id, "ts": _now(),
                                 "data": {"status": decision, **{who_key: who}}})
+    kv.enqueue(QUEUE, json.dumps({"org_id": org_id, "job_id": job_id}))
     return True
 
 
@@ -174,6 +189,51 @@ class _KVCancel:
         return self._kv.get(self._key) is not None
 
 
+def _expire(kv, org, job_id) -> bool:
+    """Reject a parked job whose review deadline has passed (it is then queued to be cancelled). True if it did."""
+    raw = kv.get(f"plan:{org}:{job_id}")
+    if raw is None or kv.get(f"review:{org}:{job_id}") is not None:
+        return False
+    if time.time() <= float(json.loads(raw).get("deadline", float("inf"))):
+        return False
+    return _decide(job_id, org, "rejected", "reason", "review timeout")
+
+
+def _sweep_parked(kv) -> None:
+    """Expire parked jobs past their deadline; drop index entries of jobs that are no longer parked."""
+    for n in range(1, int(kv.get("parkedn", 0) or 0) + 1):
+        ref = kv.get(f"parked:{n}")
+        if ref is None:
+            continue
+        org, job_id = ref.split(":", 1)
+        try:
+            row = _load(kv, job_id, org)
+        except JobNotFound:
+            kv.delete(f"parked:{n}")
+            continue
+        if row["job"]["status"] != "awaiting_review":
+            kv.delete(f"parked:{n}")
+        else:
+            _expire(kv, org, job_id)
+
+
+def _park(kv, lease, org, job_id, row, sources) -> None:
+    """The review gate was reached: persist the plan, mark the job awaiting_review and release the queue lease."""
+    timeout = float(row["request"].get("options", {}).get("review_timeout_s", 86400))
+    kv.set(f"plan:{org}:{job_id}", json.dumps(
+        {"workflow": row["request"].get("workflow"), "sources": sources, "parked_at": _now(),
+         "deadline": time.time() + timeout, "review_timeout_s": timeout}, sort_keys=True))
+    cur = _load(kv, job_id, org)
+    cur["job"]["status"] = "awaiting_review"
+    _save(kv, org, cur)
+    kv.set(f"parked:{kv.incr('parkedn')}", f"{org}:{job_id}")
+    kv.ack(lease)
+
+
+def _canon(x) -> str:
+    return json.dumps(x, sort_keys=True, default=str)
+
+
 def _process(kv, lease, adapter, tools, evidence_dir) -> None:
     msg = json.loads(lease.payload)
     org, job_id = msg["org_id"], msg["job_id"]
@@ -190,35 +250,42 @@ def _process(kv, lease, adapter, tools, evidence_dir) -> None:
         _save(kv, org, row)
         kv.ack(lease)
         return
-    resuming = row["job"]["status"] == "awaiting_review"   # crashed while waiting: keep waiting (or finish approval)
-    row["job"].update(status=row["job"]["status"] if resuming else "running", attempts=lease.attempts)
+    raw_rev = kv.get(f"review:{org}:{job_id}")
+    decision = json.loads(raw_rev)["decision"] if raw_rev is not None else None
+    if row["job"]["status"] == "awaiting_review" and decision is None:
+        kv.ack(lease)                       # already parked: a stale delivery holds nothing
+        return
+    raw_plan = kv.get(f"plan:{org}:{job_id}")
+    plan = json.loads(raw_plan) if raw_plan is not None else None
+    resuming = decision == "approved" and plan is not None
+    row["job"].update(status="running", attempts=lease.attempts)
     _save(kv, org, row)
     cancel = _KVCancel(kv, org, job_id)
-    timeout = float(row["request"].get("options", {}).get("review_timeout_s", 86400))
+    parked: dict = {}
 
     def on_event(e):
-        ev = _persist_event(kv, org, e)
-        if e.get("type") == "source_review" and (e.get("data") or {}).get("status") == "awaiting_review":
-            cur = _load(kv, job_id, org)
-            if kv.get(f"review:{org}:{job_id}") is None and cur["job"]["status"] != "awaiting_review":
-                cur["job"]["status"] = "awaiting_review"
-                _save(kv, org, cur)
-        return ev
+        if parked:
+            return None                     # the parked run's trailing step/done events are not job history
+        if resuming and e.get("type") == "source_review" and (e.get("data") or {}).get("status") == "awaiting_review":
+            return None                     # already recorded when the job parked
+        return _persist_event(kv, org, e)
 
     def review(sources) -> bool:
-        def fetch():
-            raw = kv.get(f"review:{org}:{job_id}")
-            return json.loads(raw)["decision"] if raw is not None else None
-        d = _review.poll_decision(fetch, cancel.is_set, timeout, REVIEW_POLL_S)
-        cur = _load(kv, job_id, org)
-        if d == "approved" and cur["job"]["status"] == "awaiting_review":
-            cur["job"]["status"] = "running"
-            _save(kv, org, cur)
-        return d == "approved"
+        if resuming and _canon(sources) == _canon(plan["sources"]):
+            return True                     # approved sources == the planned ones: carry on, never ask twice
+        if decision == "rejected":
+            return False
+        if resuming:                        # the plan changed since approval: the approval no longer covers it
+            kv.delete(f"review:{org}:{job_id}")
+        parked["sources"] = sources
+        raise Cancelled()                   # park: the run stops here; _process releases the lease below
     ev_dir = evidence_dir or os.environ.get("ACRETIA_EVIDENCE_DIR", "storage/evidence")
     res = run_research(ResearchRequest.from_dict(row["request"]), adapter=adapter, tools=tools,
                        evidence_dir=ev_dir, job_id=job_id, cancel=cancel,
                        on_event=on_event, review=review)
+    if parked:
+        _park(kv, lease, org, job_id, row, parked["sources"])
+        return
     kv.set(f"result:{org}:{job_id}", res.to_json())
     row = _load(kv, job_id, org)                        # approve/reject may have added a "review" record meanwhile
     row["job"].update(status=res.status, steps=[s.to_dict() for s in res.steps], tokens=res.tokens,
@@ -231,9 +298,17 @@ def _process(kv, lease, adapter, tools, evidence_dir) -> None:
 def worker_loop(stop_event: threading.Event, adapter=None, *, tools=None, evidence_dir=None, lease: float = 300.0,
                 poll: float = 0.2, db_path: str | None = None) -> None:
     """Dequeue -> run_research -> ack. A crash leaves the item leased; once the lease expires it is delivered
-    again and re-run (same job_id, evidence chain continues, result written once)."""
+    again and re-run (same job_id, evidence chain continues, result written once). A job that reaches its review
+    gate is parked (lease released), so ``lease`` only has to cover one run, never a human's review time."""
     kv = _kv(db_path)
+    last_sweep = 0.0
     while not stop_event.is_set():
+        if time.monotonic() - last_sweep >= SWEEP_S:
+            last_sweep = time.monotonic()
+            try:
+                _sweep_parked(kv)
+            except Exception:       # noqa: BLE001 - a sweep failure must not stop the worker
+                pass
         item = kv.dequeue(QUEUE, lease=lease)
         if item is None:
             stop_event.wait(poll)

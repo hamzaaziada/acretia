@@ -33,7 +33,7 @@ from om import llm as _llm
 from om import pii, replay
 from om.llm import InvalidJSON, LLMError, LLMRefusal, SchemaInvalid, TransportError, validate
 
-from .ledger import BudgetExceeded, Ledger, cost_usd  # noqa: F401  (re-exported)
+from .ledger import BudgetExceeded, Ledger, LedgerError, cost_usd, _tokens  # noqa: F401  (re-exported)
 
 DEFAULT_BASE_URL = "https://llm.meshpool.ai/v1"
 # Provider name -> the only host its key may reach. A key whose endpoint is not one of these needs an explicit key_host.
@@ -130,8 +130,10 @@ def _retryable(e: BaseException) -> bool:
     return isinstance(e, (TimeoutError, ConnectionError, urllib.error.URLError)) and not isinstance(e, urllib.error.HTTPError)
 
 
-def parse_sse(lines):
-    """Yield the JSON event of each `data:` line of a server-sent-events stream; stops at `data: [DONE]`."""
+def parse_sse(lines, state: dict | None = None):
+    """Yield the JSON event of each `data:` line of a server-sent-events stream; stops at `data: [DONE]`.
+    If `state` is given, `state["done"]` is set True when the `[DONE]` sentinel was seen (a stream that ends without it
+    was cut off)."""
     for raw in lines:
         line = raw.decode("utf-8", "replace") if isinstance(raw, bytes) else raw
         line = line.strip()
@@ -139,6 +141,8 @@ def parse_sse(lines):
             continue
         payload = line[5:].strip()
         if payload == "[DONE]":
+            if state is not None:
+                state["done"] = True
             return
         try:
             yield json.loads(payload)
@@ -174,7 +178,8 @@ class Adapter:
     def __init__(self, base_url: str = DEFAULT_BASE_URL, api_key: str | None = None, model_name: str = "auto", *,
                  key_host: str | None = None, timeout: float = 60, transport=None, mode: str | None = None,
                  masker_names=(), ledger: Ledger | None = None, max_retries: int = 2, fallbacks=(),
-                 json_mode: str = "json_schema", sleep=time.sleep, backoff: float = 0.5, mask: bool = True):
+                 json_mode: str = "json_schema", sleep=time.sleep, backoff: float = 0.5, mask: bool = True,
+                 local_hosts=()):
         """transport(url, body, headers) -> parsed reply dict; with stream=True -> iterable of SSE lines."""
         self.base_url = base_url.rstrip("/")
         self.api_key = api_key or None
@@ -183,6 +188,7 @@ class Adapter:
         self.masker_names, self.ledger, self.max_retries = tuple(masker_names), ledger, max_retries
         self.fallbacks = list(fallbacks)
         self.json_mode, self._sleep, self.backoff, self.mask = json_mode, sleep, backoff, mask
+        self.local_hosts = tuple(str(h).strip().lower() for h in (local_hosts or ()) if str(h).strip())
         self.key_host = (key_host or "").lower() or None
         if self.api_key and not self.key_host:
             host = (urlparse(self.base_url).hostname or "").lower()
@@ -203,6 +209,13 @@ class Adapter:
         if key and "key_host" not in kw:
             kw["key_host"] = env("KEY_HOST") or {h: h for h in KNOWN_KEY_HOSTS}.get((urlparse(base).hostname or "").lower())
         return cls(base, key, env("MODEL") or "auto", **kw)
+
+    @property
+    def is_local(self) -> bool:
+        """True only when base_url's host is localhost / 127.0.0.1 / ::1 or in the configured `local_hosts` (F15):
+        only then may a self-hosted ("local", "ollama") model id bill $0."""
+        host = (urlparse(self.base_url).hostname or "").lower()
+        return host in LOCAL_HOSTS or host in self.local_hosts
 
     # ----------------------------------------------------------------- endpoint / key binding
     def _check_endpoint(self) -> None:
@@ -348,12 +361,12 @@ class Adapter:
         """A callable that reserves the worst case of ONE network send, or None without a ledger."""
         if self.ledger is None:
             return None
-        worst = self.ledger.worst_case(self.model, self._estimate_input_tokens(masked_msgs), max_tokens) \
-            if hasattr(self.ledger, "worst_case") else None
+        est, local = self._estimate_input_tokens(masked_msgs), self.is_local
+        worst = self.ledger.worst_case(self.model, est, max_tokens, local) if hasattr(self.ledger, "worst_case") else None
         if worst is None:
             from .ledger import cost_usd as _c
-            worst = _c(self.model, self._estimate_input_tokens(masked_msgs), max_tokens)
-        return lambda: self.ledger.reserve(job_id, self.model, worst)
+            worst = _c(self.model, est, max(0, int(max_tokens or 0)), 0, None, local)
+        return lambda: self.ledger.reserve(job_id, self.model, worst, est, local)
 
     # ----------------------------------------------------------------- chat
     def chat(self, messages: list[dict], *, json_schema: dict | None = None, temperature: float = 0,
@@ -405,14 +418,15 @@ class Adapter:
                 "cache_read_input_tokens": u.get("prompt_cache_hit_tokens") or (u.get("prompt_tokens_details") or {}).get("cached_tokens")}
 
     def _settle(self, res, usage: dict, masked: list[dict], text: str, note: str = "") -> float:
-        i = usage.get("input_tokens")
-        o = usage.get("output_tokens")
-        i = self._estimate_input_tokens(masked) if i is None else i
-        o = len(text) // 3 if o is None else o
-        cached = usage.get("cache_read_input_tokens") or 0
+        # provider usage is untrusted (F29): negatives clamp to 0; NaN / non-numeric / absurd values fall back to estimates
+        i, o, cached = _tokens(usage.get("input_tokens")), _tokens(usage.get("output_tokens")), _tokens(usage.get("cache_read_input_tokens"))
+        est_in = self._estimate_input_tokens(masked)
+        i = est_in if i is None or usage.get("input_tokens") is None else max(i, est_in)
+        o = len(text) // 3 if o is None or usage.get("output_tokens") is None else o
+        cached = min(cached or 0, i)
         if res is not None:
             return self.ledger.settle(res, {"input_tokens": i, "output_tokens": o, "cached_tokens": cached}, note)["cost_usd"]
-        return cost_usd(self.model, i, o, cached)
+        return cost_usd(self.model, i, o, cached, None, self.is_local)
 
     def _fixture_text(self, text: str, masker) -> str:
         """The reply as it may be written to a fixture: scanned for PII; found PII is masked (the mapping stays in the
@@ -435,15 +449,23 @@ class Adapter:
         body = self._body(masked, schema, temperature, max_tokens)
         j, res = self._request(body, reserve=self._reserver(masked, max_tokens, job_id))
         text, usage, cost, calls = self._read(j, masked, res)
+        truncated = self._finish_reason(j) == "length"
+        if truncated and schema is None:                       # F10: a cut-off reply is never a complete result
+            raise StreamInterrupted(f"reply from {self.model} was cut off at the token limit (finish_reason=length); "
+                                    "retry the whole call", masker.unmask(text) if masker else text, usage, self.model)
         if schema is not None:
-            err = self._schema_error(text, masker, schema)
-            if err:                                            # one repair retry with the error, then fall through
+            err = "the reply was cut off at the token limit (finish_reason=length)" if truncated \
+                else self._schema_error(text, masker, schema)
+            if err:                    # one repair retry (a truncated reply gets a higher max_tokens), then fall through
+                mt = min(max(int(max_tokens) * 2, int(max_tokens) + 1024), 65536) if truncated else max_tokens
                 repair = body["messages"] + [{"role": "assistant", "content": text}, {"role": "user", "content":
                          f"Your previous reply was rejected: {err}. Reply again with ONLY a JSON object that conforms to the schema."}]
-                j, res = self._request({**body, "messages": repair}, reserve=self._reserver(repair, max_tokens, job_id))
+                j, res = self._request({**body, "messages": repair, "max_tokens": mt}, reserve=self._reserver(repair, mt, job_id))
                 text, u2, c2, calls = self._read(j, masked, res)
                 usage = {k: (usage.get(k) or 0) + (u2.get(k) or 0) for k in usage}
                 cost += c2
+                if self._finish_reason(j) == "length":
+                    raise InvalidJSON(f"{self.model}: reply still cut off at the token limit after a repair with max_tokens={mt}")
         out = self._finish(text, masker, schema, usage, self.model, cost, False)
         out.tool_calls = self._unmask_tool_calls(calls, masker)
         if mode == "record":                                   # only valid replies are recorded, scanned for PII first
@@ -460,6 +482,10 @@ class Adapter:
         if choice.get("finish_reason") == "content_filter":
             raise LLMRefusal("content filter")
         return text, usage, cost, msg.get("tool_calls") or []
+
+    @staticmethod
+    def _finish_reason(j: dict) -> str | None:
+        return ((j.get("choices") or [{}])[0] or {}).get("finish_reason")
 
     @staticmethod
     def _parse(text: str, masker):
@@ -509,6 +535,8 @@ class Adapter:
             except GeneratorExit:
                 gen.close()                       # abandoned by the consumer: the inner finally bills what arrived
                 raise
+            except StreamInterrupted:
+                raise                                 # already explicit and carries the partial text; never a fallback
             except BaseException as e:      # noqa: BLE001
                 if yielded and isinstance(e, Exception):
                     raise StreamInterrupted(
@@ -533,12 +561,14 @@ class Adapter:
             return AdapterResult(text, None, doc.get("usage") or {}, doc.get("model") or self.model, 0.0, True)
         lines, res = self._request(self._body(masked, None, temperature, max_tokens, stream=True), stream=True,
                                    reserve=self._reserver(masked, max_tokens, job_id))
-        raw_all, pending, usage, settled = [], "", {}, False
+        raw_all, pending, usage, settled, sse_state, finish = [], "", {}, False, {}, None
         try:
-            for ev in parse_sse(lines):
+            for ev in parse_sse(lines, sse_state):
                 if ev.get("usage"):
                     usage = self._usage(ev)
                 choice = (ev.get("choices") or [{}])[0]
+                if choice.get("finish_reason"):
+                    finish = choice["finish_reason"]
                 if choice.get("finish_reason") == "content_filter":
                     raise LLMRefusal("content filter")
                 delta = (choice.get("delta") or {}).get("content") or ""
@@ -553,6 +583,10 @@ class Adapter:
             if pending:
                 yield masker.unmask(pending) if masker else pending
             masked_text = "".join(raw_all)
+            if finish in ("length", "content_filter") or not sse_state.get("done"):
+                why = f"finish_reason={finish}" if finish in ("length", "content_filter") else "the stream ended without [DONE]"
+                full = masker.unmask(masked_text) if masker else masked_text
+                raise StreamInterrupted(f"stream from {self.model} is incomplete ({why}); retry the whole call", full, usage, self.model)
             cost = self._settle(res, usage, masked, masked_text)
             settled = True
             state["usage"] = usage

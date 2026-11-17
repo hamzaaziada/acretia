@@ -17,6 +17,7 @@ from __future__ import annotations
 
 import hashlib
 import http.client
+import inspect
 import ipaddress
 import json
 import os
@@ -39,6 +40,9 @@ MIN_INTERVAL = 1.0
 MAX_CRAWL_DELAY = 30.0            # robots Crawl-delay is clamped to [MIN_INTERVAL, 30 s]; above 30 s the host is skipped
 ROBOTS_MAX_BYTES = 512 * 1024     # parse only the first 512 KiB (RFC 9309 asks for at least 500 KiB); never block the site
 ROBOTS_TIMEOUT = 10.0
+READ_DEADLINE = 20.0              # total wall-clock budget for one response (connect to last byte), separate from the socket timeout
+MIN_BPS = 1024                    # slow-trickle defence: abort if fewer than 1 KiB/s arrive over a rolling window
+RATE_WINDOW = 5.0
 ROBOTS_TTL = 24 * 3600.0          # cached robots verdicts (incl. 5xx = disallow) expire after 24 h
 ROBOTS_UNREACHABLE_TTL = 3600.0
 MAX_PAGES = 100                   # per-run crawl budget (pages and wall-clock seconds)
@@ -68,6 +72,14 @@ class HostSkipped(CrawlError):
 
 class CrawlBudgetExceeded(CrawlError):
     pass
+
+
+class SlowResponse(CrawlError):
+    """The response blew its total read deadline or fell under the minimum throughput (slow-trickle defence)."""
+
+
+class DowngradeRefused(CrawlError):
+    """An https URL redirected to http: refused (never fetch over a weaker scheme than the one asked for)."""
 
 
 # --------------------------------------------------------------------------- SSRF guard
@@ -154,27 +166,72 @@ def validate_url(url: str, resolver=default_resolver) -> tuple[urllib.parse.Spli
 
 
 # --------------------------------------------------------------------------- transport
-def default_transport(method, url, headers, ip, timeout, max_bytes):
-    """One request, no redirects, connection pinned to `ip`, body capped. -> (status, headers, body)"""
+def default_transport(method, url, headers, ip, timeout, max_bytes, truncate=False, deadline=READ_DEADLINE,
+                      min_bps=MIN_BPS, window=RATE_WINDOW):
+    """One request, no redirects, connection pinned to `ip`. -> (status, headers, body)
+
+    Contract (a custom transport may take just the first six arguments): `max_bytes` caps the body. By default a body
+    over the cap raises ResponseTooLarge; with `truncate=True` the socket is read only up to `max_bytes`, reading stops
+    there and the first `max_bytes` are returned (used for robots.txt: parse the head, never read or block on the rest).
+    `deadline` is a total wall-clock limit for the whole response, enforced by a watchdog that closes the socket (so it
+    also covers a slow-trickled status line or headers); `min_bps` over a rolling `window` aborts a trickle early.
+    """
     u = urllib.parse.urlsplit(url)
     port = u.port or (443 if u.scheme == "https" else 80)
-    sock = socket.create_connection((ip, port), timeout=timeout)
+    t0 = time.monotonic()
+    sock = socket.create_connection((ip, port), timeout=min(timeout, deadline))
     if u.scheme == "https":
         sock = ssl.create_default_context().wrap_socket(sock, server_hostname=u.hostname)
     conn = http.client.HTTPConnection(u.hostname, port, timeout=timeout)
     conn.sock = sock
+    expired = threading.Event()
+
+    def _watchdog():
+        expired.set()
+        try:
+            sock.shutdown(socket.SHUT_RDWR)
+        except OSError:
+            pass
+        try:
+            sock.close()
+        except OSError:
+            pass
+    timer = threading.Timer(max(0.01, deadline - (time.monotonic() - t0)), _watchdog)
+    timer.daemon = True
+    timer.start()
     try:
         path = (u.path or "/") + (f"?{u.query}" if u.query else "")
         conn.request(method, path, headers={"Host": u.netloc.rpartition("@")[2], **headers})
         r = conn.getresponse()
         cl = r.getheader("Content-Length")
-        if cl and cl.isdigit() and int(cl) > max_bytes:
+        if not truncate and cl and cl.isdigit() and int(cl) > max_bytes:
             raise ResponseTooLarge(f"Content-Length {cl} exceeds {max_bytes}")
-        body = r.read(max_bytes + 1)
-        if len(body) > max_bytes:
+        limit = max_bytes if truncate else max_bytes + 1
+        chunks, got, w_start, w_bytes = [], 0, time.monotonic(), 0
+        while got < limit:
+            chunk = r.read1(min(65536, limit - got))
+            if not chunk:
+                break
+            chunks.append(chunk)
+            got += len(chunk)
+            w_bytes += len(chunk)
+            now = time.monotonic()
+            if now - w_start >= window:
+                if w_bytes < min_bps * (now - w_start):
+                    raise SlowResponse(f"throughput {w_bytes / (now - w_start):.0f} B/s is under {min_bps} B/s")
+                w_start, w_bytes = now, 0
+        if expired.is_set():                      # the watchdog closed the socket mid-read: that looks like a clean EOF
+            raise SlowResponse(f"read deadline of {deadline:g} s exceeded")
+        body = b"".join(chunks)
+        if not truncate and len(body) > max_bytes:
             raise ResponseTooLarge(f"response exceeds {max_bytes} bytes")
         return r.status, {k.lower(): v for k, v in r.getheaders()}, body
+    except (OSError, http.client.HTTPException) as e:
+        if expired.is_set():
+            raise SlowResponse(f"read deadline of {deadline:g} s exceeded") from e
+        raise
     finally:
+        timer.cancel()
         conn.close()
 
 
@@ -302,11 +359,19 @@ _PR_HINT = re.compile(r"press|news|release|announce|earnings|results|investor", 
 class Crawler:
     def __init__(self, resolver=default_resolver, transport=default_transport, limiter: RateLimiter | None = None,
                  timeout: float = 20.0, max_bytes: int = MAX_BYTES, user_agent: str = USER_AGENT, renderer=None,
-                 max_pages: int = MAX_PAGES, max_seconds: float = MAX_SECONDS, clock=None):
+                 max_pages: int = MAX_PAGES, max_seconds: float = MAX_SECONDS, clock=None,
+                 read_deadline: float = READ_DEADLINE):
         self.resolver, self.transport = resolver, transport
         self.limiter = limiter or RateLimiter()
         self.timeout, self.max_bytes, self.ua = timeout, max_bytes, user_agent
         self.max_pages, self.max_seconds = max_pages, max_seconds
+        self.read_deadline = read_deadline
+        try:
+            params = inspect.signature(transport).parameters
+            var_kw = any(p.kind is p.VAR_KEYWORD for p in params.values())
+            self._tkw = {k for k in ("truncate", "deadline") if var_kw or k in params}
+        except (TypeError, ValueError):
+            self._tkw = set()
         self.clock = clock or self.limiter._clock
         self.pages = 0
         self._started: float | None = None
@@ -326,11 +391,16 @@ class Crawler:
         if now - self._started > self.max_seconds:
             raise CrawlBudgetExceeded(f"crawl budget: {self.max_seconds:g} s exhausted")
 
-    def _send(self, u, url, ip, headers, max_bytes, delay=None, timeout=None):
+    def _send(self, u, url, ip, headers, max_bytes, delay=None, timeout=None, truncate=False):
         self.limiter.wait(f"{u.scheme}://{u.netloc}", delay)
         h = {"User-Agent": self.ua, "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.5",
              "Accept-Encoding": "identity", **(headers or {})}
-        return self.transport("GET", url, h, ip, timeout or self.timeout, max_bytes or self.max_bytes)
+        kw = {}
+        if truncate and "truncate" in self._tkw:
+            kw["truncate"] = True
+        if "deadline" in self._tkw:
+            kw["deadline"] = self.read_deadline
+        return self.transport("GET", url, h, ip, timeout or self.timeout, max_bytes or self.max_bytes, **kw)
 
     def _robots_for(self, u) -> tuple[urllib.robotparser.RobotFileParser | None, float]:
         key = f"{u.scheme}://{u.netloc}"
@@ -340,11 +410,15 @@ class Crawler:
             rp, delay, ttl = urllib.robotparser.RobotFileParser(), 0.0, ROBOTS_TTL
             try:
                 ru, addrs = validate_url(rurl, self.resolver)
-                status, hdrs, body = self._send(ru, rurl, addrs[0], None, MAX_BYTES, timeout=ROBOTS_TIMEOUT)
-                if 300 <= status < 400:       # robots redirects: follow once, re-validated
+                status, hdrs, body = self._send(ru, rurl, addrs[0], None, ROBOTS_MAX_BYTES, timeout=ROBOTS_TIMEOUT,
+                                                truncate=True)
+                if 300 <= status < 400:       # robots redirects: follow once, re-validated, never https -> http
                     loc = urllib.parse.urljoin(rurl, hdrs.get("location", ""))
                     ru, addrs = validate_url(loc, self.resolver)
-                    status, hdrs, body = self._send(ru, loc, addrs[0], None, MAX_BYTES, timeout=ROBOTS_TIMEOUT)
+                    if u.scheme == "https" and ru.scheme == "http":
+                        raise DowngradeRefused(f"robots.txt redirect {rurl} -> {loc} downgrades https to http")
+                    status, hdrs, body = self._send(ru, loc, addrs[0], None, ROBOTS_MAX_BYTES, timeout=ROBOTS_TIMEOUT,
+                                                    truncate=True)
                 if status == 200:
                     if len(body) > ROBOTS_MAX_BYTES:      # RFC 9309: parse the first part, never block the site
                         body = body[:ROBOTS_MAX_BYTES]
@@ -389,7 +463,11 @@ class Crawler:
                 loc = hdrs.get("location")
                 if not loc:
                     raise CrawlError(f"redirect without Location from {url}")
-                url = urllib.parse.urljoin(url, loc)
+                new = urllib.parse.urljoin(url, loc)
+                if u.scheme == "https" and urllib.parse.urlsplit(new).scheme == "http":
+                    validate_url(new, self.resolver)       # SSRF verdict first (a private target is an SsrfError)
+                    raise DowngradeRefused(f"refusing https -> http redirect: {url} -> {new}")
+                url = new
                 continue
             if status != 200:
                 raise CrawlError(f"HTTP {status} for {url}")

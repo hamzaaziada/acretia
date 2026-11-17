@@ -386,14 +386,21 @@ class SQLiteKV:
 
     @staticmethod
     def _fence(item):
-        """(id, token); token None (a bare id) means an unfenced legacy ack."""
-        return getattr(item, "id", item), getattr(item, "token", None)
+        """(id, token) from a ``Lease`` or an ``(id, token)`` pair. A bare id is refused (N2/F19): it would bypass
+        the lease fence and delete an item another worker now holds."""
+        if hasattr(item, "token") and hasattr(item, "id"):
+            if item.token is None:
+                raise StorageError("ack/nack need the Lease returned by dequeue (this one has no token)")
+            return item.id, item.token
+        if isinstance(item, tuple) and len(item) == 2 and isinstance(item[1], str) and item[1]:
+            return item[0], item[1]
+        raise TypeError("ack/nack need the Lease returned by dequeue() or an (id, token) pair, not a bare id "
+                        f"({type(item).__name__}): a bare id is unfenced and could delete another worker's live "
+                        "lease. Migrate: lease = kv.dequeue(...); kv.ack(lease)")
 
     def ack(self, item_id) -> bool:
         """Delete the item iff ``(id, lease_token)`` still matches the live lease; a stale worker gets False."""
         i, tok = self._fence(item_id)
-        if tok is None:
-            return self._tx(lambda d: d.execute("DELETE FROM queue WHERE id=?", (i,)).rowcount > 0)
         return self._tx(lambda d: d.execute("DELETE FROM queue WHERE id=? AND lease_token=?", (i, tok)).rowcount > 0)
 
     def nack(self, item_id, delay: float = 0.0, error: str | None = None) -> bool:
@@ -402,12 +409,12 @@ class SQLiteKV:
 
         def f(d):
             row = d.execute("SELECT name,attempts,max_attempts,lease_token FROM queue WHERE id=?", (i,)).fetchone()
-            if row is None or (tok is not None and row[3] != tok):
+            if row is None or row[3] != tok:
                 return False
             now = self._clock()
             if error is not None:
                 d.execute("UPDATE queue SET last_error=? WHERE id=?", (error, i))
-            if tok is not None and row[1] >= row[2]:
+            if row[1] >= row[2]:
                 self._to_dlq(d, i, row[0], error or "max attempts reached", now)
             else:
                 d.execute("UPDATE queue SET visible_at=?, lease_token=NULL WHERE id=?", (now + delay, i))
@@ -591,7 +598,10 @@ class RedisKV:
         return Lease(int(r[0]), r[1], int(r[2]), name, token)
 
     def _lease(self, lease):
-        if getattr(lease, "queue", None) is None or getattr(lease, "token", None) is None:
+        if not (hasattr(lease, "id") and hasattr(lease, "token") and hasattr(lease, "queue")):
+            raise TypeError("RedisKV ack/nack need the Lease returned by dequeue(), not a bare id or pair: a bare id "
+                            f"is unfenced ({type(lease).__name__}). Migrate: lease = kv.dequeue(...); kv.ack(lease)")
+        if lease.queue is None or lease.token is None:
             raise StorageError("RedisKV ack/nack need the Lease returned by dequeue")
         return lease.queue, str(lease.id), lease.token
 

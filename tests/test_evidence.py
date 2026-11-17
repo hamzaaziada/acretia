@@ -276,7 +276,8 @@ class AnchorTest(unittest.TestCase):
         a = self.b.seal(key=KEY)
         lines = self.path.read_text().splitlines(keepends=True)
         self.path.write_text("".join(lines[:3]))
-        self.assertTrue(verify(self.path))  # chain alone cannot tell
+        self.assertTrue(verify(self.path, False))  # chain alone cannot tell
+        self.assertFalse(verify(self.path, key=KEY).ok)  # default is auto once an anchor log exists
         r = verify(self.path, a, key=KEY)
         self.assertFalse(r.ok)
         self.assertIn("truncated", r.reason)
@@ -287,7 +288,7 @@ class AnchorTest(unittest.TestCase):
         recs = self.recs()
         recs[2]["source"] = "forged"
         _rewrite(self.path, _rechain(recs))
-        self.assertTrue(verify(self.path))
+        self.assertTrue(verify(self.path, False))
         r = verify(self.path, a, key=KEY)
         self.assertFalse(r.ok)
         self.assertIn("head differs", r.reason)
@@ -344,7 +345,7 @@ class AnchorTest(unittest.TestCase):
         self.assertIn("anchor", verify(self.path, "auto", key=KEY).reason)
 
     def test_key_from_env_and_file(self):
-        old = {k: os.environ.get(k) for k in ("ACRETIA_EVIDENCE_KEY", "ACRETIA_EVIDENCE_KEY_FILE")}
+        old = {k: os.environ.get(k) for k in ("ACRETIA_EVIDENCE_KEY", "ACRETIA_EVIDENCE_KEY_FILE", "ACRETIA_EVIDENCE_STATE_DIR")}
         self.addCleanup(lambda: [os.environ.pop(k, None) if v is None else os.environ.__setitem__(k, v)
                                  for k, v in old.items()])
         os.environ["ACRETIA_EVIDENCE_KEY"] = "env-secret"
@@ -352,12 +353,16 @@ class AnchorTest(unittest.TestCase):
         self.assertTrue(verify(self.path, a))
         self.assertFalse(verify(self.path, a, key=b"zzz").ok)
         del os.environ["ACRETIA_EVIDENCE_KEY"]
-        kf = self.dir / "keys" / "evidence.key"
+        keydir = tempfile.TemporaryDirectory()          # custody: the key lives outside the evidence data dir
+        self.addCleanup(keydir.cleanup)
+        kf = Path(keydir.name) / "keys" / "evidence.key"
         os.environ["ACRETIA_EVIDENCE_KEY_FILE"] = str(kf)
+        os.environ.pop("ACRETIA_EVIDENCE_STATE_DIR", None)
         self.assertFalse(verify(self.path, a).ok)  # no key, none created by verify
         self.assertFalse(kf.exists())
         a2 = self.b.seal()
         self.assertEqual(stat.S_IMODE(kf.stat().st_mode), 0o600)
+        self.assertEqual(stat.S_IMODE(kf.parent.stat().st_mode), 0o700)
         self.assertTrue(verify(self.path, a2))
         self.assertEqual(_ev._key_bytes(), kf.read_bytes().strip())
 

@@ -18,6 +18,7 @@ from __future__ import annotations
 import contextlib
 import itertools
 import json
+import math
 import os
 import sqlite3
 import threading
@@ -47,9 +48,11 @@ PRICES: dict[str, tuple[float, float]] = {
     # unverified, conservative (price_verified: false)
     "deepseek": (0.60, 2.20), "kimi": (1.20, 5.0), "glm": (1.20, 4.40), "llama": (0.90, 0.90),
     "mistral-large": (3.0, 9.0), "qwen": (0.60, 1.80),
-    # self-hosted: free
-    "ollama": (0.0, 0.0), "local": (0.0, 0.0),
 }
+# Self-hosted models are free ONLY when the adapter talks to a local host (F15): a model id that merely contains "local"
+# on a remote host gets the default (highest) price. `price_for(..., local=True)` consults this table.
+LOCAL_PRICES: dict[str, tuple[float, float]] = {"ollama": (0.0, 0.0), "local": (0.0, 0.0)}
+MAX_TOKENS_PER_CALL = 10_000_000     # provider usage above this is rejected as absurd (F29)
 DEFAULT_PRICE = (max(p[0] for p in PRICES.values()), max(p[1] for p in PRICES.values()))   # most expensive known
 CACHED_DISCOUNT = 0.1            # cached input tokens bill at 10% of the input price
 RESERVATION_TTL = 3600.0
@@ -59,8 +62,30 @@ class BudgetExceeded(RuntimeError):
     """Raised instead of sending a call whose worst-case cost would exceed the limit."""
 
 
-def price_for(model: str, prices: dict | None = None) -> tuple[float, float]:
+class LedgerError(RuntimeError):
+    """A row that must never be recorded: negative or NaN cost, absurd or non-numeric token counts."""
+
+
+def _tokens(x, *, strict: bool = False) -> int | None:
+    """Untrusted token count -> int >= 0. Negatives clamp to 0. NaN / inf / non-numbers / more than
+    MAX_TOKENS_PER_CALL are rejected: None (lenient) or LedgerError (strict)."""
+    if x is None:
+        return 0
+    try:
+        f = float(x)
+    except (TypeError, ValueError):
+        f = math.nan
+    if not math.isfinite(f) or f > MAX_TOKENS_PER_CALL:
+        if strict:
+            raise LedgerError(f"token count {x!r} is not a sane per-call value (limit {MAX_TOKENS_PER_CALL})")
+        return None
+    return max(0, int(f))
+
+
+def price_for(model: str, prices: dict | None = None, local: bool = False) -> tuple[float, float]:
     m = (model or "").lower().replace(".", "-")
+    if local and any(k in m for k in LOCAL_PRICES):
+        return (0.0, 0.0)
     table = prices if prices is not None else PRICES
     best = max((k for k in table if k.lower().replace(".", "-") in m), key=len, default=None)
     if best:
@@ -69,9 +94,9 @@ def price_for(model: str, prices: dict | None = None) -> tuple[float, float]:
 
 
 def cost_usd(model: str, input_tokens: int | None, output_tokens: int | None, cached_tokens: int | None = 0,
-             prices: dict | None = None) -> float:
-    pin, pout = price_for(model, prices)
-    inp, out, cached = int(input_tokens or 0), int(output_tokens or 0), int(cached_tokens or 0)
+             prices: dict | None = None, local: bool = False) -> float:
+    pin, pout = price_for(model, prices, local)
+    inp, out, cached = _tokens(input_tokens, strict=True), _tokens(output_tokens, strict=True), _tokens(cached_tokens, strict=True)
     cached = min(cached, inp)
     return ((inp - cached) * pin + cached * pin * CACHED_DISCOUNT + out * pout) / 1_000_000
 
@@ -91,6 +116,15 @@ class SpendGuard:
                                  f"the ${self.job_limit_usd:.2f} job limit; call not sent")
 
 
+def _nonneg(x) -> float:
+    """A stored cost as a float >= 0 (an old corrupt row never lowers the total)."""
+    try:
+        f = float(x or 0.0)
+    except (TypeError, ValueError):
+        return 0.0
+    return f if math.isfinite(f) and f > 0 else 0.0
+
+
 def _blank() -> dict:
     return {"calls": 0, "input_tokens": 0, "output_tokens": 0, "cached_tokens": 0, "cost_usd": 0.0}
 
@@ -104,6 +138,8 @@ class Reservation:
     usd: float
     ts: float
     done: bool = False
+    est_input_tokens: int = 0      # the input estimate the reservation was sized with: settle never bills less
+    local: bool = False            # the call went to a local host (self-hosted models bill $0 only then)
 
 
 _SCHEMA = """
@@ -161,8 +197,9 @@ class Ledger:
                 if self.path.is_file():
                     def ins(row):
                         c.execute("INSERT INTO rows(job,in_t,out_t,cached_t,cost) VALUES(?,?,?,?,?)",
-                                  (row.get("job_id") or "-", int(row.get("input_tokens") or 0), int(row.get("output_tokens") or 0),
-                                   int(row.get("cached_tokens") or 0), float(row.get("cost_usd") or 0.0)))
+                                  (row.get("job_id") or "-", max(0, int(row.get("input_tokens") or 0)),
+                                   max(0, int(row.get("output_tokens") or 0)), max(0, int(row.get("cached_tokens") or 0)),
+                                   _nonneg(row.get("cost_usd"))))
                     self._load_jsonl(ins)
                 c.execute("INSERT INTO meta VALUES('imported','1')")
 
@@ -187,10 +224,10 @@ class Ledger:
     def _add(self, row: dict) -> None:
         for acc in (self._all, self._jobs.setdefault(row.get("job_id") or "-", _blank())):
             acc["calls"] += 1
-            acc["input_tokens"] += int(row.get("input_tokens") or 0)
-            acc["output_tokens"] += int(row.get("output_tokens") or 0)
-            acc["cached_tokens"] += int(row.get("cached_tokens") or 0)
-            acc["cost_usd"] += float(row.get("cost_usd") or 0.0)
+            acc["input_tokens"] += max(0, int(row.get("input_tokens") or 0))
+            acc["output_tokens"] += max(0, int(row.get("output_tokens") or 0))
+            acc["cached_tokens"] += max(0, int(row.get("cached_tokens") or 0))
+            acc["cost_usd"] += _nonneg(row.get("cost_usd"))
         self.rows.append(row)
 
     def _mem_inflight(self, job_id: str | None) -> tuple[float, float]:
@@ -208,8 +245,9 @@ class Ledger:
             return ij if job_id is not None else it
 
     # ------------------------------------------------------------------ guard API
-    def worst_case(self, model: str, est_input_tokens: int, max_tokens: int) -> float:
-        return cost_usd(model, est_input_tokens, max_tokens, 0, self.prices)
+    def worst_case(self, model: str, est_input_tokens: int, max_tokens: int, local: bool = False) -> float:
+        pin, pout = price_for(model, self.prices, local)
+        return (max(0, int(est_input_tokens or 0)) * pin + max(0, int(max_tokens or 0)) * pout) / 1_000_000
 
     def precheck(self, job_id: str | None, model: str, est_input_tokens: int, max_tokens: int) -> float:
         """Non-reserving check (kept for compatibility; the adapter uses `reserve`)."""
@@ -225,11 +263,15 @@ class Ledger:
                     self.guard.check(self._all["cost_usd"] + it, self._jobs.get(job_id or "-", _blank())["cost_usd"] + ij, worst, job_id)
         return worst
 
-    def reserve(self, job_id: str | None, model: str, worst_case_usd: float) -> Reservation:
+    def reserve(self, job_id: str | None, model: str, worst_case_usd: float, est_input_tokens: int = 0,
+                local: bool = False) -> Reservation:
         """Check the guard against committed spend + all in-flight reservations and book `worst_case_usd`, as ONE
         atomic step (lock; plus a SQLite write transaction when the ledger has a path). Raises BudgetExceeded."""
-        usd = max(0.0, float(worst_case_usd))
-        res = Reservation(f"{os.getpid()}-{id(self):x}-{next(_seq)}-{time.time_ns()}", job_id, model, usd, time.time())
+        usd = float(worst_case_usd)
+        if not math.isfinite(usd) or usd < 0:
+            raise LedgerError(f"reservation of {worst_case_usd!r} USD is not a valid amount")
+        res = Reservation(f"{os.getpid()}-{id(self):x}-{next(_seq)}-{time.time_ns()}", job_id, model, usd, time.time(),
+                          est_input_tokens=max(0, int(est_input_tokens or 0)), local=bool(local))
         with self._lock:
             if self._db_path:
                 with self._tx() as c:
@@ -267,26 +309,36 @@ class Ledger:
             if reservation.done:
                 return {}
             u = actual_usage
-            if u is None or (u.get("input_tokens") is None and u.get("output_tokens") is None):
+            i = o = cached = None
+            if u is not None and not (u.get("input_tokens") is None and u.get("output_tokens") is None):
+                # provider usage is untrusted (F29): negatives clamp to 0, NaN / absurd values are rejected
+                i, o, cached = _tokens(u.get("input_tokens")), _tokens(u.get("output_tokens")), _tokens(u.get("cached_tokens"))
+            if i is None or o is None or cached is None:
                 i, o, cached = 0, self._tokens_for_usd(reservation.model, reservation.usd), 0
-                note = (note + " " if note else "") + "worst-case (usage unknown)"
+                note = (note + " " if note else "") + ("worst-case (usage unknown)" if u is None else "worst-case (usage rejected)")
             else:
-                i, o, cached = u.get("input_tokens") or 0, u.get("output_tokens") or 0, u.get("cached_tokens") or 0
+                i = max(i, reservation.est_input_tokens)       # never bill less than the reservation's input estimate
+                cached = min(cached, i)
             reservation.done = True
             self._tls.release = reservation.id
+            self._tls.local = reservation.local
             try:
                 return self.record(reservation.job_id, reservation.model, i, o, cached, note)
             finally:
                 self._tls.release = None
+                self._tls.local = False
                 if not self._db_path:
                     self._resv.pop(reservation.id, None)
 
     # ------------------------------------------------------------------ recording
     def record(self, job_id: str | None, model: str, input_tokens: int | None, output_tokens: int | None,
                cached_tokens: int | None = 0, note: str = "") -> dict:
-        cost = cost_usd(model, input_tokens, output_tokens, cached_tokens, self.prices)
-        row = {"ts": round(time.time(), 3), "job_id": job_id, "model": model, "input_tokens": int(input_tokens or 0),
-               "output_tokens": int(output_tokens or 0), "cached_tokens": int(cached_tokens or 0),
+        inp, out, cached = _tokens(input_tokens, strict=True), _tokens(output_tokens, strict=True), _tokens(cached_tokens, strict=True)
+        cost = cost_usd(model, inp, out, cached, self.prices, bool(getattr(self._tls, "local", False)))
+        if not math.isfinite(cost) or cost < 0:
+            raise LedgerError(f"cost {cost!r} for {model!r} is negative or NaN; nothing recorded")
+        row = {"ts": round(time.time(), 3), "job_id": job_id, "model": model, "input_tokens": inp,
+               "output_tokens": out, "cached_tokens": min(cached, inp),
                "cost_usd": round(cost, 8), "note": note}
         release_id = getattr(self._tls, "release", None)
         with self._lock:
