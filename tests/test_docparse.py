@@ -154,6 +154,79 @@ class TestCompleteness(unittest.TestCase):
         for b in p.blocks:
             self.assertRegex(b.sha256_span_hash, HEX64)
 
+    @unittest.skipUnless(shutil.which("pdftotext"), "needs poppler pdftotext")
+    def test_recovery_from_poppler_geometry_when_pdfdoc_lacks_words(self):
+        real_load = pdfdoc.load
+
+        def lossy(data, ocr="auto", **kw):
+            doc = real_load(data, ocr=ocr, **kw)
+            pg = doc.pages[2]
+            pg.words = [w for w in pg.words if not w.text.startswith("rightcol")
+                        and not w.text.startswith("delta")]
+            pg.lines = pdfdoc._group_lines(pg.words, pg.number)
+            return doc
+        with mock.patch.object(pdfdoc, "load", lossy):
+            d = docparse.parse(PDF, backend="pdfdoc", threshold=0.97)
+        p = d.page(3)
+        self.assertLess(p.completeness_before_recovery, 0.97)
+        self.assertGreaterEqual(p.completeness, 0.97)
+        rec = [b for b in p.blocks if b.kind == "recovered" and b.source == "pdftotext"]
+        self.assertTrue(rec)
+        for b in rec:
+            self.assertRegex(b.sha256_span_hash, HEX64)
+            x0, y0, x1, y1 = b.bbox_norm
+            self.assertTrue(0 <= x0 < x1 <= 1 and 0 <= y0 < y1 <= 1)
+        self.assertEqual(d.incomplete_pages(), [])
+        loc = docparse.locate(d, 3, "rightcol")
+        self.assertIsNotNone(loc)
+        self.assertEqual(loc.page, 3)
+        self.assertRegex(loc.sha256_span_hash, HEX64)
+
+    def test_unrecoverable_page_is_listed_and_warned(self):
+        orig = docparse._pdfdoc_blocks
+
+        def drop(pg):
+            return [] if pg.number == 2 else orig(pg)
+        with mock.patch.object(docparse, "_pdfdoc_blocks", drop), \
+                mock.patch.object(docparse, "_recover", lambda *a, **k: []), \
+                mock.patch.object(docparse, "_recover_poppler", lambda *a, **k: ([], [])):
+            d = docparse.parse(PDF, backend="pdfdoc", threshold=0.97)
+        inc = d.incomplete_pages()
+        self.assertEqual([n for n, _c in inc], [2])
+        self.assertLess(inc[0][1], 0.97)
+        self.assertTrue(any("page 2" in w and "INCOMPLETE" in w for w in d.warnings))
+
+    def test_incomplete_survives_round_trip(self):
+        d = docparse.ParsedDoc("x", "pdfdoc", [docparse.ParsedPage(1, 1, 1, completeness=0.5, threshold=0.97)])
+        self.assertEqual(docparse.ParsedDoc.from_dict(d.to_dict()).incomplete_pages(), [(1, 0.5)])
+
+    def test_arabic_token_normalisation(self):
+        n = docparse._norm_token
+        self.assertEqual(n("كِتَابٌ"), n("كتاب"))           # harakat stripped
+        self.assertEqual(n("كـتـاب"), n("كتاب"))             # tatweel stripped
+        self.assertEqual(n("ﻛﺘﺎﺏ"), n("كتاب"))             # presentation forms via NFKC
+        self.assertEqual(n("كتاب"), n("كتاب"[::-1]))        # visual (reversed) order
+        self.assertEqual(docparse.completeness("الإيرادات 2024", "ـالإيرادات 2024"), 1.0)
+        self.assertEqual(docparse.completeness("كتاب جديد", "جديد كتاب"), 1.0)  # order-agnostic
+        self.assertEqual(n("Net"), "net")
+        # mixed-script glue and reversed digits (real VDR Arabic PDFs: pdftotext vs pdfplumber)
+        self.assertEqual(docparse.completeness("درهم 2300000 March التاريخ", "2300000درهم Marchالتاريخ"), 1.0)
+        self.assertEqual(docparse.completeness("كتاب 44100000", "كتاب 00000144"), 1.0)
+        self.assertLess(docparse.completeness("kitab 1234", "kitab 4321"), 1.0)  # no bidi leniency for Latin pages
+
+
+@unittest.skipUnless(os.path.exists("evals/tenk/pdfs/PG.pdf") and HAVE_PDF_TEXT, "PG.pdf or pdf backend absent")
+class TestRealPgCompleteness(unittest.TestCase):
+    def test_all_pages_reach_threshold_or_are_flagged(self):
+        d = docparse.parse("evals/tenk/pdfs/PG.pdf", backend="pdfdoc")
+        flagged = {n for n, _c in d.incomplete_pages()}
+        for p in d.pages:
+            if p.completeness < docparse.COMPLETENESS_MIN:
+                self.assertIn(p.number, flagged)
+                self.assertTrue(any(f"page {p.number}:" in w and "INCOMPLETE" in w for w in d.warnings))
+        if shutil.which("pdftotext"):
+            self.assertEqual(flagged, set())
+
 
 class TestDoclingMapping(unittest.TestCase):
     def test_bbox_conversion_bottomleft(self):

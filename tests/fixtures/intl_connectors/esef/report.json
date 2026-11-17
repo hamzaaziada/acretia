@@ -1,0 +1,152 @@
+{
+ "documentInfo": {
+  "documentType": "https://xbrl.org/2021/xbrl-json",
+  "features": {
+   "xbrl:canonicalValues": true
+  },
+  "namespaces": {
+   "cmrs": "http://criticalmetalsplc.com/xbrl/2026",
+   "ifrs-full": "https://xbrl.ifrs.org/taxonomy/2024-03-27/ifrs-full",
+   "iso4217": "http://www.xbrl.org/2003/iso4217",
+   "scheme": "http://standards.iso.org/iso/17442",
+   "xbrl": "https://xbrl.org/2021",
+   "xbrli": "http://www.xbrl.org/2003/instance"
+  },
+  "taxonomy": [
+   "http://criticalmetalsplc.com/xbrl/2026/213800MU3B7CS88PY290-2026-06-30.xsd"
+  ]
+ },
+ "facts": {
+  "fact-1": {
+   "value": "CRITICAL METALS PLC ",
+   "dimensions": {
+    "concept": "ifrs-full:NameOfReportingEntityOrOtherMeansOfIdentification",
+    "language": "en",
+    "entity": "scheme:213800MU3B7CS88PY290",
+    "period": "2025-07-01T00:00:00/2026-07-01T00:00:00"
+   }
+  },
+  "fact-5": {
+   "value": "0.0",
+   "decimals": 0,
+   "dimensions": {
+    "concept": "ifrs-full:Revenue",
+    "entity": "scheme:213800MU3B7CS88PY290",
+    "period": "2025-07-01T00:00:00/2026-07-01T00:00:00",
+    "unit": "iso4217:GBP"
+   }
+  },
+  "fact-9": {
+   "value": "72068.0",
+   "decimals": 0,
+   "dimensions": {
+    "concept": "cmrs:ExplorationEvaluationExpenditure",
+    "entity": "scheme:213800MU3B7CS88PY290",
+    "period": "2025-07-01T00:00:00/2026-07-01T00:00:00",
+    "unit": "iso4217:GBP"
+   }
+  },
+  "fact-11": {
+   "value": "806707.0",
+   "decimals": 0,
+   "dimensions": {
+    "concept": "ifrs-full:AdministrativeExpense",
+    "entity": "scheme:213800MU3B7CS88PY290",
+    "period": "2025-07-01T00:00:00/2026-07-01T00:00:00",
+    "unit": "iso4217:GBP"
+   }
+  },
+  "fact-19": {
+   "value": "-137911.0",
+   "decimals": 0,
+   "dimensions": {
+    "concept": "ifrs-full:ProfitLossFromOperatingActivities",
+    "entity": "scheme:213800MU3B7CS88PY290",
+    "period": "2025-07-01T00:00:00/2026-07-01T00:00:00",
+    "unit": "iso4217:GBP"
+   }
+  },
+  "fact-27": {
+   "value": "-317935.0",
+   "decimals": 0,
+   "dimensions": {
+    "concept": "ifrs-full:ProfitLossBeforeTax",
+    "entity": "scheme:213800MU3B7CS88PY290",
+    "period": "2025-07-01T00:00:00/2026-07-01T00:00:00",
+    "unit": "iso4217:GBP"
+   }
+  },
+  "fact-31": {
+   "value": "-317935.0",
+   "decimals": 0,
+   "dimensions": {
+    "concept": "ifrs-full:ProfitLoss",
+    "entity": "scheme:213800MU3B7CS88PY290",
+    "period": "2025-07-01T00:00:00/2026-07-01T00:00:00",
+    "unit": "iso4217:GBP"
+   }
+  },
+  "fact-63": {
+   "value": "4437863.0",
+   "decimals": 0,
+   "dimensions": {
+    "concept": "ifrs-full:Assets",
+    "entity": "scheme:213800MU3B7CS88PY290",
+    "period": "2026-07-01T00:00:00",
+    "unit": "iso4217:GBP"
+   }
+  },
+  "fact-64": {
+   "value": "4210452.0",
+   "decimals": 0,
+   "dimensions": {
+    "concept": "ifrs-full:Assets",
+    "entity": "scheme:213800MU3B7CS88PY290",
+    "period": "2025-07-01T00:00:00",
+    "unit": "iso4217:GBP"
+   }
+  },
+  "fact-114": {
+   "value": "336948.0",
+   "decimals": 0,
+   "dimensions": {
+    "concept": "ifrs-full:Equity",
+    "entity": "scheme:213800MU3B7CS88PY290",
+    "period": "2024-07-01T00:00:00",
+    "ifrs-full:ComponentsOfEquityAxis": "ifrs-full:IssuedCapitalMember",
+    "unit": "iso4217:GBP"
+   }
+  },
+  "fact-185": {
+   "value": "0.0",
+   "decimals": 0,
+   "dimensions": {
+    "concept": "ifrs-full:ProfitLoss",
+    "entity": "scheme:213800MU3B7CS88PY290",
+    "period": "2025-07-01T00:00:00/2026-07-01T00:00:00",
+    "ifrs-full:ComponentsOfEquityAxis": "ifrs-full:IssuedCapitalMember",
+    "unit": "iso4217:GBP"
+   }
+  },
+  "fact-259": {
+   "value": "2719586.0",
+   "decimals": 0,
+   "dimensions": {
+    "concept": "ifrs-full:Equity",
+    "entity": "scheme:213800MU3B7CS88PY290",
+    "period": "2026-07-01T00:00:00",
+    "unit": "iso4217:GBP"
+   }
+  },
+  "fact-308": {
+   "value": "148734.0",
+   "decimals": 0,
+   "dimensions": {
+    "concept": "ifrs-full:CashAndCashEquivalents",
+    "entity": "scheme:213800MU3B7CS88PY290",
+    "period": "2026-07-01T00:00:00",
+    "unit": "iso4217:GBP"
+   }
+  }
+ }
+}

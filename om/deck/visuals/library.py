@@ -9,6 +9,15 @@ RETIRE_RUNS, RETIRE_BELOW = 5, 6.0
 KINDS = ("illustration", "hero", "diagram", "icon_system")
 ASPECTS = {"16:9": (1600, 900), "1:1": (900, 900), "3:2": (1200, 800), "4:3": (1200, 900)}
 NEG = "no text, no letters, no logos, flat vector look, no gradients, no shadows, no 3D, no stock-photo clichés"
+# Composition rules every style obeys (enforced in procedural.py, asserted in tests/test_deck_visuals.py, quoted to the SVG designer).
+RULES = {"safe_margin": .06,        # all marks inside this fraction of the shorter side
+         "centroid_band": .4,       # painted centroid inside the middle 40 % of both axes
+         "min_negative": .25,       # share of the canvas left as background
+         "max_accent": .12,         # accent share of painted pixels
+         "min_mark": .008}          # no mark smaller than this fraction of the canvas width
+COMPOSITION = ("Composition: keep every mark inside a 6% margin; one clear focal element (the only accent colour, at most 12% of painted area); "
+               "balance visual weight around the centre; keep at least 25% empty background; no mark smaller than 0.8% of the width; "
+               "one stroke width throughout; align to an internal grid; 3-4 palette colours; a horizon or ground line where the scene has one.")
 PALETTE_USE = "accent colour sparingly (at most 15% of painted area, one focal element); greys and secondary blue carry the rest"
 
 
@@ -27,26 +36,26 @@ class Style:
 def _s(id, description, look, svg, kinds, aspects=("16:9", "3:2", "1:1")) -> Style:
     prompt = (f"{look} Subject / concept: {{concept}}. Composition: {{composition}}. Palette (hex, flat fills only): {{palette}}; "
               f"{PALETTE_USE}. Aspect {{aspect}}. {NEG}.")
-    return Style(id, description, prompt, svg + " Flat fills only, no <text>, no gradients/filters, palette colours only.", kinds, aspects)
+    return Style(id, description, prompt, svg + " " + COMPOSITION + " Flat fills only, no <text>, no gradients/filters, palette colours only.", kinds, aspects)
 
 
 STYLES: dict[str, Style] = {s.id: s for s in (
-    _s("editorial_illustration", "Flat editorial illustration: big overlapping shapes, confident negative space.",
-       "Flat editorial illustration in the style of a business magazine, abstract large overlapping geometric forms.",
-       "Compose 4-7 large overlapping organic and geometric shapes with generous white space.", ("illustration", "hero")),
+    _s("editorial_illustration", "Composed flat editorial scene with one focal subject: skyline, factory and crane, energy grid or coin stacks, on a ground line.",
+       "Flat editorial illustration for a business magazine: one composed scene (city skyline, factory with container crane, wind and grid infrastructure, or stacked coin cylinders) with a clear focal subject, a ground line and generous negative space.",
+       "Draw one scene on a ground line: a cluster of simple buildings, plant or towers in two tones, with exactly one tall focal element in the accent; large light disc behind it; empty sky.", ("illustration", "hero")),
     _s("isometric_system", "Isometric blocks and stacks showing a system.",
        "Clean isometric illustration of stacked blocks and platforms showing a system, orthographic 30 degree view.",
        "Draw isometric cubes in a grid with varied stack heights; top/left/right faces in three tones.", ("illustration", "diagram", "hero")),
-    _s("line_art_schematic", "Line-art flow schematic with nodes and elbow connectors.",
-       "Precise line-art schematic of nodes connected by orthogonal lines with arrowheads, light panel fills.",
-       "Draw rounded-rectangle nodes in columns joined by elbow connectors with arrowheads; thin consistent strokes.", ("diagram", "illustration"),
+    _s("line_art_schematic", "Technical schematic: square nodes with geometric glyphs, orthogonal arrow connectors on a grid.",
+       "Precise technical schematic: square nodes on a grid, each with a small geometric glyph (ring, plus, triangle, bars, diamond), joined by orthogonal connectors with arrowheads; one accent node; one stroke width.",
+       "Draw square nodes (no rounded corners, no placeholder bars) on a regular grid, each holding a small geometric glyph, joined by orthogonal connectors with arrowheads (pipeline, hub, tree or loop); consistent stroke.", ("diagram", "illustration"),
        ("16:9", "3:2")),
     _s("data_art", "Data art: dot fields, flow ribbons, radial bars generated from a seed.",
        "Abstract data-art composition: dot fields, flowing ribbons or radial bars, no axes, no labels.",
        "Draw a dot field with varying radii, or layered flow ribbons, or radial bars around a centre.", ("hero", "illustration")),
-    _s("duotone_hero", "Duotone abstract hero made of overlapping flat shapes in two tones.",
-       "Duotone photo-style hero rendered as flat abstract overlapping shapes in two tones plus one small accent.",
-       "Overlap circles, arches and rectangles using two tones and one small accent element.", ("hero", "illustration"), ("16:9", "3:2")),
+    _s("duotone_hero", "Duotone layered geometric landscape or architecture with a clear horizon.",
+       "Duotone hero: layered geometric ridges, a colonnade with reflection, or concentric arches on a horizon, in two tones plus one deliberate accent (sun or cap); rhythmic, no stray marks.",
+       "Layer geometric ridges, columns or concentric arches in exactly two tones separated by background keylines, on a clear horizon; one accent element only.", ("hero", "illustration"), ("16:9", "3:2")),
     _s("annotated_map", "Abstract annotated map: regions, pins and a route (no real geography).",
        "Abstract map-like tiling of regions with pins and a dashed route; invented geography, no place names.",
        "Tile an inset rectangle with irregular regions in three light tones, add pins and a dashed route.", ("diagram", "illustration", "hero")),

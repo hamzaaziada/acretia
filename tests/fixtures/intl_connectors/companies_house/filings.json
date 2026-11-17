@@ -1,0 +1,14 @@
+{
+ "items": [
+  {
+   "transaction_id": "MzAwMDAwMDA2",
+   "date": "2026-03-15",
+   "type": "AA",
+   "category": "accounts",
+   "description": "accounts-with-accounts-type-full",
+   "links": {
+    "document_metadata": "https://document-api.company-information.service.gov.uk/document/abc123"
+   }
+  }
+ ]
+}

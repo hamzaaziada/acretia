@@ -54,9 +54,14 @@ class BuildReport:
     error: str = ""
     failed_slides: list = field(default_factory=list)
     data: bytes | None = field(default=None, repr=False)
+    theme: object = field(default=None, repr=False)
+    title: str = field(default="", repr=False)
+    solved: list | None = field(default=None, repr=False)   # final SolvedSlide list, only with build(return_slides=True)
 
-    def to_dict(self) -> dict:
-        d = {k: v for k, v in self.__dict__.items() if k != "data"}
+    def to_dict(self, include_solved: bool = False) -> dict:
+        d = {k: v for k, v in self.__dict__.items() if k not in ("data", "solved", "theme", "title")}
+        if include_solved and self.solved is not None:
+            d["solved"] = [x.to_dict() if hasattr(x, "to_dict") else x for x in self.solved]
         return d
 
 
@@ -156,7 +161,8 @@ def _build_slides(spec_slides, theme, deck, rtl, manifest, visuals_by_slide, reg
 
 def build(spec, *, out=None, adapter=None, ghost=None, require_ghost_approval: bool = False, seed: int | None = None,
           template: str | None = None, profile=None, manifest=None, values=None, critic: bool = True,
-          n_candidates: int = 3, job_id: str | None = None, strict: bool = True) -> BuildReport:
+          n_candidates: int = 3, job_id: str | None = None, strict: bool = True,
+          return_slides: bool = False, _stop_before_render: bool = False) -> BuildReport:
     from om.deck import archetypes, render as render_mod, validate as validate_mod
     from om.deck.visuals import generate, library, log, probe, score, variety
 
@@ -218,6 +224,7 @@ def build(spec, *, out=None, adapter=None, ghost=None, require_ghost_approval: b
         rep.slides = len(spec_slides)
         rtl = deck.get("lang") == "ar"
         theme = _theme(profile)
+        rep.theme, rep.title = theme, deck["title"]
         man = manifest.to_dict() if hasattr(manifest, "to_dict") else manifest
         rng = random.Random(seed)
 
@@ -285,6 +292,9 @@ def build(spec, *, out=None, adapter=None, ghost=None, require_ghost_approval: b
             st["output"] = {"unsourced": [f["shape_name"] for f in pf]}
         rep.numbers_digest = _digest(solved)
 
+        if _stop_before_render:
+            rep.solved = solved
+            raise _Stop("")
         # ---- render + validate
         with step("render") as st:
             data = render_mod.render(solved, theme, title=deck["title"], template=template)
@@ -329,6 +339,8 @@ def build(spec, *, out=None, adapter=None, ghost=None, require_ghost_approval: b
                 Path(out).write_bytes(data)
                 rep.path = str(out)
             rep.data = data
+            if return_slides:
+                rep.solved = solved
             st["detail"] = rep.path or "in memory"
     except _Stop as e:
         rep.error = str(e)
@@ -353,6 +365,18 @@ def build(spec, *, out=None, adapter=None, ghost=None, require_ghost_approval: b
               rep.error or (None if rep.ok else f"{rep.critical} critical finding(s)"))
     rep.job = job.to_dict()
     return rep
+
+
+def solve(spec, **kw) -> tuple[list, BuildReport]:
+    """Run `build` up to (not including) render: returns (solved slides, report). For callers that splice or render
+    themselves. `report.error` is empty when the solve succeeded; `slides` is [] when a step stopped the run."""
+    kw.pop("out", None)
+    kw["_stop_before_render"] = True
+    rep = build(spec, **kw)
+    slides = rep.solved or []
+    if rep.error == "" and rep.solved is not None:
+        rep.ok = rep.critical == 0
+    return slides, rep
 
 
 _SPEC_SYSTEM = ("You write the content of a client deck as a DeckSpec v2 JSON object. Use ONLY the given storyline titles and the "

@@ -578,7 +578,7 @@ EXAMPLES = {
                              {"label": "Corvus Holdings", "value": 12.1}, {"label": "Aster Partners", "value": 11.8},
                              {"label": "Acme", "value": 10.6, "key": True}],
                    "stat": {"value": "2.3x", "label": "discount to the peer median of 12.9x"},
-                   "takeaway": "Closing half the gap to the median re-rates Acme by 1.2x EBITDA [1]",
+                   "takeaway": "Closing half the gap to the 12.9x median would re-rate Acme from 10.6x EBITDA [1]",
                    "binding": "m-peer-ev-ebitda"}},
     "waterfall": {
         "title": "EBITDA grows $32m as price and savings outweigh cost inflation",
@@ -589,7 +589,7 @@ EXAMPLES = {
                              {"label": "Volume", "value": -31}, {"label": "Mix", "value": 12},
                              {"label": "Inflation", "value": -44}, {"label": "FX", "value": -9},
                              {"label": "Savings", "value": 46}, {"label": "FY26", "value": 444}],
-                   "takeaway": "Price and savings add $104m; volume, inflation and FX give back $84m [2]",
+                   "takeaway": "Price (+$58m) and savings (+$46m) outweigh inflation (-$44m) and volume (-$31m) [2]",
                    "binding": {"manifest_id": "m-ebitda-bridge"}}},
     "stacked_bar": {
         "title": "Acme leans on retail more than any peer while corporate lags",
@@ -601,7 +601,7 @@ EXAMPLES = {
                              {"name": "Corporate", "values": [28, 30, 34, 41]},
                              {"name": "Treasury and markets", "values": [12, 15, 19, 20]},
                              {"name": "Other", "values": [8, 10, 9, 9]}],
-                   "takeaway": "Retail is 52% of Acme revenue, 14 points above the peer average [2]"}},
+                   "takeaway": "Retail is 52% of Acme revenue against 30% at Brightline [2]"}},
     "stacked_column": {
         "title": "Current accounts now fund 42% of deposits, up from 31% four years ago",
         "source": _SRC, "as_of": "2026-09-30",
@@ -610,7 +610,7 @@ EXAMPLES = {
                    "parts": [{"name": "Current accounts", "values": [31, 33, 36, 39, 42], "key": True},
                              {"name": "Savings", "values": [38, 37, 35, 33, 31]},
                              {"name": "Term deposits", "values": [31, 30, 29, 28, 27]}],
-                   "takeaway": "Cheaper funding lowers the cost of deposits by 0.4 points a year"}},
+                   "takeaway": "Cheaper funding lowers the cost of deposits as current accounts reach 42% of the mix"}},
     "annotated_line": {
         "title": "Net interest margin recovers to 3.42% after the floating book reprices",
         "source": _SRC, "as_of": "2026-09-30",
@@ -621,7 +621,7 @@ EXAMPLES = {
                                "binding": "m-nim"},
                               {"name": "Peer median", "values": [3.10, 3.08, 3.04, 3.02, 3.05, 3.10, 3.15, 3.20]}],
                    "annotation": {"at": 3, "text": "Floating book reprices from Q1 FY26"},
-                   "takeaway": "Acme now earns 22 bps more than the peer median, from 8 bps less a year ago [2]"}},
+                   "takeaway": "Acme NIM of 3.42% now sits above the 3.20% peer median, from 3.05% against 3.10% two years ago [2]"}},
     "combo_margin": {
         "title": "Revenue grows 8% a year while EBITDA margin widens 4.2 points",
         "source": _SRC, "as_of": "2026-09-30",
@@ -630,7 +630,7 @@ EXAMPLES = {
                    "categories": ["FY22", "FY23", "FY24", "FY25", "FY26"],
                    "bars": {"name": "Revenue, $m", "values": [820, 905, 968, 1042, 1128], "binding": "m-revenue"},
                    "line": {"name": "EBITDA margin", "values": [0.184, 0.196, 0.201, 0.213, 0.226]},
-                   "takeaway": "Operating leverage turns each extra $100m of revenue into $31m of EBITDA [1]"}},
+                   "takeaway": "Operating leverage lifts EBITDA margin from 18.4% to 22.6% as revenue reaches $1,128m [1]"}},
     "scatter_quadrant": {
         "title": "Acme pairs peer-median growth with the highest margin in the set",
         "source": "FactSet consensus", "as_of": "2026-10-31",
@@ -662,7 +662,7 @@ EXAMPLES = {
                               {"title": "Levant", "categories": ["FY23", "FY24", "FY25", "FY26"], "values": [14, 15, 17, 18]},
                               {"title": "North Africa", "categories": ["FY23", "FY24", "FY25", "FY26"], "values": [12, 14, 15, 17]},
                               {"title": "Europe", "categories": ["FY23", "FY24", "FY25", "FY26"], "values": [16, 16, 18, 19]}],
-                   "takeaway": "Gulf margin is up 9 points since FY23, three times the Levant gain"}},
+                   "takeaway": "Gulf margin is up from 18% to 27% since FY23, the largest gain of any region"}},
     "paired_bars": {
         "title": "Cost-to-income improves in four of five divisions after the programme",
         "source": _SRC, "as_of": "2026-09-30",
@@ -671,14 +671,14 @@ EXAMPLES = {
                    "before": {"name": "FY25", "values": [61.2, 48.5, 39.4, 66.8, 71.3]},
                    "after": {"name": "FY26", "values": [57.4, 45.1, 38.9, 62.0, 72.1]},
                    "stat": {"value": "-3.6pp", "label": "average ratio change across the group"},
-                   "takeaway": "Insurance is the only division that moved the wrong way, by 0.8 points"}},
+                   "takeaway": "Insurance is the only division that moved the wrong way, from 71.3% to 72.1%"}},
     "doughnut_split": {
         "title": "Corporate lending is almost half of the $18.4bn loan book",
         "source": _SRC, "as_of": "2026-09-30",
         "blocks": {"subtitle": "Loan book by segment, % of gross loans", "centre": "$18.4bn",
                    "slices": [{"label": "Corporate", "value": 46, "key": True}, {"label": "Retail", "value": 31},
                               {"label": "SME", "value": 15}, {"label": "Other", "value": 8}],
-                   "takeaway": "Corporate and SME together are 61% of loans, so credit cost drives earnings"}},
+                   "takeaway": "Corporate is 46% of loans against 31% for retail, so credit cost drives earnings"}},
     "column_kpi": {
         "title": "Revenue compounds at 8.3% a year to $1.13bn",
         "source": _SRC, "as_of": "2026-09-30",

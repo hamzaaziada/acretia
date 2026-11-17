@@ -106,6 +106,94 @@ class Procedural(unittest.TestCase):
         self.assertNotEqual(procedural.render("duotone_hero")[2], procedural.render("duotone_hero")[2])
 
 
+def _mask(png):
+    import numpy as np
+    im = np.asarray(Image.open(io.BytesIO(png)).convert("RGB")).astype(int)
+    bg = np.array([int(PAL["background"][i:i + 2], 16) for i in (1, 3, 5)])
+    return im, np.abs(im - bg).sum(2) > 60
+
+
+def _min_component(im, painted, pal, step=2):
+    """Smallest bounding-box extent (px) of any connected single-colour region of a palette colour."""
+    import numpy as np
+    small = im[::step, ::step]
+    cols = [np.array([int(v[i:i + 2], 16) for i in (1, 3, 5)]) for k, v in pal.items() if k != "background" and v.startswith("#")]
+    best = 10 ** 6
+    h, w = small.shape[:2]
+    for col in {tuple(c) for c in cols}:
+        m = np.abs(small - np.array(col)).sum(2) < 12
+        seen = np.zeros_like(m)
+        for y, x in zip(*np.nonzero(m)):
+            if seen[y, x]:
+                continue
+            stack, lo_x, hi_x, lo_y, hi_y, area = [(y, x)], x, x, y, y, 0
+            seen[y, x] = True
+            while stack:
+                cy, cx = stack.pop()
+                area += 1
+                lo_x, hi_x, lo_y, hi_y = min(lo_x, cx), max(hi_x, cx), min(lo_y, cy), max(hi_y, cy)
+                for ny, nx in ((cy + 1, cx), (cy - 1, cx), (cy, cx + 1), (cy, cx - 1)):
+                    if 0 <= ny < h and 0 <= nx < w and m[ny, nx] and not seen[ny, nx]:
+                        seen[ny, nx] = True
+                        stack.append((ny, nx))
+            if area > 10:    # specks under 10 px (at half scale)  are anti-aliasing fringe, not marks
+                best = min(best, (max(hi_x - lo_x, hi_y - lo_y) + 1) * step)
+    return best
+
+
+class Composition(unittest.TestCase):
+    """Composition rules on the rendered PNG, per style, over several seeds (library.RULES)."""
+    SEEDS = (1, 2, 3, 4, 5)
+
+    def test_rules_per_style(self):
+        R = library.RULES
+        for sid in library.STYLES:
+            for seed in self.SEEDS:
+                with self.subTest(style=sid, seed=seed):
+                    png = procedural.render(sid, seed=seed)[0]
+                    im, m = _mask(png)
+                    h, w = m.shape
+                    ys, xs = m.nonzero()
+                    mg = R["safe_margin"] * min(w, h)
+                    self.assertGreaterEqual(xs.min(), mg - 4); self.assertLessEqual(xs.max(), w - mg + 4)
+                    self.assertGreaterEqual(ys.min(), mg - 4); self.assertLessEqual(ys.max(), h - mg + 4)
+                    lo, hi = .5 - R["centroid_band"] / 2, .5 + R["centroid_band"] / 2
+                    self.assertTrue(lo <= xs.mean() / w <= hi, f"cx {xs.mean() / w:.2f}")
+                    self.assertTrue(lo <= ys.mean() / h <= hi, f"cy {ys.mean() / h:.2f}")
+                    self.assertGreaterEqual(1 - m.mean(), R["min_negative"])
+                    self.assertLessEqual(score.color_shares(png, PAL)["accent"], R["max_accent"])
+                    if seed <= 2:
+                        self.assertGreaterEqual(_min_component(im, m, PAL), R["min_mark"] * w * .75)
+
+    def test_other_aspects_respect_margin_and_balance(self):
+        for sid in library.STYLES:
+            for asp in ("1:1", "3:2"):
+                with self.subTest(style=sid, aspect=asp):
+                    im, m = _mask(procedural.render(sid, seed=2, aspect=asp)[0])
+                    h, w = m.shape
+                    ys, xs = m.nonzero()
+                    mg = library.RULES["safe_margin"] * min(w, h)
+                    self.assertTrue(xs.min() >= mg - 4 and xs.max() <= w - mg + 4 and ys.min() >= mg - 4 and ys.max() <= h - mg + 4)
+                    self.assertTrue(.3 <= xs.mean() / w <= .7 and .3 <= ys.mean() / h <= .7)
+
+    def test_one_or_two_stroke_widths_per_style(self):
+        for sid in library.STYLES:
+            for seed in self.SEEDS:
+                with self.subTest(style=sid, seed=seed):
+                    widths = {round(g[1], 1) for k, g, _ in procedural.build(sid, seed=seed).items if k == "line"}
+                    self.assertLessEqual(len(widths), 2, widths)
+
+    def test_five_seeds_give_three_compositions(self):
+        for sid in library.STYLES:
+            with self.subTest(style=sid):
+                hs = [score.phash(procedural.render(sid, seed=s)[0]) for s in range(1, 6)]
+                kept = []
+                for hh in hs:
+                    if all(score.hamming(hh, k) > 12 for k in kept):
+                        kept.append(hh)
+                self.assertGreaterEqual(len(kept), 3, [score.hamming(hs[0], x) for x in hs])
+
+
 class Raising:
     """Adapter whose every call fails (replay miss)."""
     def chat(self, *a, **k):

@@ -8,7 +8,7 @@ talks to them with http.client and a hand-rolled cookie jar, and cleans everythi
 One PASS/FAIL/SKIP line per check. Exit 0 only if every check PASSes (SKIP is not a pass).
 
 Assumptions taken from SPEC section 7 / 12 (the spec names only the owner explicitly):
-  owner@meridian.example, member@meridian.example, viewer@meridian.example, all with ACRETIA_DEMO_PASSWORD
+  owner@meridian.example, analyst@meridian.example, lp@meridian.example, all with ACRETIA_DEMO_PASSWORD
   (default demo-password-123); deals "Project Nile - ElSewedy Electric" and "Project Atlas - Apple Inc.".
 
 Usage: python3 scripts/verify_product.py [--only 3,6,9] [--keep-logs]
@@ -42,8 +42,8 @@ ROOT = Path(__file__).resolve().parent.parent
 PY = sys.executable
 DEMO_PW = os.environ.get("ACRETIA_DEMO_PASSWORD", "demo-password-123")
 OWNER = "owner@meridian.example"
-MEMBER = "member@meridian.example"
-VIEWER = "viewer@meridian.example"
+MEMBER = "analyst@meridian.example"
+VIEWER = "lp@meridian.example"
 API = "/api/v1"
 
 EXPECTED_CSP = (
@@ -831,7 +831,7 @@ def check_08():
     st, _, _ = c.request("POST", path, {}, origin=f"http://127.0.0.1:{env.port}.evil.example")
     need(st == 403, f"look-alike Origin host -> {st}")
     # PATCH/DELETE are covered too
-    st, _, _ = c.request("DELETE", f"{API}/deals/{secrets.token_hex(4)}", csrf=None)
+    st, _, _ = c.request("DELETE", f"{API}/org/members/usr_{secrets.token_hex(8)}", csrf=None)
     need(st == 403, f"DELETE without token -> {st} (CSRF must precede resource lookup)")
     st, _, b = c.request("POST", path, {})
     need(200 <= st < 300, f"valid token+Origin -> {st} {b[:150]!r}")
@@ -938,7 +938,7 @@ MUTATING = ("POST", "PUT", "PATCH", "DELETE")
 OWNER_ONLY_STATIC = [("POST", "/org/invites"), ("GET", "/audit"), ("GET", "/audit/verify"), ("GET", "/audit/export.csv"),
                      ("PUT", "/firm/definitions"), ("PUT", "/firm/mailbox"), ("POST", "/firm/mailbox/test"),
                      ("POST", "/firm/connectors"), ("POST", "/firm/assets")]
-VIEWER_MAY_MUTATE_PREFIX = ("/api/v1/auth/", "/api/v1/notifications")
+VIEWER_MAY_MUTATE_PREFIX = ("/api/v1/auth/logout", "/api/v1/auth/switch-org", "/api/v1/me/preferences", "/api/v1/notifications/")
 
 
 def check_10():

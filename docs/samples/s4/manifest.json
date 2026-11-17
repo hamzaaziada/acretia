@@ -1,0 +1,400 @@
+[
+ {
+  "as_of_filing": {
+   "accession": "0000320193-26-000026",
+   "filed": "2026-11-03",
+   "fiscal_year_end": "2026-09-26",
+   "form": "10-K",
+   "ticker": "AAPL"
+  },
+  "build_seconds": 5.7,
+  "bytes": 61343,
+  "compared_cells": 1218,
+  "kind": "dcf",
+  "market": {},
+  "modelcheck_score": 100.0,
+  "name": "aapl_three_statement_dcf",
+  "pdf_pages": 12,
+  "pngs": [
+   {
+    "png": "png/aapl_three_statement_dcf/page-01.png",
+    "shows": "Strictly private & confidential | Apple Inc. (AAPL) | Integrated three-statement model and DCF, built from SEC filings"
+   },
+   {
+    "png": "png/aapl_three_statement_dcf/page-02.png",
+    "shows": "EBITDA to unlevered free cash flow, FY2027E DCF value per share (sensitivity range) | Strictly private & confidential | 200,000"
+   },
+   {
+    "png": "png/aapl_three_statement_dcf/page-03.png",
+    "shows": "Strictly private & confidential | Assumptions and scenarios | Blue cells are inputs. Grey columns show the same ratio in the actuals for reference."
+   },
+   {
+    "png": "png/aapl_three_statement_dcf/page-04.png",
+    "shows": "Strictly private & confidential | Apple Inc. \u2014 income statement | fiscal years 2022\u20132026 actual, 2027\u20132031 forecast"
+   },
+   {
+    "png": "png/aapl_three_statement_dcf/page-05.png",
+    "shows": "Strictly private & confidential | Apple Inc. \u2014 balance sheet | fiscal years 2022\u20132026 actual, 2027\u20132031 forecast"
+   },
+   {
+    "png": "png/aapl_three_statement_dcf/page-06.png",
+    "shows": "Strictly private & confidential | Apple Inc. \u2014 cash flow statement | fiscal years 2022\u20132026 actual, 2027\u20132031 forecast"
+   },
+   {
+    "png": "png/aapl_three_statement_dcf/page-07.png",
+    "shows": "Strictly private & confidential | Supporting schedules | PP&E roll-forward and working capital"
+   },
+   {
+    "png": "png/aapl_three_statement_dcf/page-08.png",
+    "shows": "Strictly private & confidential | Debt, revolver and interest | Revolver draws to keep minimum cash; interest on average balances when the circularity switch is"
+   },
+   {
+    "png": "png/aapl_three_statement_dcf/page-09.png",
+    "shows": "Strictly private & confidential | Apple Inc. \u2014 discounted cash flow | Unlevered free cash flow from the integrated model; mid-year convention switchable; both t"
+   },
+   {
+    "png": "png/aapl_three_statement_dcf/page-10.png",
+    "shows": "Strictly private & confidential | USD in millions FY2022A FY2023A FY2024A FY2025A FY2026A FY2027E FY2028E FY2029E FY2030E FY2031E | Implied exit EV / EBITDA 11."
+   },
+   {
+    "png": "png/aapl_three_statement_dcf/page-11.png",
+    "shows": "Strictly private & confidential | Model checks | Every check must read OK; the master check feeds the cover"
+   },
+   {
+    "png": "png/aapl_three_statement_dcf/page-12.png",
+    "shows": "Strictly private & confidential | Apple Inc. \u2014 figures as filed with the SEC | Blue = as reported (XBRL), $m. Hover for the concept, period and accession; click"
+   }
+  ],
+  "production_ready": true,
+  "three_engine_agree": true,
+  "tickers": [
+   "AAPL"
+  ],
+  "validate_critical": 0,
+  "validate_passed": true
+ },
+ {
+  "as_of_filing": {
+   "accession": "0001628280-26-010047",
+   "filed": "2026-02-20",
+   "fiscal_year_end": "2025-12-31",
+   "form": "10-K",
+   "ticker": "KO"
+  },
+  "build_seconds": 2.0,
+  "bytes": 61093,
+  "compared_cells": 1219,
+  "kind": "dcf",
+  "market": {},
+  "modelcheck_score": 100.0,
+  "name": "ko_three_statement_dcf",
+  "pdf_pages": 12,
+  "pngs": [
+   {
+    "png": "png/ko_three_statement_dcf/page-01.png",
+    "shows": "Strictly private & confidential | COCA COLA CO (KO) | Integrated three-statement model and DCF, built from SEC filings"
+   },
+   {
+    "png": "png/ko_three_statement_dcf/page-02.png",
+    "shows": "EBITDA to unlevered free cash flow, FY2026E DCF value per share (sensitivity range) | 16,000 | Strictly private & confidential"
+   },
+   {
+    "png": "png/ko_three_statement_dcf/page-03.png",
+    "shows": "Strictly private & confidential | Assumptions and scenarios | Blue cells are inputs. Grey columns show the same ratio in the actuals for reference."
+   },
+   {
+    "png": "png/ko_three_statement_dcf/page-04.png",
+    "shows": "Strictly private & confidential | COCA COLA CO \u2014 income statement | fiscal years 2021\u20132025 actual, 2026\u20132030 forecast"
+   },
+   {
+    "png": "png/ko_three_statement_dcf/page-05.png",
+    "shows": "Strictly private & confidential | COCA COLA CO \u2014 balance sheet | fiscal years 2021\u20132025 actual, 2026\u20132030 forecast"
+   },
+   {
+    "png": "png/ko_three_statement_dcf/page-06.png",
+    "shows": "Strictly private & confidential | COCA COLA CO \u2014 cash flow statement | fiscal years 2021\u20132025 actual, 2026\u20132030 forecast"
+   },
+   {
+    "png": "png/ko_three_statement_dcf/page-07.png",
+    "shows": "Strictly private & confidential | Supporting schedules | PP&E roll-forward and working capital"
+   },
+   {
+    "png": "png/ko_three_statement_dcf/page-08.png",
+    "shows": "Strictly private & confidential | Debt, revolver and interest | Revolver draws to keep minimum cash; interest on average balances when the circularity switch is"
+   },
+   {
+    "png": "png/ko_three_statement_dcf/page-09.png",
+    "shows": "Strictly private & confidential | COCA COLA CO \u2014 discounted cash flow | Unlevered free cash flow from the integrated model; mid-year convention switchable; both"
+   },
+   {
+    "png": "png/ko_three_statement_dcf/page-10.png",
+    "shows": "Strictly private & confidential | USD in millions FY2021A FY2022A FY2023A FY2024A FY2025A FY2026E FY2027E FY2028E FY2029E FY2030E | Implied exit EV / EBITDA 10."
+   },
+   {
+    "png": "png/ko_three_statement_dcf/page-11.png",
+    "shows": "Strictly private & confidential | Model checks | Every check must read OK; the master check feeds the cover"
+   },
+   {
+    "png": "png/ko_three_statement_dcf/page-12.png",
+    "shows": "Strictly private & confidential | COCA COLA CO \u2014 figures as filed with the SEC | Blue = as reported (XBRL), $m. Hover for the concept, period and accession; cli"
+   }
+  ],
+  "production_ready": true,
+  "three_engine_agree": true,
+  "tickers": [
+   "KO"
+  ],
+  "validate_critical": 0,
+  "validate_passed": true
+ },
+ {
+  "as_of_filing": {
+   "accession": "0001628280-26-019436",
+   "filed": "2026-03-18",
+   "fiscal_year_end": "2026-02-01",
+   "form": "10-K",
+   "ticker": "HD"
+  },
+  "build_seconds": 2.2,
+  "bytes": 52794,
+  "compared_cells": 672,
+  "kind": "lbo",
+  "market": {
+   "HD": {
+    "price": 373.28887537123995,
+    "source": "PROXY, not a quote: dei:EntityPublicFloat 371,800,000,000 USD (as of 2025-08-01, 10-K filed 2026-03-18, accn 0001628280-26-019436) / dei:EntityCommonStockSharesOutstanding 996,011,466 shares (cover date 2026-03-04, accn 0001628280-26-019436). Public float excludes affiliates' shares and is measured at mid-year, so this understates the market price; supply a real quote when you have one."
+   }
+  },
+  "modelcheck_score": 100.0,
+  "name": "hd_lbo",
+  "pdf_pages": 13,
+  "pngs": [
+   {
+    "png": "png/hd_lbo/page-01.png",
+    "shows": "Strictly private & confidential | The Home Depot, Inc. (HD) \u2014 take-private LBO | Leveraged buyout model built from SEC filings; every number is written by code"
+   },
+   {
+    "png": "png/hd_lbo/page-02.png",
+    "shows": "Strictly private & confidential | Assumptions | Blue cells are inputs. Grey columns show the same ratio in the actuals for reference."
+   },
+   {
+    "png": "png/hd_lbo/page-03.png",
+    "shows": "Strictly private & confidential | The Home Depot, Inc. \u2014 sources and uses at close | Sponsor equity is the plug: total uses less the debt raised"
+   },
+   {
+    "png": "png/hd_lbo/page-04.png",
+    "shows": "Strictly private & confidential | USD in millions Amount % of totalx LTM EBITDA | Net debt at close (new debt less minimum cash) $m 120,373"
+   },
+   {
+    "png": "png/hd_lbo/page-05.png",
+    "shows": "Strictly private & confidential | The Home Depot, Inc. \u2014 operating build | fiscal years 2022\u20132026 actual, 2027\u20132031 projected"
+   },
+   {
+    "png": "png/hd_lbo/page-06.png",
+    "shows": "Strictly private & confidential | Debt schedule and credit statistics | Revolver draws to hold minimum cash and is repaid first; term loan B amortises and sweep"
+   },
+   {
+    "png": "png/hd_lbo/page-07.png",
+    "shows": "Strictly private & confidential | USD in millions Close (LTM) Year 1 Year 2 Year 3 Year 4 Year 5 | Fiscal year ending FY2026A FY2027E FY2028E FY2029E FY2030E FY"
+   },
+   {
+    "png": "png/hd_lbo/page-08.png",
+    "shows": "Strictly private & confidential | Sponsor returns | Exit value, money multiple and IRR (closed form with an IRR() cross-check), and where the gain comes from"
+   },
+   {
+    "png": "png/hd_lbo/page-09.png",
+    "shows": "Strictly private & confidential | The Home Depot, Inc. \u2014 returns sensitivity | Live closed-form grids: entry multiple moves purchase price and fees, debt stays "
+   },
+   {
+    "png": "png/hd_lbo/page-10.png",
+    "shows": "Strictly private & confidential | USD in millions | 20.8x 0.2% 2.0% 3.6% 5.2% 6.7%"
+   },
+   {
+    "png": "png/hd_lbo/page-11.png",
+    "shows": "Strictly private & confidential | Model checks | Every check must read OK; the master check feeds the cover"
+   },
+   {
+    "png": "png/hd_lbo/page-12.png",
+    "shows": "Strictly private & confidential | The Home Depot, Inc. \u2014 figures as filed with the SEC | Blue = as reported (XBRL), $m. Hover for the concept, period and access"
+   }
+  ],
+  "production_ready": true,
+  "three_engine_agree": true,
+  "tickers": [
+   "HD"
+  ],
+  "validate_critical": 0,
+  "validate_passed": true
+ },
+ {
+  "as_of_filing": {
+   "accession": "0000080424-26-000103",
+   "filed": "2026-08-04",
+   "fiscal_year_end": "2026-06-30",
+   "form": "10-K",
+   "ticker": "PG"
+  },
+  "build_seconds": 1.8,
+  "bytes": 55966,
+  "compared_cells": 360,
+  "kind": "merger",
+  "market": {
+   "KO": {
+    "price": 69.88428497324388,
+    "source": "PROXY, not a quote: dei:EntityPublicFloat 300,552,956,545 USD (as of 2025-06-27, 10-K filed 2026-02-20, accn 0001628280-26-010047) / dei:EntityCommonStockSharesOutstanding 4,300,723,069 shares (cover date 2026-02-18, accn 0001628280-26-010047). Public float excludes affiliates' shares and is measured at mid-year, so this understates the market price; supply a real quote when you have one."
+   },
+   "PG": {
+    "price": 143.2607398898379,
+    "source": "PROXY, not a quote: dei:EntityPublicFloat 333,000,000,000 USD (as of 2025-12-31, 10-K filed 2026-08-04, accn 0000080424-26-000103) / dei:EntityCommonStockSharesOutstanding 2,324,433,060 shares (cover date 2026-07-31, accn 0000080424-26-000103). Public float excludes affiliates' shares and is measured at mid-year, so this understates the market price; supply a real quote when you have one."
+   }
+  },
+  "modelcheck_score": 100.0,
+  "name": "pg_ko_merger",
+  "pdf_pages": 15,
+  "pngs": [
+   {
+    "png": "png/pg_ko_merger/page-01.png",
+    "shows": "Strictly private & confidential | PROCTER & GAMBLE Co (PG) acquires COCA COLA CO (KO) | Accretion / dilution merger model, built from SEC filings; every number "
+   },
+   {
+    "png": "png/pg_ko_merger/page-02.png",
+    "shows": "Strictly private & confidential | Assumptions | Blue cells are inputs. Per-year inputs sit under the forecast years; everything else is in column C."
+   },
+   {
+    "png": "png/pg_ko_merger/page-03.png",
+    "shows": "Strictly private & confidential | $ in millions FY2026A FY2027E FY2028E FY2029E | Fiscal year (acquirer)"
+   },
+   {
+    "png": "png/pg_ko_merger/page-04.png",
+    "shows": "Strictly private & confidential | Purchase price | Offer price, equity purchase price, net debt assumed and the multiples paid."
+   },
+   {
+    "png": "png/pg_ko_merger/page-05.png",
+    "shows": "Strictly private & confidential | Sources & Uses | How the equity purchase price and fees are funded; shares issued to target holders."
+   },
+   {
+    "png": "png/pg_ko_merger/page-06.png",
+    "shows": "Strictly private & confidential | Purchase price allocation | Target book equity, intangible write-ups, deferred tax and goodwill. Existing goodwill is eliminat"
+   },
+   {
+    "png": "png/pg_ko_merger/page-07.png",
+    "shows": "Strictly private & confidential | Pro forma earnings and accretion / dilution | Standalone projections, deal adjustments and the pro forma EPS bridge. Reported "
+   },
+   {
+    "png": "png/pg_ko_merger/page-08.png",
+    "shows": "Strictly private & confidential | $ in millions FY2026A FY2027E FY2028E FY2029E | Fiscal year (acquirer)"
+   },
+   {
+    "png": "png/pg_ko_merger/page-09.png",
+    "shows": "Strictly private & confidential | Breakeven analysis | Pre-tax synergies that make each year EPS-neutral, and the highest year-1 premium that is EPS-neutral (cl"
+   },
+   {
+    "png": "png/pg_ko_merger/page-10.png",
+    "shows": "Strictly private & confidential | Sensitivity: year-1 accretion / (dilution) | Live closed-form grids on the model's drivers and the row / column headers. The c"
+   },
+   {
+    "png": "png/pg_ko_merger/page-11.png",
+    "shows": "Strictly private & confidential | Year-1 accretion / (dilution) %: run-rate synergies (down) x offer premium (across) | Run-rate synergies down; offer premium a"
+   },
+   {
+    "png": "png/pg_ko_merger/page-12.png",
+    "shows": "Strictly private & confidential | Model checks | Every check must read OK; the master check feeds the cover."
+   }
+  ],
+  "production_ready": true,
+  "three_engine_agree": true,
+  "tickers": [
+   "PG",
+   "KO"
+  ],
+  "validate_critical": 0,
+  "validate_passed": true
+ },
+ {
+  "as_of_filing": {
+   "accession": "0001628280-26-010047",
+   "filed": "2026-02-20",
+   "fiscal_year_end": "2025-12-31",
+   "form": "10-K",
+   "ticker": "KO"
+  },
+  "build_seconds": 3.7,
+  "bytes": 47127,
+  "compared_cells": 564,
+  "kind": "comps",
+  "market": {
+   "CL": {
+    "price": 91.57280342033353,
+    "source": "PROXY, not a quote: dei:EntityPublicFloat 73,400,000,000 USD (as of 2025-06-30, 10-K filed 2026-02-23, accn 0000021665-26-000006) / dei:EntityCommonStockSharesOutstanding 801,548,028 shares (cover date 2026-01-31, accn 0000021665-26-000006). Public float excludes affiliates' shares and is measured at mid-year, so this understates the market price; supply a real quote when you have one."
+   },
+   "KO": {
+    "price": 69.88428497324388,
+    "source": "PROXY, not a quote: dei:EntityPublicFloat 300,552,956,545 USD (as of 2025-06-27, 10-K filed 2026-02-20, accn 0001628280-26-010047) / dei:EntityCommonStockSharesOutstanding 4,300,723,069 shares (cover date 2026-02-18, accn 0001628280-26-010047). Public float excludes affiliates' shares and is measured at mid-year, so this understates the market price; supply a real quote when you have one."
+   },
+   "MDLZ": {
+    "price": 67.94889752051735,
+    "source": "PROXY, not a quote: dei:EntityPublicFloat 87,100,000,000 USD (as of 2025-06-30, 10-K filed 2026-02-04, accn 0001628280-26-005345) / dei:EntityCommonStockSharesOutstanding 1,281,845,669 shares (cover date 2026-01-30, accn 0001628280-26-005345). Public float excludes affiliates' shares and is measured at mid-year, so this understates the market price; supply a real quote when you have one."
+   },
+   "PEP": {
+    "price": 130.97729779790072,
+    "source": "PROXY, not a quote: dei:EntityPublicFloat 179,000,000,000 USD (as of 2025-06-13, 10-K filed 2026-02-03, accn 0000077476-26-000007) / dei:EntityCommonStockSharesOutstanding 1,366,649,053 shares (cover date 2026-01-23, accn 0000077476-26-000007). Public float excludes affiliates' shares and is measured at mid-year, so this understates the market price; supply a real quote when you have one."
+   },
+   "PG": {
+    "price": 143.2607398898379,
+    "source": "PROXY, not a quote: dei:EntityPublicFloat 333,000,000,000 USD (as of 2025-12-31, 10-K filed 2026-08-04, accn 0000080424-26-000103) / dei:EntityCommonStockSharesOutstanding 2,324,433,060 shares (cover date 2026-07-31, accn 0000080424-26-000103). Public float excludes affiliates' shares and is measured at mid-year, so this understates the market price; supply a real quote when you have one."
+   }
+  },
+  "modelcheck_score": 100.0,
+  "name": "ko_comps",
+  "pdf_pages": 9,
+  "pngs": [
+   {
+    "png": "png/ko_comps/page-01.png",
+    "shows": "Strictly private & confidential | COCA COLA CO (KO) \u2014 trading comparables | Peer multiples, calendarised and treasury-stock-method diluted, built from SEC filin"
+   },
+   {
+    "png": "png/ko_comps/page-02.png",
+    "shows": "Strictly private & confidential | COCA COLA CO \u2014 trading comparables: inputs | Blue = typed. Companyfacts are as filed with the SEC; hover for the concept, peri"
+   },
+   {
+    "png": "png/ko_comps/page-03.png",
+    "shows": "Strictly private & confidential | Millions except per share Unit KO PEP PG MDLZ CL | Company COCA COLA CO PEPSICO INC R & GAMBLE Co nternational, Inc. LIVE COMP"
+   },
+   {
+    "png": "png/ko_comps/page-04.png",
+    "shows": "Strictly private & confidential | Calendarisation to a common year end | CY = w_latest x FY_latest + w_prior x FY_prior; w_prior = MOD(FYE month - CY month, 12)"
+   },
+   {
+    "png": "png/ko_comps/page-05.png",
+    "shows": "Strictly private & confidential | Equity value and enterprise value | Diluted shares by the treasury stock method: in-the-money options add options - options x "
+   },
+   {
+    "png": "png/ko_comps/page-06.png",
+    "shows": "Strictly private & confidential | COCA COLA CO \u2014 trading comparables | Multiples are formulas on Equity value and Calendarisation. NM = denominator <= 0 or mult"
+   },
+   {
+    "png": "png/ko_comps/page-07.png",
+    "shows": "Strictly private & confidential | COCA COLA CO \u2014 implied valuation from peer multiples | Peer 25th-75th percentile multiple x the target's metric. EV methods go"
+   },
+   {
+    "png": "png/ko_comps/page-08.png",
+    "shows": "Strictly private & confidential | Checks | Every cell reads OK or ERROR. Tolerance Tol is a named input on Inputs."
+   },
+   {
+    "png": "png/ko_comps/page-09.png",
+    "shows": "Strictly private & confidential | Source filings | Every typed historical number on Inputs comes from one of these filings (hover over the cell for concept and "
+   }
+  ],
+  "production_ready": true,
+  "three_engine_agree": true,
+  "tickers": [
+   "KO",
+   "PEP",
+   "PG",
+   "MDLZ",
+   "CL"
+  ],
+  "validate_critical": 0,
+  "validate_passed": true
+ }
+]

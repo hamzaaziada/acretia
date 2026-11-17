@@ -25,6 +25,7 @@ from .http import (ApiError, RequestContext, Response, Route, Router, SSE, SSE_K
 ROUTE_MODULES: tuple[str, ...] = (
     "om.api.auth", "om.api.audit", "om.api.deals", "om.api.library", "om.api.notify", "om.api.jobs",
     "om.api.agents.library", "om.api.citations", "om.api.viewers", "om.api.firm", "om.api.mail",
+    "om.api.grid", "om.api.decks", "om.api.watch",
 )
 API_PREFIX = "/api/"
 MAX_BODY = 200 * 1024 * 1024

@@ -20,7 +20,8 @@ import re
 PROSE_KEYS = frozenset({
     "takeaways", "bullets", "text", "body", "subtitle", "measure", "title", "headline", "summary", "callout", "callouts",
     "notes", "caption", "description", "message", "points", "narrative", "commentary", "lead", "so_what", "bottom_line",
-    "quote", "statement", "paragraph", "paragraphs", "rationale"})
+    "quote", "statement", "paragraph", "paragraphs", "rationale", "takeaway", "verdict", "note", "badge",
+    "tagline", "label_note"})
 SKIP_ROLES = frozenset({"footer", "page_number", "source", "footer_rule", "title_rule", "decor", "divider", "visual"})
 UNITS = {"bn": 1e9, "billion": 1e9, "mm": 1e6, "m": 1e6, "million": 1e6, "tn": 1e12, "trillion": 1e12, "k": 1e3,
          "thousand": 1e3}
