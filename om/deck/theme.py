@@ -36,8 +36,14 @@ def grid_w(span: int) -> float:
     return round(span * col_width() + (span - 1) * GUTTER, 2)
 
 
+POSITIVE_ACCESSIBLE = "#0B7A54"
+
+
 @dataclass
 class Theme:
+    """Theme tokens. D-S3-12: the deck theme's `positive` is #0B7A54 (5.35:1 on white, 4.82:1 on the panel grey), not the
+    v1 house green #0F8A5F (4.36:1), so positive text and fills under white labels pass WCAG AA 4.5:1 at small sizes.
+    The v1 palette in om/house.py is unchanged."""
     name: str
     colors: dict[str, str]
     fonts: dict[str, str]
@@ -49,7 +55,7 @@ class Theme:
         h = house.FONTS
         return cls(
             name="house",
-            colors=dict(house.PALETTE),
+            colors={**house.PALETTE, "positive": POSITIVE_ACCESSIBLE},
             fonts={"major": h["heading"], "minor": h["body"], "major_cs": "Arial", "minor_cs": "Arial"},
             sizes=dict(SIZES),
             grid={**house.GRID, "gutter": GUTTER, "cols": COLS, "canvas_w": CANVAS_W, "canvas_h": CANVAS_H},

@@ -51,6 +51,13 @@ def figure_runs(text: str, *, color: str | None = None) -> list[Run]:
     return [Run(t, b, color) for t, b in merged if t]
 
 
+def declare(meta: dict, value, *paths: str) -> None:
+    """Record a figure the archetype computed (median, total, CAGR, implied value) in `meta["derived"]` so provenance
+    counts it as sourced: {"value": v, "from": [json paths of the inputs]} (D-S3-11)."""
+    if isinstance(value, (int, float)) and not isinstance(value, bool):
+        meta.setdefault("derived", []).append({"value": float(value), "from": list(paths)})
+
+
 def eid(ctx: "BuildContext", role: str, suffix: str | int | None = None) -> str:
     return f"s{ctx.index}.{role}" + (f".{suffix}" if suffix not in (None, "") else "")
 
@@ -101,9 +108,13 @@ def has_subtitle(slide: dict) -> bool:
 
 
 def _source_text(slide: dict) -> str:
-    src, as_of = slide.get("source"), slide.get("as_of")
+    """`Source: A; as of D`, or with a `sources` list `Source: [1] A; [2] B; as of D` (citations, #19)."""
+    srcs, as_of = slide.get("sources"), slide.get("as_of")
     parts = []
-    if src:
+    if isinstance(srcs, (list, tuple)) and srcs:
+        parts.append("Source: " + "; ".join(f"[{i}] {str(t).rstrip('.')}" for i, t in enumerate(srcs, 1)))
+    elif slide.get("source"):
+        src = slide["source"]
         parts.append(src if src.lower().startswith("source") else f"Source: {src}")
     if as_of:
         parts.append(f"as of {as_of}")
@@ -138,8 +149,9 @@ def frame(slide: dict, ctx: "BuildContext", *, mode: str = "content", meta: dict
                            [Para(subtitle_runs(sub), space_after=0)], SIZES["body"]))
     src = _source_text(slide)
     if src:
-        els.append(text_el(ctx, "source", None, MARGIN_X, G["note_y"], FULL_W, 0.4,
-                           [Para([Run(src)], space_after=0)], SIZES["note"], color="muted"))
+        paras, size = fitted([Para([Run(src)], space_after=0)], FULL_W, 0.4, size=SIZES["note"], floor=SIZES["note"],
+                             role="source", block_id="source", meta=meta)
+        els.append(text_el(ctx, "source", None, MARGIN_X, G["note_y"], FULL_W, 0.4, paras, size, color="muted"))
     return els + footer_elements(ctx)
 
 

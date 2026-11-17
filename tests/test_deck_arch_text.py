@@ -297,5 +297,47 @@ class Visuals(unittest.TestCase):
         self.assertNotEqual(kpis[0].x, kpis[1].x)
 
 
+class ReservedKeysAndDerived(unittest.TestCase):
+    """FP-S3-b: reserved spec keys (D-S3-10) and declared figures (D-S3-11) for the text archetypes."""
+
+    def _deck(self, aid, ex):
+        return {"deck_id": "d", "title": "T", "lang": "en", "as_of": "2026-09-30",
+                "slides": [{"id": "s1", "archetype": aid, "blocks": {}, "title": "Example", **copy.deepcopy(ex)}]}
+
+    def test_every_text_example_is_a_valid_spec(self):
+        from om.deck import spec
+        for aid in IDS:
+            with self.subTest(aid):
+                self.assertEqual([str(e) for e in spec.validate(self._deck(aid, archetypes.get(aid).example))], [])
+
+    def test_two_column_compare_uses_a_and_b(self):
+        from om.deck import spec
+        ex = archetypes.get("two_column_compare").example
+        self.assertEqual({"a", "b"} <= set(ex["blocks"]), True)
+        self.assertNotIn("left", ex["blocks"])
+        old = copy.deepcopy(ex)
+        old["blocks"]["left"], old["blocks"]["right"] = old["blocks"].pop("a"), old["blocks"].pop("b")
+        errs = spec.validate(self._deck("two_column_compare", old))
+        self.assertTrue(any("left" in str(e) for e in errs))
+        out = archetypes.get("two_column_compare").build(dict(ex, id="s1"), BuildContext(THEME, 1, 3, "Atlas"))
+        self.assertTrue(any(e.id.endswith("label.a") for e in out.elements) and any(e.id.endswith("label.b") for e in out.elements))
+
+    def test_agenda_declares_its_times(self):
+        out = archetypes.get("agenda").build(dict(archetypes.get("agenda").example, id="s1"),
+                                             BuildContext(THEME, 1, 3, "Atlas"))
+        self.assertEqual(sorted(d["value"] for d in out.meta["derived"]), [10.0, 10.0, 15.0, 15.0, 25.0])
+
+    def test_numbered_insights_figure_in_both_layouts(self):
+        ex = copy.deepcopy(archetypes.get("numbered_insights").example)
+        for layout, n in (("grid", 4), ("row", 3)):
+            ex["blocks"]["layout"] = layout
+            ex["blocks"]["insights"] = ex["blocks"]["insights"][:n]
+            out = archetypes.get("numbered_insights").build(dict(ex, id="s1"), BuildContext(THEME, 1, 3, "Atlas"))
+            self.assertEqual(len([e for e in out.elements if e.role == "kpi"]), n, layout)
+            data = render([out], THEME, title="T")
+            bad = [f for f in validate(data, theme=THEME).findings if f["severity"] in ("critical", "major")]
+            self.assertEqual(bad, [], (layout, bad))
+
+
 if __name__ == "__main__":
     unittest.main()

@@ -111,25 +111,29 @@ class Build(NoNetwork):
         self.assertEqual(len(r.numbers_digest), 64)
 
     def test_registry_examples_build(self):
-        """Every archetype that ships an example builds on its own with no critical finding."""
+        """FP-S3-b: every registered archetype's example builds (cover + one slide) with 0 critical findings of any rule
+        (spec, unsourced_number, citation, validator) and at most 1 major finding on the example slide."""
         from om.deck import spec as specmod
-        built = 0
-        for aid, e in archetypes.examples().items():
-            sl = {"id": "e1", "archetype": aid, "blocks": {}, "title": "Example", **copy.deepcopy(e)}
-            d = {"deck_id": "ex", "title": "Examples", "lang": "en", "as_of": "2026-09-30", "slides": [sl]}
+        ids = sorted(archetypes.examples())
+        self.assertEqual(set(ids), set(archetypes.REGISTRY), "every archetype must ship an example")
+        self.assertGreaterEqual(len(ids), 40)
+        for aid in ids:
+            sl = {"id": "e1", "archetype": aid, "blocks": {}, "title": "Example", **copy.deepcopy(archetypes.examples()[aid])}
+            slides = [sl] if aid == "cover" else [
+                {"id": "c0", "archetype": "cover", "title": "Examples", "blocks": {"client": "Acme", "date": "2026-09-30"},
+                 "as_of": "2026-09-30"}, sl]
+            d = {"deck_id": "ex", "title": "Examples", "lang": "en", "as_of": "2026-09-30", "slides": slides}
             with self.subTest(archetype=aid):
                 errs = specmod.validate(d)
-                if errs:
-                    print(f"\n[engine] example for {aid!r} is not a valid spec, skipped: {errs[0]}")
-                    continue
+                self.assertEqual(errs, [], [str(e) for e in errs])
                 r = engine.build(d, out=self.out("ex.pptx"), seed=1, critic=False)
+                idx = len(slides)
                 crit = [f for f in r.findings if f["severity"] == "critical"]
-                prov = [f for f in crit if f["rule"] == "unsourced_number"]
-                if prov:   # archetype-computed stats / unsourced example slides: reported, not a build failure
-                    print(f"\n[engine] example for {aid!r}: {len(prov)} unsourced_number finding(s), e.g. {prov[0]['message'][:110]}")
-                self.assertEqual([f for f in crit if f["rule"] != "unsourced_number"], [], crit)
-                built += 1
-        self.assertGreaterEqual(built, 3)
+                major = [f for f in r.findings if f["severity"] == "major" and f["slide"] == idx]
+                show = "\n".join(f"  {f['severity']} {f['rule']} slide {f['slide']}: {f['message']}" for f in r.findings)
+                self.assertEqual(crit, [], f"{aid}: critical findings\n{show}")
+                self.assertLessEqual(len(major), 1, f"{aid}: more than one major finding\n{show}")
+                self.assertTrue(r.ok, r.error)
 
     def test_arabic_rtl(self):
         r = engine.build(spec6("ar"), out=self.out("ar.pptx"), seed=3)
@@ -254,6 +258,140 @@ class Provenance(NoNetwork):
         f = provenance.check(sp, [SolvedSlide(1, "x", [el])])
         self.assertEqual([x["shape_name"] for x in f], ["s1.table"])
         self.assertIn("9.9x", f[0]["message"])
+
+
+class ProvenanceWave3(NoNetwork):
+    """D-S3-11: derived values, deck-wide sources, citations, and the rule still biting."""
+
+    def _slide(self, text, idx=1, role="body", meta=None):
+        el = Element(f"s{idx}.{role}", "text", role, 1, 1, 5, 1, text=TextSpec([Para([Run(text)])], 14))
+        return SolvedSlide(idx, "x", [el], meta=meta or {})
+
+    def test_planted_unsourced_number_in_every_data_example_is_still_critical(self):
+        for aid in ("waterfall", "comps_table", "exec_summary", "scorecard"):
+            sl = {"id": "e1", "archetype": aid, "blocks": {}, "title": "Example", **copy.deepcopy(archetypes.examples()[aid])}
+            sl["title"] = "Valuation rises 987% on the new plan"
+            d = {"deck_id": "ex", "title": "Examples", "lang": "en", "as_of": "2026-09-30", "slides": [sl]}
+            with self.subTest(archetype=aid):
+                hits = [f for f in engine.build(d, seed=1, critic=False).findings if f["rule"] == "unsourced_number"]
+                self.assertEqual([h["shape_name"] for h in hits], ["s1.title"])
+                self.assertEqual(hits[0]["severity"], "critical")
+
+    def test_derived_value_counts_but_only_that_value(self):
+        sp = {"slides": [{"id": "a", "blocks": {}}]}
+        meta = {"derived": [{"value": 11.2, "from": ["blocks.rows[0].ev_ebitda"]}]}
+        self.assertEqual(provenance.check(sp, [self._slide("Median 11.2x", meta=meta)]), [])
+        self.assertEqual(len(provenance.check(sp, [self._slide("Median 11.9x", meta=meta)])), 1)
+        self.assertEqual(len(provenance.check(sp, [self._slide("Median 11.2x")])), 1)     # not declared
+
+    def test_archetype_declares_its_computed_figures(self):
+        from om.deck.archetypes import core  # noqa: F401
+        for aid, expect in (("comps_table", 11.2), ("waterfall", 32.0), ("football_field", None), ("scorecard", 8.0)):
+            sl = {"id": "e1", "archetype": aid, "blocks": {}, "title": "Example", **copy.deepcopy(archetypes.examples()[aid])}
+            ctx = archetypes.BuildContext(theme=__import__("om.deck.theme", fromlist=["Theme"]).Theme.house(), index=1,
+                                          total=1, deck_title="T")
+            out = archetypes.get(aid).build(sl, ctx)
+            vals = [d["value"] for d in out.meta.get("derived", [])]
+            self.assertTrue(vals, aid)
+            if expect is not None:
+                self.assertTrue(any(abs(v - expect) < 1e-6 for v in vals), (aid, vals))
+
+    def test_prose_number_traces_to_a_later_slide_of_the_deck(self):
+        sp = {"slides": [{"id": "a", "blocks": {}},
+                         {"id": "b", "source": "Filings", "blocks": {"kpis": [{"label": "Rev", "value": "$4.7bn"}]}}]}
+        s1 = self._slide("Revenue reached $4.7bn", idx=1)
+        self.assertEqual(provenance.check(sp, [s1, self._slide("x", idx=2)]), [])
+        self.assertEqual(len(provenance.check(sp, [self._slide("Revenue reached $4.9bn", idx=1)])), 1)
+        # slide b has no source -> its data does not count for slide a
+        sp["slides"][1].pop("source")
+        self.assertEqual(len(provenance.check(sp, [s1, self._slide("x", idx=2)])), 1)
+
+    def test_no_data_anywhere_stays_critical(self):
+        sp = {"slides": [{"id": "a", "source": "S", "blocks": {"value": 3.1}}, {"id": "b", "source": "S", "blocks": {}}]}
+        f = provenance.check(sp, [self._slide("Margin 44%", idx=2)])
+        self.assertEqual([x["rule"] for x in f], ["unsourced_number"])
+
+
+class Citations(NoNetwork):
+    def _deck(self, sources, text, *, source="Company filings"):
+        sl = {"id": "s1", "archetype": "chart_takeaways", "title": "Revenue grew on stronger lending",
+              "source": source, "as_of": "2026-09-30",
+              "blocks": {"subtitle": "Revenue, $ billion", "chart": _chart("column", ["FY24", "FY25"], [4.2, 4.7]),
+                         "takeaways": [text, "FY24: 4.2bn base year", "Lending led the gain"]}}
+        if sources is not None:
+            sl["sources"] = sources
+        return {"deck_id": "c", "title": "Cites", "lang": "en", "as_of": "2026-09-30", "slides": [sl]}
+
+    def test_sources_render_as_numbered_note_line(self):
+        from om.deck import archetypes as A
+        from om.deck.theme import Theme
+        sl = self._deck(["Company 10-K, FY25", "Broker consensus"], "Revenue: 4.7bn in FY25 [1]")["slides"][0]
+        els = A.get("chart_takeaways").build(sl, A.BuildContext(Theme.house(), 1, 1, "Cites")).elements
+        src = next(e for e in els if e.role == "source")
+        txt = "".join(r.t for p in src.text.paras for r in p.runs)
+        self.assertEqual(txt, "Source: [1] Company 10-K, FY25; [2] Broker consensus; as of 2026-09-30")
+        self.assertEqual(src.text.size, 10)
+
+    def test_single_source_keeps_the_plain_format(self):
+        from om.deck import archetypes as A
+        from om.deck.theme import Theme
+        sl = self._deck(None, "Revenue: 4.7bn in FY25")["slides"][0]
+        els = A.get("chart_takeaways").build(sl, A.BuildContext(Theme.house(), 1, 1, "Cites")).elements
+        src = next(e for e in els if e.role == "source")
+        self.assertEqual("".join(r.t for p in src.text.paras for r in p.runs), "Source: Company filings; as of 2026-09-30")
+
+    def test_resolved_markers_build_clean_and_are_not_numbers(self):
+        r = engine.build(self._deck(["Company 10-K", "Broker consensus"], "Revenue: 4.7bn in FY25 [1][2]"),
+                         out=self.out("cite.pptx"), seed=1, critic=False)
+        self.assertEqual([f for f in r.findings if f["severity"] == "critical"], [])
+
+    def test_dangling_marker_is_a_critical_citation_finding(self):
+        r = engine.build(self._deck(["Company 10-K"], "Revenue: 4.7bn in FY25 [3]"), out=self.out("cite.pptx"),
+                         seed=1, critic=False)
+        hits = [f for f in r.findings if f["rule"] == "citation"]
+        self.assertEqual(len(hits), 1, r.findings)
+        self.assertEqual(hits[0]["severity"], "critical")
+        self.assertIn("[3]", hits[0]["message"])
+        self.assertFalse(r.ok)
+
+    def test_marker_without_any_source_list_resolves_against_single_source(self):
+        ok = engine.build(self._deck(None, "Revenue: 4.7bn in FY25 [1]"), seed=1, critic=False)
+        bad = engine.build(self._deck(None, "Revenue: 4.7bn in FY25 [2]"), seed=1, critic=False)
+        self.assertEqual([f for f in ok.findings if f["rule"] == "citation"], [])
+        self.assertEqual(len([f for f in bad.findings if f["rule"] == "citation"]), 1)
+
+    def test_markers_in_table_cells_are_checked(self):
+        sp = {"slides": [{"id": "a", "source": "S", "sources": ["One"], "blocks": {}}]}
+        el = Element("s1.table", "table", "table", 1, 1, 5, 3, table={"columns": ["A", "B"], "rows": [["x [1]", "y [2]"]]})
+        f = provenance.check(sp, [SolvedSlide(1, "x", [el])])
+        self.assertEqual([(x["rule"], x["shape_name"]) for x in f], [("citation", "s1.table")])
+        self.assertIn("[2]", f[0]["message"])
+
+    def test_at_least_six_data_examples_carry_markers(self):
+        import re
+        n = 0
+        for aid, e in archetypes.examples().items():
+            if archetypes.get(aid).data and re.search(r"\[\d\]", json.dumps(e)):
+                n += 1
+                self.assertTrue(e.get("sources"), aid)
+        self.assertGreaterEqual(n, 6)
+
+
+class ThemeContrast(unittest.TestCase):
+    def test_house_positive_passes_aa_as_text_and_fill(self):
+        from om.deck.theme import Theme
+
+        def lum(h):
+            c = [int(h[i:i + 2], 16) / 255 for i in (1, 3, 5)]
+            c = [x / 12.92 if x <= 0.03928 else ((x + 0.055) / 1.055) ** 2.4 for x in c]
+            return 0.2126 * c[0] + 0.7152 * c[1] + 0.0722 * c[2]
+
+        def ratio(a, b):
+            la, lb = sorted((lum(a), lum(b)), reverse=True)
+            return (la + 0.05) / (lb + 0.05)
+        th = Theme.house().colors
+        self.assertGreaterEqual(ratio(th["positive"], "#FFFFFF"), 4.5)
+        self.assertGreaterEqual(ratio(th["positive"], th["panel"]), 4.5)
 
 
 class GhostGate(NoNetwork):

@@ -339,5 +339,34 @@ class FrameworkArchetypeTests(unittest.TestCase):
             build("market_map", spec)
 
 
+class ReservedKeysAndDerived(unittest.TestCase):
+    """FP-S3-b: matrix items use xv/yv (D-S3-10); computed stats are declared (D-S3-11)."""
+
+    def test_every_framework_example_is_a_valid_spec(self):
+        from om.deck import spec
+        for aid in IDS:
+            d = {"deck_id": "d", "title": "T", "lang": "en", "as_of": "2026-09-30",
+                 "slides": [{"id": "s1", "archetype": aid, "blocks": {}, "title": "Example", **example(aid)}]}
+            with self.subTest(aid):
+                self.assertEqual([str(e) for e in spec.validate(d)], [])
+
+    def test_matrix_items_use_xv_yv(self):
+        items = example("matrix_2x2")["blocks"]["items"]
+        self.assertTrue(all({"xv", "yv"} <= set(i) and "x" not in i and "y" not in i for i in items))
+        out = archetypes.get("matrix_2x2").build(dict(example("matrix_2x2"), id="s1"), ctx())
+        self.assertEqual(len([e for e in out.elements if e.id.startswith("s1.decor.item")]), len(items))
+
+    def test_comps_and_scorecard_declare_computed_figures(self):
+        out = archetypes.get("comps_table").build(dict(example("comps_table"), id="s1"), ctx())
+        vals = [d["value"] for d in out.meta["derived"]]
+        self.assertTrue(any(abs(v - 11.2) < 1e-9 for v in vals))                    # median EV/EBITDA
+        self.assertTrue(all(d["from"] for d in out.meta["derived"]))
+        sc = archetypes.get("scorecard").build(dict(example("scorecard"), id="s1"), ctx())
+        self.assertTrue(any(abs(d["value"] - 8.0) < 1e-6 for d in sc.meta["derived"]))   # net debt / EBITDA change
+
+    def test_positive_glyph_colour_is_the_accessible_green(self):
+        self.assertEqual(THEME.colors["positive"], "#0B7A54")
+
+
 if __name__ == "__main__":
     unittest.main()
