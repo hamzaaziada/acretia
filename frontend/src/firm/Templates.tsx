@@ -159,7 +159,7 @@ function AssetCard({ a, owner, onDefault, onRemove }: { a: Asset; owner: boolean
         <div className="acr-firm-asset__title">
           <span className="acr-firm-asset__name acr-firm-ltr">{a.name}</span>
           <span className="acr-firm__meta">
-            {t(kindLabel)} · {sizeLabel(a.size, fmt)} · {fmt.date(a.created_at)}
+            {t(kindLabel)} · <bdi>{sizeLabel(a.size, fmt)}</bdi> · <bdi>{fmt.date(a.created_at)}</bdi>
           </span>
         </div>
         {a.is_default && <Badge tone="accent">{t('firm.tpl.default')}</Badge>}
@@ -235,7 +235,7 @@ function StylePreview({ s }: { s: AssetStyle }) {
                 {l}
               </span>
             ))}
-            {s.layouts.length > shown.length && <span className="acr-chip">+{fmt.integer(s.layouts.length - shown.length)}</span>}
+            {s.layouts.length > shown.length && <span className="acr-chip" dir="ltr">+{fmt.integer(s.layouts.length - shown.length)}</span>}
           </div>
         </>
       )}

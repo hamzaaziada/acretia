@@ -82,6 +82,11 @@ export default function Connectors() {
       render: (c) => (
         <span className="acr-strong">
           {c.name}
+          {c.has_secret && (
+            <div className="acr-firm__meta acr-firm-secret" aria-label={t('firm.conn.tokenSaved')}>
+              {t('firm.conn.token')} {c.secret}
+            </div>
+          )}
           {results[c.id] && !results[c.id].ok && <div className="acr-firm-conn-err">{[results[c.id].message, results[c.id].hint].filter(Boolean).join(' ')}</div>}
           {!results[c.id] && c.status === 'error' && c.last_error && <div className="acr-firm-conn-err">{c.last_error}</div>}
         </span>
@@ -92,8 +97,7 @@ export default function Connectors() {
     { key: 'items', header: t('firm.conn.items'), numeric: true, sortValue: (c) => c.item_count, render: (c) => (c.item_count ? fmt.integer(c.item_count) : '—') },
     { key: 'bytes', header: t('firm.conn.size'), numeric: true, sortValue: (c) => c.bytes, render: (c) => (c.bytes ? sizeLabel(c.bytes, fmt) : '—') },
     { key: 'sync', header: t('firm.conn.lastSync'), numeric: true, sortValue: (c) => c.last_sync, render: (c) => (c.last_sync ? fmt.relative(c.last_sync) : t('firm.conn.never')) },
-    { key: 'secret', header: t('firm.conn.token'), render: (c) => (c.has_secret ? <span className="acr-firm-secret" aria-label={t('firm.conn.tokenSaved')}>{c.secret}</span> : '—') },
-    { key: 'perm', header: t('firm.conn.permissions'), sortValue: (c) => c.permissions, render: (c) => t(c.permissions === 'mirror' ? 'firm.conn.perm.mirror' : 'firm.conn.perm.firm') },
+    { key: 'perm', header: t('firm.conn.permissions'), sortValue: (c) => c.permissions, render: (c) => <Badge tone={c.permissions === 'mirror' ? 'info' : 'neutral'}>{t(c.permissions === 'mirror' ? 'firm.conn.perm.mirrorShort' : 'firm.conn.perm.firmShort')}</Badge> },
     {
       key: 'actions',
       header: '',

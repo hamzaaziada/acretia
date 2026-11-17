@@ -120,7 +120,7 @@ export default function Mailbox() {
   const logCols: Column<MailLogRow>[] = [
     { key: 'at', header: t('firm.mail.log.at'), numeric: true, sortValue: (r) => r.at, render: (r) => fmt.dateTime(r.at) },
     { key: 'sender', header: t('firm.mail.log.from'), mono: true, sortValue: (r) => r.sender, render: (r) => r.sender || '—' },
-    { key: 'subject', header: t('firm.mail.log.subject'), render: (r) => <span className="acr-truncate">{r.subject || '—'}</span> },
+    { key: 'subject', header: t('firm.mail.log.subject'), render: (r) => <span className="acr-truncate" dir="auto">{r.subject || '—'}</span> },
     { key: 'outcome', header: t('firm.mail.log.outcome'), sortValue: (r) => r.outcome, render: (r) => <Badge tone={OUTCOME[r.outcome]?.tone ?? 'neutral'}>{t(OUTCOME[r.outcome]?.label ?? 'firm.mail.outcome.error')}</Badge> },
     {
       key: 'detail',
