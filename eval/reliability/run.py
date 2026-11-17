@@ -11,7 +11,7 @@ Each runnable brief in `corpus.json` runs as an in-process job (temp data dir, s
   3. determinism: the brief runs a second time and every xlsx cell (formula and value), pptx text, docx text and json value must match;
   4. resume: a one-shot exception is injected into the last engine step before `deliver`, the job is resumed, finished steps must not re-run,
      and the result must equal the clean run;
-  5. latency (wall seconds of the clean run) and cost per deliverable (replay: zero by construction).
+  5. latency (wall seconds of the clean run) and cost per deliverable (replay: priced fixture usage, not a bill).
 Writes report.md and results.csv.  No live model calls, no sockets.
 """
 from __future__ import annotations
@@ -218,7 +218,11 @@ def write_report(path: Path, rows: list[dict], s: dict, corpus: list[dict], mode
     L.append(f"| Determinism (two runs, identical numbers) | 100% | {pc(s['determinism'])} ({s['n_det_ok']}/{s['n_det']}) | {'MET' if s['determinism'] == 1.0 else 'NOT MET'} |")
     L.append(f"| Failed jobs resume cleanly | 100% | {pc(s['resume_rate'])} ({s['n_resume_ok']}/{s['n_resume']}) | {'MET' if s['resume_rate'] == 1.0 else 'NOT MET'} |")
     L.append(f"| p95 latency (job wall seconds, replay) | published | p50 {fmt(s['p50'], 2)} s, p95 {fmt(s['p95'], 2)} s, max {fmt(s['max'], 2)} s | published; no live-model latency included |")
-    L.append(f"| Cost per deliverable | published | replay = $0.00 by construction ({s['tokens']} replayed tokens booked on the ledger at zero cost); live cost not measured | not measured |")
+    prose = [r for r in rows if r["outcome"] == "done" and float(r["cost_usd"] or 0) > 0]
+    pd = sum(r.get("_deliverables", 0) for r in prose)
+    L.append(f"| Cost per deliverable | published | **not a live measurement.** Replay books the recorded token usage of the canned fixtures at ledger rates: "
+             f"${s['cost']:.4f} over {s['n_deliverables']} deliverables = ${s['cost'] / max(1, s['n_deliverables']):.4f} each on average; the {len(prose)} prose runs "
+             f"({s['tokens']} replayed tokens) account for all of it (about ${sum(float(r['cost_usd']) for r in prose) / max(1, pd):.4f} per prose deliverable); engine-only deliverables cost $0.00 | not measured |")
     L += ["", f"Briefs run: {s['n_briefs_run']} of {len(corpus)} in the corpus ({len(skipped)} need live data/model and are skipped). Supported briefs run: {s['n_supported_run']}; "
           f"engine blocked: {s['n_blocked']}; Arabic-only probes (planner has no Arabic rules): {s['n_unsupported']}.", ""]
     L += ["## What each check does", "",
@@ -281,7 +285,7 @@ def write_report(path: Path, rows: list[dict], s: dict, corpus: list[dict], mode
           "Runs of the same company under different phrasing are not independent samples.",
           "- US-GAAP only offline. IFRS and MENA companies (MSFT, NVDA, SWDY, SAP in the corpus) need live data and are skipped; the MENA coverage here is the synthetic Nile data room (EN+AR documents).",
           "- Prose deliverables (IC memo, recap, buyer list) are canned replay text for AAPL only and are flagged `REPLAY FIXTURE`; they pass the number check by that flag, not by being right.",
-          "- Latency excludes model time; cost is zero because nothing is billed in replay.", "", "### Skipped (need live)", ""]
+          "- Latency excludes model time. Cost is the priced replayed usage of canned fixtures, not a bill; live cost per deliverable has not been measured.", "", "### Skipped (need live)", ""]
     L += [f"- `{b['id']}` {b['task_id']} {b['ticker']} ({b['region']})" for b in skipped]
     path.write_text("\n".join(L) + "\n", encoding="utf-8")
 
