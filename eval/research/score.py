@@ -54,8 +54,39 @@ def parse_numbers(text: str) -> list:
     return out
 
 
+_CCY = r"(?:usd|eur|gbp|egp|sar|aed|us\$|\$|€|£)"
+_SCALE_WORDS = {"thousand": 1e3, "thousands": 1e3, "k": 1e3, "'000": 1e3, "000s": 1e3, "000": 1e3,
+                "million": 1e6, "millions": 1e6, "mm": 1e6, "mn": 1e6, "m": 1e6,
+                "billion": 1e9, "billions": 1e9, "bn": 1e9, "b": 1e9}
+
+
+def _unit_parts(units) -> tuple:
+    """Canonical (kind, multiplier) for a units string; case-insensitive. Unknown strings give ("plain", 1.0)."""
+    u = str(units or "").strip().lower().replace("’", "'").replace("_", " ").replace("-", " ")
+    u = re.sub(r"\s+", " ", u)
+    if u in _UNIT_FIGURE:
+        return _UNIT_FIGURE[u]
+    if u in ("%", "pct", "percent", "percentage", "percentage points", "pp"):
+        return "frac", 0.01
+    if u in ("bps", "bp", "basis points", "basis point"):
+        return "frac", 1e-4
+    if u in ("ratio", "x", "times", "multiple", "turns"):
+        return "plain", 1.0
+    if u in ("count", "shares", "units", "number", "employees"):
+        return "count", 1.0
+    m = re.fullmatch(rf"({_CCY})?\s*(?:in |\()?\s*('?000s?|[a-z]+)?\)?\s*(?:/|per )?\s*(share|shares|sh|unit)?", u)
+    if m and (m.group(1) or m.group(3)) and (m.group(2) is None or m.group(2) in _SCALE_WORDS or m.group(2) == "000s"):
+        if m.group(3):                               # "USD/share" is a per-share amount, never scaled
+            return "money", 1.0
+        return "money", _SCALE_WORDS.get(m.group(2), 1.0) if m.group(2) else 1.0
+    m = re.fullmatch(r"(?:in )?('?000s?|thousands?|millions?|billions?|mm|mn|bn|k)(?: of)?\s*(?:" + _CCY + r")?", u)
+    if m and (m.group(1) in _SCALE_WORDS):
+        return "money", _SCALE_WORDS[m.group(1)]
+    return "plain", 1.0
+
+
 def normalise_figure(value, units) -> dict:
-    kind, mult = _UNIT_FIGURE.get(str(units or "").strip().lower(), ("plain", 1.0))
+    kind, mult = _unit_parts(units)
     return {"value": float(value) * mult, "kind": kind}
 
 

@@ -358,7 +358,28 @@ IMPORT_ALIASES = {"pil": "python-pillow/Pillow", "bidi": "MeirKriheli/python-bid
                   "docling_parse": "docling-project/docling-parse", "pypdfium2": "pypdfium2-team/pypdfium2"}
 
 
-def first_party_names(root=None):
+def _namespace_dirs(root):
+    """Top-level dirs (not hidden, not reference/) holding at least one .py anywhere under them (PEP 420 namespaces)."""
+    out = []
+    for fn in sorted(os.listdir(root)):
+        full = os.path.join(root, fn)
+        if fn.startswith(".") or fn == "reference" or not os.path.isdir(full):
+            continue
+        if any(True for _ in py_files(fn, root=root)):
+            out.append(fn)
+    return out
+
+
+def first_party_collisions(root=None, rows=None):
+    """Auto-detected first-party dir names that shadow a stdlib module or a ledger-row repo name."""
+    root = root or ROOT
+    if rows is None:
+        rows = [tuple(x.strip() for x in r) for r in ledger_rows()]
+    return [d for d in _namespace_dirs(root)
+            if d not in FIRST_PARTY and (d in sys.stdlib_module_names or row_matches(d, rows))]
+
+
+def first_party_names(root=None, rows=None):
     root = root or ROOT
     names = set(FIRST_PARTY)
     for fn in os.listdir(root):
@@ -366,6 +387,8 @@ def first_party_names(root=None):
             names.add(fn[:-3])
         elif os.path.isdir(os.path.join(root, fn)) and os.path.exists(os.path.join(root, fn, "__init__.py")):
             names.add(fn)
+    bad = set(first_party_collisions(root, rows))
+    names |= {d for d in _namespace_dirs(root) if d not in bad}
     return names
 
 
@@ -456,6 +479,34 @@ def _():
     assert not unmapped, "no ledger row for: " + "; ".join(unmapped)
     assert not bad_dec, "skip/isolated_service module imported: " + "; ".join(bad_dec[:8])
     return f"{len(found)} third-party names, {n_mapped} mapped, table entries {len(table)}"
+
+
+@check("first-party dirs: no namespace dir shadows a stdlib module or a ledger-row repo name")
+def _():
+    bad = first_party_collisions()
+    assert not bad, "first-party directory name collides with stdlib/ledger module: " + ", ".join(bad)
+    return f"{len(_namespace_dirs(ROOT))} namespace/first-party dirs, 0 collisions"
+
+
+@check("self-test: namespace dir (no __init__.py, .py inside) is first-party; hidden/reference/.py-less dirs and collisions are not")
+def _():
+    import tempfile
+    d = tempfile.mkdtemp(prefix="s1ns_")
+    for rel in ("evals/corpus/a.py", "reference/x/b.py", ".hid/c.py", "docsonly/readme.md", "json/d.py", "fitzns/e.py"):
+        p = os.path.join(d, rel)
+        os.makedirs(os.path.dirname(p), exist_ok=True)
+        open(p, "w").write("x = 1\n" if rel.endswith(".py") else "x\n")
+    rows = [("pymupdf/fitzns", "x", "MIT", "adopt", "r")]
+    fp = first_party_names(d, rows)
+    assert "evals" in fp, f"namespace dir not first-party: {fp}"
+    assert not ({"reference", ".hid", "docsonly"} & fp), f"excluded dir treated as first-party: {fp}"
+    assert first_party_collisions(d, rows) == ["fitzns", "json"], first_party_collisions(d, rows)
+    assert not ({"json", "fitzns"} & fp), f"colliding dir wrongly first-party: {fp}"
+    open(os.path.join(d, "om_x.py"), "w").write("import evals.corpus\n")
+    os.makedirs(os.path.join(d, "om"), exist_ok=True)
+    open(os.path.join(d, "om", "m.py"), "w").write("from evals.corpus import a\n")
+    assert "evals" not in third_party_imports(d), "evals still reported as third-party"
+    return "namespace rule + collision rule"
 
 
 @check("self-test: scanners flag module-level fitz and unguarded uno, accept lazy uno")
