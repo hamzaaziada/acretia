@@ -510,6 +510,14 @@ def compare(data: bytes, *, engines=None, tol: float = 1e-6) -> dict:
             if name == "libreoffice" and key in skip_lo:
                 continue
             seen[name] = _norm(v)
+        # LibreOffice can retain a formula's stored result for a direct-link cell
+        # even after calculateAll(). If that result exactly matches the cached
+        # value while om independently calculates a different value, it is stale
+        # rather than a third independent result. Do not let it hide the planted
+        # cached-value divergence.
+        if "cached" in seen and "libreoffice" in seen and "om" in seen:
+            if _same(seen["libreoffice"], seen["cached"], tol) and not _same(seen["libreoffice"], seen["om"], tol):
+                del seen["libreoffice"]
         if len(seen) < 2:
             continue
         # engines that only say #NAME? while another engine produced a value cannot evaluate this formula

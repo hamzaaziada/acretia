@@ -282,7 +282,7 @@ class InviteAndRoleTests(ServerCase):
         self.assertEqual({m["email"]: m["role"] for m in d["items"]}["new@acme.example"], "viewer")
         # an invite for an existing user needs that user's password
         s, data, _ = owner.j("POST", "/api/v1/org/invites", {"email": "owner@acme.example", "role": "member"})
-        s, d, _ = Client(self.port).j("POST", "/api/v1/auth/invites/accept", {"token": data["token"], "password": "wrong"}, csrf=False)
+        s, d, _ = Client(self.port).j("POST", "/api/v1/auth/invites/accept", {"token": data["token"], "password": "not-the-password"}, csrf=False)  # secret-scan: allow, intentionally invalid fixture
         self.assertEqual(s, 401)
 
     def test_last_owner_guard(self):
