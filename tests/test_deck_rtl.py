@@ -1,6 +1,17 @@
 import unittest
 from dataclasses import dataclass, field
 
+try:
+    import pptx, PIL, fontTools  # noqa: F401
+except ImportError as e:
+    raise unittest.SkipTest(f"deck deps missing: {e}")
+
+try:
+    import arabic_reshaper  # noqa: F401
+    HAVE_RESHAPER = True
+except ImportError:
+    HAVE_RESHAPER = False
+
 from om.deck import metrics, rtl
 
 AR = ("الإيرادات ارتفعت بنسبة كبيرة خلال العام المالي الحالي مدفوعة بنمو قوي في قطاع الخدمات المصرفية "
@@ -43,6 +54,7 @@ class TestRtl(unittest.TestCase):
         self.assertFalse(rtl.is_rtl("Revenue growth for الشركة was strong across all regions"))
         self.assertFalse(rtl.is_rtl("123"))
 
+    @unittest.skipUnless(HAVE_RESHAPER, "arabic_reshaper not installed")
     def test_shape_and_width(self):
         s = rtl.shape(AR[:20])
         self.assertNotEqual(s, AR[:20])

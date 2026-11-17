@@ -2,3 +2,6 @@ pdfplumber>=0.11  # om/pdfdoc.py optional backend (words, font sizes, rulings)
 duckdb>=1.1  # om/grid.py Matrix store (S5.2); sqlite3 fallback when missing
 docling>=2.100  # om/docparse.py default parser (S5.1); om.pdfdoc fallback when missing (pulls torch CPU + HF weights)
 formulon==0.18.0
+openpyxl==3.1.5  # tests and gates read workbooks (S4)
+wasmtime==49.0.0  # formulon's wasm runtime (S4)
+# System packages (not pip): apt-get install -y libreoffice-calc poppler-utils

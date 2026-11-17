@@ -7,6 +7,11 @@ import unittest
 import zipfile
 from unittest import mock
 
+try:
+    import pptx, PIL, fontTools, openpyxl  # noqa: F401
+except ImportError as e:
+    raise unittest.SkipTest(f"deck deps missing: {e}")
+
 from pptx import Presentation
 
 from om.contracts import ManifestOutput, ModelManifest

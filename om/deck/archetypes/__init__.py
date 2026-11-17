@@ -30,6 +30,7 @@ class Archetype:
     visual_type: str
     data: bool
     build: Callable[[dict, BuildContext], Any]
+    example: dict | None = None
 
 
 REGISTRY: dict[str, Archetype] = {}
@@ -51,6 +52,14 @@ def get(id: str) -> Archetype:
         raise KeyError(f"unknown archetype {id!r}; known: {sorted(REGISTRY)}") from None
 
 
+def examples() -> dict[str, dict]:
+    """Realistic example slide spec per archetype id, for every archetype that ships one."""
+    return {i: a.example for i, a in REGISTRY.items() if a.example is not None}
+
+
 for _m in pkgutil.iter_modules(__path__):
     if _m.name != "base" and not _m.name.startswith("_"):
-        importlib.import_module(f"{__name__}.{_m.name}")
+        _mod = importlib.import_module(f"{__name__}.{_m.name}")
+        for _id, _ex in (getattr(_mod, "EXAMPLES", None) or {}).items():
+            if _id in REGISTRY:
+                REGISTRY[_id].example = _ex

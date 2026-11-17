@@ -1,0 +1,655 @@
+# Structured depth for every IFRS, IAS and analyst-relevant IFRIC in force in 2026. Own words; references point at the standard.
+# Records for ids already in ifrs_standards.yaml are merged into them; the others become new standard entries
+# (new entries carry `title`, `slug`, `ref`). All are reference-based (basis: standard-reference), not page-read.
+detail:
+- id: std-ifrs1
+  standard: IFRS 1
+  title: First-time adoption of IFRS
+  slug: ifrs-1-first-time-adoption-of-international-financial-reporting-standards
+  ref: "paras 6-8, 13-19, 21-24"
+  scope: "The first financial statements that state explicit and unreserved IFRS compliance, plus interim reports inside that year."
+  recognition: "Prepare an opening IFRS statement of financial position at the transition date by applying the standards in force at the first reporting date retrospectively, then adjust everything recognised under old GAAP."
+  measurement_initial: "Opening balances use IFRS carrying amounts; optional exemptions allow deemed cost (fair value or revalued amount) for PPE, investment property and intangibles."
+  measurement_subsequent: "After transition the entity follows each IFRS normally; the differences are reconciled once through equity."
+  presentation: "At least one year of comparatives and an opening position; reconciliations of equity and total comprehensive income from previous GAAP."
+  key_disclosures: "Reconciliations from previous GAAP to IFRS for equity at the transition date and the last old-GAAP year end, and the profit or loss for that year; exemptions used."
+  key_judgements: "Which optional exemptions to take (business combinations before transition, deemed cost, cumulative translation reserve reset to zero, leases) and whether mandatory exceptions such as estimates apply."
+  recent_amendments: "Amendments for subsidiaries that become first-time adopters later and for hyperinflation exit (2010); annual improvements on hedge accounting at transition (2022). IFRS 18 consequential edits from 2027."
+  analyst_effect: "Transition year equity, margins and leverage jump with no operating cause (leases on balance sheet, deemed cost, reserve reset); do not trend across the transition without the reconciliation."
+  keywords: [first-time adoption, transition date, deemed cost, opening balance sheet, previous gaap]
+- id: std-ifrs2
+  standard: IFRS 2
+  title: Share-based payment
+  slug: ifrs-2-share-based-payment
+  ref: "paras 7-8, 10-13, 19-21, 30"
+  scope: "Transactions paid for in shares, options or cash linked to share price, including employee schemes and goods or services from others."
+  recognition: "Expense over the vesting period as services are received, credited to equity for equity-settled awards or to a liability for cash-settled ones."
+  measurement_initial: "Equity-settled awards at grant-date fair value of the instruments (option pricing model), not revalued; cash-settled at the fair value of the liability."
+  measurement_subsequent: "Equity-settled: true up the number expected to vest for service and non-market conditions only; cash-settled: remeasure to fair value each period through profit or loss."
+  presentation: "Employee cost within staff expense (function or nature); credit to a share-based payment reserve or a liability."
+  key_disclosures: "Nature of plans, number and weighted exercise prices of options, valuation inputs, and the total expense."
+  key_judgements: "Model inputs (volatility, expected term), vesting and market conditions, modification and cancellation accounting, and cash-settled versus equity-settled classification (net settlement features)."
+  recent_amendments: "2016 amendments on cash-settled awards with vesting conditions, net-settled withholding tax and modifications from cash to equity settlement."
+  analyst_effect: "A non-cash charge inside EBIT; adjusted EBITDA often adds it back but dilution through diluted EPS and cash-settled liabilities (debt-like) still cost holders value."
+  keywords: [share based payment, stock options, esop, vesting, grant date fair value, dilution]
+- id: std-ifrs3
+  standard: IFRS 3
+  scope: "Transactions in which an acquirer obtains control of a business; excludes common-control combinations, asset acquisitions and joint ventures formation."
+  recognition: "Apply the acquisition method: identify the acquirer, the acquisition date, recognise identifiable assets and liabilities (including contingent liabilities that are present obligations) and goodwill."
+  measurement_initial: "Identifiable net assets at fair value (with exceptions such as deferred tax, employee benefits, leases); consideration at fair value including contingent consideration; non-controlling interest at fair value or share of net assets; acquisition costs expensed."
+  measurement_subsequent: "Goodwill is not amortised and is tested annually under IAS 36; contingent consideration classified as a liability is remeasured through profit or loss; measurement period of up to twelve months for provisional values."
+  presentation: "Goodwill and acquired intangibles on the balance sheet; acquisition costs and remeasurements in profit or loss; cash paid net of cash acquired in investing."
+  key_disclosures: "Consideration, assets and liabilities acquired, goodwill drivers and tax deductibility, acquired receivables, revenue and profit since acquisition and pro forma."
+  key_judgements: "Business versus asset acquisition (concentration test), identifying intangibles, fair value of contingent consideration and earn-outs, and bargain purchase gains."
+  recent_amendments: "2018 amendments on the definition of a business and optional concentration test; 2020 reference to the Conceptual Framework."
+  analyst_effect: "Purchase-price amortisation lowers EBIT and earnings but not EBITDA; goodwill inflates equity and invites later impairment; earn-out remeasurements distort profit."
+- id: std-ifrs4
+  standard: IFRS 4
+  title: Insurance contracts (superseded)
+  slug: ifrs-4-insurance-contracts
+  ref: "Replaced by IFRS 17 from 1 January 2023"
+  scope: "Insurance contracts under the interim standard; replaced by IFRS 17 for periods from 2023 (with a temporary deferral for some insurers until IFRS 9 alignment)."
+  recognition: "Permitted continuing local GAAP practices for insurance liabilities with a liability adequacy test."
+  measurement_initial: "Insurer's previous GAAP basis."
+  measurement_subsequent: "Previous GAAP with limited improvements; shadow accounting allowed."
+  presentation: "Insurance liabilities as presented under local rules."
+  key_disclosures: "Amounts and risks from insurance contracts, sensitivity and concentration."
+  key_judgements: "Classifying insurance versus investment contracts and the temporary exemption from IFRS 9."
+  recent_amendments: "Deferral of IFRS 9 for insurers (2016) ended with IFRS 17 adoption in 2023."
+  analyst_effect: "Historical insurer comparability is poor; treat pre-2023 figures as a different basis from IFRS 17."
+- id: std-ifrs5
+  standard: IFRS 5
+  title: Non-current assets held for sale and discontinued operations
+  slug: ifrs-5-non-current-assets-held-for-sale-and-discontinued-operations
+  ref: "paras 6-8, 15, 25, 30-33, 33A"
+  scope: "Non-current assets and disposal groups whose carrying amount will be recovered mainly through sale, and components that are discontinued."
+  recognition: "Classify as held for sale when the asset is available for immediate sale in present condition, management is committed and the sale is highly probable and expected within a year."
+  measurement_initial: "Lower of carrying amount and fair value less costs to sell; impairment loss if lower."
+  measurement_subsequent: "No depreciation or amortisation while held for sale; gains from later increases recognised only up to prior losses."
+  presentation: "Assets and liabilities shown separately as current; results of a discontinued operation as one post-tax line with comparatives re-presented."
+  key_disclosures: "Description, facts and circumstances, gain or loss, segment, and cash flows of discontinued operations."
+  key_judgements: "Whether the highly probable and one-year criteria are met (and delays outside control), what qualifies as a major line of business, and fair value less costs to sell."
+  recent_amendments: "Clarifications on plans to sell a controlling interest (2014) and IFRS 18 consequential presentation changes from 2027."
+  analyst_effect: "Moves earnings and EBITDA of discontinued parts below continuing profit, stops depreciation, and splits net debt and cash flow; use continuing figures for run-rate and the held-for-sale balance in the EV bridge."
+  keywords: [held for sale, discontinued operations, disposal group, fair value less costs to sell]
+- id: std-ifrs6
+  standard: IFRS 6
+  title: Exploration for and evaluation of mineral resources
+  slug: ifrs-6-exploration-for-and-evaluation-of-mineral-resources
+  ref: "paras 6-9, 15-18, 20"
+  scope: "Costs incurred in searching for mineral, oil and gas resources before technical feasibility is shown."
+  recognition: "Entities may continue prior policies for exploration and evaluation assets (capitalise or expense) while choosing a consistent policy."
+  measurement_initial: "Cost, with a policy on which expenditures are capitalised as exploration and evaluation assets."
+  measurement_subsequent: "Cost or revaluation; tested for impairment when facts suggest carrying amount may exceed recoverable amount, using a relaxed CGU rule."
+  presentation: "Classified as tangible or intangible; reclassified out of the exploration category when feasibility is shown."
+  key_disclosures: "Policies, amounts of assets, liabilities, income, expense and cash flows from exploration."
+  key_judgements: "Policy choice between successful efforts and full cost, and impairment indicators such as expired licences."
+  recent_amendments: "None of significance since 2019; IFRS 18 only affects presentation."
+  analyst_effect: "Full-cost capitalisation lifts EBIT and operating cash flow versus expensing; compare miners and oil companies on one policy."
+- id: std-ifrs7
+  standard: IFRS 7
+  title: Financial instruments disclosures
+  slug: ifrs-7-financial-instruments-disclosures
+  ref: "paras 7-8, 31-42, 44F-44H"
+  scope: "Disclosure of the significance of financial instruments and the nature and extent of credit, liquidity and market risks."
+  recognition: "A disclosure standard; recognition and measurement sit in IFRS 9 and IAS 32."
+  measurement_initial: "Not applicable (disclosure)."
+  measurement_subsequent: "Fair value hierarchy information for items at fair value."
+  presentation: "Classification tables by category, offsetting information, and risk sections in the notes."
+  key_disclosures: "Carrying amounts by IFRS 9 category, ECL allowance reconciliation, credit risk exposure, liquidity maturity tables, market risk sensitivity, hedging effects, supplier finance arrangements."
+  key_judgements: "Level 3 inputs, how credit risk concentrations and significant increases in credit risk are described, and what counts as a supplier finance arrangement."
+  recent_amendments: "Supplier finance arrangements disclosures with IAS 7 (2023, effective 2024); 2024 amendments on classification and measurement of financial instruments (effective 2026) add disclosures for contingent features and equity instruments at FVOCI."
+  analyst_effect: "Use the maturity table for debt schedules, the supplier finance note to adjust working capital and net debt, and the ECL reconciliation for credit-cost forecasts."
+  keywords: [financial instruments disclosures, supplier finance, liquidity risk, credit risk, maturity analysis, ifrs 7]
+- id: std-ifrs8
+  standard: IFRS 8
+  scope: "Entities with publicly traded securities (or filing to list); disclosure of operating segments, products, geography and major customers."
+  recognition: "Not a recognition standard: segments follow the management approach, as the chief operating decision maker reviews them."
+  measurement_initial: "Segment profit and assets reported on the measure used internally, not necessarily IFRS."
+  measurement_subsequent: "Not applicable; reconcile totals to group revenue, profit, assets and liabilities."
+  presentation: "A note: segment revenue (external and intersegment), profit measure, assets if reported internally, reconciliations."
+  key_disclosures: "Factors identifying segments, measurement basis, reconciliations, revenue by product and country, customers above 10 percent of revenue."
+  key_judgements: "Identifying the CODM and aggregation of segments, applying the 10 percent thresholds and 75 percent external revenue test, and allocations of central costs."
+  recent_amendments: "No major amendment in 2019-2026; IFRS 18 from 2027 aligns operating profit measures and changes how segment profit reconciles."
+  analyst_effect: "Segment EBITDA may differ from group EBIT; use the reconciliation, watch unallocated costs and intersegment eliminations, and rebuild like-for-like margins."
+- id: std-ifrs9
+  standard: IFRS 9
+  scope: "Recognition, classification, impairment and derecognition of financial assets and liabilities, and hedge accounting; excludes items covered by IFRS 10-11, IFRS 16, IFRS 2 and IFRS 17."
+  recognition: "Recognise when the entity becomes party to the contract; derecognise assets when cash flow rights expire or risks and rewards transfer; liabilities when extinguished."
+  measurement_initial: "Fair value plus transaction costs (not for items at FVTPL); trade receivables without a significant financing component at transaction price."
+  measurement_subsequent: "Assets by business model and cash flow test: amortised cost, FVOCI or FVTPL; ECL impairment in three stages (12-month loss in stage 1, lifetime when credit risk rose significantly or credit-impaired) using forward-looking information; liabilities mainly at amortised cost."
+  presentation: "Impairment losses shown separately in profit or loss; interest revenue on effective-interest basis; hedge results in the line they hedge or OCI reserves for cash flow hedges."
+  key_disclosures: "Through IFRS 7: ECL movement, credit risk, fair value levels, hedging relationships."
+  key_judgements: "Business model assessment, SPPI test, significant increase in credit risk, macroeconomic scenario weights, and hedge accounting (fair value, cash flow and net investment models; economic relationship, credit risk dominance and hedge ratio replace the old 80-125 percent test)."
+  recent_amendments: "2019-2020 interest rate benchmark reform relief (phases 1 and 2); 2024 amendments on settlement of liabilities through electronic payment systems and on SPPI and contingent features, effective 2026."
+  analyst_effect: "Credit cost is booked earlier, so provisions lead write-offs; hedge accounting shifts FX and rate effects between OCI and profit; fair value option and FVTPL items add volatility to earnings and EPS."
+- id: std-ifrs10
+  standard: IFRS 10
+  scope: "Consolidated financial statements of a parent and subsidiaries; investment entities are exempt from consolidating most investees."
+  recognition: "Consolidate every entity that is controlled: power over relevant activities, exposure to variable returns, and ability to use power to affect them."
+  measurement_initial: "Subsidiary assets and liabilities combined line by line with intragroup items eliminated; non-controlling interests shown separately."
+  measurement_subsequent: "Uniform accounting policies and reporting dates (within three months); transactions with non-controlling interests are equity transactions; loss of control triggers derecognition and gain or loss."
+  presentation: "Profit and equity attributed to owners and to non-controlling interests."
+  key_disclosures: "Through IFRS 12: judgements on control, restrictions, material non-controlling interests, structured entities."
+  key_judgements: "De facto control with less than half of votes, potential voting rights, principal versus agent for funds, and structured entities."
+  recent_amendments: "2014 and 2015 amendments on investment entities and sale of assets to an associate; effective-date deferral for the sale or contribution amendment remains open."
+  analyst_effect: "EBITDA and debt include 100 percent of subsidiaries; subtract non-controlling interests (and their share of net debt) when valuing the parent."
+- id: std-ifrs11
+  standard: IFRS 11
+  scope: "Arrangements controlled jointly under a contract."
+  recognition: "Classify as a joint operation (investor has rights to assets and obligations) or a joint venture (rights to net assets) by structure, legal form, contract terms and other facts."
+  measurement_initial: "Joint operation: recognise own share of assets, liabilities, revenue and expenses; joint venture: equity method at cost."
+  measurement_subsequent: "Joint venture follows IAS 28 equity accounting; joint operation share kept line by line."
+  presentation: "Share of profit of joint ventures in one line; joint operation shares inside normal lines."
+  key_disclosures: "Through IFRS 12: nature and risks of joint arrangements, summarised financial information."
+  key_judgements: "Structure and legal form classification, separate vehicles, and acquisition of an interest in a joint operation that is a business."
+  recent_amendments: "2014 amendment on acquiring an interest in a joint operation; open deferral of the IFRS 10/IAS 28 sale amendment."
+  analyst_effect: "Proportionate share of joint operation EBITDA and debt is in the numbers; joint venture debt and EBITDA are off the group figures and need a manual proportionate adjustment."
+  adjustment: associates_share_strip
+- id: std-ifrs12
+  standard: IFRS 12
+  scope: "Interests in subsidiaries, joint arrangements, associates and unconsolidated structured entities."
+  recognition: "Disclosure standard with no recognition rules."
+  measurement_initial: "Not applicable."
+  measurement_subsequent: "Not applicable."
+  presentation: "Dedicated note with summarised financial information per material associate and joint venture."
+  key_disclosures: "Significant judgements, restrictions on assets and cash, risks from structured entities, summarised financials, dividends received."
+  key_judgements: "Materiality of investees, what is a structured entity, and degree of detail given."
+  recent_amendments: "Investment entity consequential changes (2012-2014); IFRS 18 aligns profit measures."
+  analyst_effect: "Supplies the numbers needed for proportionate net debt and EBITDA and for non-controlling interest values."
+  adjustment: associates_share_strip
+- id: std-ifrs13
+  standard: IFRS 13
+  title: Fair value measurement
+  slug: ifrs-13-fair-value-measurement
+  ref: "paras 9, 22-27, 61-66, 72-90, 93"
+  scope: "How to measure fair value when another IFRS requires or permits it, with exceptions (share-based payments, leases, net realisable value)."
+  recognition: "A measurement framework only."
+  measurement_initial: "Exit price in an orderly transaction between market participants at the measurement date, in the principal or most advantageous market, using the highest and best use for non-financial assets."
+  measurement_subsequent: "Valuation techniques (market, income, cost) maximising observable inputs: level 1 quoted prices, level 2 observable, level 3 unobservable."
+  presentation: "Applied in the lines that carry fair value."
+  key_disclosures: "Hierarchy levels, valuation techniques and inputs for level 2 and 3, reconciliations of level 3 movements, sensitivity of recurring level 3 measurements."
+  key_judgements: "Level classification, unobservable inputs such as discount rates and yields, blockage factors, and unit of account."
+  recent_amendments: "No substantial amendment in 2019-2026; the 2024 IFRS 9 and IFRS 7 amendments add fair value related disclosures for equity instruments."
+  analyst_effect: "Level 3 gains (investment property, financial assets) are subjective; haircut them in comparable earnings and cap rates for property groups."
+- id: std-ifrs14
+  standard: IFRS 14
+  title: Regulatory deferral accounts
+  slug: ifrs-14-regulatory-deferral-accounts
+  ref: "paras 5-6, 11-13, 20-26"
+  scope: "Optional interim standard for first-time adopters that kept regulatory deferral balances under previous GAAP; superseded in practice while the IASB completes its rate-regulated activities project."
+  recognition: "Continue previous GAAP recognition of regulatory deferral account balances."
+  measurement_initial: "Previous GAAP basis."
+  measurement_subsequent: "Previous GAAP basis, with impairment per previous practice."
+  presentation: "Separate line items for regulatory deferral balances and movements, outside revenue."
+  key_disclosures: "Nature of rate regulation, risks, amounts and reconciliations."
+  key_judgements: "Whether the entity is eligible (first-time adopter with rate-regulated activities) and which balances to carry."
+  recent_amendments: "New rate-regulated activities standard still pending at the IASB; only IFRS 18 consequential changes."
+  analyst_effect: "Regulatory balances act like deferred revenue or receivables; adjust leverage and earnings for utilities that use or do not use the option."
+- id: std-ifrs15
+  standard: IFRS 15
+  scope: "Revenue from contracts with customers, except leases, insurance, financial instruments and some non-monetary exchanges."
+  recognition: "Five-step model: identify the contract, identify separate performance obligations, determine the transaction price, allocate by stand-alone selling price, recognise revenue when or as control passes (over time if the customer simultaneously benefits, the asset is enhanced under customer control, or there is no alternative use plus a right to payment; otherwise at a point in time)."
+  measurement_initial: "Transaction price net of variable consideration (expected value or most likely amount) only to the extent it is highly probable that a significant reversal will not occur (the constraint); adjust for significant financing and non-cash consideration."
+  measurement_subsequent: "Revisit estimates of variable consideration each period; progress measured by input or output methods; contract costs amortised."
+  presentation: "Contract assets, contract liabilities and receivables; revenue separately from other income."
+  key_disclosures: "Disaggregation, contract balances and movements, remaining performance obligations, significant judgements, assets from costs to obtain or fulfil."
+  key_judgements: "The variable-consideration constraint, principal versus agent, licence timing (right to use versus access), distinct goods bundled with services, and percentage-of-completion progress measures."
+  recent_amendments: "No major amendments in 2019-2026; clarifications of 2016 are embedded; IFRS 18 only changes presentation."
+  analyst_effect: "Revenue timing and gross versus net presentation move margins; contract liabilities are a leading indicator of future revenue and a source of operating cash."
+- id: std-ifrs16
+  standard: IFRS 16
+  scope: "All leases except some rights under other standards (mineral rights, biological assets, service concessions, licences of intellectual property granted by a lessor)."
+  recognition: "Lessee recognises a right-of-use asset and a lease liability at commencement for all leases except short-term (12 months or less) and low-value asset exemptions; lessors classify as finance or operating leases."
+  measurement_initial: "Liability at the present value of unpaid lease payments using the implicit rate or the incremental borrowing rate; asset equals the liability plus initial direct costs, prepayments and restoration costs."
+  measurement_subsequent: "Depreciate the asset and accrue interest on the liability; remeasure on reassessment or modification (term, index-linked payments, purchase option); lessor finance leases as net investment."
+  presentation: "Right-of-use assets and lease liabilities separately or in notes; depreciation in operating costs, interest in finance costs; principal repayments in financing cash flow."
+  key_disclosures: "Right-of-use movement by class, maturity analysis, total cash outflow, expense on short-term, low-value and variable payments, sale and leaseback gains."
+  key_judgements: "Lease term including extension options, whether a contract contains a lease, discount rate, separating lease and non-lease components, and variable payments."
+  recent_amendments: "COVID-19 rent concession relief (2020-2021); sale and leaseback with variable payments (2022, effective 2024) requires lessee measurement without recognising gains on retained rights."
+  analyst_effect: "EBITDA rises as rent leaves operating costs, operating cash flow rises and financing outflows rise; net debt may include lease liabilities; convert to a pre-16 basis to compare with US GAAP operating-lease reporters."
+  adjustment: ifrs16_to_pre16_ebitda
+- id: std-ifrs17
+  standard: IFRS 17
+  title: Insurance contracts
+  slug: ifrs-17-insurance-contracts
+  ref: "paras 32-52, 53-59, 99-105, B96-B119"
+  scope: "Insurance contracts issued, reinsurance held and investment contracts with discretionary participation features."
+  recognition: "Group contracts by portfolio, profitability and annual cohort; recognise from the start of coverage, with onerous contracts losses immediately."
+  measurement_initial: "General model: fulfilment cash flows (probability-weighted cash flows, discounting, risk adjustment) plus the contractual service margin that defers unearned profit; premium allocation approach for short contracts; variable fee approach for participating contracts."
+  measurement_subsequent: "The contractual service margin is released over coverage; insurance finance income or expense through profit or loss or OCI by policy choice; remeasure estimates each period."
+  presentation: "Insurance revenue, insurance service expense, and insurance finance income or expense; groups of contracts in assets or liabilities."
+  key_disclosures: "Reconciliations of liabilities, contractual service margin, discount rates, confidence level for risk adjustment, transition approach, sensitivity."
+  key_judgements: "Discount rate curves, risk adjustment, coverage units, boundary of contracts, grouping and the OCI option."
+  recent_amendments: "2020 amendments (effective 2023) and a 2021 comparative-information option for the IFRS 9 overlap."
+  analyst_effect: "Revenue is no longer gross premium; value insurers on contractual service margin and combined ratio from insurance service result, and watch investment result versus finance expense."
+- id: std-ifrs18
+  standard: IFRS 18
+  scope: "Presentation and disclosure in general-purpose financial statements; replaces IAS 1 presentation rules for annual periods from 1 January 2027 (retrospective)."
+  recognition: "No recognition changes; reclassifies items into operating, investing, financing, income tax and discontinued operations categories."
+  measurement_initial: "No measurement requirements."
+  measurement_subsequent: "No measurement requirements."
+  presentation: "Mandatory subtotals: operating profit and profit before financing and income taxes; aggregation and disaggregation principles; function reporters disclose operating expenses by nature."
+  key_disclosures: "Management-defined performance measures in one note with reconciliation, unusual items, and by-nature breakdown for function presenters."
+  key_judgements: "Main business activities (for entities with investing or financing as a main business), classification of FX and derivative items, and what counts as a management-defined measure."
+  recent_amendments: "Issued April 2024; IFRS 19 for subsidiaries without public accountability issued 2024 for 2027; cash flow statement starts from operating profit under IAS 7 amendments."
+  analyst_effect: "Operating profit finally comparable across IFRS reporters; EBITDA and adjusted measures must be reconciled; expect restated comparatives and a one-off definitional break in 2027."
+  adjustment: by_nature_ebit
+- id: std-ias1
+  standard: IAS 1
+  scope: "General-purpose financial statements: the full set of statements, fair presentation, going concern, accruals, materiality and offsetting."
+  recognition: "No recognition rules; sets classification as current or non-current by the right to defer settlement for at least twelve months after the reporting date."
+  measurement_initial: "Not applicable."
+  measurement_subsequent: "Not applicable."
+  presentation: "Minimum face line items, expenses by nature or function, current and non-current split, OCI by recyclable and non-recyclable items, comparatives, until IFRS 18 replaces the presentation rules from 2027."
+  key_disclosures: "Accounting policies (material only), judgements, sources of estimation uncertainty, capital management, puttable instruments, dividends."
+  key_judgements: "Going concern, classification of debt with covenants, aggregation, and whether a liability is current when covenants fall due within twelve months."
+  recent_amendments: "Classification of liabilities as current or non-current and non-current liabilities with covenants (2020 and 2022, effective 2024); material accounting policy information (2021); IFRS 18 replaces IAS 1 presentation from 2027."
+  analyst_effect: "Covenant-driven reclassification moves debt into current liabilities and distorts working capital and liquidity ratios; no standard operating profit exists before IFRS 18."
+  adjustment: by_nature_ebit
+- id: std-ias2
+  standard: IAS 2
+  scope: "Inventories except financial instruments, biological assets and work in progress under construction contracts (IFRS 15)."
+  recognition: "Recognise as expense when sold; write-downs when net realisable value is below cost."
+  measurement_initial: "Cost: purchase price, conversion costs including fixed production overheads on normal capacity, and other costs bringing inventory to location and condition."
+  measurement_subsequent: "Lower of cost and net realisable value; FIFO or weighted average (LIFO prohibited); reversal of write-downs when NRV recovers."
+  presentation: "Inventory as current asset; cost of inventories sold in cost of sales or by nature."
+  key_disclosures: "Policies, carrying amount by class, write-downs and reversals, amounts pledged."
+  key_judgements: "Net realisable value estimates, capacity assumptions for overhead absorption, and commodity inventories at fair value less costs to sell for brokers."
+  recent_amendments: "No amendments in 2019-2026."
+  analyst_effect: "Cost of sales and margins depend on the formula; no LIFO reserve under IFRS, so convert US LIFO peers to FIFO."
+  adjustment: lifo_to_fifo
+- id: std-ias7
+  standard: IAS 7
+  scope: "Statement of cash flows for all entities."
+  recognition: "Classify cash flows into operating, investing and financing."
+  measurement_initial: "Cash and cash equivalents: short-term highly liquid investments with insignificant risk of changes in value."
+  measurement_subsequent: "Not applicable."
+  presentation: "Operating flows by the direct or indirect method; interest and dividends classified consistently by policy; taxes in operating unless identified with investing or financing."
+  key_disclosures: "Components of cash, non-cash transactions, changes in liabilities from financing, restrictions on cash, supplier finance arrangements effects."
+  key_judgements: "Classification of interest, dividends and lease payments, cash equivalents boundary, and where supplier finance outflows belong."
+  recent_amendments: "Supplier finance arrangements disclosures (2023, effective 2024); IFRS 18 changes the starting line to operating profit and removes interest and dividend choices from 2027."
+  analyst_effect: "Interest placement changes operating cash flow and free cash flow; supplier finance can inflate operating cash flow while hiding debt."
+- id: std-ias8
+  standard: IAS 8
+  title: Accounting policies, changes in accounting estimates and errors
+  slug: ias-8-accounting-policies-changes-in-accounting-estimates-and-errors
+  ref: "paras 10-12, 14-19, 32-40, 41-49"
+  scope: "Selecting and changing accounting policies, accounting for changes in estimates and correcting prior period errors."
+  recognition: "A policy change is applied retrospectively unless impracticable; an estimate change is prospective; material prior-period errors are restated."
+  measurement_initial: "Apply IFRS; when silent, develop policies from similar standards and the Conceptual Framework."
+  measurement_subsequent: "Comparatives and opening equity restated for policy changes and errors."
+  presentation: "Third balance sheet where restatement is material; effect of restatement per line item."
+  key_disclosures: "Nature and amount of policy changes, estimate changes with material effects, and prior period error corrections."
+  key_judgements: "Distinguishing a change in estimate from a change in policy, materiality of errors, and the hierarchy when no IFRS applies."
+  recent_amendments: "Definition of accounting estimates (2021, effective 2023); Conceptual Framework references (2018)."
+  analyst_effect: "Restated comparatives break trends; read the restatement note before using prior-year figures, and treat repeated restatements as an audit quality flag."
+- id: std-ias10
+  standard: IAS 10
+  title: Events after the reporting period
+  slug: ias-10-events-after-the-reporting-period
+  ref: "paras 3, 8-11, 14-16, 21"
+  scope: "Events between the reporting date and the date financial statements are authorised for issue."
+  recognition: "Adjusting events (evidence of conditions existing at the reporting date) are recognised; non-adjusting events are disclosed only; dividends declared after year end are not liabilities."
+  measurement_initial: "Adjusting events change recognised amounts."
+  measurement_subsequent: "Not applicable."
+  presentation: "Date of authorisation disclosed; going concern deterioration after year end can change the basis of preparation."
+  key_disclosures: "Nature and estimated financial effect of material non-adjusting events such as acquisitions, major FX moves and dividends proposed."
+  key_judgements: "Whether an event provides evidence of conditions at the reporting date, for example customer insolvency or a post-year-end devaluation (non-adjusting)."
+  recent_amendments: "No amendments in 2019-2026."
+  analyst_effect: "A post-year-end devaluation or large acquisition is not in the balance sheet; read the events note and pro forma the debt and earnings."
+- id: std-ias12
+  standard: IAS 12
+  scope: "Taxes on profits, including withholding taxes on distributions; excludes non-income taxes and (in Saudi Arabia) zakat."
+  recognition: "Recognise current tax payable and deferred tax on temporary differences using the balance-sheet liability method; recognise deferred tax assets only to the extent that taxable profit is probable; initial recognition exemption has narrowed."
+  measurement_initial: "Use rates enacted or substantively enacted at the reporting date; deferred tax is not discounted."
+  measurement_subsequent: "Reassess recoverability of deferred tax assets each period; tax on items in OCI or equity goes there."
+  presentation: "Tax expense line, deferred tax as non-current, offsetting only where a legal right exists; no discounting."
+  key_disclosures: "Tax rate reconciliation, deferred tax by temporary difference, unrecognised losses and credits, uncertain positions via IFRIC 23, Pillar Two current tax."
+  key_judgements: "Recoverability of deferred tax assets, uncertain tax positions, outside basis differences on subsidiaries, and tax on leases and decommissioning."
+  recent_amendments: "Deferred tax on leases and decommissioning obligations (2021, effective 2023); International Tax Reform Pillar Two model rules temporary exception and disclosures (2023, immediate effect); IFRIC 23 (2019)."
+  analyst_effect: "Effective tax rate swings from one-off deferred tax items or tax losses; normalise to a statutory rate and add Pillar Two top-up tax for large groups."
+  adjustment: zakat_as_tax
+- id: std-ias16
+  standard: IAS 16
+  scope: "Property, plant and equipment held for use that are expected to be used for more than one period; excludes investment property, biological assets and assets held for sale."
+  recognition: "Recognise when future economic benefits are probable and cost is reliably measurable; spare parts and major inspections as components."
+  measurement_initial: "Cost: purchase price, directly attributable costs and estimated restoration costs; borrowing costs of qualifying assets capitalised; proceeds from testing before use now go to profit or loss."
+  measurement_subsequent: "Cost model or revaluation model by class; depreciation over useful life by component with annual review of residual value, life and method; impairment under IAS 36."
+  presentation: "Separate class lines; depreciation by function or nature; revaluation surplus in OCI."
+  key_disclosures: "Reconciliation of carrying amounts, methods and lives, revalued amounts and surplus, commitments, assets pledged."
+  key_judgements: "Useful lives and residual values, component identification, revaluation valuer inputs, and when assets are available for use."
+  recent_amendments: "Proceeds before intended use (2020, effective 2022); IFRS 18 only presentation."
+  analyst_effect: "Depreciation policy drives EBIT and capital intensity; the revaluation model inflates equity and depreciation base, reverse it for return on capital."
+  adjustment: revaluation_reverse
+- id: std-ias19
+  standard: IAS 19
+  scope: "All employee benefits: short-term, post-employment (defined contribution and defined benefit), other long-term and termination benefits."
+  recognition: "Expense short-term benefits as service is rendered; recognise the net defined benefit liability or asset for defined benefit plans, with the asset limited by the asset ceiling."
+  measurement_initial: "Projected unit credit method for the obligation, discounted at high-quality corporate bond yields (or government bonds where no deep market); plan assets at fair value."
+  measurement_subsequent: "Current service cost and net interest in profit or loss; remeasurements (actuarial gains and losses, return on assets, change in ceiling) in OCI and not recycled; settlement and curtailment gains in profit or loss."
+  presentation: "Net liability or asset on the balance sheet; service cost in operating expenses, interest in finance items."
+  key_disclosures: "Actuarial assumptions and sensitivity, reconciliation of obligation and plan assets, asset allocation, funding, expected contributions."
+  key_judgements: "Discount rate, salary growth, mortality and attrition, asset ceiling and minimum funding (IFRIC 14), classification of plans as defined contribution or benefit, and statutory end-of-service schemes."
+  recent_amendments: "Plan amendment, curtailment or settlement: use updated assumptions for the rest of the period (2018, effective 2019)."
+  analyst_effect: "Treat net deficits as debt-like (after tax); discount-rate changes move OCI and equity, not earnings; end-of-service schemes are debt-like even when unfunded."
+  adjustment: eosb_as_debt_like
+- id: std-ias20
+  standard: IAS 20
+  scope: "Government grants and other government assistance, except tax benefits through the tax system."
+  recognition: "Recognise when there is reasonable assurance that conditions will be met and the grant will be received; match to related costs."
+  measurement_initial: "Fair value of the asset or amount received; below-market government loans carry a grant element measured as the difference from market rate under IFRS 9."
+  measurement_subsequent: "Income grants in profit or loss over the periods costs are recognised; asset grants as deferred income or deducted from the asset; repayment accounted as a change in estimate."
+  presentation: "Separate other income or reduction of the related expense; deferred income as a liability."
+  key_disclosures: "Policy, nature and extent of grants, unfulfilled conditions and contingencies."
+  key_judgements: "Reasonable assurance, whether a benefit is a grant or revenue, and gross versus net presentation."
+  recent_amendments: "No amendments in 2019-2026; new US GAAP disclosure rules (ASU 2021-10) differ."
+  analyst_effect: "Netting grants against costs raises margins and lowers capex; gross up and exclude grants that may end."
+  adjustment: gov_grant_gross_up
+- id: std-ias21
+  standard: IAS 21
+  scope: "Foreign currency transactions, foreign operations and presentation currency; excludes derivatives and hedge accounting under IFRS 9."
+  recognition: "Translate transactions into the functional currency at the date of transaction; monetary items at the closing rate at each reporting date."
+  measurement_initial: "Functional currency is the currency of the primary economic environment (sales prices, costs, financing, retention of receipts); initial foreign items at the transaction-date rate (IFRIC 22 for advance consideration)."
+  measurement_subsequent: "Monetary items retranslated at closing rate with differences in profit or loss; non-monetary items at historical cost keep their rate; foreign operations translated at closing rate for balance sheet and transaction or average rate for income with differences in OCI, recycled on disposal."
+  presentation: "Exchange differences disclosed; translation reserve in equity."
+  key_disclosures: "Net exchange differences in profit or loss, functional currency changes, translation reserve movement."
+  key_judgements: "Functional currency indicators, hyperinflation interaction, net investment designation and lack of exchangeability."
+  recent_amendments: "Lack of exchangeability (2023, effective 2025): estimate a spot rate when a currency cannot be exchanged and disclose the effect; IFRIC 22 (2016)."
+  analyst_effect: "Devaluation flows through finance costs or other expense and can swamp EBIT; strip FX out of EBITDA and recurring profit, and translate peers on the same rate basis."
+  adjustment: devaluation_fx_loss_normalise
+- id: std-ias23
+  standard: IAS 23
+  scope: "Borrowing costs for qualifying assets; exempts assets measured at fair value and inventories produced in large quantities repetitively."
+  recognition: "Capitalise borrowing costs directly attributable to acquisition, construction or production of a qualifying asset that takes a substantial period to get ready; expense the rest."
+  measurement_initial: "Specific borrowings: actual cost less investment income earned; general borrowings: weighted average capitalisation rate on expenditure."
+  measurement_subsequent: "Part of asset cost, depreciated; capitalisation suspended during extended interruption and ceases when substantially ready."
+  presentation: "Interest in finance costs reduced by the capitalised part; cash interest paid classification under IAS 7."
+  key_disclosures: "Amount capitalised and the capitalisation rate."
+  key_judgements: "Whether an asset is qualifying, start and end dates, and treatment of general funds used for development."
+  recent_amendments: "Borrowings that remain outstanding after the related asset is ready are general borrowings (2019 annual improvements)."
+  analyst_effect: "Interest cover and EBIT look better because interest is in capex; add capitalised interest back to interest expense."
+  adjustment: capitalised_interest_expense
+- id: std-ias24
+  standard: IAS 24
+  scope: "Related party relationships, transactions, balances and commitments; key management compensation."
+  recognition: "Disclosure only."
+  measurement_initial: "Not applicable."
+  measurement_subsequent: "Not applicable."
+  presentation: "Notes: parent and ultimate controlling party, key management personnel compensation by category (short-term, post-employment, other long-term, termination, share-based), transaction amounts and balances with terms and guarantees."
+  key_disclosures: "Names of related parties, nature of relationships, outstanding balances, terms, provisions for doubtful debts, commitments, government-related entity exemptions."
+  key_judgements: "Who is a related party (family, joint ventures, post-employment plans), what qualifies as key management, and arm's-length statements."
+  recent_amendments: "No amendments in 2019-2026."
+  analyst_effect: "Large dealings with controlling shareholders or government-related entities affect revenue quality and governance; key management pay shows alignment."
+  adjustment: associates_share_strip
+- id: std-ias27
+  standard: IAS 27
+  title: Separate financial statements
+  slug: ias-27-separate-financial-statements
+  ref: "paras 10-12, 16-17"
+  scope: "Statements presented by a parent or investor in addition to consolidated statements, or where consolidation is not required."
+  recognition: "Account for investments in subsidiaries, joint ventures and associates at cost, as financial instruments under IFRS 9, or using the equity method."
+  measurement_initial: "Cost or fair value under the chosen policy, applied to each category."
+  measurement_subsequent: "Cost less impairment, fair value, or equity method; dividends recognised in profit or loss when the right to receive arises."
+  presentation: "Separate statements clearly labelled, with dividend income as the main investment income."
+  key_disclosures: "Reasons for separate statements, list of significant investments and the method used."
+  key_judgements: "Which of the three methods to use (the equity method option was added in 2014) and impairment of the carrying amount."
+  recent_amendments: "Equity method in separate statements (2014, effective 2016); local standards such as Egypt's EAS 17 were revised in 2024."
+  analyst_effect: "Parent-only profit is mostly dividends and says little about group earnings; value from consolidated figures."
+  adjustment: associates_share_strip
+- id: std-ias28
+  standard: IAS 28
+  scope: "Investments in associates (significant influence) and joint ventures."
+  recognition: "Equity method from the date significant influence arises (usually 20 percent or more of votes)."
+  measurement_initial: "Cost, with goodwill included in the carrying amount and not tested separately; excess of share of net fair values recognised in profit."
+  measurement_subsequent: "Add the share of profit or loss and OCI, deduct dividends; stop at zero unless there are obligations; tested under IAS 36 for impairment; use uniform policies."
+  presentation: "Share of results in one line, investment in one balance-sheet line."
+  key_disclosures: "Through IFRS 12: summarised financials, unrecognised losses, restrictions."
+  key_judgements: "Significant influence with less than 20 percent, long-term interests that form part of the net investment, and the profit on transactions with the investee."
+  recent_amendments: "Long-term interests in associates (2017, effective 2019); open deferral of the sale or contribution amendment."
+  analyst_effect: "Exclude share of associates from EBITDA, add the investment at value to enterprise value, and note that profit is not cash until dividends."
+  adjustment: associates_share_strip
+- id: std-ias29
+  standard: IAS 29
+  scope: "Entities whose functional currency is that of a hyperinflationary economy, assessed with indicators including a cumulative three-year inflation rate near or above 100 percent."
+  recognition: "Restate non-monetary items and equity by a general price index; recognise the net monetary gain or loss in profit."
+  measurement_initial: "Statements expressed in the measuring unit at the reporting date, with comparatives restated."
+  measurement_subsequent: "Revalue each period by the index change; income statement restated from transaction dates; no restatement of monetary items."
+  presentation: "Gain or loss on net monetary position in profit or loss; restated comparatives; translation of a hyperinflationary operation uses the closing rate for all amounts."
+  key_disclosures: "Fact of restatement, index and level, monetary position gain or loss."
+  key_judgements: "When an economy becomes or ceases to be hyperinflationary and the choice of index."
+  recent_amendments: "IFRIC agenda decision on assessing hyperinflation (2022) and annual lists of affected economies; check each year-end list."
+  analyst_effect: "Restated earnings and equity are not comparable to other markets; use constant-currency and compare operating cash flow."
+  adjustment: ias29_restate
+- id: std-ias32
+  standard: IAS 32
+  title: Financial instruments presentation
+  slug: ias-32-financial-instruments-presentation
+  ref: "paras 11, 16-18, 25-27, 33, 42"
+  scope: "Presentation of financial instruments as liabilities or equity, treasury shares, compound instruments and offsetting."
+  recognition: "Classify an instrument as a liability when the issuer has a contractual obligation to deliver cash or another financial asset (or settle in a variable number of its own shares); otherwise equity."
+  measurement_initial: "Compound instruments split into liability (fair value of equivalent debt) and equity (residual)."
+  measurement_subsequent: "Liability component at amortised cost; equity not remeasured; treasury shares deducted from equity."
+  presentation: "Offset only with a legally enforceable right and intention to settle net; interest and dividends follow the classification."
+  key_disclosures: "Through IFRS 7: terms, offsetting, and puttable instruments."
+  key_judgements: "Puttable and perpetual instruments, convertibles with foreign currency features and derivative settlement choices, and the fixed-for-fixed test."
+  recent_amendments: "Classification of liabilities as current or non-current (IAS 1) interacts; 2024 IFRS 9 and 7 amendments; the IASB project on financial instruments with characteristics of equity is pending."
+  analyst_effect: "Hybrid and preferred instruments shift between debt and equity and so alter leverage and EPS; check perpetual notes and put options on non-controlling interests."
+- id: std-ias33
+  standard: IAS 33
+  scope: "Earnings per share for entities with publicly traded ordinary shares."
+  recognition: "Disclosure of basic and diluted EPS on continuing operations and total."
+  measurement_initial: "Basic: profit to ordinary holders (after preference dividends) over weighted average shares; Diluted: add dilutive potential ordinary shares."
+  measurement_subsequent: "Restate for bonus issues, splits and share consolidations; options use the treasury stock method; convertibles use the if-converted method; antidilutive potential shares are excluded."
+  presentation: "EPS on the face of the statement of profit or loss."
+  key_disclosures: "Numerators and denominators, instruments that could dilute, antidilutive instruments."
+  key_judgements: "Contingently issuable shares, ranking of potential shares, and the control number (profit from continuing operations)."
+  recent_amendments: "No amendments in 2019-2026; IFRS 18 consequential edits from 2027."
+  analyst_effect: "Use diluted weighted average shares for market cap work and normalised EPS; watch buybacks and treasury shares."
+- id: std-ias34
+  standard: IAS 34
+  title: Interim financial reporting
+  slug: ias-34-interim-financial-reporting
+  ref: "paras 5-8, 16A, 28-30, 43"
+  scope: "Condensed interim reports when required or chosen."
+  recognition: "Same policies as annual statements applied to year-to-date, with each interim period treated as a discrete part of the year."
+  measurement_initial: "Same recognition and measurement; costs incurred unevenly are not deferred; tax uses the estimated average annual effective rate."
+  measurement_subsequent: "Estimate changes and restatements handled prospectively or as annual rules."
+  presentation: "Condensed statements with major headings and subtotals, selected explanatory notes, comparative periods (prior year-to-date and last year end balance sheet)."
+  key_disclosures: "Significant events, changes in policies, seasonality, segment and fair value information, contingent liabilities, and dividends."
+  key_judgements: "Seasonality and estimating annual tax rate, and impairment testing at interim dates."
+  recent_amendments: "Disclosure of information elsewhere in the interim report (2018); IFRS 18 aligns presentation."
+  analyst_effect: "Quarterly data is condensed and unaudited; seasonal businesses need trailing twelve-month figures, and tax rates smooth through the year."
+- id: std-ias36
+  standard: IAS 36
+  scope: "Impairment of PPE, intangibles, goodwill, right-of-use assets and investments in subsidiaries, associates and joint ventures; excludes inventories, deferred tax, financial instruments and others."
+  recognition: "Test when an indicator exists; test goodwill, indefinite-life and not-yet-available intangibles annually; recognise a loss when carrying amount exceeds recoverable amount."
+  measurement_initial: "Recoverable amount is the higher of fair value less costs of disposal and value in use (present value of cash flows from continuing use with pre-tax discount rate)."
+  measurement_subsequent: "Impairment first reduces goodwill allocated to the cash-generating unit, then other assets pro rata; reversals allowed for assets other than goodwill, capped at depreciated cost; no reversal of goodwill."
+  presentation: "Impairment in profit or loss (or against revaluation surplus); reversal in profit."
+  key_disclosures: "Key assumptions (growth, discount rate), headroom, sensitivity, goodwill allocation, impairment by segment."
+  key_judgements: "CGU identification, cash flow forecasts, terminal growth, discount rate, and allocation of corporate assets and goodwill."
+  recent_amendments: "Recoverable amount disclosures for non-financial assets (2013); consequential changes for IFRS 18 only."
+  analyst_effect: "Impairments are non-cash but signal weak returns; reversals inflate IFRS earnings versus US GAAP, where reversals are prohibited for held-and-used assets."
+  adjustment: impairment_reversal_strip
+- id: std-ias37
+  standard: IAS 37
+  scope: "Provisions, contingent liabilities and contingent assets, except those covered by other standards (revenue contracts, income tax, leases, employee benefits)."
+  recognition: "Recognise a provision when there is a present obligation (legal or constructive) from a past event, an outflow of resources is probable and a reliable estimate can be made; contingent liabilities are disclosed only; contingent assets recognised only when virtually certain."
+  measurement_initial: "Best estimate of the expenditure required to settle, discounted when the time value of money is material, with risks reflected in cash flows or the rate."
+  measurement_subsequent: "Review each period; unwind discount as finance cost; use provisions only for the purpose for which they were set up."
+  presentation: "Provisions as current or non-current liabilities; charge in operating costs or other expense."
+  key_disclosures: "Movement by class, timing and uncertainty, major assumptions, contingent liabilities with estimates, and reimbursement assets."
+  key_judgements: "Probability of outflow, constructive obligations (restructuring), onerous contracts (unavoidable costs), litigation outcomes and decommissioning cost estimates."
+  recent_amendments: "Onerous contracts: cost of fulfilling a contract (2020, effective 2022); climate-related commitments illustrated in IFRIC discussions."
+  analyst_effect: "Large provision movements swing earnings; treat litigation, decommissioning and warranty provisions with expected cash outflows as debt-like and read contingent liability notes."
+  adjustment: eosb_as_debt_like
+- id: std-ias38
+  standard: IAS 38
+  scope: "Intangible assets that are not within another standard; includes software, licences, brands and development costs."
+  recognition: "Recognise when identifiable, controlled, probable benefits and reliable cost; research expensed; development capitalised when technical feasibility, intention, ability to use or sell, probable benefits, resources and reliable measurement are shown; internally generated brands, goodwill and customer lists are not recognised."
+  measurement_initial: "Cost; separately acquired at purchase price, business-combination intangibles at fair value."
+  measurement_subsequent: "Cost or revaluation model (active market only); finite lives amortised, indefinite lives tested annually; impairment under IAS 36."
+  presentation: "Intangibles separate from goodwill; amortisation in operating costs."
+  key_disclosures: "Useful lives, amortisation, reconciliations, research and development expensed, assets with indefinite lives."
+  key_judgements: "Feasibility and probable benefit for development, software as intangible versus part of hardware (IAS 16), cloud computing arrangements (service contracts versus assets, per IFRIC agenda decisions), and useful lives."
+  recent_amendments: "IFRIC cloud computing configuration and customisation costs (2021); IASB project on intangible assets pending."
+  analyst_effect: "Capitalised development lifts EBIT and operating cash flow and shifts spending to investing; expense it to compare with US GAAP peers."
+  adjustment: dev_cost_expense
+- id: std-ias40
+  standard: IAS 40
+  scope: "Property held to earn rentals or for capital appreciation, including property under construction for that use; excludes owner-occupied and inventory property."
+  recognition: "Recognise when probable benefits and reliable cost; transfers to or from investment property require a change in use supported by evidence (the change-in-use trigger)."
+  measurement_initial: "Cost, including transaction costs."
+  measurement_subsequent: "Choose cost model (with fair value disclosed) or fair value model for all investment property; fair value changes in profit or loss and no depreciation."
+  presentation: "Fair value gains in profit or loss (often outside operating profit); rental income in revenue or other income."
+  key_disclosures: "Method, valuation inputs and valuer, reconciliation, rental income and direct operating expenses, restrictions and commitments."
+  key_judgements: "Classification of mixed-use property, change in use, valuation yields and rents, and property under construction at fair value when reliably measurable."
+  recent_amendments: "Transfers of investment property (2016, clarified evidence of change in use); IFRS 16 sub-leases interaction."
+  analyst_effect: "Fair value gains are unrealised; strip them from earnings and use adjusted EBITDA from rental income; Ind AS permits cost only."
+  adjustment: revaluation_reverse
+- id: std-ias41
+  standard: IAS 41
+  title: Agriculture
+  slug: ias-41-agriculture
+  ref: "paras 10-12, 26, 30, 43-46"
+  scope: "Biological assets and agricultural produce at the point of harvest; bearer plants moved to IAS 16."
+  recognition: "Recognise a biological asset when controlled, probable benefits and reliable measurement."
+  measurement_initial: "Fair value less costs to sell; produce at fair value at harvest becomes inventory under IAS 2."
+  measurement_subsequent: "Remeasure biological assets to fair value less costs to sell each period with changes in profit or loss; cost used only when fair value is clearly unreliable."
+  presentation: "Biological assets separately; fair value changes disclosed separately in the income statement."
+  key_disclosures: "Reconciliation of carrying amount, description of groups, valuation methods and assumptions, restrictions and commitments."
+  key_judgements: "Level 3 valuation inputs, discount rates, and the split between bearer plants and the fruit."
+  recent_amendments: "Bearer plants moved to IAS 16 (2014, effective 2016); removal of tax cash flows from fair value (2020 annual improvements)."
+  analyst_effect: "Earnings include unrealised fair value gains on herds and crops; strip them to find cash-based profit in agriculture and dairy."
+- id: std-ifric1
+  standard: IFRIC 1
+  title: Changes in existing decommissioning, restoration and similar liabilities
+  slug: ifric-1-changes-in-existing-decommissioning-restoration-and-similar-liabilities
+  ref: "paras 4-8"
+  scope: "Changes in the measurement of decommissioning, restoration or similar liabilities recognised under IAS 37 and included in asset cost."
+  recognition: "Adjust the related asset when the estimate of outflows, timing or the discount rate changes."
+  measurement_initial: "Liability at the present value of expected costs; asset cost includes the same amount."
+  measurement_subsequent: "Change adds to or reduces asset cost (cost model) or revaluation surplus and profit (revaluation model); the asset cannot go below zero, with any excess to profit."
+  presentation: "Unwinding of discount as finance cost."
+  key_disclosures: "Provision movement and assumptions under IAS 37."
+  key_judgements: "Discount rate selection and timing of abandonment."
+  recent_amendments: "None in 2019-2026."
+  analyst_effect: "A lower discount rate raises liabilities and asset values together; treat decommissioning provisions as debt-like for extractives and utilities."
+  adjustment: eosb_as_debt_like
+- id: std-ifric12
+  standard: IFRIC 12
+  title: Service concession arrangements
+  slug: ifric-12-service-concession-arrangements
+  ref: "paras 11-19, 21-27"
+  scope: "Operators that build, operate and maintain public infrastructure for a grantor with control over services and the residual interest."
+  recognition: "Operator does not recognise the infrastructure as PPE; it recognises a financial asset, an intangible asset, or both."
+  measurement_initial: "Construction revenue and cost under IFRS 15 at fair value of consideration received or receivable."
+  measurement_subsequent: "Financial asset at amortised cost with interest income; intangible asset amortised over the concession."
+  presentation: "Construction revenue and costs in profit or loss; concession receivable or intangible in assets."
+  key_disclosures: "Terms of the concession, rights, obligations, and revenue and profit on construction."
+  key_judgements: "Whether the grantor controls the asset, split between the financial and intangible models, and construction margins."
+  recent_amendments: "None of significance in 2019-2026."
+  analyst_effect: "Construction margins can inflate revenue and operating cash flow in build years; cash flow to equity follows the receivable collection."
+- id: std-ifric14
+  standard: IFRIC 14
+  title: IAS 19, the limit on a defined benefit asset, minimum funding requirements and their interaction
+  slug: ifric-14-ias-19-the-limit-on-a-defined-benefit-asset-minimum-funding-requirements-and-their-interaction
+  ref: "paras 7-11, 23-26"
+  scope: "How much of a surplus can be recognised as an asset and whether a minimum funding commitment creates a liability."
+  recognition: "A surplus is recognised only to the extent of an available economic benefit through refunds or reduced future contributions (the asset ceiling); onerous minimum funding adds a liability."
+  measurement_initial: "Present value of economic benefits available."
+  measurement_subsequent: "Remeasure each period; changes in the ceiling go to OCI."
+  presentation: "Net asset or liability after ceiling."
+  key_disclosures: "Effect of the ceiling and minimum funding on the plan, per IAS 19."
+  key_judgements: "Control of a refund or the trustees' power, and the funding schedule."
+  recent_amendments: "2018 IAS 19 amendment changes how settlements interact; no change in 2019-2026."
+  analyst_effect: "Pension surplus on the balance sheet may be inaccessible; deduct it from enterprise value adjustments."
+  adjustment: eosb_as_debt_like
+- id: std-ifric16
+  standard: IFRIC 16
+  title: Hedges of a net investment in a foreign operation
+  slug: ifric-16-hedges-of-a-net-investment-in-a-foreign-operation
+  ref: "paras 10-14, 16-17"
+  scope: "Hedges of the foreign currency exposure on the net assets of a foreign operation."
+  recognition: "Hedge of the functional currency exposure only (not the presentation currency); derivatives or borrowings can be the instrument."
+  measurement_initial: "Effective part of the hedging instrument in OCI with the translation reserve."
+  measurement_subsequent: "Recycle to profit or loss on disposal of the foreign operation; ineffectiveness in profit."
+  presentation: "Foreign currency translation reserve and the hedge reserve in OCI."
+  key_disclosures: "Hedge documentation and effectiveness under IFRS 7 and 9."
+  key_judgements: "Which entity holds the instrument and the amount of the hedged net investment."
+  recent_amendments: "Replaced the IAS 39 references with IFRS 9 hedge accounting."
+  analyst_effect: "Offsets translation moves in OCI instead of earnings; net debt FX gains and losses are in OCI."
+  adjustment: fx_translate_period_end_average
+- id: std-ifric17
+  standard: IFRIC 17
+  title: Distributions of non-cash assets to owners
+  slug: ifric-17-distributions-of-non-cash-assets-to-owners
+  ref: "paras 10-16"
+  scope: "Distributions of assets other than cash (and choice of cash or assets) to owners."
+  recognition: "Recognise a dividend liability when appropriately authorised and no longer at the entity's discretion."
+  measurement_initial: "Fair value of the assets to be distributed."
+  measurement_subsequent: "Remeasure the liability through equity until settlement; the difference between the dividend and the carrying amount of the assets goes to profit or loss."
+  presentation: "Dividend through equity; gain on distribution in profit or loss."
+  key_disclosures: "Carrying amount of the dividend payable and change since."
+  key_judgements: "Date from which approval is no longer at the entity's discretion."
+  recent_amendments: "None in 2019-2026."
+  analyst_effect: "A spin-off or in-kind dividend leaves a fair value gain in profit or loss; exclude it from recurring earnings."
+- id: std-ifric19
+  standard: IFRIC 19
+  title: Extinguishing financial liabilities with equity instruments
+  slug: ifric-19-extinguishing-financial-liabilities-with-equity-instruments
+  ref: "paras 5-10"
+  scope: "A debtor issues its own equity instruments to a creditor to settle a financial liability in full or in part."
+  recognition: "Equity instruments are consideration paid; the liability is derecognised when extinguished."
+  measurement_initial: "Equity instruments at fair value (or at the liability's fair value if the equity cannot be measured reliably)."
+  measurement_subsequent: "Difference from the carrying amount of the liability goes to profit or loss."
+  presentation: "Gain or loss separately disclosed."
+  key_disclosures: "Gain or loss on extinguishment."
+  key_judgements: "Fair value of the equity issued and whether the transaction is with a creditor acting as a shareholder."
+  recent_amendments: "None in 2019-2026."
+  analyst_effect: "Debt-for-equity swaps create a non-cash gain in profit; remove it and treat leverage as improved only by the equity issue."
+- id: std-ifric21
+  standard: IFRIC 21
+  title: Levies
+  slug: ifric-21-levies
+  ref: "paras 8-14"
+  scope: "Outflows imposed by governments, other than income taxes, fines or IFRS 15 and IAS 12 items."
+  recognition: "Recognise a liability when the obligating event that triggers payment under the legislation occurs; no constructive obligation arises from economic compulsion."
+  measurement_initial: "Amount of the levy as set by the legislation, recognised progressively if the event occurs over time."
+  measurement_subsequent: "No change; interim reports do not anticipate or defer the levy."
+  presentation: "Operating expense, not income tax."
+  key_disclosures: "Under IAS 37 for the liability and contingency."
+  key_judgements: "Identifying the obligating event (threshold crossing or activity at a date)."
+  recent_amendments: "None in 2019-2026."
+  analyst_effect: "Levies hit profit in a particular quarter; spread over the year for run-rate and treat bank and sector levies as costs, not tax."
+- id: std-ifric22
+  standard: IFRIC 22
+  title: Foreign currency transactions and advance consideration
+  slug: ifric-22-foreign-currency-transactions-and-advance-consideration
+  ref: "paras 8-9"
+  scope: "Foreign currency transactions where a non-monetary asset or liability (advance or deferred income) is recognised before the related asset, expense or income."
+  recognition: "The transaction date for the related item is the date the advance non-monetary item was recognised."
+  measurement_initial: "Use the exchange rate on the date of the advance payment or receipt, for each payment separately."
+  measurement_subsequent: "The non-monetary advance is not retranslated."
+  presentation: "Related income or expense at the historical advance rate."
+  key_disclosures: "Under IAS 21."
+  key_judgements: "Whether the advance is non-refundable and non-monetary and the date of recognition."
+  recent_amendments: "Effective 2018; no later changes."
+  analyst_effect: "Revenue and cost can reflect historical rates after a devaluation, so margins lag the new exchange rate."
+  adjustment: fx_translate_period_end_average
+- id: std-ifric23
+  standard: IFRIC 23
+  title: Uncertainty over income tax treatments
+  slug: ifric-23-uncertainty-over-income-tax-treatments
+  ref: "paras 8-13"
+  scope: "Uncertain income tax treatments affecting taxable profit, tax bases, losses and credits under IAS 12."
+  recognition: "Assume the tax authority examines the position with full knowledge; if an authority is probable to accept the treatment, use it; otherwise reflect the uncertainty."
+  measurement_initial: "Most likely amount or expected value, whichever better predicts the resolution."
+  measurement_subsequent: "Reassess when facts change, such as an audit or a ruling."
+  presentation: "Current or deferred tax asset or liability; separate presentation where relevant."
+  key_disclosures: "Judgements and estimates under IAS 1 and tax contingencies under IAS 12 and IAS 37."
+  key_judgements: "Whether treatments are considered separately or together, the probability that an authority will accept the position, and measurement method."
+  recent_amendments: "Effective 2019 with a modified retrospective transition."
+  analyst_effect: "Tax liabilities from disputes are debt-like; watch settlements that change effective tax rates."
+  adjustment: zakat_as_tax

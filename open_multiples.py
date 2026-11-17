@@ -574,6 +574,86 @@ def cmd_bench(args) -> None:
     print(f"wrote {OUT / 'bench' / _date.today().isoformat()}")
 
 
+def cmd_grid(args) -> None:
+    from om import grid as G
+    db = args.db or str(DATA / ("grid.duckdb" if G.duckdb_available() else "grid.sqlite"))
+    store = G.GridStore(db, parser_backend=args.parser)
+    act = args.action
+    if act == "migrate":
+        from om.search import Index
+        files = json.loads(Path(args.files).read_text()) if args.files else None
+        print(json.dumps(G.migrate_matrix(Index(SEARCH_DB), store, args.name, files)))
+        return
+    if act == "new":
+        raw = json.loads(Path(args.questions).read_text())
+        qs = raw["questions"] if isinstance(raw, dict) else raw
+        ids = [store.add_document(p) for p in args.docs or []]
+        gid = store.create_grid(args.name, ids, qs)
+        print(f"grid '{args.name}' ({gid}): {len(ids)} documents x {len(qs)} questions "
+              f"[{store.backend}, parser {args.parser or 'auto'}]. Run: python3 open_multiples.py grid run {args.name}")
+        return
+    if not args.name:
+        raise SystemExit("grid: a grid NAME is required")
+    if act in ("estimate", "run"):
+        engine = args.engine
+        est = store.estimate(args.name, engine)
+        print(f"estimate: {est['pending_cells']} cells to compute ({est['skipped_cells']} up to date), "
+              f"~{est['est_input_tokens']:,} in / {est['est_output_tokens']:,} out tokens, "
+              f"${est['est_cost_usd']:.4f} on {est['model']} [{est['engine']}]")
+        if act == "run":
+            try:
+                res = store.run(args.name, engine, workers=args.workers, max_cost_usd=args.max_cost)
+            except G.BudgetExceeded as e:
+                raise SystemExit(f"refused: {e}")
+            print(f"ran {len(res['touched'])} cells {res['stats']}; actual cost ${res['actual_cost_usd']:.4f}")
+    elif act == "show":
+        v = store.view(args.name)
+        print(f"grid '{v['name']}': {len(v['rows'])} documents x {len(v['questions'])} questions, {v['pending_cells']} pending")
+        for r in v["rows"]:
+            print(f"\n{r['name']}")
+            for q in v["questions"]:
+                c = r["cells"].get(q["id"])
+                if not c:
+                    print(f"  {q['id']:<16} (pending)")
+                    continue
+                src = f" p.{c['page']}" if c["page"] else ""
+                ans = (c["answer"] or "(hidden: unverified)")[:90]
+                print(f"  {q['id']:<16} [{c['status']}{src}] {ans}")
+    elif act == "export":
+        if not args.out:
+            raise SystemExit("grid export NAME out.csv")
+        store.export_csv(args.name, args.out)
+        print(f"wrote {args.out}")
+
+
+def cmd_slides(args) -> None:
+    import json as _json
+    from om.deck import engine, spec as deck_spec
+    d = deck_spec.load(args.spec)
+    out = args.out or str(DATA / "out" / f"{d.get('deck_id') or 'deck'}.pptx")
+    adapter = None
+    if (os.environ.get("ACRETIA_LLM_API_KEY") or "").strip():
+        from src.harness.adapter import Adapter
+        adapter = Adapter.from_env()
+    r = engine.build(d, out=out, adapter=adapter, seed=args.seed, template=args.template, critic=not args.no_critic)
+    if args.json:
+        print(_json.dumps(r.to_dict(), indent=2, default=str))
+    else:
+        probe = r.image_probe or {}
+        print(f"slides: {r.slides} | critical: {r.critical} | major: {r.major} | art direction: {r.art_direction or '-'} | "
+              f"image probe: {'available' if probe.get('available') else 'unavailable'} ({probe.get('reason', '-')}) | "
+              f"{r.critic or 'critic: -'} | {r.total_seconds:.2f} s")
+        for f in r.findings:
+            if f["severity"] == "critical":
+                print(f"  CRITICAL [{f['rule']}] slide {f['slide']}: {f['message']}")
+        if r.error:
+            print(f"  error: {r.error}")
+        if r.path:
+            print(f"  wrote {r.path}")
+    if not r.ok:
+        sys.exit(1)
+
+
 def main() -> None:
     load_env()
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
@@ -625,6 +705,18 @@ def main() -> None:
     px.add_argument("--engine", default="auto",
                     help='auto (configured model, else extractive) | extractive | <provider>[:<model>], '
                          'e.g. deepseek, deepseek:deepseek-reasoner, anthropic, openai:gpt-4.1, ollama:qwen2.5:14b')
+    pgr = sp.add_parser("grid", help="document matrix grid (DuckDB): documents x questions, every cell cited to a page and box")
+    pgr.add_argument("action", choices=["new", "estimate", "run", "show", "export", "migrate"])
+    pgr.add_argument("name", nargs="?")
+    pgr.add_argument("out", nargs="?", help="export: output .csv")
+    pgr.add_argument("--docs", nargs="*", help="PDF files (new)")
+    pgr.add_argument("--questions", help="JSON file: a list of {id, text, type?, instructions?} (new)")
+    pgr.add_argument("--db", help="grid database (default data/grid.duckdb)")
+    pgr.add_argument("--parser", choices=["pdfdoc", "docling"], help="document parser backend (default: docling when installed)")
+    pgr.add_argument("--engine", default="extractive", help="extractive (offline, free) | llm (through the model adapter)")
+    pgr.add_argument("--workers", type=int, default=8)
+    pgr.add_argument("--max-cost", type=float, help="refuse to run when the estimate exceeds this many USD")
+    pgr.add_argument("--files", help="migrate: JSON {legacy doc_id: pdf path}")
     pr = sp.add_parser("room", help="data rooms: create, import VDR exports/folders, connectors, sync")
     pr.add_argument("action", choices=["create", "list", "import", "connect", "sync", "docs"])
     pr.add_argument("name", nargs="?")
@@ -657,6 +749,15 @@ def main() -> None:
     pd.add_argument("tickers", nargs="*")
     pd.add_argument("--industry")
     pd.add_argument("--out", help="output .pptx path (default data/out/<name>.pptx)")
+    pl = sp.add_parser("slides", help="deck engine v2: build a .pptx from a DeckSpec (YAML/JSON)")
+    pls = pl.add_subparsers(dest="slides_cmd", required=True)
+    plb = pls.add_parser("build", help="spec -> validated .pptx; exits 1 on any critical finding")
+    plb.add_argument("spec")
+    plb.add_argument("--out", help="output .pptx path (default data/out/<deck_id>.pptx)")
+    plb.add_argument("--seed", type=int)
+    plb.add_argument("--template", help=".potx/.pptx template")
+    plb.add_argument("--no-critic", action="store_true")
+    plb.add_argument("--json", action="store_true", help="print the full BuildReport as JSON")
     pm3 = sp.add_parser("model", help="integrated three-statement model + DCF (.xlsx) from SEC filings, graded")
     pm3.add_argument("ticker")
     pm3.add_argument("--scenario", type=int, choices=[1, 2, 3], default=1, help="1 base, 2 upside, 3 downside")
@@ -701,12 +802,16 @@ def main() -> None:
         cmd_alerts(args)
     elif args.cmd == "matrix":
         cmd_matrix(args)
+    elif args.cmd == "grid":
+        cmd_grid(args)
     elif args.cmd == "room":
         cmd_room(args)
     elif args.cmd == "rounds":
         cmd_rounds(args)
     elif args.cmd == "deck":
         cmd_deck(args)
+    elif args.cmd == "slides":
+        cmd_slides(args)
     elif args.cmd == "model":
         cmd_model(args)
     elif args.cmd == "grade":

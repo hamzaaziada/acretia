@@ -4,24 +4,21 @@ One row per active claim. Claim a packet before you touch its files, commit the 
 
 | Packet | Agent / session | Branch | Claimed (UTC) | Files |
 |---|---|---|---|---|
-| S1.3 excel/grid/research teardowns | worker | claude/dreamy-ramanujan-k8p2xt | 2026-11-16 | docs/teardowns/excel-*.md, docs/teardowns/grid-*.md, docs/teardowns/research-*.md |
-| S5.1 parser (session D) | worker | main | 2026-11-16 | om/docparse.py, om/parse_services.py, tests/test_docparse.py, tests/fixtures/docparse/*, docs/s5/parser-*.md |
-| S5.2 DuckDB grid (session D) | worker | main | 2026-11-16 | om/grid.py, tests/test_grid.py, tests/fixtures/grid/*, open_multiples.py (grid subcommand only) |
-| S5.3 VDR gap/risk (session D) | worker | main | 2026-11-16 | om/vdr_risk.py, tests/test_vdr_risk.py, tests/fixtures/vdr/* |
-| S5.4 evals (session D) | worker | main | 2026-11-16 | evals/tenk/*, evals/odl_bench/*, scripts/build_tenk_corpus.py, scripts/eval_s5.py, tests/test_s5_evals.py, scorecard.csv (S5 rows only) |
-| S5 gate (session D) | Boss | main | 2026-11-16 | scripts/verify_s5.py, docs/s5/* |
+| S5.4a 10-K corpus (session D) | worker | main | 2026-11-16 | evals/tenk/*, scripts/build_tenk_corpus.py, tests/test_s5_evals.py |
+| S5.4b evals + VDR50 (session D) | worker | main | 2026-11-17 | evals/vdr50/*, evals/odl_bench/*, evals/out/*, scripts/build_vdr50.py, scripts/eval_s5.py, tests/test_s5_eval_runner.py, scorecard.csv (S5 rows only) |
+| S5.5c Matrix Chat (session D) | worker | main | 2026-11-17 | om/grid_chat.py, tests/test_grid_chat.py, tests/fixtures/grid_chat/* |
+| S5.6 grid interfaces doc (session D) | worker | main | 2026-11-17 | docs/interfaces.md ("Document grid (S5)" section only) |
+| S5 gate (session D) | gate-writer worker | main | 2026-11-17 | scripts/verify_s5.py |
+| S5 docs (session D) | Boss | main | 2026-11-16 | docs/s5/* |
 | S1 gate | Boss | claude/dreamy-ramanujan-k8p2xt | 2026-11-16 | scripts/verify_s1.py |
-| S3.3a archetypes: text/structure + registry examples | session B worker | claude/upbeat-mccarthy-viqjuo | 2026-11-16 | om/deck/archetypes/__init__.py, om/deck/archetypes/core.py, om/deck/archetypes/text.py, tests/test_deck_arch_text.py |
-| S3.3b archetypes: charts + renderer chart polish | session B worker | claude/upbeat-mccarthy-viqjuo | 2026-11-16 | om/deck/archetypes/charts.py, om/deck/render.py, tests/test_deck_arch_charts.py, tests/test_deck_render.py |
-| S3.3c archetypes: tables/frameworks | session B worker | claude/upbeat-mccarthy-viqjuo | 2026-11-16 | om/deck/archetypes/frameworks.py, tests/test_deck_arch_frameworks.py |
-| S3.int engine entry + adapter switch + provenance/telemetry | session B worker | claude/upbeat-mccarthy-viqjuo | 2026-11-16 | om/deck/engine.py, om/deck/provenance.py, om/deck/ghost.py, om/deck/visuals/generate.py, om/deck/visuals/probe.py, om/deck/visuals/score.py, tests/test_deck_engine.py, tests/test_deck_ghost.py, tests/test_deck_visuals.py, open_multiples.py (deck subcommand only) |
-| S3.fix-env deck deps + font discovery + clean skips | session B worker | claude/upbeat-mccarthy-viqjuo | 2026-11-16 | requirements.txt (deck lines only), om/deck/metrics.py, tests/test_deck_fit.py, tests/test_deck_rtl.py, tests/test_deck_spec.py, tests/test_validate_pptx.py, tests/test_deck_critic.py, tests/test_deck_clone.py, tests/test_deck_sync.py |
-| S3 gate + docs | session B Boss | claude/upbeat-mccarthy-viqjuo | 2026-11-16 | scripts/verify_s3.py, docs/deck-engine.md, PROGRESS.md (S3 row only) |
-| S8.1 standards KB (session E) | worker | main | 2026-11-16 | om/intl/standards/**, docs/s8/standards/**, tests/test_intl_standards.py |
-| S8.2 concepts + bilingual labels (session E) | worker | main | 2026-11-16 | om/intl/concepts.py, om/intl/labels.py, om/intl/data/labels/**, tests/test_intl_concepts.py, tests/test_intl_labels.py |
+| FP-S3-a renderer native shapes/connectors + chart plot layout | session B worker | claude/upbeat-mccarthy-viqjuo | 2026-11-16 | om/deck/render.py, om/deck/model.py, tests/test_deck_render.py |
+| FP-S3-b archetype keys, sourced examples, derived provenance, citation markers, positive token | session B worker | claude/upbeat-mccarthy-viqjuo | 2026-11-16 | om/deck/archetypes/*.py, om/deck/provenance.py, om/deck/theme.py, tests/test_deck_arch_*.py, tests/test_deck_engine.py |
+| S3.12 revisions: per-slide edit, annotations, versions, rollback | session B worker | claude/upbeat-mccarthy-viqjuo | 2026-11-16 | om/deck/revise.py, om/deck/versions.py, tests/test_deck_revise.py |
+| S3 gate script (independent writer) | session B gate worker | claude/upbeat-mccarthy-viqjuo | 2026-11-16 | scripts/verify_s3.py |
+| S3 gate + docs | session B Boss | claude/upbeat-mccarthy-viqjuo | 2026-11-16 | docs/s3/*, docs/deck-engine.md, PROGRESS.md (S3 row only) |
+| S8.1 standards KB (session E) | worker | main | 2026-11-16 | om/intl/standards/**, docs/s8/standards/**, scripts/gen_standards_docs.py, tests/test_intl_standards.py |
 | S8.3a numbers + OCR service + synthetic fixtures (session E) | worker | main | 2026-11-16 | om/intl/numparse.py, om/intl/ocr.py, scripts/make_intl_fixtures.py, tests/fixtures/intl/**, tests/test_intl_numparse.py, tests/test_intl_ocr.py, license-and-repo-ledger.csv (S8 rows only) |
-| S8.4 types + tie-out + review queue (session E) | worker | main | 2026-11-16 | om/intl/types.py, om/intl/tieout.py, om/intl/review.py, tests/test_intl_tieout.py |
-| S8.6a FX, calendarisation, adjustments (session E) | worker | main | 2026-11-16 | om/intl/fx.py, om/intl/calendar.py, om/intl/adjust.py, tests/test_intl_fx.py, tests/test_intl_adjust.py, docs/s8-requests-for-s4.md |
+| S8.3b extraction pipeline + read_report + intl-model CLI (session E) | worker | main | 2026-11-16 | om/intl/extract.py, om/intl/tables.py, om/intl/pipeline.py, open_multiples.py (intl-model subcommand only), tests/test_intl_extract.py, tests/test_intl_pipeline.py, evals/intl/review_minutes.csv, evals/intl/telemetry.jsonl |
 | S8.0/S8.7-corpus anchors + eval sourcing (session E) | worker | main | 2026-11-16 | evals/intl/corpus/**, evals/intl/anchors/*/sources.json, scripts/fetch_intl_corpus.py, data/raw/intl/** (never committed) |
 | S8.0 anchor notes + QA (session E, wave 2) | worker | main | 2026-11-16 | om/intl/companies/**, evals/intl/anchors/*/{figures,release_recon,qa}.jsonl |
 | S8.5 intl connectors (session E, wave 2; new files only, base.py untouched) | worker | main | 2026-11-16 | src/harness/connectors/intl_*.py, om/intl/sources/**, om/intl/ixbrl.py, docs/s8/source-terms.md, tests/test_intl_connectors.py, tests/fixtures/intl_connectors/** |
@@ -32,20 +29,23 @@ One row per active claim. Claim a packet before you touch its files, commit the 
 | SF.2 frontend app (session F) | session F workers | main | 2026-11-16 | frontend/** |
 | SF.3 e2e journeys + product gate (session F) | session F gate worker | main | 2026-11-16 | e2e/**, scripts/verify_product.py |
 | SF.4 TSB + reliability harness (session F, D-032) | session F workers | main | 2026-11-16 | eval/tsb/**, eval/reliability/** |
-| FP-R4 ledger rows for new imports | worker (session A) | claude/dreamy-ramanujan-k8p2xt | 2026-11-16 | license-and-repo-ledger.csv, docs/ledger-notes.md |
-| S2-gate-conn connector gate section | gate-writer (session A) | claude/dreamy-ramanujan-k8p2xt | 2026-11-16 | scripts/verify_s2.py |
-| S6.1b research tools | worker (session A) | claude/dreamy-ramanujan-k8p2xt | 2026-11-16 | src/harness/research/tools.py, tests/test_research_tools.py, tests/fixtures/research/tools/* |
 | S6.2 figure verifier | worker (session A) | claude/dreamy-ramanujan-k8p2xt | 2026-11-16 | src/harness/research/verify.py, tests/test_research_verify.py |
-| S6.3 research evals | worker (session A) | claude/dreamy-ramanujan-k8p2xt | 2026-11-16 | eval/research/**, tests/test_research_evals.py |
 | S4.7c dashboards for LBO/merger/comps | worker (session C) | claude/busy-knuth-i3ewp5 | 2026-11-16 | om/lbo.py, om/merger.py, om/comps.py, tests/test_polish_models.py |
 | S4.6a OM-Bench 10 + planted audit | worker (session C) | claude/busy-knuth-i3ewp5 | 2026-11-16 | om/bench.py, om/validate_xlsx.py, tests/test_bench.py, tests/test_validate_xlsx.py |
-| S4.6b SpreadsheetBench | worker (session C) | claude/busy-knuth-i3ewp5 | 2026-11-16 | om/sbench.py, tests/test_sbench.py |
 | S4.6c reliability-100 + timing | worker (session C) | claude/busy-knuth-i3ewp5 | 2026-11-16 | om/reliability.py, tests/test_reliability.py |
-| S4.fix1 deterministic xlsx bytes | worker (session C) | claude/busy-knuth-i3ewp5 | 2026-11-16 | om/xlsx.py, tests/test_xlsx_determinism.py, requirements-extras.txt (S4 lines only) |
 | S4 gate script | gate worker (session C) | claude/busy-knuth-i3ewp5 | 2026-11-16 | scripts/verify_s4.py |
 | S4.8 model API for product app | worker (session C) | claude/busy-knuth-i3ewp5 | 2026-11-16 | om/modelapi.py, tests/test_modelapi.py, docs/interfaces.md (Models section only) |
 | S4.9 reference-structure generation + firm templates | worker (session C) | claude/busy-knuth-i3ewp5 | 2026-11-17 | om/templatefit.py, tests/test_templatefit.py |
-| S7.5a CI workflow + secret scan | worker (session A) | claude/dreamy-ramanujan-k8p2xt | 2026-11-16 | .github/workflows/ci.yml, scripts/secret_scan.py, tests/test_secret_scan.py |
+| FP-S1c buyer-research rubric thresholds | worker (session A) | claude/dreamy-ramanujan-k8p2xt | 2026-11-17 | docs/buyer-research.md |
+| S4.fix2 formula engine coverage (SpreadsheetBench) | worker (session C) | claude/busy-knuth-i3ewp5 | 2026-11-17 | om/formula.py, tests/test_formula_ext2.py |
+| S6.1 research workflows | worker (session A) | claude/dreamy-ramanujan-k8p2xt | 2026-11-17 | src/harness/research/workflows/**, src/harness/research/api.py, tests/test_research_workflows.py, docs/interfaces-s6/workflows.md |
+| S6.4 schedules + email | worker (session A) | claude/dreamy-ramanujan-k8p2xt | 2026-11-17 | src/harness/research/schedule.py, src/harness/research/email_io.py, tests/test_research_schedule.py, docs/interfaces-s6/schedule-email.md |
+| S6.5a admin core | worker (session A) | claude/dreamy-ramanujan-k8p2xt | 2026-11-17 | src/harness/admin/__init__.py, src/harness/admin/agents.py, src/harness/admin/spend.py, src/harness/admin/sources.py, src/harness/admin/mcp_tools.py, tests/test_admin_core.py, docs/interfaces-s6/admin.md |
+| S6.5b SCIM + ACL mirroring | worker (session A) | claude/dreamy-ramanujan-k8p2xt | 2026-11-17 | src/harness/admin/scim.py, src/harness/connectors/acl.py, tests/test_admin_scim_acl.py, docs/interfaces-s6/scim-acl.md |
+| FP-S2a MCP/grid query safety | worker (session A) | claude/dreamy-ramanujan-k8p2xt | 2026-11-17 | src/harness/mcp/**, src/harness/research/tools.py, tests/test_mcp.py, tests/test_research_tools.py |
+| FP-S2b adapter/ledger/PII/router | worker (session A) | claude/dreamy-ramanujan-k8p2xt | 2026-11-17 | src/harness/adapter.py, src/harness/ledger.py, src/harness/router.py, src/harness/profiles/*, om/pii.py, om/replay.py, tests/test_adapter.py, tests/test_harness_router.py, tests/test_llm_router.py |
+| FP-S2c evidence/deals/queue | worker (session A) | claude/dreamy-ramanujan-k8p2xt | 2026-11-17 | src/harness/evidence.py, om/deals.py, om/storage.py, tests/test_evidence.py, tests/test_deal_memory.py, tests/test_storage.py |
+| FP-S2d unpack/crawler | worker (session A) | claude/dreamy-ramanujan-k8p2xt | 2026-11-17 | src/harness/connectors/unpack.py, src/harness/connectors/web.py, tests/test_connectors_harness.py |
 
 ## Log
 - 2026-11-16: created; no active claims.
@@ -72,3 +72,15 @@ One row per active claim. Claim a packet before you touch its files, commit the 
 - 2026-11-16: session B: S3.8, S3.9 merged and released; S3.fix-env claimed (reviewer: deck deps/fonts on clean machines).
 - 2026-11-16: session A: S6.1a released (agent loop belongs to harness lab S9, D-033); S7.5a CI claimed early (reviewer: main red on clean machine).
 - 2026-11-16: session E: S8.4, S8.6a, S8.1 landed; S8.7c and the S8 gate writer dispatched.
+- 2026-11-17: S5.1, S5.2, S5.3 verified on main and released. Claimed S5.fix1, S5.5a; S5.4a resumed; S5 gate writer dispatched (session D).
+- 2026-11-16: session A: S1.3, FP-R4, S2 connector gate done; S1-fin claimed.
+- 2026-11-16: session A: S7.5a CI on main (a6c1b2b); S1 grader findings → FP-S1a/b/c claimed.
+- 2026-11-16: session B: S3.3a/b/c, S3.int, S3.fix-env merged and released; wave 3 claimed (FP-S3-a, FP-S3-b, S3.12, S3 gate script).
+- 2026-11-17: S4.fix1, S4.6b merged and released; S4.fix2 claimed.
+- 2026-11-16: session A: FP-S1a/b, S6.1b, S6.3 done; S6.1 workflows, S6.4, S6.5a, S6.5b claimed (parity items 24-33, 58-63).
+- 2026-11-16: session A: S2 specialist review FAIL (1C/7H); FP-S2a-d claimed.
+- 2026-11-17: S5.fix1 and S5.5a verified on main and released; S5.4b and S5.5b claimed (session D).
+- 2026-11-16: session A: FP-CI1 claimed (main CI runs all cancelled by cancel-in-progress).
+- 2026-11-16: session E: S8.2, S8.3a, S8.4, S8.6a landed (S8.4/S8.6a/S8.2 rows released; S8.3a row kept for the Eastern-digit fix). S8.3b claimed.
+- 2026-11-16: session A: FP-CI1 landed.
+- 2026-11-17: S5.5b verified on main and released; S5.5c, S5.6 claimed (session D).
