@@ -178,3 +178,202 @@ values)` (refresh bound charts/tables/KPIs from the model, no LLM), `om.deck.rev
 (per-slide revision, annotations, versions, rollback). CLI: `python3 open_multiples.py slides build spec.yaml
 --out deck.pptx [--json]`. Stability: the call signature and the report keys above are stable from S3; new keys
 may be added, none removed without a decision entry.
+
+## Models (S4)
+
+**Status: implemented (S4.8).** One stable module, `om/modelapi.py`, is the only thing the product app needs to build, edit,
+question, audit and export a financial model. Every call is a pure function over workbook bytes and small JSON-friendly
+dicts; the only state is an on-disk store keyed by `model_id`. No model (LLM) call is made, and nothing touches the network
+unless the default `fetch` is used. Session F wires the model view on top of it.
+
+```python
+from om import modelapi
+from om.modelapi import ModelResult, ModelApiError, DeliveryBlocked   # DeliveryBlocked is om.delivery.DeliveryBlocked
+
+modelapi.build_model(kind, tickers, *, assumptions=None, quotes=None, fetch=None) -> ModelResult
+    # kind: "three_statement" | "dcf" | "lbo" | "merger" | "comps"
+    # tickers: one ticker; merger = [acquirer, target]; comps = [target, *peers] (at least one peer)
+    # assumptions: the builder's own overrides (om.model3 / om.lbo / om.merger defaults keys); comps also takes
+    #              "as_of" and "calendar_month"
+    # quotes: an om.prices.Quote, {ticker: Quote} or CsvPrices (same as om.market.resolve); without one, the
+    #         public-float proxy from the filings is used when it exists
+    # fetch: callable ticker -> SEC companyfacts dict. Default: om.sec with SEC_USER_AGENT (cached under data/raw/sec)
+modelapi.get_model(model_id, version=None) -> ModelResult          # latest version when None
+modelapi.get_bytes(model_id, version=None) -> bytes                # the .xlsx
+modelapi.list_versions(model_id) -> [{"version", "parent_version", "bytes_sha256", "created_at"}]
+modelapi.list_inputs(model_id, version=None) -> [{"cell", "sheet", "label", "period", "value", "fmt", "source"}]
+modelapi.set_inputs(model_id, changes: dict[str, number], *, version=None) -> ModelResult
+modelapi.ask(model_id, question, *, version=None) -> {"answer", "cells", "values", "reconciled", "unreconciled", "method"}
+modelapi.audit(model_id, version=None) -> {"tabs": [...], "findings": [...]}
+modelapi.explain(model_id, cell, *, version=None) -> dict
+modelapi.export(model_id, *, fmt="xlsx", logo_png=None, version=None) -> bytes   # fmt: "xlsx" | "xlsx_values" | "manifest_json"
+modelapi.export_with_report(...same...) -> (bytes, {"warnings": [...], "gate": {...}, "sha256"})
+modelapi.update_earnings(model_id, *, fetch=None) -> ModelResult
+```
+
+`"dcf"` is the three-statement workbook (it contains the DCF sheet) with the outputs led by the DCF ids
+(`m3.dcf.value_per_share`, `m3.dcf.enterprise_value`, `m3.dcf.equity_value`, `m3.dcf.tv_pct_ev`).
+
+### ModelResult
+
+```json
+{
+  "v": 1,
+  "model_id": "m_8d68ab77605ec281775d",
+  "version": 2,
+  "parent": {"version": 1, "bytes_sha256": "<hex>"},        // null for version 1
+  "kind": "dcf",
+  "tickers": ["ACME"],
+  "created_at": "2026-11-16T09:30:00Z",
+  "bytes_sha256": "<hex>", "bytes": 52720,
+  "outputs": [
+    {"id": "m3.dcf.value_per_share", "label": "Implied value per share", "sheet": "DCF", "ref": "C48", "units": "USD/share",
+     "value": 35.33,
+     "citations": [{"doc_id": "0000320193-24-000123", "sha256_span_hash": "<hex>", "quote": "us-gaap:Revenues = ...",
+                    "source_url": "https://www.sec.gov/Archives/edgar/data/...", "sheet": "Filings", "cell": "D9"}]}
+  ],
+  "checks": {"master": "OK", "ok": true,
+             "items": [{"label": "Balance sheet balances", "cell": "Checks!C9", "value": "OK", "ok": true, "cells": 9}]},
+  "grade": {"score": 100.0, "production_ready": true, "critical_failed": [], "formulas": 1017, "typed_numbers": 300},
+  "validate": {"passed": true, "critical": 0, "warnings": 2, "formulas": 1017, "circular_cells": 14, "first_findings": []},
+  "engines": {"agree": true, "compared_cells": 1017, "divergences": 0,
+              "engines": {"om": {"available": true, "cells": 1017, "seconds": 0.8, "reason": ""}}},
+  "timings": {"fetch": 0.01, "build": 1.9, "grade": 0.7, "validate": 0.5, "recalc": 1.4, "manifest": 0.3, "total": 4.9},
+  "warnings": [],
+  "markets": {"ACME": {"price": 50.0, "as_of": "2025-01-03", "source": "quote ...", "basis": "quote"}},   // lbo, merger, comps
+  "assumptions": {},
+  "edit":   {"changes": [{"cell", "label", "period", "before", "after"}],
+             "changed_outputs": [{"id", "label", "before", "after"}], "dependents_updated": 412, "parts_touched": ["xl/worksheets/sheet3.xml"]},
+  "update": {"rolled": true, "new_actual": {...}, "previous_last_actual": 2023, "forecast_years": [2025, 2026, 2027],
+             "variance": [{"metric", "prior_forecast", "actual", "diff", "pct_diff", ...}], "changed_outputs": [...], "timings": {...}}
+}
+```
+
+`edit` is present only on versions made by `set_inputs`, `update` only on versions made by `update_earnings`. `timings` are
+seconds per step (D-032); `total` is wall time of the call that made the version. `checks.ok` is the master check plus every
+check line; read `checks.master` for the single cell the workbook shows.
+
+### Other shapes
+
+```json
+// list_inputs: blue input cells, by row label and period. Reported (filing) figures and the Checks sheet are not inputs.
+{"cell": "Assumptions!E27", "sheet": "Assumptions", "label": "Tax rate (% of pre-tax income)", "period": "FY2024E",
+ "value": 0.21, "fmt": "0.0%_);(0.0%);\"–\"_)", "source": null}
+
+// ask: reconciled is true only when every cited value equals the workbook's cached value AND an independent om.formula
+// recalculation of that cell (parity 43). No cell found: cells == [], reconciled == false.
+{"answer": "Revenue FY2025E = 1,309.83 (IS!F9). ...", "cells": ["IS!F9"], "values": [1309.83], "reconciled": true,
+ "unreconciled": [], "method": "..."}
+
+// audit (parity 44): one entry per tab, in workbook order
+{"tabs": [{"sheet": "IS", "formulas": 153, "inputs": 0,
+           "links_in":  [{"sheet": "CF", "count": 12}], "links_out": [{"sheet": "Assumptions", "count": 40}],
+           "errors": ["IS!G9"], "hardcodes": ["IS!H12"], "unsourced": [],
+           "checks": {"ok": 0, "error": 0}}],
+ "findings": [{"id": "errors", "severity": "critical", "sheet": "IS", "cell": "G9", "message": "..."}]}   // om.validate_xlsx findings
+
+// explain (parity 20): om.wbgraph.explain plus the leaves that have no source
+{"cell": "IS!E9", "label": "Revenue (FY2023A)", "formula": "=Filings!E9", "value": 1.1e9,
+ "precedents": [...], "inputs": [{"cell": "Filings!E9", "value": 1100.0, "source": "us-gaap:Revenues = ...", "link": "https://www.sec.gov/..."}],
+ "unsourced_leaves": []}
+```
+
+### Errors
+
+All are `ModelApiError` subclasses with a stable string `code`, a message that starts with the cause, and `detail`
+(JSON-friendly or `None`); `e.to_dict()` is `{"code", "message", "detail"}`.
+
+| code | class | raised when |
+|---|---|---|
+| `unsupported_company` | `UnsupportedCompany` | bank/insurer or unclassified balance sheet, fewer than two fiscal years, a required line is not tagged, unknown ticker, `fetch` found nothing |
+| `no_market_price` | `NoMarketPrice` | `lbo`, `merger` or `comps` needs a price and neither `quotes` nor the filings supply one (`detail.ticker`) |
+| `not_an_input` | `NotAnInput` | `set_inputs` touched a formula, a reported figure, an empty cell or another non-blue cell; `detail` is `[{"cell", "reason"}]`; nothing is changed |
+| `blocked` | `Blocked` (also an `om.delivery.DeliveryBlocked`) | `export` and the delivery gate failed; `.report` / `detail` is the gate report (`steps[name, passed, detail]`) |
+| `not_found` | `NotFound` | unknown `model_id`, version or cell |
+| `invalid_request` | `InvalidRequest` | bad kind, tickers, question, number, cell reference or export format; `update_earnings` on a non-three-statement model |
+
+### Storage layout
+
+`ACRETIA_MODELS_DIR` (default `storage/models/`, not committed):
+
+```
+<dir>/m_<20 hex>/v1/model.xlsx       # the workbook of that version
+<dir>/m_<20 hex>/v1/record.json      # the ModelResult above, exactly as returned
+<dir>/m_<20 hex>/v1/private.json     # builder metadata, build inputs and cumulative input edits (not part of the contract)
+<dir>/m_<20 hex>/v2/...              # one directory per version; a version records its parent
+<dir>/_sources/<sha256>.json.gz      # the companyfacts each model was built from (content-addressed)
+```
+
+`model_id` is `m_` plus 20 hex characters of the sha256 of the build key (kind, tickers, assumptions, markets and the sha256
+of each filings payload), so building the same thing twice returns the same model and version 1 without recomputing.
+Files are written once and never changed; `record.json` is written last, so a version is visible only when complete.
+Editing never overwrites: `set_inputs` and `update_earnings` add the next version number with `parent` pointing at the
+version they started from (`version=` on `set_inputs` branches from an older one).
+
+### Runnable examples (offline, from the repo root)
+
+```python
+import os, tempfile
+os.environ["ACRETIA_MODELS_DIR"] = tempfile.mkdtemp()
+from datetime import date
+from om import modelapi
+from om.prices import Quote
+from tests.test_model3 import synthetic_companyfacts
+
+fetch = lambda ticker: synthetic_companyfacts(years=(2022, 2023))        # any callable ticker -> companyfacts
+
+# build_model, get_model, get_bytes
+m = modelapi.build_model("dcf", ["ACME"], fetch=fetch)
+mid = m["model_id"]
+print(m["checks"]["master"], m["outputs"][0]["id"], round(m["outputs"][0]["value"], 2))     # OK m3.dcf.value_per_share 35.33
+lbo = modelapi.build_model("lbo", ["ACME"], fetch=fetch, quotes={"ACME": Quote("ACME", 50.0, "USD", date(2025, 1, 3), "demo")})
+try:
+    modelapi.build_model("lbo", ["ACME"], fetch=fetch)                   # no quote, no public float in these filings
+except modelapi.NoMarketPrice as e:
+    print(e.code)                                                        # no_market_price
+assert modelapi.get_model(mid) == m and modelapi.get_bytes(mid)[:2] == b"PK"
+
+# list_inputs, set_inputs (a new version; changed outputs come back with before/after)
+tax = next(i for i in modelapi.list_inputs(mid) if i["label"].lower().startswith("tax") and i["period"])
+m2 = modelapi.set_inputs(mid, {tax["cell"]: tax["value"] + 0.05})
+print(m2["version"], m2["parent"]["version"], m2["edit"]["changed_outputs"][0]["id"])       # 2 1 m3.dcf.value_per_share
+try:
+    modelapi.set_inputs(mid, {"IS!G9": 1})                               # a formula
+except modelapi.NotAnInput as e:
+    print(e.code, e.detail)                                              # not_an_input [{'cell': 'IS!G9', 'reason': 'a formula'}]
+
+# ask, audit, explain
+a = modelapi.ask(mid, "What is revenue in FY2025?")
+print(a["cells"], a["reconciled"])                                       # ['IS!F9'] True
+print([(t["sheet"], t["formulas"], len(t["errors"])) for t in modelapi.audit(mid)["tabs"]][:3])
+ex = modelapi.explain(mid, "IS!E9", version=1)
+print(ex["formula"], ex["inputs"][0]["cell"], ex["inputs"][0]["source"][:30])          # =D9*(1+Assumptions!E13) Filings!D9 us-gaap:Revenues = 1,1
+
+# export: refused with Blocked unless om.delivery.gate passes
+xl = modelapi.export(mid, fmt="xlsx")
+values_only = modelapi.export(mid, fmt="xlsx_values")
+manifest = modelapi.export(mid, fmt="manifest_json")
+
+# update_earnings: roll forward to the newest filing (a new version, timings recorded)
+m3 = modelapi.update_earnings(mid, fetch=lambda t: synthetic_companyfacts(years=(2022, 2023, 2024)))
+print(m3["version"], m3["update"]["rolled"], m3["update"]["new_actual"]["label"], round(m3["timings"]["roll_forward"], 1))
+```
+
+### Optional xlsx hooks
+
+- `xlsx_values` uses `om.xlsx.values_only(bytes)` when it exists; otherwise a built-in fallback drops every formula and keeps
+  the cached values (string results become inline strings; the calc chain is removed).
+- `logo_png` uses `om.xlsx.Sheet.image(png, anchor)` when it exists: the version is rebuilt from its stored filings plus its
+  input edits and the logo goes on the first sheet at `modelapi.LOGO_ANCHOR` (`"B2"`). If the hook is missing, the version
+  cannot be rebuilt (rolled forward) or the hook fails, the logo is ignored: `export_with_report` lists it in `warnings` and
+  `export` raises a `UserWarning`. The gate always runs on the stored version first.
+
+### What is guaranteed stable
+
+Within `"v": 1`: the function names and keyword arguments above; the error codes; the field names and meanings in
+ModelResult, `list_inputs`, `ask`, `audit` and `explain`; the storage layout and the immutability of stored versions; that
+`model_id` is a pure function of the build inputs; that `set_inputs` only ever edits blue input cells and never overwrites a
+version; that `export` never returns bytes the delivery gate refused. Additive changes only: new optional fields, new output
+ids, new error codes (clients must treat an unknown `code` as a failure) and new export formats. Output ids follow the
+builders (`m3.*`, `lbo.*`, `merger.*`, `comps.*`); a new id may appear, an existing id keeps its meaning. `timings` keys,
+`first_findings`, `method` and the wording of messages are informative, not contract.
