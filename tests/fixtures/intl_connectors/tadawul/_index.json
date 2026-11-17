@@ -1,0 +1,6 @@
+{
+ "https://www.saudiexchange.sa/wps/portal/saudiexchange/hidden/financial-statements": "fs.html",
+ "https://www.saudiexchange.sa/wps/portal/saudiexchange/hidden/xbrl": "fs.html",
+ "https://www.saudiexchange.sa/wps/wcm/connect/synthetic/FS_2230_2024Q4.xbrl": "doc_xbrl.bin",
+ "https://www.saudiexchange.sa/wps/wcm/connect/synthetic/AR_2230_2024.pdf": "doc_ar.bin"
+}

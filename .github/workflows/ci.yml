@@ -18,7 +18,6 @@ concurrency:
   cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
 
 env:
-  ACRETIA_LLM_MODE: replay
   PIP_DISABLE_PIP_VERSION_CHECK: "1"
   PYTHONDONTWRITEBYTECODE: "1"
 
@@ -55,11 +54,17 @@ jobs:
           fi
           python -m pip install -r requirements.txt -r requirements-extras.txt \
             --extra-index-url https://download.pytorch.org/whl/cpu
-      - name: Offline suite (replay mode, no provider keys)
+      - name: Offline suite (no provider keys; unit tests use fakes)
         env:
           ANTHROPIC_API_KEY: ""
           OPENAI_API_KEY: ""
         run: python -m unittest discover -s tests -q
+      - name: Replay-mode tests (adapter and router)
+        env:
+          ACRETIA_LLM_MODE: replay
+          ANTHROPIC_API_KEY: ""
+          OPENAI_API_KEY: ""
+        run: python -m unittest tests.test_adapter tests.test_llm_router -q
 
   gates:
     name: gates
@@ -91,6 +96,7 @@ jobs:
             --extra-index-url https://download.pytorch.org/whl/cpu
       - name: Stage gates (scripts/verify_*.py)
         env:
+          ACRETIA_LLM_MODE: replay
           SEC_USER_AGENT: ${{ secrets.SEC_USER_AGENT }}
           ANTHROPIC_API_KEY: ""
           OPENAI_API_KEY: ""

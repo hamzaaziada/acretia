@@ -1,0 +1,16 @@
+{
+ "bilans": [
+  {
+   "id": "b-2024-pub",
+   "dateCloture": "2024-12-31",
+   "dateDepot": "2025-04-02",
+   "confidentialite": "Public"
+  },
+  {
+   "id": "b-2023-conf",
+   "dateCloture": "2023-12-31",
+   "dateDepot": "2024-04-02",
+   "confidentialite": "Confidentiel"
+  }
+ ]
+}

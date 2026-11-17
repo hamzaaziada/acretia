@@ -1,0 +1,107 @@
+{
+ "meta": {
+  "pagination": {
+   "total": 1
+  }
+ },
+ "links": {},
+ "data": [
+  {
+   "type": "lei-records",
+   "id": "213800LH1BZH3DI6G760",
+   "attributes": {
+    "lei": "213800LH1BZH3DI6G760",
+    "entity": {
+     "legalName": {
+      "name": "BP P.L.C.",
+      "language": "en"
+     },
+     "otherNames": [],
+     "transliteratedOtherNames": [],
+     "legalAddress": {
+      "language": "en",
+      "addressLines": [
+       "1 ST JAMES'S SQUARE"
+      ],
+      "addressNumber": null,
+      "addressNumberWithinBuilding": null,
+      "mailRouting": null,
+      "city": "LONDON",
+      "region": "GB-LND",
+      "country": "GB",
+      "postalCode": "SW1Y 4PD"
+     },
+     "headquartersAddress": {
+      "language": "en",
+      "addressLines": [
+       "1 ST JAMES'S SQUARE"
+      ],
+      "addressNumber": null,
+      "addressNumberWithinBuilding": null,
+      "mailRouting": null,
+      "city": "LONDON",
+      "region": "GB-LND",
+      "country": "GB",
+      "postalCode": "SW1Y 4PD"
+     },
+     "registeredAt": {
+      "id": "RA000585",
+      "other": null
+     },
+     "registeredAs": "00102498",
+     "jurisdiction": "GB",
+     "category": "GENERAL",
+     "legalForm": {
+      "id": "B6ES",
+      "other": null
+     },
+     "associatedEntity": {
+      "lei": null,
+      "name": null
+     },
+     "status": "ACTIVE",
+     "expiration": {
+      "date": null,
+      "reason": null
+     },
+     "successorEntity": {
+      "lei": null,
+      "name": null
+     },
+     "successorEntities": [],
+     "creationDate": "1909-04-14T00:00:00Z",
+     "subCategory": null,
+     "otherAddresses": [],
+     "eventGroups": []
+    },
+    "registration": {
+     "initialRegistrationDate": "2016-04-29T00:00:00Z",
+     "lastUpdateDate": "2026-04-29T10:34:03Z",
+     "status": "ISSUED",
+     "nextRenewalDate": "2027-04-29T00:00:00Z",
+     "managingLou": "213800WAVVOPS85N2205",
+     "corroborationLevel": "FULLY_CORROBORATED",
+     "validatedAt": {
+      "id": "RA000585",
+      "other": null
+     },
+     "validatedAs": "00102498",
+     "otherValidationAuthorities": []
+    },
+    "bic": null,
+    "mic": null,
+    "ocid": "gb/00102498",
+    "qcc": "QGBXKVABR2",
+    "gem": "E100000001096",
+    "spglobal": [
+     "394466"
+    ],
+    "conformityFlag": "CONFORMING"
+   },
+   "relationships": {},
+   "links": {
+    "self": "https://api.gleif.org/api/v1/lei-records/213800LH1BZH3DI6G760"
+   }
+  }
+ ]
+}
