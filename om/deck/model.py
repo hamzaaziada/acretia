@@ -17,6 +17,10 @@ def parse_role(element_id: str) -> str:
     return m.group(2)
 
 
+SHAPE_PRST = frozenset({"chevron", "homePlate", "diamond", "ellipse", "triangle", "downTriangle", "rect",
+                        "rightArrow"})
+
+
 @dataclass
 class Run:
     t: str
@@ -60,12 +64,33 @@ class Element:
     table: dict | None = None
     image: dict | None = None
     binding: dict | None = None
+    shape: dict | None = None
+    connector: dict | None = None
 
     def __post_init__(self) -> None:
         if parse_role(self.id) != self.role:
             raise ValueError(f"element {self.id!r}: role {self.role!r} does not match the id")
         if self.line is not None:
             self.line = (self.line[0], float(self.line[1]))
+        if self.kind == "shape":
+            sh = self.shape
+            if not isinstance(sh, dict) or sh.get("prst") not in SHAPE_PRST:
+                raise ValueError(f"element {self.id!r}: shape.prst must be one of {sorted(SHAPE_PRST)}")
+            if sh.get("rot", 0) not in (0, 90, 180, 270):
+                raise ValueError(f"element {self.id!r}: shape.rot must be 0, 90, 180 or 270")
+        elif self.shape is not None:
+            raise ValueError(f"element {self.id!r}: shape data on kind {self.kind!r}")
+        if self.kind == "connector":
+            c = self.connector
+            if not isinstance(c, dict) or c.get("type") not in ("elbow", "straight"):
+                raise ValueError(f"element {self.id!r}: connector.type must be elbow or straight")
+            for k in ("start", "end"):
+                v = c.get(k)
+                if not (isinstance(v, (list, tuple)) and len(v) == 2 and all(isinstance(n, (int, float)) for n in v)):
+                    raise ValueError(f"element {self.id!r}: connector.{k} must be [x, y]")
+            self.connector = {**c, "start": list(c["start"]), "end": list(c["end"]), "arrow": bool(c.get("arrow", False))}
+        elif self.connector is not None:
+            raise ValueError(f"element {self.id!r}: connector data on kind {self.kind!r}")
 
 
 @dataclass

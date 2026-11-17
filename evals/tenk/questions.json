@@ -1,0 +1,13 @@
+{"version": 1, "applies_to": "every filing in manifest.json (latest 10-K per filer)",
+ "questions": [
+  {"id": "q01", "question": "What was total net revenue (net sales) for the latest fiscal year?", "type": "currency", "unit": "usd_millions"},
+  {"id": "q02", "question": "What was net income for the latest fiscal year (attributable to the company's shareholders where the statement separates it)?", "type": "currency", "unit": "usd_millions"},
+  {"id": "q03", "question": "What was diluted earnings per share for the latest fiscal year?", "type": "number", "unit": "usd_per_share"},
+  {"id": "q04", "question": "What were total assets at fiscal year end?", "type": "currency", "unit": "usd_millions"},
+  {"id": "q05", "question": "What were cash and cash equivalents at fiscal year end?", "type": "currency", "unit": "usd_millions"},
+  {"id": "q06", "question": "How many employees does the company report?", "type": "number", "unit": "count"},
+  {"id": "q07", "question": "What is the fiscal year end date of the report?", "type": "date", "unit": "iso_date"},
+  {"id": "q08", "question": "Who is the independent registered public accounting firm (auditor)?", "type": "text", "unit": null},
+  {"id": "q09", "question": "What is the company's state of incorporation?", "type": "text", "unit": null},
+  {"id": "q10", "question": "What was long-term debt (non-current, excluding current maturities) at fiscal year end?", "type": "currency", "unit": "usd_millions"}
+ ]}

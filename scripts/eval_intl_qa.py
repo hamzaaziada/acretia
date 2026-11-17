@@ -24,6 +24,8 @@ _EAST = str.maketrans("٠١٢٣٤٥٦٧٨٩۰۱۲۳۴۵۶۷۸۹", "0123456789012
 
 def norm(text) -> str:
     t = _AR_DIAC.sub("", str(text)).translate(_AR_MAP).translate(_EAST).lower()
+    t = re.sub(r"\b(?:percent|per cent|pct)\b", "%", t)
+    t = re.sub(r"(\d)\s+%", r"\1%", t)
     return re.sub(r"\s+", " ", t).strip()
 
 
@@ -61,13 +63,13 @@ def load_questions(path: Path = QDIR / "questions.jsonl") -> list:
     return [json.loads(l) for l in path.read_text(encoding="utf-8").splitlines() if l.strip()]
 
 
-def run(kb=None) -> list:
+def run(kb=None, qfile: str = "questions.jsonl") -> list:
     if kb is None:
         sys.path.insert(0, str(ROOT))
         from om.intl.standards import load
         kb = load()
     out = []
-    for q in load_questions():
+    for q in load_questions(QDIR / qfile):
         a = kb.answer(q["question"])
         cits = [{"standard": c.get("standard"), "ref": c.get("ref"), "url": c.get("url")} for c in a.citations]
         r = score_answer(q, a.text, a.citations)
@@ -76,14 +78,14 @@ def run(kb=None) -> list:
     return out
 
 
-def write_scorecard(n: int, score: float, path: Path = SCORECARD) -> None:
+def write_scorecard(n: int, score: float, path: Path = SCORECARD, eval_name: str = "standards_qa") -> None:
     rows = []
     if path.exists():
         with path.open(newline="", encoding="utf-8") as f:
             rows = list(csv.reader(f))
     header = rows[0] if rows else HEADER
-    body = [r for r in rows[1:] if not (len(r) > 1 and r[0] == "S8" and r[1] == "standards_qa")]
-    new = {"stage": "S8", "eval": "standards_qa", "n": str(n), "score": f"{score:.3f}",
+    body = [r for r in rows[1:] if not (len(r) > 1 and r[0] == "S8" and r[1] == eval_name)]
+    new = {"stage": "S8", "eval": eval_name, "n": str(n), "score": f"{score:.3f}",
            "notes": "live_model=no; deterministic retrieval; key-point rubric >=75%, cite match, url on every citation"}
     body.append([new.get(h, "") for h in header])
     with path.open("w", newline="", encoding="utf-8") as f:
@@ -93,14 +95,15 @@ def write_scorecard(n: int, score: float, path: Path = SCORECARD) -> None:
 
 
 def main() -> int:
-    res = run()
-    with (QDIR / "results.jsonl").open("w", encoding="utf-8") as f:
+    heldout = "--set" in sys.argv and sys.argv[sys.argv.index("--set") + 1:][:1] == ["heldout"]
+    res = run(qfile="heldout.jsonl" if heldout else "questions.jsonl")
+    with (QDIR / ("heldout_results.jsonl" if heldout else "results.jsonl")).open("w", encoding="utf-8") as f:
         for r in res:
             f.write(json.dumps(r, ensure_ascii=False) + "\n")
     n = len(res)
     score = sum(r["pass"] for r in res) / n
-    write_scorecard(n, score)
-    print(f"standards_qa: {sum(r['pass'] for r in res)}/{n} = {score:.3f}")
+    write_scorecard(n, score, eval_name="standards_qa_heldout" if heldout else "standards_qa")
+    print(f"{'standards_qa_heldout' if heldout else 'standards_qa'}: {sum(r['pass'] for r in res)}/{n} = {score:.3f}")
     for r in res:
         if not r["pass"]:
             print(f"FAIL {r['id']} points={r['points_fraction']} cite={r['cite_ok']} url={r['url_ok']} missed={r['missed_points']}")

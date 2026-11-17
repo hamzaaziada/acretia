@@ -1,6 +1,6 @@
 # US generally accepted accounting principles (FASB ASC)
 
-*Generated from `om/intl/standards/frameworks.yaml`. Authored by Acretia in its own words. Confidence: verified.*
+*Generated from `om/intl/standards/frameworks.yaml`. Authored by Acretia in its own words. Confidence: unverified.*
 
 **Issuer:** FASB, with SEC rules for registrants  
 **Jurisdictions:** United States
@@ -96,6 +96,8 @@ Different framework with partial convergence on revenue (ASC 606 vs IFRS 15) and
 - `diff-presentation-by-nature-function` (presentation): recipe `by_nature_ebit`
 - `diff-cash-flow-classification` (presentation): recipe `ifrs16_to_pre16_ebitda`
 - `diff-ecl-ifrs9-eas47-cecl` (credit_losses): recipe `eas_to_ifrs_map`
+- `diff-business-combinations` (business_combinations): recipe `associates_share_strip`
+- `diff-provisions-ias37-asc450` (provisions): recipe `eosb_as_debt_like`
 
 ## Sources
 - FASB ASC, Topics 205, 220, 230, 330, 606, 842: <https://asc.fasb.org/>

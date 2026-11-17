@@ -11,6 +11,7 @@
 | S5 Document matrix grid | 🟡 | Session D building S5.1–S5.4 (claimed 2026-11-16). Existing: Matrix with verified quotes (no bbox/DuckDB) |
 | S6 Research agent | 🟡 | Ask with verified citations exists |
 | S7 UI, security, Docker/CI | ⬜ | |
+| Product (Felix parity, session F) | 🟡 | Not demoable yet. On main: SPEC + API/security/test-id contracts (docs/product/SPEC.md), API core (om/api/http.py, db.py; 22 tests). In flight (worktrees, not merged): backend services (auth/RBAC/CSRF, audit chain, deals, documents, library, notifications, demo seed), job runtime + 14-task agent library + telemetry + TSB baselines parser, frontend shell + agent home + run view, PDF citation inspector + model view, Matrix grid + deck viewer, independent gate (verify_product.py, Playwright P-J1..P-J8, parity checklist tests). Container restart lost the first wave once (re-dispatched). No grader has run: no ✅ until verify_product, the UI/UX-lead reviewer and the Haiku personas all pass (D-033) |
 | S8 International accounting + OCR financials | 🟡 | Session E building S8.1–S8.7 (claimed 2026-11-16) |
 
 ## v1 (superseded)

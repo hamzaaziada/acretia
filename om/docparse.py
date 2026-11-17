@@ -195,10 +195,19 @@ def _segments(line, gap=0.03):
 
 def _pdfdoc_blocks(pg):
     """Group lines into paragraph blocks (same column, small vertical gap)."""
-    sizes = sorted(w.font_size for w in pg.words if w.font_size)
+    have_sizes = any(w.font_size for w in pg.words)
+    lines = pg.lines
+    if not have_sizes:
+        # poppler backend: no font sizes, and its flow-based lines split table cells apart.
+        # Rebuild visual lines from words and use glyph box height as the size proxy.
+        lines = pdfdoc._group_lines(pg.words, pg.number) or pg.lines
+
+    def size(w):
+        return w.font_size or (w.bbox_norm[3] - w.bbox_norm[1])
+    sizes = sorted(size(w) for w in pg.words if size(w))
     med = sizes[len(sizes) // 2] if sizes else None
     groups, cur = [], []
-    for l in pg.lines:
+    for l in lines:
         if cur:
             p = cur[-1]
             h = max(p.bbox_norm[3] - p.bbox_norm[1], 1e-6)
@@ -221,7 +230,7 @@ def _pdfdoc_blocks(pg):
             kind = "footer"
         elif all(len(_segments(l)) >= 3 for l in g):
             kind = "table"
-        elif med and len(g) == 1 and any(w.font_size and w.font_size > med * 1.15 for w in g[0].words):
+        elif med and len(g) == 1 and any(size(w) > med * 1.15 for w in g[0].words):
             kind = "heading"
         elif re.match(r"\s*([-*•]|\d+[.)])\s", g[0].text):
             kind = "list"
