@@ -128,5 +128,32 @@
     "unit": "EGP million",
     "notes": "IR platform file (ir.elsewedyelectric.com Results Center loads documents via a POST API, not scraped); 4Q/FY 2025 earnings release; no publisher terms-of-use page located (committed stays false)",
     "local_path": "anchors/SWDY/Elsewedy-Electric-ER-4Q2025-E-.pdf"
+  },
+  {
+    "doc_type": "annual_fs",
+    "period_end": "2025-12-31",
+    "consolidated": true,
+    "status": "not_found",
+    "committed": false,
+    "checked": [
+      "https://ir.elsewedyelectric.com/en/results-center (documents load via POST API; not scraped)",
+      "https://ir.elsewedyelectric.com/en/regulatory-filings (board/audit reports only)",
+      "https://s3.amazonaws.com/resources.inktankir.com/swdy2/ and https://irfiles.technologyverse.com/swdy2/ (about 30 file-name variants of the FY2024 pattern, all HTTP 404)",
+      "https://english.mubasher.info/markets/EGX/stocks/SWDY/news (JS shell)",
+      "static.mubasher.info search results (only FY2024 separate FS and other companies)",
+      "https://www.argaam.com (Saudi market only, no Egyptian listings)",
+      "https://www.egx.com.eg (unreachable)"
+    ],
+    "hosts_checked": [
+      "ir.elsewedyelectric.com",
+      "irfiles.technologyverse.com",
+      "s3.amazonaws.com",
+      "english.mubasher.info",
+      "static.mubasher.info",
+      "www.argaam.com",
+      "www.zawya.com",
+      "www.egx.com.eg"
+    ],
+    "notes": "FY2025 consolidated FS not located on any public GET mirror; FY2024 consolidated FS is the latest consolidated annual in this file"
   }
 ]

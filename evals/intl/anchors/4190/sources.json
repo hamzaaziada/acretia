@@ -102,5 +102,31 @@
     "unit": "SAR million",
     "notes": "Board of Directors report FY2025 (43pp, management discussion, no FS). NO earnings release or investor presentation located: jarir.com IR page loads documents via JS API, saudiexchange.sa 403, mubasher news pages are JS shells; no publisher terms-of-use page located (committed stays false)",
     "local_path": "anchors/4190/JB_AnnualReport_2025_EN.pdf"
+  },
+  {
+    "doc_type": "earnings_release",
+    "period_end": "2026-09-30",
+    "fiscal_year_end_month": 12,
+    "language": "en",
+    "scanned": false,
+    "url": "https://www.argaam.com/en/financial-reports/company-report/95/2026/72",
+    "host": "www.argaam.com",
+    "sha256": "1eef7840bb420bca54d0f2ace0937eb94994de751d44fe09fd9e6773881e6101",
+    "bytes": 1175432,
+    "pages": null,
+    "retrieved": "2026-11-17",
+    "terms_url": "https://www.argaam.com/en/static-contents/termsandconditions",
+    "committed": false,
+    "primary_statement_pages": {
+      "IS": null,
+      "BS": null,
+      "CF": null,
+      "OCI": null,
+      "EQ": null
+    },
+    "currency": "SAR",
+    "unit": "SAR million",
+    "notes": "Argaam \"Financial Results\" page (13/10/2026) for Jarir 9M/Q3 2026: Argaam-compiled results table derived from the Tadawul results announcement, not the issuer own release; no issuer press release or presentation exists on the sources reachable (HTML announcement, no pages)",
+    "local_path": "anchors/4190/argaam_95_2026_72_Q3_2026_results.html"
   }
 ]
