@@ -36,7 +36,7 @@ class HTTP:
         self.token = token
 
     def _h(self, extra=None):
-        h = {"User-Agent": "OpenMultiples/0.1"}
+        h = {"User-Agent": "Acretia/0.1"}
         if self.token:
             h["Authorization"] = f"Bearer {self.token}"
         return {**h, **(extra or {})}

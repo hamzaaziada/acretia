@@ -177,7 +177,7 @@ class LifecycleTests(Base):
         jid = self.run_job("DCF for $ZZZZ")
         r = self.svc._row(jid)
         self.assertEqual(r["status"], "failed")
-        self.assertIn("open_multiples.py", r["hint"])
+        self.assertIn("acretia.py", r["hint"])
 
 
 class SseTests(Base):

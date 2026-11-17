@@ -100,7 +100,7 @@ class DataService:
             return json.loads(r["row"]), json.loads(r["prov"])
         cik = self._cik(ticker)
         if cik is None:
-            raise KeyError(f"unknown ticker {ticker} (run `python3 open_multiples.py universe` to load the SEC ticker list)")
+            raise KeyError(f"unknown ticker {ticker} (run `python3 acretia.py universe` to load the SEC ticker list)")
         import os
 
         from .fx import FX
@@ -130,7 +130,7 @@ class DataService:
         from .sec import SecClient
         cik = self._cik(ticker)
         if cik is None:
-            raise KeyError(f"unknown ticker {ticker} (run `python3 open_multiples.py universe` to load the SEC ticker list)")
+            raise KeyError(f"unknown ticker {ticker} (run `python3 acretia.py universe` to load the SEC ticker list)")
         sec = SecClient(os.environ.get("SEC_USER_AGENT", ""), self.data_dir / "raw" / "sec")
         sub = sec.submissions(cik)
         try:

@@ -175,7 +175,7 @@ shape_id, shape_name, message}`: shape ids let the UI badge the exact shape), `a
 
 Related: `scripts/validate_pptx.py deck.pptx --json` (validator alone), `om.deck.sync.resync(pptx, manifest,
 values)` (refresh bound charts/tables/KPIs from the model, no LLM), `om.deck.revise` / `om.deck.versions`
-(per-slide revision, annotations, versions, rollback). CLI: `python3 open_multiples.py slides build spec.yaml
+(per-slide revision, annotations, versions, rollback). CLI: `python3 acretia.py slides build spec.yaml
 --out deck.pptx [--json]`. Stability: the call signature and the report keys above are stable from S3; new keys
 may be added, none removed without a decision entry.
 

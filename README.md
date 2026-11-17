@@ -1,4 +1,4 @@
-# open-multiples
+# acretia
 
 Public-company valuation comps built only from free, reusable sources. Every number links back to the SEC filing it came from.
 
@@ -9,7 +9,7 @@ The details are in [METHODOLOGY.md](METHODOLOGY.md). The project is pure Python 
 ## Setup
 
 ```bash
-cd ~/Downloads/open-multiples
+cd acretia
 ```
 
 ```bash
@@ -21,19 +21,19 @@ Set `SEC_USER_AGENT` in `.env` to your name or organisation plus a contact email
 ## Use
 
 ```bash
-python3 open_multiples.py show AAPL
+python3 acretia.py show AAPL
 ```
 
 ```bash
-python3 open_multiples.py build AAPL MSFT NVDA JPM --prices my_prices.csv
+python3 acretia.py build AAPL MSFT NVDA JPM --prices my_prices.csv
 ```
 
 ```bash
-python3 open_multiples.py build --all
+python3 acretia.py build --all
 ```
 
 ```bash
-python3 open_multiples.py build --all --as-of 2025-06-30
+python3 acretia.py build --all --as-of 2025-06-30
 ```
 
 - `show` prints one company, with every field linked to its source filing.
@@ -41,16 +41,16 @@ python3 open_multiples.py build --all --as-of 2025-06-30
 - `build --all` covers every listed SEC filer, about 6–7k companies, at ≤8 requests/second.
 - `--as-of` gives a point-in-time view that uses only filings made by that date.
 
-`--cik 320193` works in place of tickers, and doesn't need the SEC ticker list. To fetch everything in one file instead of per-company calls, run `python3 open_multiples.py bulk-download`, which downloads SEC's nightly `companyfacts.zip` (over 1 GB).
+`--cik 320193` works in place of tickers, and doesn't need the SEC ticker list. To fetch everything in one file instead of per-company calls, run `python3 acretia.py bulk-download`, which downloads SEC's nightly `companyfacts.zip` (over 1 GB).
 
 ## M&A precedent multiples (from merger filings)
 
 ```bash
-python3 open_multiples.py ma --from 2026-01-01 --to 2026-11-15
+python3 acretia.py ma --from 2026-01-01 --to 2026-11-15
 ```
 
 ```bash
-python3 open_multiples.py ma --url https://www.sec.gov/Archives/edgar/data/1527753/000119312526427872/d141436ddefm14a.htm
+python3 acretia.py ma --url https://www.sec.gov/Archives/edgar/data/1527753/000119312526427872/d141436ddefm14a.htm
 ```
 
 The first command searches a date range. The second parses a single filing.
@@ -73,23 +73,23 @@ The first command searches a date range. The second parses a single filing.
 Index the full text of filings, search them with keyword operators, and track mentions over time.
 
 ```bash
-python3 open_multiples.py ingest AAPL MSFT NVDA --since 2025-01-01
+python3 acretia.py ingest AAPL MSFT NVDA --since 2025-01-01
 ```
 
 ```bash
-python3 open_multiples.py search '"pricing pressure"' --form 10-K 10-Q --section "Risk Factors" --trend
+python3 acretia.py search '"pricing pressure"' --form 10-K 10-Q --section "Risk Factors" --trend
 ```
 
 ```bash
-python3 open_multiples.py search 'tariff* NOT china' --save tariffs
+python3 acretia.py search 'tariff* NOT china' --save tariffs
 ```
 
 ```bash
-python3 open_multiples.py alerts
+python3 acretia.py alerts
 ```
 
 ```bash
-python3 open_multiples.py serve
+python3 acretia.py serve
 ```
 
 - **`ingest`** indexes 10-K, 10-Q, 8-K (plus EX-99 earnings releases), 20-F, 6-K, proxies, S-1 and S-4 filings. Add `--all` for every listed filer.
@@ -118,11 +118,11 @@ The model can be set separately for Ask with `OM_MODEL_ASK`. With no model confi
 ## Funding rounds (SEC Form D)
 
 ```bash
-python3 open_multiples.py rounds load --last 8
+python3 acretia.py rounds load --last 8
 ```
 
 ```bash
-python3 open_multiples.py rounds search --sort amount --equity-only
+python3 acretia.py rounds search --sort amount --equity-only
 ```
 
 - `rounds load` loads the latest 8 quarters. Any quarter back to 2008 is available.
@@ -140,7 +140,7 @@ Pooled funds and test filings are excluded. Amendments are merged into their ori
 ## Web app and data rooms (VDRs)
 
 ```bash
-python3 open_multiples.py serve
+python3 acretia.py serve
 ```
 
 Then open http://127.0.0.1:8765. The app has three pages:
@@ -167,23 +167,23 @@ How the connectors behave:
 The same operations from the command line:
 
 ```bash
-python3 open_multiples.py room create "Project Falcon"
+python3 acretia.py room create "Project Falcon"
 ```
 
 ```bash
-python3 open_multiples.py room import "Project Falcon" ~/Downloads/Falcon_VDR_export.zip
+python3 acretia.py room import "Project Falcon" ~/Downloads/Falcon_VDR_export.zip
 ```
 
 ```bash
-python3 open_multiples.py room connect "Project Falcon" --type synced_folder --set path="~/Library/CloudStorage/Box-Box/Project Falcon"
+python3 acretia.py room connect "Project Falcon" --type synced_folder --set path="~/Library/CloudStorage/Box-Box/Project Falcon"
 ```
 
 ```bash
-python3 open_multiples.py room sync "Project Falcon"
+python3 acretia.py room sync "Project Falcon"
 ```
 
 ```bash
-python3 open_multiples.py search '"change of control"'
+python3 acretia.py search '"change of control"'
 ```
 
 The app binds to 127.0.0.1 and has no login yet. Don't expose it on a network until authentication is added.
@@ -308,7 +308,7 @@ The frame on every content slide:
 
 Keys entered in Settings go to the **macOS Keychain**: encrypted at rest and outside the project folder, so they can't be committed, zipped or shared with it. The app writes them through the Security framework directly, so a key never appears on a command line, in a temp file, in `.env`, in a log or on a page. Pages show only the last four characters.
 
-On other systems, keys go to `~/.config/open-multiples/secrets.env` with owner-only permissions. Any key found in `.env` is moved out on startup.
+On other systems, keys go to `~/.config/acretia/secrets.env` with owner-only permissions. Any key found in `.env` is moved out on startup.
 
 The local web app is locked down:
 - It listens on 127.0.0.1 only.
@@ -352,10 +352,10 @@ To stay quiet when nothing is wrong, it follows these rules:
 On the seven Costco board decks from the earlier review loop, it raised 4 flags, all of which the partner and MD reviewers had also raised.
 
 ```bash
-python3 open_multiples.py check deck.pptx                       # deck, tied to SEC filings
-python3 open_multiples.py check model.xlsx                      # workbook (recalculated with LibreOffice if needed)
-python3 open_multiples.py check "Project Falcon" --room         # every document in a data room
-python3 open_multiples.py check deck.pptx --against-room "Project Falcon"
+python3 acretia.py check deck.pptx                       # deck, tied to SEC filings
+python3 acretia.py check model.xlsx                      # workbook (recalculated with LibreOffice if needed)
+python3 acretia.py check "Project Falcon" --room         # every document in a data room
+python3 acretia.py check deck.pptx --against-room "Project Falcon"
 ```
 
 Rules only, by default. With an AI model set for the `check` stage, it also pulls figures from harder prose (each one must quote its passage word for word) and reviews each mismatch for differing definitions, such as gross vs net or reported vs adjusted. If the model judges two figures to measure different things, that mismatch is downgraded.
@@ -375,9 +375,9 @@ Every deck is a native, editable `.pptx` (real PowerPoint tables and charts, not
 Set the firm name printed on covers and footers in **Settings → Slides**. From the command line:
 
 ```bash
-python3 open_multiples.py deck comps AAPL MSFT NVDA GOOGL
-python3 open_multiples.py deck tearsheet AAPL
-python3 open_multiples.py deck rounds --industry Biotechnology
+python3 acretia.py deck comps AAPL MSFT NVDA GOOGL
+python3 acretia.py deck tearsheet AAPL
+python3 acretia.py deck rounds --industry Biotechnology
 ```
 
 Decks are written to `data/out/` (or `--out file.pptx`). They open in PowerPoint, Keynote and Google Slides.
@@ -394,7 +394,7 @@ DEEPSEEK_API_KEY=...
 ```
 
 ```bash
-python3 open_multiples.py models
+python3 acretia.py models
 ```
 
 `models` shows which model serves each stage.
@@ -426,23 +426,23 @@ pip install -r requirements.txt
 Then add `ANTHROPIC_API_KEY=...` to `.env`.
 
 ```bash
-python3 open_multiples.py matrix create ai-capex --query '"capital expenditures"' --form 10-K 10-Q --max-rows 10 --column "Capex:currency::What were capital expenditures in the period?" --column "AI spend::What does the company say about AI infrastructure investment?"
+python3 acretia.py matrix create ai-capex --query '"capital expenditures"' --form 10-K 10-Q --max-rows 10 --column "Capex:currency::What were capital expenditures in the period?" --column "AI spend::What does the company say about AI infrastructure investment?"
 ```
 
 ```bash
-python3 open_multiples.py matrix run ai-capex
+python3 acretia.py matrix run ai-capex
 ```
 
 ```bash
-python3 open_multiples.py matrix add-column ai-capex --column "Guidance::What capex outlook does management give?"
+python3 acretia.py matrix add-column ai-capex --column "Guidance::What capex outlook does management give?"
 ```
 
 ```bash
-python3 open_multiples.py matrix show ai-capex
+python3 acretia.py matrix show ai-capex
 ```
 
 ```bash
-python3 open_multiples.py matrix export ai-capex
+python3 acretia.py matrix export ai-capex
 ```
 
 - `create` builds the grid from a search.

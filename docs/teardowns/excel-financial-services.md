@@ -5,7 +5,7 @@ commit: 3e32c2287dcb637c184c01cc0ad82d6af7e9bb0f
 licence: Apache-2.0 (top-level `LICENSE` is the unmodified Apache-2.0 text; nested `LICENSE`/`LICENSE.txt` in `skill-creator` and `partner-built/spglobal/**` are also Apache-2.0 text)
 ran: partial (the repo is prompt/skill text plus one validator script; ran `validate_dcf.py` on our real AAPL workbook, read the comps, DCF, LBO, 3-statement, merger, audit and xlsx-author skills; nothing here builds a workbook, so there is no builder to run)
 
-Scope read: `plugins/vertical-plugins/financial-analysis/skills/{comps-analysis,dcf-model,lbo-model,3-statement-model,audit-xls,xlsx-author}/SKILL.md` and `plugins/vertical-plugins/investment-banking/skills/merger-model/SKILL.md`. Test input: `data/out/AAPL three-statement model.xlsx` (written by `python3 open_multiples.py model AAPL`; 10 sheets, 1,155 formula cells), copied to the scratchpad before use.
+Scope read: `plugins/vertical-plugins/financial-analysis/skills/{comps-analysis,dcf-model,lbo-model,3-statement-model,audit-xls,xlsx-author}/SKILL.md` and `plugins/vertical-plugins/investment-banking/skills/merger-model/SKILL.md`. Test input: `data/out/AAPL three-statement model.xlsx` (written by `python3 acretia.py model AAPL`; 10 sheets, 1,155 formula cells), copied to the scratchpad before use.
 
 ## What it is
 
