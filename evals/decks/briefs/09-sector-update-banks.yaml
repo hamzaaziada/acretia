@@ -1,0 +1,351 @@
+brief: 'Write a 9-slide third-quarter sector update on US regional banks for the financial institutions group: net
+  interest margin, funding mix, valuation versus returns, comparables and our stock-selection screens. Synthetic
+  data, as of 10 November 2026.'
+ghost:
+  deck_id: d09-sector-update-banks
+  brief: 'Write a 9-slide third-quarter sector update on US regional banks for the financial institutions group:
+    net interest margin, funding mix, valuation versus returns, comparables and our stock-selection screens. Synthetic
+    data, as of 10 November 2026.'
+  lang: en
+  slides:
+  - id: s1
+    title: 'US regional banks: third quarter sector update'
+    section: Answer
+    archetype_hint: cover
+    purpose: 'Evidence slide 1: US regional banks: third quarter sector update'
+  - id: s2
+    title: Regional bank margins turned up in Q3 as NIM reached 3.38%, and valuations lag
+    section: Answer
+    archetype_hint: exec_summary
+    purpose: 'Evidence slide 2: Regional bank margins turned up in Q3 as NIM reached 3.38%, '
+  - id: s3
+    title: Sector NIM rose to 3.38% in Q3, 21 bps above its Q1 2026 low
+    section: Earnings
+    archetype_hint: annotated_line
+    purpose: 'Evidence slide 3: Sector NIM rose to 3.38% in Q3, 21 bps above its Q1 2026 low'
+  - id: s4
+    title: Non-interest deposits stabilise at 24% of funding after falling from 31% in 2022
+    section: Earnings
+    archetype_hint: stacked_column
+    purpose: 'Evidence slide 4: Non-interest deposits stabilise at 24% of funding after fall'
+  - id: s5
+    title: 'Returns explain valuation: each point of ROTCE is worth about 0.1x of tangible book'
+    section: Valuation
+    archetype_hint: scatter_quadrant
+    purpose: 'Evidence slide 5: Returns explain valuation: each point of ROTCE is worth abou'
+  - id: s6
+    title: Lakeshore trades at 1.3x tangible book, fifth of 8 and below the 1.4x median
+    section: Valuation
+    archetype_hint: ranked_bar
+    purpose: 'Evidence slide 6: Lakeshore trades at 1.3x tangible book, fifth of 8 and below'
+  - id: s7
+    title: The sector median trades at 1.4x tangible book with 12.9% ROTCE and 11.2% CET1
+    section: Valuation
+    archetype_hint: comps_table
+    purpose: 'Evidence slide 7: The sector median trades at 1.4x tangible book with 12.9% RO'
+  - id: s8
+    title: Three screens identify 4 of the 24 banks where earnings can beat consensus
+    section: Positioning
+    archetype_hint: numbered_insights
+    purpose: 'Evidence slide 8: Three screens identify 4 of the 24 banks where earnings can '
+  - id: s9
+    title: We prefer four banks with deposit growth above 5% and unrealised losses below 12%
+    section: Positioning
+    archetype_hint: takeaway_box
+    purpose: 'Evidence slide 9: We prefer four banks with deposit growth above 5% and unreal'
+  sections:
+  - Answer
+  - Earnings
+  - Valuation
+  - Positioning
+  approved: true
+  approved_by: eval-corpus
+  approved_at: '2026-11-17T00:00:00+00:00'
+  lint: []
+spec:
+  deck_id: d09-sector-update-banks
+  title: 'US regional banks: third quarter sector update'
+  lang: en
+  client: Financial institutions group
+  as_of: '2026-11-10'
+  art_direction: data_art
+  theme: house
+  slides:
+  - id: s1
+    archetype: cover
+    title: 'US regional banks: third quarter sector update'
+    blocks:
+      client: Financial institutions group
+      date: 10 November 2026
+    visual:
+      concept: data dots drifting across a grid in blue and grey
+      kind: hero
+    notes: 'Evidence slide 1: US regional banks: third quarter sector update'
+  - id: s2
+    archetype: exec_summary
+    title: Regional bank margins turned up in Q3 as NIM reached 3.38%, and valuations lag
+    source: Company filings, Q3 2026 (synthetic); Market data, 6 Nov 2026 (synthetic)
+    sources:
+    - Company filings, Q3 2026 (synthetic)
+    - Market data, 6 Nov 2026 (synthetic)
+    as_of: '2026-11-10'
+    blocks:
+      subtitle: Sector summary, 24 regional banks
+      insights:
+      - lead: Margin
+        text: Sector net interest margin recovers on fixed-asset repricing
+        figure: 3.38%
+      - lead: Funding
+        text: Non-interest deposits stabilise as a share of funding
+        figure: 24%
+      - lead: Capital
+        text: Median CET1 ratio sits comfortably above requirements
+        figure: 11.2%
+      - lead: Valuation
+        text: The sector trades at a discount to tangible book
+        figure: 1.4x
+      so_what:
+        text: Favour banks with high deposit growth and low securities losses.
+    notes: 'Evidence slide 2: Regional bank margins turned up in Q3 as NIM reached 3.38%, '
+  - id: s3
+    archetype: annotated_line
+    title: Sector NIM rose to 3.38% in Q3, 21 bps above its Q1 2026 low
+    source: Company filings (synthetic); FFIEC call reports (synthetic)
+    sources:
+    - Company filings (synthetic)
+    - FFIEC call reports (synthetic)
+    as_of: '2026-11-10'
+    blocks:
+      subtitle: Median net interest margin, quarterly, %
+      number_format: '0.00'
+      change_unit: pp
+      categories:
+      - Q1 25
+      - Q2 25
+      - Q3 25
+      - Q4 25
+      - Q1 26
+      - Q2 26
+      - Q3 26
+      series:
+      - name: Regional bank median
+        values:
+        - 3.31
+        - 3.26
+        - 3.22
+        - 3.19
+        - 3.17
+        - 3.28
+        - 3.38
+      - name: Large bank median
+        values:
+        - 2.62
+        - 2.64
+        - 2.66
+        - 2.68
+        - 2.7
+        - 2.73
+        - 2.75
+      annotation:
+        at: 4
+        text: Low point after funding costs peak
+      takeaway: Regional banks earn 3.38% against 2.75% for large banks [1]
+    notes: 'Evidence slide 3: Sector NIM rose to 3.38% in Q3, 21 bps above its Q1 2026 low'
+  - id: s4
+    archetype: stacked_column
+    title: Non-interest deposits stabilise at 24% of funding after falling from 31% in 2022
+    source: Company filings (synthetic)
+    sources:
+    - Company filings (synthetic)
+    as_of: '2026-11-10'
+    blocks:
+      subtitle: Deposit mix, year end, % of total deposits
+      mode: percent
+      categories:
+      - '2022'
+      - '2023'
+      - '2024'
+      - '2025'
+      - Q3 26
+      parts:
+      - name: Non-interest bearing
+        values:
+        - 31
+        - 27
+        - 25
+        - 24
+        - 24
+        key: true
+      - name: Savings and money market
+        values:
+        - 44
+        - 46
+        - 47
+        - 48
+        - 48
+      - name: Time deposits
+        values:
+        - 25
+        - 27
+        - 28
+        - 28
+        - 28
+      takeaway: The mix has been stable at 24% for three quarters [1]
+    notes: 'Evidence slide 4: Non-interest deposits stabilise at 24% of funding after fall'
+  - id: s5
+    archetype: scatter_quadrant
+    title: 'Returns explain valuation: each point of ROTCE is worth about 0.1x of tangible book'
+    source: Company filings (synthetic); Market data, 6 Nov 2026 (synthetic)
+    sources:
+    - Company filings (synthetic)
+    - Market data, 6 Nov 2026 (synthetic)
+    as_of: '2026-11-10'
+    blocks:
+      subtitle: Price to tangible book versus ROTCE, 10 banks
+      x_title: ROTCE, %
+      y_title: Price to tangible book, x
+      x_format: '0.0'
+      y_format: '0.0'
+      points:
+      - label: Northgate
+        xv: 17.2
+        yv: 2.0
+      - label: Harbor Trust
+        xv: 15.8
+        yv: 1.8
+      - label: Summit
+        xv: 14.1
+        yv: 1.6
+      - label: Pinecrest
+        xv: 12.9
+        yv: 1.5
+      - label: Lakeshore
+        xv: 11.5
+        yv: 1.3
+        subject: true
+      - label: Ridgeway
+        xv: 10.4
+        yv: 1.2
+      - label: Cedar Valley
+        xv: 9.1
+        yv: 1.0
+      - label: Mesa
+        xv: 8.2
+        yv: 0.9
+      stat:
+        value: 0.1x
+        label: valuation per point of ROTCE across the set
+      takeaway: Lakeshore trades at 1.3x with 11.5% ROTCE, in line with the line of fit [1]
+    notes: 'Evidence slide 5: Returns explain valuation: each point of ROTCE is worth abou'
+  - id: s6
+    archetype: ranked_bar
+    title: Lakeshore trades at 1.3x tangible book, fifth of 8 and below the 1.4x median
+    source: Market data, 6 Nov 2026 (synthetic)
+    sources:
+    - Market data, 6 Nov 2026 (synthetic)
+    as_of: '2026-11-10'
+    blocks:
+      subtitle: Price to tangible book, x
+      number_format: 0.0"x"
+      series_name: P/TBV
+      items:
+      - label: Northgate
+        value: 2.0
+      - label: Harbor Trust
+        value: 1.8
+      - label: Summit
+        value: 1.6
+      - label: Pinecrest
+        value: 1.5
+      - label: Lakeshore
+        value: 1.3
+        key: true
+      - label: Ridgeway
+        value: 1.2
+      - label: Cedar Valley
+        value: 1.0
+      - label: Mesa
+        value: 0.9
+      stat:
+        value: -0.1x
+        label: discount to the peer median of 1.4x
+      takeaway: Re-rating to the median adds 0.1x of tangible book [1]
+    notes: 'Evidence slide 6: Lakeshore trades at 1.3x tangible book, fifth of 8 and below'
+  - id: s7
+    archetype: comps_table
+    title: The sector median trades at 1.4x tangible book with 12.9% ROTCE and 11.2% CET1
+    source: Market data, 6 Nov 2026 (synthetic)
+    sources:
+    - Market data, 6 Nov 2026 (synthetic)
+    as_of: '2026-11-10'
+    blocks:
+      subtitle: Regional bank comparables, EV not shown, multiples on Q3 2026
+      dense: true
+      compute_stats: true
+      rows:
+      - company: Northgate
+        ev: 21.4
+        ev_ebitda: 9.8
+        pe: 11.2
+        growth: 6.1
+        margin: 41.0
+      - company: Harbor Trust
+        ev: 14.2
+        ev_ebitda: 9.1
+        pe: 10.6
+        growth: 5.4
+        margin: 38.5
+      - company: Summit
+        ev: 11.8
+        ev_ebitda: 8.4
+        pe: 9.9
+        growth: 4.7
+        margin: 36.2
+      - company: Pinecrest
+        ev: 9.3
+        ev_ebitda: 7.9
+        pe: 9.4
+        growth: 4.1
+        margin: 34.8
+      - company: Lakeshore
+        ev: 7.6
+        ev_ebitda: 7.2
+        pe: 8.8
+        growth: 3.6
+        margin: 33.1
+      takeaway: Median price to earnings is 9.9x on 4.7% revenue growth [1]
+    notes: 'Evidence slide 7: The sector median trades at 1.4x tangible book with 12.9% RO'
+  - id: s8
+    archetype: numbered_insights
+    title: Three screens identify 4 of the 24 banks where earnings can beat consensus
+    source: Screening model (synthetic)
+    as_of: '2026-11-10'
+    blocks:
+      subtitle: Stock-selection screens
+      layout: row
+      insights:
+      - title: Deposit growth
+        text: Deposits growing faster than loans fund margin expansion
+        figure: +5.2%
+      - title: Securities losses
+        text: Unrealised losses below this share of tangible equity
+        figure: 12%
+      - title: Credit costs
+        text: Net charge-offs at or below the sector median
+        figure: 0.31%
+    notes: 'Evidence slide 8: Three screens identify 4 of the 24 banks where earnings can '
+  - id: s9
+    archetype: takeaway_box
+    title: We prefer four banks with deposit growth above 5% and unrealised losses below 12%
+    source: Screening model (synthetic)
+    as_of: '2026-11-10'
+    blocks:
+      decision: Overweight banks with deposit growth above 5.2% and securities losses below 12% of tangible equity
+      rationale:
+      - 'Margin: NIM of 3.38% is still rising'
+      - 'Valuation: 1.4x tangible book lags returns'
+      - 'Capital: CET1 of 11.2% supports buybacks'
+      risks:
+      - 'Credit: charge-offs of 0.31% could rise'
+      - 'Rates: a flat curve caps margin gains'
+    notes: 'Evidence slide 9: We prefer four banks with deposit growth above 5% and unreal'

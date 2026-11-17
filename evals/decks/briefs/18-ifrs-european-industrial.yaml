@@ -1,0 +1,358 @@
+brief: 'Write a 10-slide strategic review for the supervisory board of Rheinwerk AG, a European industrial group
+  reporting under IFRS in EUR: group financials with IFRS 16, divisions, options (spin-off, sale, hold), valuation
+  and the workplan. Synthetic data.'
+ghost:
+  deck_id: d18-ifrs-european-industrial
+  brief: 'Write a 10-slide strategic review for the supervisory board of Rheinwerk AG, a European industrial group
+    reporting under IFRS in EUR: group financials with IFRS 16, divisions, options (spin-off, sale, hold), valuation
+    and the workplan. Synthetic data.'
+  lang: en
+  slides:
+  - id: s1
+    title: 'Project Rhine: strategic review of Rheinwerk AG'
+    section: Answer
+    archetype_hint: cover
+    purpose: 'Evidence slide 1: Project Rhine: strategic review of Rheinwerk AG'
+  - id: s2
+    title: Separating Automation lifts the sum of the parts to €46.00 per share against €38.40 today
+    section: Answer
+    archetype_hint: exec_summary
+    purpose: 'Evidence slide 2: Separating Automation lifts the sum of the parts to €46.00 p'
+  - id: s3
+    title: Rheinwerk earns €412m of IFRS EBITDA, a 12.0% margin, with net debt at 1.6x
+    section: Group
+    archetype_hint: kpi_row
+    purpose: 'Evidence slide 3: Rheinwerk earns €412m of IFRS EBITDA, a 12.0% margin, with n'
+  - id: s4
+    title: Removing IFRS 16 lease effects lowers EBITDA from €412m to €354m
+    section: Group
+    archetype_hint: waterfall
+    purpose: 'Evidence slide 4: Removing IFRS 16 lease effects lowers EBITDA from €412m to €'
+  - id: s5
+    title: Automation is 35% of revenue and Europe is 62% of group sales
+    section: Divisions
+    archetype_hint: stacked_bar
+    purpose: 'Evidence slide 5: Automation is 35% of revenue and Europe is 62% of group sale'
+  - id: s6
+    title: Automation margin rises 3.4 points to 15.1%, while Components stays below 9%
+    section: Divisions
+    archetype_hint: small_multiples
+    purpose: 'Evidence slide 6: Automation margin rises 3.4 points to 15.1%, while Component'
+  - id: s7
+    title: A spin-off of Automation delivers €46.00 per share, €3.00 more than a sale
+    section: Options
+    archetype_hint: comparison_table
+    purpose: 'Evidence slide 7: A spin-off of Automation delivers €46.00 per share, €3.00 mo'
+  - id: s8
+    title: Every method values Rheinwerk above the current share price of €38.40
+    section: Options
+    archetype_hint: football_field
+    purpose: 'Evidence slide 8: Every method values Rheinwerk above the current share price '
+  - id: s9
+    title: A five-step plan lists Automation within 9 months of the board mandate
+    section: Next steps
+    archetype_hint: process_flow
+    purpose: 'Evidence slide 9: A five-step plan lists Automation within 9 months of the boa'
+  - id: s10
+    title: We recommend a spin-off of Automation for €46.00 per share in 9 months
+    section: Next steps
+    archetype_hint: takeaway_box
+    purpose: 'Evidence slide 10: We recommend a spin-off of Automation for €46.00 per share i'
+  sections:
+  - Answer
+  - Group
+  - Divisions
+  - Options
+  - Next steps
+  approved: true
+  approved_by: eval-corpus
+  approved_at: '2026-11-17T00:00:00+00:00'
+  lint: []
+spec:
+  deck_id: d18-ifrs-european-industrial
+  title: 'Project Rhine: strategic review of Rheinwerk AG'
+  lang: en
+  client: Supervisory Board
+  as_of: '2026-11-16'
+  art_direction: auto
+  theme: house
+  slides:
+  - id: s1
+    archetype: cover
+    title: 'Project Rhine: strategic review of Rheinwerk AG'
+    blocks:
+      client: Supervisory Board, Rheinwerk AG
+      date: 16 November 2026
+    visual:
+      concept: a river delta drawn as layered organic and geometric shapes
+      kind: illustration
+    notes: 'Evidence slide 1: Project Rhine: strategic review of Rheinwerk AG'
+  - id: s2
+    archetype: exec_summary
+    title: Separating Automation lifts the sum of the parts to €46.00 per share against €38.40 today
+    source: Annual report FY25, IFRS (synthetic); Advisor SOTP model (synthetic)
+    sources:
+    - Annual report FY25, IFRS (synthetic)
+    - Advisor SOTP model (synthetic)
+    as_of: '2026-11-16'
+    blocks:
+      subtitle: Strategic review summary, IFRS, € million
+      insights:
+      - lead: Gap
+        text: Sum-of-the-parts value per share against the current price
+        figure: €46.00
+      - lead: Earnings
+        text: IFRS EBITDA on revenue of €3,420m
+        figure: €412m
+      - lead: Option
+        text: A spin-off of Automation takes this long to complete
+        figure: 9 months
+      - lead: Balance sheet
+        text: Net debt to EBITDA excluding leases
+        figure: 1.6x
+      so_what:
+        text: Mandate a spin-off of Automation for a 2027 listing.
+    notes: 'Evidence slide 2: Separating Automation lifts the sum of the parts to €46.00 p'
+  - id: s3
+    archetype: kpi_row
+    title: Rheinwerk earns €412m of IFRS EBITDA, a 12.0% margin, with net debt at 1.6x
+    source: Annual report FY25, IFRS (synthetic)
+    as_of: '2026-11-16'
+    blocks:
+      subtitle: FY26E group, IFRS, € million
+      highlight: 1
+      kpis:
+      - label: Revenue
+        value: €3,420m
+        context: +4.1% YoY
+        change:
+          text: up
+          direction: up
+      - label: IFRS EBITDA
+        value: €412m
+        context: 12.0% margin
+        change:
+          text: up
+          direction: up
+      - label: Net debt
+        value: €640m
+        context: Excludes leases
+        change:
+          text: down
+          direction: up
+      - label: Lease liabilities
+        value: €310m
+        context: IFRS 16
+        change:
+          text: flat
+          direction: flat
+      so_what: Net debt of €640m is 1.6x IFRS EBITDA before leases.
+    notes: 'Evidence slide 3: Rheinwerk earns €412m of IFRS EBITDA, a 12.0% margin, with n'
+  - id: s4
+    archetype: waterfall
+    title: Removing IFRS 16 lease effects lowers EBITDA from €412m to €354m
+    source: Annual report FY25, IFRS 16 note (synthetic)
+    sources:
+    - Annual report FY25, IFRS 16 note (synthetic)
+    as_of: '2026-11-16'
+    blocks:
+      subtitle: IFRS EBITDA to pre-IFRS 16 EBITDA, € million
+      number_format: '0'
+      prefix: €
+      suffix: m
+      steps:
+      - label: IFRS EBITDA
+        value: 412
+      - label: Lease depreciation
+        value: -46
+      - label: Lease interest
+        value: -12
+      - label: Pre-IFRS 16
+        value: 354
+      takeaway: Lease costs of €58m are 14% of IFRS EBITDA [1]
+    notes: 'Evidence slide 4: Removing IFRS 16 lease effects lowers EBITDA from €412m to €'
+  - id: s5
+    archetype: stacked_bar
+    title: Automation is 35% of revenue and Europe is 62% of group sales
+    source: Annual report FY25 segment note (synthetic)
+    sources:
+    - Annual report FY25 segment note (synthetic)
+    as_of: '2026-11-16'
+    blocks:
+      subtitle: Revenue by division and region, % of group
+      mode: percent
+      categories:
+      - By division
+      - By region
+      parts:
+      - name: Automation | Europe
+        values:
+        - 35
+        - 62
+        key: true
+      - name: Drives | Americas
+        values:
+        - 41
+        - 24
+      - name: Components | Asia
+        values:
+        - 24
+        - 14
+      takeaway: Automation, at 35% of revenue, has the clearest listing profile [1]
+    notes: 'Evidence slide 5: Automation is 35% of revenue and Europe is 62% of group sale'
+  - id: s6
+    archetype: small_multiples
+    title: Automation margin rises 3.4 points to 15.1%, while Components stays below 9%
+    source: Annual report FY25 segment note (synthetic)
+    sources:
+    - Annual report FY25 segment note (synthetic)
+    as_of: '2026-11-16'
+    blocks:
+      subtitle: EBITDA margin by division, FY23 to FY26E, %
+      number_format: '0.0'
+      panels:
+      - title: Automation
+        categories:
+        - FY23
+        - FY24
+        - FY25
+        - FY26E
+        values:
+        - 11.7
+        - 12.9
+        - 14.0
+        - 15.1
+      - title: Drives
+        categories:
+        - FY23
+        - FY24
+        - FY25
+        - FY26E
+        values:
+        - 12.4
+        - 12.1
+        - 12.6
+        - 12.9
+      - title: Components
+        categories:
+        - FY23
+        - FY24
+        - FY25
+        - FY26E
+        values:
+        - 8.8
+        - 8.1
+        - 8.4
+        - 8.7
+      takeaway: Automation has gained 3.4 points since FY23 [1]
+    notes: 'Evidence slide 6: Automation margin rises 3.4 points to 15.1%, while Component'
+  - id: s7
+    archetype: comparison_table
+    title: A spin-off of Automation delivers €46.00 per share, €3.00 more than a sale
+    source: Advisor SOTP model (synthetic)
+    sources:
+    - Advisor SOTP model (synthetic)
+    as_of: '2026-11-16'
+    blocks:
+      subtitle: Strategic options, € per share
+      options:
+      - Spin-off
+      - Sale of Automation
+      - Hold
+      highlight: 0
+      rows:
+      - criterion: Value per share
+        values:
+        - €46.00
+        - €43.00
+        - €38.40
+      - criterion: Time to complete
+        values:
+        - 9 months
+        - 7 months
+        - n.a.
+      - criterion: Tax leakage
+        values:
+        - €0m
+        - €64m
+        - €0m
+      - criterion: Execution risk
+        values:
+        - Medium
+        - Medium
+        - Low
+      verdict:
+      - Recommended
+      - Tax cost
+      - Discount
+      takeaway: The spin-off avoids €64m of tax leakage [1]
+    notes: 'Evidence slide 7: A spin-off of Automation delivers €46.00 per share, €3.00 mo'
+  - id: s8
+    archetype: football_field
+    title: Every method values Rheinwerk above the current share price of €38.40
+    source: Advisor SOTP model (synthetic); Market data, 13 Nov 2026 (synthetic)
+    sources:
+    - Advisor SOTP model (synthetic)
+    - Market data, 13 Nov 2026 (synthetic)
+    as_of: '2026-11-16'
+    blocks:
+      subtitle: Equity value per share by method, €
+      prefix: €
+      number_format: '0.00'
+      current_price: 38.4
+      implied: 46.0
+      methods:
+      - label: Sum of the parts
+        low: 41.0
+        high: 52.0
+        key: true
+      - label: DCF
+        low: 39.0
+        high: 50.0
+      - label: Trading comps
+        low: 36.0
+        high: 46.0
+      - label: Precedents
+        low: 44.0
+        high: 55.0
+      - label: Analyst targets
+        low: 37.0
+        high: 48.0
+      takeaway: Only the trading comps range starts below the current price of €38.40 [1]
+    notes: 'Evidence slide 8: Every method values Rheinwerk above the current share price '
+  - id: s9
+    archetype: process_flow
+    title: A five-step plan lists Automation within 9 months of the board mandate
+    source: Advisor workplan (synthetic)
+    as_of: '2026-11-16'
+    blocks:
+      highlight: 2
+      output_label: Output
+      subtitle: Spin-off workplan
+      steps:
+      - name: Mandate
+        output: 'Month 0: supervisory board decision'
+      - name: Carve-out accounts
+        output: 'Month 3: IFRS accounts for Automation'
+      - name: Governance
+        output: 'Month 5: board and capital structure'
+      - name: Prospectus
+        output: 'Month 7: filing'
+      - name: Listing
+        output: 'Month 9: first day of trading'
+    notes: 'Evidence slide 9: A five-step plan lists Automation within 9 months of the boa'
+  - id: s10
+    archetype: takeaway_box
+    title: We recommend a spin-off of Automation for €46.00 per share in 9 months
+    source: Advisor SOTP model (synthetic)
+    as_of: '2026-11-16'
+    blocks:
+      decision: Mandate the spin-off of Automation, targeting a listing in 9 months and €46.00 per share of value
+      rationale:
+      - 'Value: €46.00 against €38.40 today'
+      - 'Tax: no leakage against €64m on a sale'
+      - 'Margin: Automation at 15.1% earns a premium multiple'
+      risks:
+      - 'Execution: carve-out accounts in 3 months'
+      - 'Market: listing window in 2027'
+    notes: 'Evidence slide 10: We recommend a spin-off of Automation for €46.00 per share i'

@@ -1,0 +1,363 @@
+brief: 'Write a 9-slide third-quarter board update for Redwood Industries, a US manufacturer: results versus plan,
+  margin trend, divisional margins, KPI scorecard, cost programme status and three decisions requested. Synthetic
+  data.'
+ghost:
+  deck_id: d12-board-update
+  brief: 'Write a 9-slide third-quarter board update for Redwood Industries, a US manufacturer: results versus plan,
+    margin trend, divisional margins, KPI scorecard, cost programme status and three decisions requested. Synthetic
+    data.'
+  lang: en
+  slides:
+  - id: s1
+    title: 'Redwood Industries: third quarter FY26 board update'
+    section: Answer
+    archetype_hint: cover
+    purpose: 'Evidence slide 1: Redwood Industries: third quarter FY26 board update'
+  - id: s2
+    title: Redwood grew revenue 5.6% to $842m, and the cost programme has delivered $48m
+    section: Answer
+    archetype_hint: exec_summary
+    purpose: 'Evidence slide 2: Redwood grew revenue 5.6% to $842m, and the cost programme h'
+  - id: s3
+    title: Today we cover results, the cost programme and the decisions
+    section: Answer
+    archetype_hint: agenda
+    purpose: 'Evidence slide 3: Today we cover results, the cost programme and the decisions'
+  - id: s4
+    title: Third quarter revenue of $842m and adjusted EBITDA of $151m both beat plan
+    section: Results
+    archetype_hint: kpi_row
+    purpose: 'Evidence slide 4: Third quarter revenue of $842m and adjusted EBITDA of $151m '
+  - id: s5
+    title: Revenue grew to $842m over five quarters while margin widened to 17.9%
+    section: Results
+    archetype_hint: combo_margin
+    purpose: 'Evidence slide 5: Revenue grew to $842m over five quarters while margin widene'
+  - id: s6
+    title: Margin improves in four of five divisions, with Packaging up 2.1 points to 15.4%
+    section: Results
+    archetype_hint: paired_bars
+    purpose: 'Evidence slide 6: Margin improves in four of five divisions, with Packaging up'
+  - id: s7
+    title: Four of five operating KPIs improved, but backlog slipped 1.4% to $1,055m
+    section: Results
+    archetype_hint: scorecard
+    purpose: 'Evidence slide 7: Four of five operating KPIs improved, but backlog slipped 1.'
+  - id: s8
+    title: The cost programme has captured $48m and finishes the last wave by month 9
+    section: Cost programme
+    archetype_hint: gantt
+    purpose: 'Evidence slide 8: The cost programme has captured $48m and finishes the last w'
+  - id: s9
+    title: Approve $65m of plant 4 capex, a 6% dividend increase and a $200m buyback
+    section: Decisions
+    archetype_hint: recommendation
+    purpose: 'Evidence slide 9: Approve $65m of plant 4 capex, a 6% dividend increase and a '
+  sections:
+  - Answer
+  - Results
+  - Cost programme
+  - Decisions
+  approved: true
+  approved_by: eval-corpus
+  approved_at: '2026-11-17T00:00:00+00:00'
+  lint: []
+spec:
+  deck_id: d12-board-update
+  title: 'Redwood Industries: third quarter FY26 board update'
+  lang: en
+  client: Board of Directors
+  as_of: '2026-11-18'
+  art_direction: auto
+  theme: house
+  slides:
+  - id: s1
+    archetype: cover
+    title: 'Redwood Industries: third quarter FY26 board update'
+    blocks:
+      client: Board of Directors
+      date: 18 November 2026
+    visual:
+      concept: layered flat forest and factory shapes
+      kind: hero
+    notes: 'Evidence slide 1: Redwood Industries: third quarter FY26 board update'
+  - id: s2
+    archetype: exec_summary
+    title: Redwood grew revenue 5.6% to $842m, and the cost programme has delivered $48m
+    source: Management accounts, Q3 FY26 (synthetic); Cost programme tracker (synthetic)
+    sources:
+    - Management accounts, Q3 FY26 (synthetic)
+    - Cost programme tracker (synthetic)
+    as_of: '2026-11-18'
+    blocks:
+      subtitle: Quarterly summary, $ million
+      insights:
+      - lead: Revenue
+        text: Third quarter revenue grew on price and volume
+        figure: $842m
+      - lead: Earnings
+        text: Adjusted EBITDA margin improved on cost savings
+        figure: 17.9%
+      - lead: Savings
+        text: Cost programme savings captured year to date
+        figure: $48m
+      - lead: Decisions
+        text: Three approvals are requested at this meeting
+        figure: $65m
+      so_what:
+        text: Approve the plant 4 capex, the dividend increase and the buyback.
+    notes: 'Evidence slide 2: Redwood grew revenue 5.6% to $842m, and the cost programme h'
+  - id: s3
+    archetype: agenda
+    title: Today we cover results, the cost programme and the decisions
+    blocks:
+      current: 0
+      items:
+      - title: Q3 results
+        detail: Revenue, margin and KPIs
+        time: 15 min
+      - title: Cost programme
+        detail: Savings and timetable
+        time: 15 min
+      - title: Decisions
+        detail: Capex, dividend, buyback
+        time: 20 min
+    notes: 'Evidence slide 3: Today we cover results, the cost programme and the decisions'
+  - id: s4
+    archetype: kpi_row
+    title: Third quarter revenue of $842m and adjusted EBITDA of $151m both beat plan
+    source: Management accounts, Q3 FY26 (synthetic)
+    as_of: '2026-11-18'
+    blocks:
+      subtitle: Q3 FY26 versus plan, $ million
+      highlight: 1
+      kpis:
+      - label: Revenue
+        value: $842m
+        context: +5.6% YoY, plan $825m
+        change:
+          text: beat
+          direction: up
+      - label: Adjusted EBITDA
+        value: $151m
+        context: Plan $142m
+        change:
+          text: beat
+          direction: up
+      - label: EBITDA margin
+        value: 17.9%
+        context: +90 bps YoY
+        change:
+          text: up
+          direction: up
+      - label: Free cash flow
+        value: $96m
+        context: Plan $88m
+        change:
+          text: beat
+          direction: up
+      so_what: All four measures beat plan.
+    notes: 'Evidence slide 4: Third quarter revenue of $842m and adjusted EBITDA of $151m '
+  - id: s5
+    archetype: combo_margin
+    title: Revenue grew to $842m over five quarters while margin widened to 17.9%
+    source: Management accounts (synthetic)
+    sources:
+    - Management accounts (synthetic)
+    as_of: '2026-11-18'
+    blocks:
+      subtitle: Revenue, $ million, and adjusted EBITDA margin, %
+      number_format: '#,##0'
+      line_format: 0.0%
+      categories:
+      - Q3 25
+      - Q4 25
+      - Q1 26
+      - Q2 26
+      - Q3 26
+      bars:
+        name: Revenue, $m
+        values:
+        - 797
+        - 811
+        - 818
+        - 830
+        - 842
+      line:
+        name: EBITDA margin
+        values:
+        - 0.17
+        - 0.172
+        - 0.174
+        - 0.177
+        - 0.179
+      takeaway: Margin has widened for five quarters, from 17.0% to 17.9% [1]
+    notes: 'Evidence slide 5: Revenue grew to $842m over five quarters while margin widene'
+  - id: s6
+    archetype: paired_bars
+    title: Margin improves in four of five divisions, with Packaging up 2.1 points to 15.4%
+    source: Management accounts (synthetic)
+    sources:
+    - Management accounts (synthetic)
+    as_of: '2026-11-18'
+    blocks:
+      subtitle: Adjusted EBITDA margin by division, Q3 FY25 versus Q3 FY26, %
+      number_format: '0.0'
+      categories:
+      - Packaging
+      - Industrial
+      - Consumer
+      - Energy
+      - Medical
+      before:
+        name: Q3 FY25
+        values:
+        - 13.3
+        - 18.2
+        - 16.1
+        - 21.4
+        - 19.0
+      after:
+        name: Q3 FY26
+        values:
+        - 15.4
+        - 19.0
+        - 16.8
+        - 22.1
+        - 18.6
+      stat:
+        value: +0.9pp
+        label: average margin change across divisions
+      takeaway: Medical is the only division down, by 0.4 points to 18.6% [1]
+    notes: 'Evidence slide 6: Margin improves in four of five divisions, with Packaging up'
+  - id: s7
+    archetype: scorecard
+    title: Four of five operating KPIs improved, but backlog slipped 1.4% to $1,055m
+    source: Management accounts (synthetic)
+    sources:
+    - Management accounts (synthetic)
+    as_of: '2026-11-18'
+    blocks:
+      subtitle: KPI scorecard, last five quarters
+      periods:
+      - Q3 25
+      - Q4 25
+      - Q1 26
+      - Q2 26
+      - Q3 26
+      kpis:
+      - name: On-time delivery
+        format: pct
+        values:
+        - 91
+        - 92
+        - 92
+        - 94
+        - 95
+      - name: Scrap rate
+        format: pct
+        values:
+        - 3.1
+        - 3.0
+        - 2.8
+        - 2.6
+        - 2.4
+        good_up: false
+      - name: Net debt / EBITDA
+        format: x
+        values:
+        - 2.9
+        - 2.8
+        - 2.6
+        - 2.5
+        - 2.3
+        good_up: false
+      - name: Backlog ($m)
+        format: usd_m
+        values:
+        - 980
+        - 1010
+        - 1040
+        - 1070
+        - 1055
+      takeaway: Net debt to EBITDA fell to 2.3x from 2.9x a year ago [1]
+    notes: 'Evidence slide 7: Four of five operating KPIs improved, but backlog slipped 1.'
+  - id: s8
+    archetype: gantt
+    title: The cost programme has captured $48m and finishes the last wave by month 9
+    source: Cost programme tracker (synthetic)
+    as_of: '2026-11-18'
+    blocks:
+      subtitle: Cost programme waves, FY27
+      today: 2.5
+      months:
+      - Jan
+      - Feb
+      - Mar
+      - Apr
+      - May
+      - Jun
+      - Jul
+      - Aug
+      - Sep
+      workstreams:
+      - name: Procurement
+        bars:
+        - start: 0
+          end: 4
+          label: Wave 2 tenders
+        milestones:
+        - month: 4.5
+          label: $20m captured
+      - name: Footprint
+        bars:
+        - start: 2
+          end: 8
+          label: Close two plants
+          highlight: true
+        milestones:
+        - month: 7.6
+          label: Month 9 done
+      - name: Shared services
+        bars:
+        - start: 1
+          end: 5
+          label: Move to hub
+        milestones: []
+      - name: Automation
+        bars:
+        - start: 3
+          end: 8
+          label: Line upgrades
+        milestones: []
+    notes: 'Evidence slide 8: The cost programme has captured $48m and finishes the last w'
+  - id: s9
+    archetype: recommendation
+    title: Approve $65m of plant 4 capex, a 6% dividend increase and a $200m buyback
+    source: Management proposal (synthetic)
+    as_of: '2026-11-18'
+    blocks:
+      subtitle: Decisions requested
+      phases:
+      - label: Capex
+        window: plant 4
+        owner: COO
+        date: Dec 2026
+        actions:
+        - Approve $65m for the plant 4 line
+        - Payback of 3.5 years at base volumes
+      - label: Dividend
+        window: FY27
+        owner: CFO
+        date: Jan 2027
+        actions:
+        - Raise the quarterly dividend by 6%
+        - Payout ratio stays at 38% of earnings
+      - label: Buyback
+        window: 12 months
+        owner: CFO
+        date: Nov 2027
+        actions:
+        - Authorise a $200m repurchase programme
+        - Keep net debt to EBITDA at 2.3x
+    notes: 'Evidence slide 9: Approve $65m of plant 4 capex, a 6% dividend increase and a '

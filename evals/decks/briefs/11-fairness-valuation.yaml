@@ -1,0 +1,408 @@
+brief: 'Write a 10-slide valuation summary for the board of Lighthouse Corp, a US listed company receiving a $58.00
+  per share cash offer: football field, share price history, premium analysis, comps, precedents, DCF sensitivity
+  and a recommendation. Synthetic data.'
+ghost:
+  deck_id: d11-fairness-valuation
+  brief: 'Write a 10-slide valuation summary for the board of Lighthouse Corp, a US listed company receiving a $58.00
+    per share cash offer: football field, share price history, premium analysis, comps, precedents, DCF sensitivity
+    and a recommendation. Synthetic data.'
+  lang: en
+  slides:
+  - id: s1
+    title: 'Project Lighthouse: valuation summary for the board'
+    section: Answer
+    archetype_hint: cover
+    purpose: 'Evidence slide 1: Project Lighthouse: valuation summary for the board'
+  - id: s2
+    title: The $58.00 offer sits above the midpoint of four of six valuation methods
+    section: Answer
+    archetype_hint: exec_summary
+    purpose: 'Evidence slide 2: The $58.00 offer sits above the midpoint of four of six valu'
+  - id: s3
+    title: The $58.00 offer is above the unaffected price of $44.10 and inside four ranges
+    section: Valuation
+    archetype_hint: football_field
+    purpose: 'Evidence slide 3: The $58.00 offer is above the unaffected price of $44.10 and'
+  - id: s4
+    title: The share price peaked at $49.80 in August and closed unaffected at $44.10
+    section: Valuation
+    archetype_hint: annotated_line
+    purpose: 'Evidence slide 4: The share price peaked at $49.80 in August and closed unaffe'
+  - id: s5
+    title: The offer is a 31.5% premium and 16.5% above the 52-week high
+    section: Valuation
+    archetype_hint: ranked_bar
+    purpose: 'Evidence slide 5: The offer is a 31.5% premium and 16.5% above the 52-week hig'
+  - id: s6
+    title: Peers trade at a median 11.4x EBITDA, and the offer implies 12.6x
+    section: Valuation
+    archetype_hint: comps_table
+    purpose: 'Evidence slide 6: Peers trade at a median 11.4x EBITDA, and the offer implies '
+  - id: s7
+    title: Precedent deals cleared 10.2x to 13.4x EBITDA, with the offer at 12.6x
+    section: Valuation
+    archetype_hint: tombstones
+    purpose: 'Evidence slide 7: Precedent deals cleared 10.2x to 13.4x EBITDA, with the offe'
+  - id: s8
+    title: DCF value per share spans $50.60 to $76.20 across WACC and terminal growth
+    section: Valuation
+    archetype_hint: sensitivity_table
+    purpose: 'Evidence slide 8: DCF value per share spans $50.60 to $76.20 across WACC and t'
+  - id: s9
+    title: Accepting at $58.00 beats the standalone value of $51.00 per share
+    section: Conclusion
+    archetype_hint: two_column_compare
+    purpose: 'Evidence slide 9: Accepting at $58.00 beats the standalone value of $51.00 per'
+  - id: s10
+    title: We recommend the board approve the $58.00 per share cash offer
+    section: Conclusion
+    archetype_hint: takeaway_box
+    purpose: 'Evidence slide 10: We recommend the board approve the $58.00 per share cash off'
+  sections:
+  - Answer
+  - Valuation
+  - Conclusion
+  approved: true
+  approved_by: eval-corpus
+  approved_at: '2026-11-17T00:00:00+00:00'
+  lint: []
+spec:
+  deck_id: d11-fairness-valuation
+  title: 'Project Lighthouse: valuation summary for the board'
+  lang: en
+  client: Board of Directors
+  as_of: '2026-11-13'
+  art_direction: bold_typographic
+  theme: house
+  slides:
+  - id: s1
+    archetype: cover
+    title: 'Project Lighthouse: valuation summary for the board'
+    blocks:
+      client: Board of Directors, Lighthouse Corp
+      date: 13 November 2026
+    visual:
+      concept: huge segmented numerals as flat geometric forms
+      kind: hero
+    notes: 'Evidence slide 1: Project Lighthouse: valuation summary for the board'
+  - id: s2
+    archetype: exec_summary
+    title: The $58.00 offer sits above the midpoint of four of six valuation methods
+    source: Market data, 12 Nov 2026 (synthetic); Advisor valuation model (synthetic)
+    sources:
+    - Market data, 12 Nov 2026 (synthetic)
+    - Advisor valuation model (synthetic)
+    as_of: '2026-11-13'
+    blocks:
+      subtitle: Valuation summary, $ per share
+      insights:
+      - lead: Offer
+        text: All-cash offer from the bidder, per share
+        figure: $58.00
+      - lead: Premium
+        text: Premium to the unaffected share price of $44.10
+        figure: 31.5%
+      - lead: DCF
+        text: The standalone DCF midpoint sits near the offer
+        figure: $59.00
+      - lead: Peers
+        text: The offer implies this multiple against a peer median of 11.4x
+        figure: 12.6x
+      so_what:
+        text: Recommend the board accept the offer, subject to the fairness opinion.
+    notes: 'Evidence slide 2: The $58.00 offer sits above the midpoint of four of six valu'
+  - id: s3
+    archetype: football_field
+    title: The $58.00 offer is above the unaffected price of $44.10 and inside four ranges
+    source: Advisor valuation model (synthetic); Market data, 12 Nov 2026 (synthetic)
+    sources:
+    - Advisor valuation model (synthetic)
+    - Market data, 12 Nov 2026 (synthetic)
+    as_of: '2026-11-13'
+    blocks:
+      subtitle: Equity value per share by method, $
+      prefix: $
+      number_format: '0.00'
+      current_price: 44.1
+      implied: 58.0
+      methods:
+      - label: DCF, WACC 8.5% to 9.5%
+        low: 52.0
+        high: 66.0
+        key: true
+      - label: Trading comps
+        low: 46.0
+        high: 58.0
+      - label: Precedent transactions
+        low: 50.0
+        high: 64.0
+      - label: Premiums paid
+        low: 55.0
+        high: 62.0
+      - label: 52-week range
+        low: 38.5
+        high: 49.8
+      - label: Analyst targets
+        low: 47.0
+        high: 60.0
+      takeaway: The offer is above the 52-week high of $49.80 [1]
+    notes: 'Evidence slide 3: The $58.00 offer is above the unaffected price of $44.10 and'
+  - id: s4
+    archetype: annotated_line
+    title: The share price peaked at $49.80 in August and closed unaffected at $44.10
+    source: Market data, 12 Nov 2026 (synthetic)
+    sources:
+    - Market data, 12 Nov 2026 (synthetic)
+    as_of: '2026-11-13'
+    blocks:
+      subtitle: Month-end share price, last 12 months, $
+      number_format: '0.00'
+      change_unit: $
+      categories:
+      - Dec
+      - Jan
+      - Feb
+      - Mar
+      - Apr
+      - May
+      - Jun
+      - Jul
+      - Aug
+      - Sep
+      - Oct
+      - Nov
+      series:
+      - name: Lighthouse
+        values:
+        - 41.2
+        - 39.6
+        - 38.5
+        - 40.1
+        - 42.8
+        - 44.7
+        - 47.9
+        - 49.8
+        - 48.2
+        - 46.4
+        - 45.0
+        - 44.1
+      annotation:
+        at: 7
+        text: 52-week high of $49.80
+      takeaway: The offer of $58.00 is above every month-end close [1]
+    notes: 'Evidence slide 4: The share price peaked at $49.80 in August and closed unaffe'
+  - id: s5
+    archetype: ranked_bar
+    title: The offer is a 31.5% premium and 16.5% above the 52-week high
+    source: Market data, 12 Nov 2026 (synthetic); Deal database extract (synthetic)
+    sources:
+    - Market data, 12 Nov 2026 (synthetic)
+    - Deal database extract (synthetic)
+    as_of: '2026-11-13'
+    blocks:
+      subtitle: Offer premium by reference point, %
+      number_format: '0.0'
+      series_name: Premium
+      items:
+      - label: Unaffected price
+        value: 31.5
+        key: true
+      - label: 30-day VWAP
+        value: 27.8
+      - label: 90-day VWAP
+        value: 24.7
+      - label: 52-week high
+        value: 16.5
+      stat:
+        value: 31.5%
+        label: premium to the unaffected price of $44.10
+      takeaway: Premiums paid in comparable deals range from 25% to 40% [1]
+    notes: 'Evidence slide 5: The offer is a 31.5% premium and 16.5% above the 52-week hig'
+  - id: s6
+    archetype: comps_table
+    title: Peers trade at a median 11.4x EBITDA, and the offer implies 12.6x
+    source: Market data, 12 Nov 2026 (synthetic)
+    sources:
+    - Market data, 12 Nov 2026 (synthetic)
+    as_of: '2026-11-13'
+    blocks:
+      subtitle: Trading comparables, NTM multiples, EV in $ billion
+      compute_stats: true
+      dense: true
+      rows:
+      - company: Beacon Systems
+        ev: 8.4
+        ev_ebitda: 13.1
+        pe: 19.4
+        growth: 7.8
+        margin: 24.6
+      - company: Harbor Controls
+        ev: 6.2
+        ev_ebitda: 12.0
+        pe: 18.1
+        growth: 6.9
+        margin: 23.0
+      - company: Keystone Devices
+        ev: 5.1
+        ev_ebitda: 11.6
+        pe: 17.0
+        growth: 6.1
+        margin: 22.2
+      - company: Summit Instruments
+        ev: 4.3
+        ev_ebitda: 11.2
+        pe: 16.6
+        growth: 5.4
+        margin: 21.5
+      - company: Pioneer Sensors
+        ev: 3.2
+        ev_ebitda: 10.4
+        pe: 15.2
+        growth: 4.6
+        margin: 20.1
+      - company: Vector Optics
+        ev: 2.6
+        ev_ebitda: 9.7
+        pe: 14.3
+        growth: 3.8
+        margin: 18.8
+      takeaway: The offer multiple of 12.6x is above the peer median of 11.4x [1]
+    notes: 'Evidence slide 6: Peers trade at a median 11.4x EBITDA, and the offer implies '
+  - id: s7
+    archetype: tombstones
+    title: Precedent deals cleared 10.2x to 13.4x EBITDA, with the offer at 12.6x
+    source: Company announcements (synthetic)
+    sources:
+    - Company announcements (synthetic)
+    as_of: '2026-11-13'
+    blocks:
+      subtitle: Precedent transactions, EV in $ billion, EV/EBITDA
+      deals:
+      - acquirer: Our bidder
+        target: Lighthouse Corp
+        date: Nov 2026
+        ev: 5.4
+        multiple: 12.6
+        highlight: true
+      - acquirer: Strategic A
+        target: Prism Optics
+        date: Jun 2026
+        ev: 3.1
+        multiple: 13.4
+      - acquirer: Sponsor B
+        target: Orion Sensing
+        date: Mar 2026
+        ev: 2.4
+        multiple: 10.2
+      - acquirer: Strategic C
+        target: Delta Controls
+        date: Jan 2026
+        ev: 4.2
+        multiple: 12.9
+      - acquirer: Strategic D
+        target: Nova Devices
+        date: Oct 2025
+        ev: 1.9
+        multiple: 11.5
+      - acquirer: Sponsor E
+        target: Quill Systems
+        date: Jul 2025
+        ev: 2.8
+        multiple: 11.1
+      takeaway: Strategic buyers paid 11.5x to 13.4x; the offer is within that band [1]
+    notes: 'Evidence slide 7: Precedent deals cleared 10.2x to 13.4x EBITDA, with the offe'
+  - id: s8
+    archetype: sensitivity_table
+    title: DCF value per share spans $50.60 to $76.20 across WACC and terminal growth
+    source: Advisor DCF model, management plan (synthetic)
+    sources:
+    - Advisor DCF model, management plan (synthetic)
+    as_of: '2026-11-13'
+    blocks:
+      subtitle: Value per share, WACC by terminal growth, $
+      row_label: WACC, %
+      col_label: Terminal growth, %
+      row_values:
+      - 8.0
+      - 8.5
+      - 9.0
+      - 9.5
+      - 10.0
+      col_values:
+      - 2.0
+      - 2.5
+      - 3.0
+      - 3.5
+      - 4.0
+      value_format: '0.00'
+      values:
+      - - 58.1
+        - 61.4
+        - 65.3
+        - 70.1
+        - 76.2
+      - - 53.2
+        - 55.9
+        - 59.0
+        - 62.8
+        - 67.5
+      - - 49.0
+        - 51.2
+        - 53.8
+        - 56.9
+        - 60.6
+      - - 45.4
+        - 47.3
+        - 49.5
+        - 52.1
+        - 55.2
+      - - 42.3
+        - 43.9
+        - 45.8
+        - 48.0
+        - 50.6
+      base:
+      - 1
+      - 2
+      takeaway: The base case of $59.00 is at 8.5% WACC and 3.0% growth [1]
+    notes: 'Evidence slide 8: DCF value per share spans $50.60 to $76.20 across WACC and t'
+  - id: s9
+    archetype: two_column_compare
+    title: Accepting at $58.00 beats the standalone value of $51.00 per share
+    source: Advisor valuation model (synthetic)
+    sources:
+    - Advisor valuation model (synthetic)
+    as_of: '2026-11-13'
+    blocks:
+      emphasis: a
+      a:
+        heading: Accept the offer
+        metric: $58.00
+        points:
+        - 'Value: cash certainty at a 31.5% premium'
+        - 'Timing: closing within 6 months'
+        - 'Risk: regulatory approval only'
+      b:
+        heading: Remain standalone
+        metric: $51.00
+        points:
+        - 'Value: the plan needs three years of delivery'
+        - 'Timing: no closing risk'
+        - 'Risk: input costs and execution'
+      verdict: Accepting is worth $7.00 per share more than the risk-adjusted standalone value.
+    notes: 'Evidence slide 9: Accepting at $58.00 beats the standalone value of $51.00 per'
+  - id: s10
+    archetype: takeaway_box
+    title: We recommend the board approve the $58.00 per share cash offer
+    source: Advisor valuation model (synthetic)
+    as_of: '2026-11-13'
+    blocks:
+      decision: Approve the $58.00 per share all-cash offer, a 31.5% premium, subject to the fairness opinion
+      rationale:
+      - 'Value: above four of six valuation ranges'
+      - 'Premium: above the 25% to 40% band midpoint'
+      - 'Certainty: cash with 6 months to close'
+      risks:
+      - 'Approval: regulatory review may extend closing'
+      - 'Price: DCF upside to $66.00 is not captured'
+    notes: 'Evidence slide 10: We recommend the board approve the $58.00 per share cash off'

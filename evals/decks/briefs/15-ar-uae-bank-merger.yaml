@@ -1,0 +1,336 @@
+brief: 'أعدّ عرضا من 10 شرائح لمجلسي إدارة بنك الصقر وبنك النخيل عن الاندماج المقترح (مشروع الواحة): مقارنة البنكين،
+  وفورات التكاليف، الإضافة لربحية السهم، هيكل الملكية، المخاطر والجدول الزمني. بيانات توضيحية.'
+ghost:
+  deck_id: d15-ar-uae-bank-merger
+  brief: 'أعدّ عرضا من 10 شرائح لمجلسي إدارة بنك الصقر وبنك النخيل عن الاندماج المقترح (مشروع الواحة): مقارنة البنكين،
+    وفورات التكاليف، الإضافة لربحية السهم، هيكل الملكية، المخاطر والجدول الزمني. بيانات توضيحية.'
+  lang: ar
+  slides:
+  - id: s1
+    title: 'مشروع الواحة: اندماج بنكين إماراتيين'
+    section: الخلاصة
+    archetype_hint: cover
+    purpose: 'Evidence slide 1: مشروع الواحة: اندماج بنكين إماراتيين'
+  - id: s2
+    title: اندماج الصقر والنخيل يوفر 540 مليون درهم ويرفع ربحية السهم 5.6%
+    section: الخلاصة
+    archetype_hint: exec_summary
+    purpose: 'Evidence slide 2: اندماج الصقر والنخيل يوفر 540 مليون درهم ويرفع ربحية السهم 5'
+  - id: s3
+    title: يتفوق بنك الصقر في العائد على الملكية بنسبة 16.2% مقابل 12.9% للنخيل
+    section: البنكان
+    archetype_hint: paired_bars
+    purpose: 'Evidence slide 3: يتفوق بنك الصقر في العائد على الملكية بنسبة 16.2% مقابل 12.9'
+  - id: s4
+    title: التمويل العقاري 30% من القروض المدمجة، أقل من الشركات والتجزئة
+    section: البنكان
+    archetype_hint: stacked_bar
+    purpose: 'Evidence slide 4: التمويل العقاري 30% من القروض المدمجة، أقل من الشركات والتجز'
+  - id: s5
+    title: التكاليف تنخفض من 4,820 إلى 4,280 مليون درهم بعد الاندماج
+    section: القيمة
+    archetype_hint: waterfall
+    purpose: 'Evidence slide 5: التكاليف تنخفض من 4,820 إلى 4,280 مليون درهم بعد الاندماج'
+  - id: s6
+    title: الإضافة لربحية السهم تبقى موجبة بين 2.6% و8.7% في جميع الحالات
+    section: القيمة
+    archetype_hint: sensitivity_table
+    purpose: 'Evidence slide 6: الإضافة لربحية السهم تبقى موجبة بين 2.6% و8.7% في جميع الحال'
+  - id: s7
+    title: مساهمو الصقر يملكون 58% ومساهمو النخيل 42% من البنك المدمج
+    section: الهيكل
+    archetype_hint: deal_structure
+    purpose: 'Evidence slide 7: مساهمو الصقر يملكون 58% ومساهمو النخيل 42% من البنك المدمج'
+  - id: s8
+    title: 3 من 5 مخاطر تحتاج إلى مالك محدد قبل التوقيع
+    section: المخاطر
+    archetype_hint: risk_heatmap
+    purpose: 'Evidence slide 8: 3 من 5 مخاطر تحتاج إلى مالك محدد قبل التوقيع'
+  - id: s9
+    title: التوقيع في 15 ديسمبر يحقق الإغلاق في الربع الثالث من 2027
+    section: الخطوات
+    archetype_hint: timeline_milestones
+    purpose: 'Evidence slide 9: التوقيع في 15 ديسمبر يحقق الإغلاق في الربع الثالث من 2027'
+  - id: s10
+    title: نوصي بمذكرة تفاهم بملكية 58% ووفورات 540 مليون درهم
+    section: الخطوات
+    archetype_hint: takeaway_box
+    purpose: 'Evidence slide 10: نوصي بمذكرة تفاهم بملكية 58% ووفورات 540 مليون درهم'
+  sections:
+  - الخلاصة
+  - البنكان
+  - القيمة
+  - الهيكل
+  - المخاطر
+  - الخطوات
+  approved: true
+  approved_by: eval-corpus
+  approved_at: '2026-11-17T00:00:00+00:00'
+  lint: []
+spec:
+  deck_id: d15-ar-uae-bank-merger
+  title: 'مشروع الواحة: اندماج بنكين إماراتيين'
+  lang: ar
+  client: بنك الصقر وبنك النخيل
+  as_of: '2026-11-05'
+  art_direction: auto
+  theme: house
+  slides:
+  - id: s1
+    archetype: cover
+    title: 'مشروع الواحة: اندماج بنكين إماراتيين'
+    blocks:
+      client: مجلسا إدارة بنك الصقر وبنك النخيل
+      date: '2026-11-05'
+    visual:
+      concept: two interlocking arches in flat editorial shapes
+      kind: illustration
+    notes: 'Evidence slide 1: مشروع الواحة: اندماج بنكين إماراتيين'
+  - id: s2
+    archetype: exec_summary
+    title: اندماج الصقر والنخيل يوفر 540 مليون درهم ويرفع ربحية السهم 5.6%
+    source: Bank accounts FY25 (synthetic); Merger model v4 (synthetic)
+    sources:
+    - Bank accounts FY25 (synthetic)
+    - Merger model v4 (synthetic)
+    as_of: '2026-11-05'
+    blocks:
+      subtitle: ملخص الاندماج، بالدرهم الإماراتي
+      insights:
+      - lead: الحجم
+        text: إجمالي أصول البنك المدمج بالمليار درهم
+        figure: '240'
+      - lead: الوفورات
+        text: وفورات التكاليف السنوية بالمليون درهم بعد ثلاث سنوات
+        figure: '540'
+      - lead: الربحية
+        text: الزيادة في ربحية السهم في السنة الأولى الكاملة
+        figure: 5.6%
+      - lead: الملكية
+        text: حصة مساهمي بنك الصقر في البنك المدمج
+        figure: 58%
+      so_what:
+        text: نوصي بالموافقة على مذكرة التفاهم وبدء العناية الواجبة.
+    notes: 'Evidence slide 2: اندماج الصقر والنخيل يوفر 540 مليون درهم ويرفع ربحية السهم 5'
+  - id: s3
+    archetype: paired_bars
+    title: يتفوق بنك الصقر في العائد على الملكية بنسبة 16.2% مقابل 12.9% للنخيل
+    source: Bank accounts FY25 (synthetic)
+    sources:
+    - Bank accounts FY25 (synthetic)
+    as_of: '2026-11-05'
+    blocks:
+      subtitle: مؤشرات رئيسية لكل بنك، نسبة مئوية
+      number_format: '0.0'
+      categories:
+      - العائد على الملكية
+      - التكلفة إلى الدخل
+      - كفاية رأس المال
+      - القروض المتعثرة
+      before:
+        name: بنك الصقر
+        values:
+        - 16.2
+        - 38.5
+        - 14.8
+        - 4.1
+      after:
+        name: بنك النخيل
+        values:
+        - 12.9
+        - 46.2
+        - 15.9
+        - 5.6
+      stat:
+        value: +3.3pp
+        label: فجوة العائد على الملكية لصالح الصقر
+      takeaway: النخيل أقوى في رأس المال بنسبة 15.9% مقابل 14.8% [1]
+    notes: 'Evidence slide 3: يتفوق بنك الصقر في العائد على الملكية بنسبة 16.2% مقابل 12.9'
+  - id: s4
+    archetype: stacked_bar
+    title: التمويل العقاري 30% من القروض المدمجة، أقل من الشركات والتجزئة
+    source: Bank accounts FY25 (synthetic)
+    sources:
+    - Bank accounts FY25 (synthetic)
+    as_of: '2026-11-05'
+    blocks:
+      subtitle: محفظة القروض المدمجة، نسبة من الإجمالي
+      mode: percent
+      categories:
+      - الصقر
+      - النخيل
+      - المدمج
+      parts:
+      - name: الشركات
+        values:
+        - 44
+        - 38
+        - 41
+        key: true
+      - name: التجزئة
+        values:
+        - 28
+        - 31
+        - 29
+      - name: العقاري
+        values:
+        - 28
+        - 31
+        - 30
+      takeaway: التمويل العقاري عند 30% من المحفظة المدمجة [1]
+    notes: 'Evidence slide 4: التمويل العقاري 30% من القروض المدمجة، أقل من الشركات والتجز'
+  - id: s5
+    archetype: waterfall
+    title: التكاليف تنخفض من 4,820 إلى 4,280 مليون درهم بعد الاندماج
+    source: Merger model v4 (synthetic)
+    sources:
+    - Merger model v4 (synthetic)
+    as_of: '2026-11-05'
+    blocks:
+      subtitle: جسر التكاليف التشغيلية، مليون درهم
+      number_format: '#,##0'
+      prefix: ''
+      suffix: ''
+      steps:
+      - label: التكاليف المجمعة
+        value: 4820
+      - label: الفروع
+        value: -210
+      - label: التقنية
+        value: -240
+      - label: المشتريات
+        value: -90
+      - label: بعد الاندماج
+        value: 4280
+      takeaway: التقنية أكبر مصدر للوفورات بمقدار 240 مليون درهم [1]
+    notes: 'Evidence slide 5: التكاليف تنخفض من 4,820 إلى 4,280 مليون درهم بعد الاندماج'
+  - id: s6
+    archetype: sensitivity_table
+    title: الإضافة لربحية السهم تبقى موجبة بين 2.6% و8.7% في جميع الحالات
+    source: Merger model v4 (synthetic)
+    sources:
+    - Merger model v4 (synthetic)
+    as_of: '2026-11-05'
+    blocks:
+      subtitle: الإضافة لربحية السهم، حسب الملكية والوفورات، نسبة مئوية
+      row_label: ملكية مساهمي الصقر، %
+      col_label: وفورات التكاليف، مليون درهم
+      row_values:
+      - 56
+      - 58
+      - 60
+      col_values:
+      - 400
+      - 540
+      - 680
+      value_format: '0.0'
+      values:
+      - - 4.1
+        - 6.3
+        - 8.7
+      - - 3.4
+        - 5.6
+        - 7.9
+      - - 2.6
+        - 4.8
+        - 7.1
+      base:
+      - 1
+      - 1
+      takeaway: الحالة الأساسية 5.6% عند ملكية 58% ووفورات 540 مليونا [1]
+    notes: 'Evidence slide 6: الإضافة لربحية السهم تبقى موجبة بين 2.6% و8.7% في جميع الحال'
+  - id: s7
+    archetype: deal_structure
+    title: مساهمو الصقر يملكون 58% ومساهمو النخيل 42% من البنك المدمج
+    source: Merger term sheet (synthetic)
+    as_of: '2026-11-05'
+    blocks:
+      subtitle: هيكل الملكية بعد الاندماج
+      entities:
+      - id: a
+        label: مساهمو الصقر
+        sub: 58%
+        tier: 0
+      - id: b
+        label: مساهمو النخيل
+        sub: 42%
+        tier: 0
+      - id: m
+        label: البنك المدمج
+        sub: مدرج في سوق أبوظبي
+        tier: 1
+        highlight: true
+      links:
+      - from: a
+        to: m
+        label: 58%
+      - from: b
+        to: m
+        label: 42%
+    notes: 'Evidence slide 7: مساهمو الصقر يملكون 58% ومساهمو النخيل 42% من البنك المدمج'
+  - id: s8
+    archetype: risk_heatmap
+    title: 3 من 5 مخاطر تحتاج إلى مالك محدد قبل التوقيع
+    source: Deal team workshop (synthetic)
+    sources:
+    - Deal team workshop (synthetic)
+    as_of: '2026-11-05'
+    blocks:
+      subtitle: سجل المخاطر، احتمال مقابل أثر على مقياس من خمس درجات
+      risks:
+      - label: موافقة المصرف المركزي بعد 6 أشهر
+        likelihood: 3
+        impact: 5
+      - label: تسرب الموظفين بنسبة 10%
+        likelihood: 3
+        impact: 4
+      - label: تأخر دمج الأنظمة عن 540 يوما
+        likelihood: 2
+        impact: 4
+      - label: تركز الودائع في عملاء كبار
+        likelihood: 2
+        impact: 3
+      - label: تباين الثقافة المؤسسية
+        likelihood: 3
+        impact: 2
+      takeaway: موافقة المصرف المركزي أكبر أثر عند الدرجة 5 [1]
+    notes: 'Evidence slide 8: 3 من 5 مخاطر تحتاج إلى مالك محدد قبل التوقيع'
+  - id: s9
+    archetype: timeline_milestones
+    title: التوقيع في 15 ديسمبر يحقق الإغلاق في الربع الثالث من 2027
+    source: Merger plan (synthetic)
+    sources:
+    - Merger plan (synthetic)
+    as_of: '2026-11-05'
+    blocks:
+      subtitle: الجدول الزمني للاندماج
+      milestones:
+      - date: 5 نوفمبر
+        label: مذكرة التفاهم
+      - date: 15 ديسمبر
+        label: توقيع الاتفاقية
+        highlight: true
+      - date: مارس
+        label: موافقة المساهمين
+      - date: يونيو
+        label: موافقة المصرف المركزي
+      - date: سبتمبر
+        label: الإغلاق
+        highlight: true
+      takeaway: التوقيع في 15 ديسمبر هو شرط المسار [1]
+    notes: 'Evidence slide 9: التوقيع في 15 ديسمبر يحقق الإغلاق في الربع الثالث من 2027'
+  - id: s10
+    archetype: takeaway_box
+    title: نوصي بمذكرة تفاهم بملكية 58% ووفورات 540 مليون درهم
+    source: Merger model v4 (synthetic)
+    as_of: '2026-11-05'
+    blocks:
+      decision: الموافقة على مذكرة التفاهم بملكية 58% لمساهمي الصقر ووفورات سنوية قدرها 540 مليون درهم
+      rationale:
+      - 'الربحية: زيادة 5.6% في ربحية السهم'
+      - 'الحجم: أصول مدمجة بقيمة 240 مليار درهم'
+      - 'الكفاءة: التكاليف تنخفض إلى 4,280 مليونا'
+      risks:
+      - 'الموافقات: المصرف المركزي قد يتجاوز 6 أشهر'
+      - 'الأنظمة: دمج التقنية يحتاج 540 يوما'
+    notes: 'Evidence slide 10: نوصي بمذكرة تفاهم بملكية 58% ووفورات 540 مليون درهم'

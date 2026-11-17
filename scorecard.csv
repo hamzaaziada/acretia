@@ -10,3 +10,68 @@ S4,ombench_planted_error_audit,19,1.000,"10 three-statement + 9 LBO/merger/comps
 S4,reliability_critical_pass,119,0.521,"live SEC, 100 US + 19 IFRS 20-F; target 0.97 NOT MET; IFRS 0/19 -> FP-S4-A/B"
 S4,earnings_update_p95_seconds,119,10.9,"roll-forward incl. rebuild and grade; target < 300 s"
 S4,ib_vp_specialist_review,5,0.62,"round 1, docs/s4/reviews/ib-vp-round1.md; target >= 0.85 NOT MET"
+S3,deck_lbo-ic-update__claude-frontier,1,,not run live (D-021); offline: critical=0 major=0 build_s=2.231
+S3,deck_lbo-ic-update__gpt-frontier,1,,not run live (D-021); offline: critical=0 major=0 build_s=2.231
+S3,deck_lbo-ic-update__open-weight,1,,not run live (D-021); offline: critical=0 major=0 build_s=2.231
+S3,deck_public-comps-football-field__claude-frontier,1,,not run live (D-021); offline: critical=0 major=0 build_s=1.999
+S3,deck_public-comps-football-field__gpt-frontier,1,,not run live (D-021); offline: critical=0 major=0 build_s=1.999
+S3,deck_public-comps-football-field__open-weight,1,,not run live (D-021); offline: critical=0 major=0 build_s=1.999
+S3,deck_gulf-market-entry__claude-frontier,1,,not run live (D-021); offline: critical=0 major=0 build_s=2.262
+S3,deck_gulf-market-entry__gpt-frontier,1,,not run live (D-021); offline: critical=0 major=0 build_s=2.262
+S3,deck_gulf-market-entry__open-weight,1,,not run live (D-021); offline: critical=0 major=0 build_s=2.262
+S3,deck_sell-side-pitchbook__claude-frontier,1,,not run live (D-021); offline: critical=0 major=0 build_s=2.488
+S3,deck_sell-side-pitchbook__gpt-frontier,1,,not run live (D-021); offline: critical=0 major=0 build_s=2.488
+S3,deck_sell-side-pitchbook__open-weight,1,,not run live (D-021); offline: critical=0 major=0 build_s=2.488
+S3,deck_ic-dental-platform__claude-frontier,1,,not run live (D-021); offline: critical=0 major=0 build_s=2.177
+S3,deck_ic-dental-platform__gpt-frontier,1,,not run live (D-021); offline: critical=0 major=0 build_s=2.177
+S3,deck_ic-dental-platform__open-weight,1,,not run live (D-021); offline: critical=0 major=0 build_s=2.177
+S3,deck_carve-out__claude-frontier,1,,not run live (D-021); offline: critical=0 major=0 build_s=1.964
+S3,deck_carve-out__gpt-frontier,1,,not run live (D-021); offline: critical=0 major=0 build_s=1.964
+S3,deck_carve-out__open-weight,1,,not run live (D-021); offline: critical=0 major=0 build_s=1.964
+S3,deck_buy-side-diligence__claude-frontier,1,,not run live (D-021); offline: critical=0 major=0 build_s=1.76
+S3,deck_buy-side-diligence__gpt-frontier,1,,not run live (D-021); offline: critical=0 major=0 build_s=1.76
+S3,deck_buy-side-diligence__open-weight,1,,not run live (D-021); offline: critical=0 major=0 build_s=1.76
+S3,deck_earnings-recap__claude-frontier,1,,not run live (D-021); offline: critical=0 major=0 build_s=2.084
+S3,deck_earnings-recap__gpt-frontier,1,,not run live (D-021); offline: critical=0 major=0 build_s=2.084
+S3,deck_earnings-recap__open-weight,1,,not run live (D-021); offline: critical=0 major=0 build_s=2.084
+S3,deck_sector-update-banks__claude-frontier,1,,not run live (D-021); offline: critical=0 major=0 build_s=1.995
+S3,deck_sector-update-banks__gpt-frontier,1,,not run live (D-021); offline: critical=0 major=0 build_s=1.995
+S3,deck_sector-update-banks__open-weight,1,,not run live (D-021); offline: critical=0 major=0 build_s=1.995
+S3,deck_restructuring-options__claude-frontier,1,,not run live (D-021); offline: critical=0 major=0 build_s=2.057
+S3,deck_restructuring-options__gpt-frontier,1,,not run live (D-021); offline: critical=0 major=0 build_s=2.057
+S3,deck_restructuring-options__open-weight,1,,not run live (D-021); offline: critical=0 major=0 build_s=2.057
+S3,deck_fairness-valuation__claude-frontier,1,,not run live (D-021); offline: critical=0 major=0 build_s=1.795
+S3,deck_fairness-valuation__gpt-frontier,1,,not run live (D-021); offline: critical=0 major=0 build_s=1.795
+S3,deck_fairness-valuation__open-weight,1,,not run live (D-021); offline: critical=0 major=0 build_s=1.795
+S3,deck_board-update__claude-frontier,1,,not run live (D-021); offline: critical=0 major=0 build_s=2.109
+S3,deck_board-update__gpt-frontier,1,,not run live (D-021); offline: critical=0 major=0 build_s=2.109
+S3,deck_board-update__open-weight,1,,not run live (D-021); offline: critical=0 major=0 build_s=2.109
+S3,deck_debt-financing__claude-frontier,1,,not run live (D-021); offline: critical=0 major=0 build_s=2.2
+S3,deck_debt-financing__gpt-frontier,1,,not run live (D-021); offline: critical=0 major=0 build_s=2.2
+S3,deck_debt-financing__open-weight,1,,not run live (D-021); offline: critical=0 major=0 build_s=2.2
+S3,deck_ar-saudi-ipo-readiness__claude-frontier,1,,not run live (D-021); offline: critical=0 major=1 build_s=2.324
+S3,deck_ar-saudi-ipo-readiness__gpt-frontier,1,,not run live (D-021); offline: critical=0 major=1 build_s=2.324
+S3,deck_ar-saudi-ipo-readiness__open-weight,1,,not run live (D-021); offline: critical=0 major=1 build_s=2.324
+S3,deck_ar-uae-bank-merger__claude-frontier,1,,not run live (D-021); offline: critical=0 major=0 build_s=2.209
+S3,deck_ar-uae-bank-merger__gpt-frontier,1,,not run live (D-021); offline: critical=0 major=0 build_s=2.209
+S3,deck_ar-uae-bank-merger__open-weight,1,,not run live (D-021); offline: critical=0 major=0 build_s=2.209
+S3,deck_gcc-infrastructure__claude-frontier,1,,not run live (D-021); offline: critical=0 major=0 build_s=2.065
+S3,deck_gcc-infrastructure__gpt-frontier,1,,not run live (D-021); offline: critical=0 major=0 build_s=2.065
+S3,deck_gcc-infrastructure__open-weight,1,,not run live (D-021); offline: critical=0 major=0 build_s=2.065
+S3,deck_us-software-take-private__claude-frontier,1,,not run live (D-021); offline: critical=0 major=0 build_s=1.784
+S3,deck_us-software-take-private__gpt-frontier,1,,not run live (D-021); offline: critical=0 major=0 build_s=1.784
+S3,deck_us-software-take-private__open-weight,1,,not run live (D-021); offline: critical=0 major=0 build_s=1.784
+S3,deck_ifrs-european-industrial__claude-frontier,1,,not run live (D-021); offline: critical=0 major=0 build_s=2.156
+S3,deck_ifrs-european-industrial__gpt-frontier,1,,not run live (D-021); offline: critical=0 major=0 build_s=2.156
+S3,deck_ifrs-european-industrial__open-weight,1,,not run live (D-021); offline: critical=0 major=0 build_s=2.156
+S3,deck_ar-egypt-market-entry__claude-frontier,1,,not run live (D-021); offline: critical=0 major=0 build_s=2.073
+S3,deck_ar-egypt-market-entry__gpt-frontier,1,,not run live (D-021); offline: critical=0 major=0 build_s=2.073
+S3,deck_ar-egypt-market-entry__open-weight,1,,not run live (D-021); offline: critical=0 major=0 build_s=2.073
+S3,deck_mena-bank-ma__claude-frontier,1,,not run live (D-021); offline: critical=0 major=0 build_s=1.963
+S3,deck_mena-bank-ma__gpt-frontier,1,,not run live (D-021); offline: critical=0 major=0 build_s=1.963
+S3,deck_mena-bank-ma__open-weight,1,,not run live (D-021); offline: critical=0 major=0 build_s=1.963
+S3,deck_corpus_offline,20,1.000,offline; share of decks with 0 critical; major=1 variety=0 unsourced=0; critic skipped offline
+S3,deck_reliability_offline,100,1.000,offline; 0-critical success rate; 10-slide build p50=2.049s p90=2.386s; unsourced=0
+S3,bench_presenton,,,not run: needs a live model (and Docker for Presenton); ledger decision borrow_ideas
+S3,bench_ppteval,,,not run: needs a live model (and Docker for Presenton); ledger decision borrow_ideas
+S3,bench_slidesbench,,,not run: needs a live model (and Docker for Presenton); ledger decision borrow_ideas
