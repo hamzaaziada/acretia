@@ -531,7 +531,7 @@ class TestGridCli(unittest.TestCase):
             db = str(d / "g.db")
 
             def cli(*a):
-                p = subprocess.run([sys.executable, str(ROOT / "open_multiples.py"), "grid", *a, "--db", db],
+                p = subprocess.run([sys.executable, str(ROOT / "acretia.py"), "grid", *a, "--db", db],
                                    capture_output=True, text=True, cwd=str(ROOT), timeout=120)
                 self.assertEqual(p.returncode, 0, p.stderr[-800:])
                 return p.stdout

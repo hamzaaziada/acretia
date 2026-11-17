@@ -5,7 +5,7 @@ One row per active claim. Claim a packet before you touch its files, commit the 
 | Packet | Agent / session | Branch | Claimed (UTC) | Files |
 |---|---|---|---|---|
 | S5.F4 Arabic OCR + extraction (session D) | worker | main | 2026-11-17 | om/pdfdoc.py, om/grid.py, tests/test_pdfdoc.py, tests/test_grid_arabic.py |
-| S5.5c Matrix Chat (session D) | worker | main | 2026-11-17 | om/grid_chat.py, tests/test_grid_chat.py, tests/fixtures/grid_chat/* |
+| S5.F3b risk detector precision + Arabic (session D) | worker | main | 2026-11-17 | om/vdr_risk.py, tests/test_vdr_risk.py |
 | S5.6 grid interfaces doc (session D) | worker | main | 2026-11-17 | docs/interfaces.md ("Document grid (S5)" section only) |
 | S5 docs (session D) | Boss | main | 2026-11-16 | docs/s5/* |
 | S1 gate | Boss | claude/dreamy-ramanujan-k8p2xt | 2026-11-16 | scripts/verify_s1.py |
@@ -15,7 +15,7 @@ One row per active claim. Claim a packet before you touch its files, commit the 
 | S3 gate + docs | session B Boss | claude/upbeat-mccarthy-viqjuo | 2026-11-16 | docs/s3/*, docs/deck-engine.md, PROGRESS.md (S3 row only) |
 | S8.1 standards KB (session E) | worker | main | 2026-11-16 | om/intl/standards/**, docs/s8/standards/**, scripts/gen_standards_docs.py, tests/test_intl_standards.py |
 | S8.3a numbers + OCR service + synthetic fixtures (session E) | worker | main | 2026-11-16 | om/intl/numparse.py, om/intl/ocr.py, scripts/make_intl_fixtures.py, tests/fixtures/intl/**, tests/test_intl_numparse.py, tests/test_intl_ocr.py, license-and-repo-ledger.csv (S8 rows only) |
-| S8.3b extraction pipeline + read_report + intl-model CLI (session E) | worker | main | 2026-11-16 | om/intl/extract.py, om/intl/tables.py, om/intl/pipeline.py, open_multiples.py (intl-model subcommand only), tests/test_intl_extract.py, tests/test_intl_pipeline.py, evals/intl/review_minutes.csv, evals/intl/telemetry.jsonl |
+| S8.3b extraction pipeline + read_report + intl-model CLI (session E) | worker | main | 2026-11-16 | om/intl/extract.py, om/intl/tables.py, om/intl/pipeline.py, acretia.py (intl-model subcommand only), tests/test_intl_extract.py, tests/test_intl_pipeline.py, evals/intl/review_minutes.csv, evals/intl/telemetry.jsonl |
 | S8.0/S8.7-corpus anchors + eval sourcing (session E) | worker | main | 2026-11-16 | evals/intl/corpus/**, evals/intl/anchors/*/sources.json, scripts/fetch_intl_corpus.py, data/raw/intl/** (never committed) |
 | S8.0 anchor notes + QA (session E, wave 2) | worker | main | 2026-11-16 | om/intl/companies/**, evals/intl/anchors/*/{figures,release_recon,qa}.jsonl |
 | S8.5 intl connectors (session E, wave 2; new files only, base.py untouched) | worker | main | 2026-11-16 | src/harness/connectors/intl_*.py (S2.5 base fixed on main; S8.5 dispatched 2026-11-17), om/intl/sources/**, om/intl/ixbrl.py, docs/s8/source-terms.md, tests/test_intl_connectors.py, tests/fixtures/intl_connectors/** |
@@ -28,13 +28,12 @@ One row per active claim. Claim a packet before you touch its files, commit the 
 | SF.4 TSB + reliability harness (session F, D-032) | session F workers | main | 2026-11-16 | eval/tsb/**, eval/reliability/** |
 | S6.2 figure verifier | worker (session A) | claude/dreamy-ramanujan-k8p2xt | 2026-11-16 | src/harness/research/verify.py, tests/test_research_verify.py |
 | FP-S1c buyer-research rubric thresholds | worker (session A) | claude/dreamy-ramanujan-k8p2xt | 2026-11-17 | docs/buyer-research.md |
-| S4.fix2 formula engine coverage (SpreadsheetBench) | worker (session C) | claude/busy-knuth-i3ewp5 | 2026-11-17 | om/formula.py, tests/test_formula_ext2.py |
+| S4.fix2 formula engine coverage (SpreadsheetBench) | worker (session C) | claude/busy-knuth-i3ewp5 | 2026-11-17 | om/formula.py, tests/test_formula_ext2.py, tests/test_sbench.py, tests/test_model3.py (obsolete 'unsupported' assertions only) |
 | FP-S4-A data fidelity (statements/concepts/facts) | worker (session C) | claude/busy-knuth-i3ewp5 | 2026-11-17 | om/statements.py, om/concepts.py, om/facts.py, tests/test_statements_fix.py |
 | FP-S4-B model3 valuation + robustness | worker (session C) | claude/busy-knuth-i3ewp5 | 2026-11-17 | om/model3.py, tests/test_model3_fix.py, license-and-repo-ledger.csv (one row) |
 | FP-S4-C print/polish + manifest | worker (session C) | claude/busy-knuth-i3ewp5 | 2026-11-17 | om/polish.py, om/xlsx.py, om/manifest.py, tests/test_polish_fix.py |
 | FP-S4-D LBO + merger | worker (session C) | claude/busy-knuth-i3ewp5 | 2026-11-17 | om/lbo.py, om/merger.py, tests/test_lbo_merger_fix.py |
 | FP-S4-E comps + market | worker (session C) | claude/busy-knuth-i3ewp5 | 2026-11-17 | om/comps.py, om/market.py, tests/test_comps_fix.py |
-| FP-S4-F validator 3-column rows | worker (session C) | claude/busy-knuth-i3ewp5 | 2026-11-17 | om/validate_xlsx.py, tests/test_validate_fix.py |
 | S6-gate verify_s6.py | gate-writer (session A) | claude/dreamy-ramanujan-k8p2xt | 2026-11-17 | scripts/verify_s6.py, tests/fixtures/s6gate/** |
 | S7.5b Docker/compose/deploy | worker (session A) | claude/dreamy-ramanujan-k8p2xt | 2026-11-17 | Dockerfile, .dockerignore, docker-compose.yml, deploy/**, DEPLOY.md, scripts/verify_s7_deploy.py |
 | S7.4a security review | reviewer (session A) | claude/dreamy-ramanujan-k8p2xt | 2026-11-17 | SECURITY_REPORT.md, docs/reviews/security-*.md |
@@ -100,3 +99,4 @@ One row per active claim. Claim a packet before you touch its files, commit the 
 - 2026-11-17: session B: S3.10, FP-S3-c/d, S3 gate script merged and released; verify_s3 47/51; claimed FP-S3-e, FP-S3-f, specialist review r1.
 - 2026-11-17: S5.F2 verified on main and released (session D).
 - 2026-11-17: S5.4b verified on main and released; S5.F4 claimed (session D).
+- 2026-11-17: S5.5c verified on main and released; S5.F3b claimed (session D).

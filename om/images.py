@@ -85,7 +85,7 @@ class OpenAIImages:
         if item.get("url"):                                   # some gateways return a link instead of bytes
             if item["url"].startswith("data:"):
                 return base64.b64decode(item["url"].split(",", 1)[-1])
-            with urllib.request.urlopen(urllib.request.Request(item["url"], headers={"User-Agent": "OpenMultiples/0.1"}), timeout=120) as r:
+            with urllib.request.urlopen(urllib.request.Request(item["url"], headers={"User-Agent": "Acretia/0.1"}), timeout=120) as r:
                 return r.read()
         raise ImageError(f"no image in response: {json.dumps(j)[:300]}")
 

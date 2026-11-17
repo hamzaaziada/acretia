@@ -57,7 +57,7 @@ Companion to `license-and-repo-ledger.csv`. Commits were pinned with `git ls-rem
 
 ## Import-name → ledger row map
 
-Every third-party (non-stdlib) module imported under `om/`, `src/`, `scripts/` and `open_multiples.py` (top-level, function-level, try/except and constant `importlib.import_module`), found by AST walk against `sys.stdlib_module_names`, maps to a ledger row `owner/repo` below. FP-R2 added `psycopg` and `pypdf`.
+Every third-party (non-stdlib) module imported under `om/`, `src/`, `scripts/` and `acretia.py` (top-level, function-level, try/except and constant `importlib.import_module`), found by AST walk against `sys.stdlib_module_names`, maps to a ledger row `owner/repo` below. FP-R2 added `psycopg` and `pypdf`.
 
 | import_name | ledger repo | decision |
 |---|---|---|

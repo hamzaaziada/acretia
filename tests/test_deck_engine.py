@@ -488,12 +488,12 @@ class FromBrief(NoNetwork):
 
 class Cli(NoNetwork):
     def run_cli(self, *argv):
-        import open_multiples
+        import acretia
         buf = io.StringIO()
         code = 0
-        with mock.patch.object(sys, "argv", ["open_multiples.py", *argv]), redirect_stdout(buf):
+        with mock.patch.object(sys, "argv", ["acretia.py", *argv]), redirect_stdout(buf):
             try:
-                open_multiples.main()
+                acretia.main()
             except SystemExit as e:
                 code = e.code or 0
         return code, buf.getvalue()

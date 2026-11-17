@@ -210,4 +210,4 @@ jobs:
           python -m pip install -r requirements.txt
       - name: Bench AAPL MSFT against LibreOffice recalculation
         if: env.SEC_USER_AGENT != ''
-        run: python3 open_multiples.py bench AAPL MSFT --libreoffice
+        run: python3 acretia.py bench AAPL MSFT --libreoffice

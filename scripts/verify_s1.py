@@ -392,7 +392,7 @@ def third_party_imports(root=None, with_scope=False):
     fp = first_party_names(root)
     found: dict[str, list] = {}
     files = list(py_files("om", "src", "scripts", root=root))
-    top = os.path.join(root, "open_multiples.py")
+    top = os.path.join(root, "acretia.py")
     if os.path.exists(top):
         files.append(top)
     for path in files:

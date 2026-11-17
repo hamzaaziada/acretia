@@ -186,7 +186,7 @@ def list_models() -> dict:
         key_host_guard(base)
     except LLMError as e:
         return {"ok": False, "detail": str(e)}
-    req = urllib.request.Request(base + "/models", headers={"Authorization": f"Bearer {key}", "User-Agent": "OpenMultiples/0.1"} if key else {})
+    req = urllib.request.Request(base + "/models", headers={"Authorization": f"Bearer {key}", "User-Agent": "Acretia/0.1"} if key else {})
     try:
         with urllib.request.urlopen(req, timeout=30) as r:
             j = _json.loads(r.read())

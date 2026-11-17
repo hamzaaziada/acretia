@@ -1,4 +1,4 @@
-"""Web app + JSON API (stdlib http.server). Run: python3 open_multiples.py serve
+"""Web app + JSON API (stdlib http.server). Run: python3 acretia.py serve
 
 Pages:  /            Search (public filings or a data room)
         /rooms.html  Data rooms: upload files/folders/VDR exports, connectors, documents

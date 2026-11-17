@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
-"""open-multiples — public-company comps built only from free, reusable sources.
+"""acretia — public-company comps built only from free, reusable sources.
 
-  python3 open_multiples.py universe                       # SEC ticker -> CIK list (needs SEC_USER_AGENT)
-  python3 open_multiples.py build AAPL MSFT NVDA           # compute comps for tickers
-  python3 open_multiples.py build --cik 320193 789019      # ...or by SEC CIK (works without the ticker list)
-  python3 open_multiples.py build --all [--limit 500]      # every SEC filer with a listed ticker
-  python3 open_multiples.py show AAPL                      # one company, every field with its source filing
-  python3 open_multiples.py bulk-download                  # nightly companyfacts.zip instead of per-company calls
+  python3 acretia.py universe                       # SEC ticker -> CIK list (needs SEC_USER_AGENT)
+  python3 acretia.py build AAPL MSFT NVDA           # compute comps for tickers
+  python3 acretia.py build --cik 320193 789019      # ...or by SEC CIK (works without the ticker list)
+  python3 acretia.py build --all [--limit 500]      # every SEC filer with a listed ticker
+  python3 acretia.py show AAPL                      # one company, every field with its source filing
+  python3 acretia.py bulk-download                  # nightly companyfacts.zip instead of per-company calls
 
 Options for build/show: --prices FILE.csv | --twelvedata   (market cap / EV / multiples need a price)
                         --as-of YYYY-MM-DD                (point in time: only filings filed by that date)
@@ -358,7 +358,7 @@ def cmd_matrix(args) -> None:
                 params + [args.max_rows])]
         mid = store.create(args.name, doc_ids, _parse_columns(args.column or []))
         print(f"matrix '{args.name}' (id {mid}): {len(doc_ids)} rows × {len(args.column or [])} columns. "
-              f"Run: python3 open_multiples.py matrix run {args.name}")
+              f"Run: python3 acretia.py matrix run {args.name}")
         return
     mid = store.get_id(args.name)
     if args.action == "add-column":
@@ -590,7 +590,7 @@ def cmd_grid(args) -> None:
         ids = [store.add_document(p) for p in args.docs or []]
         gid = store.create_grid(args.name, ids, qs)
         print(f"grid '{args.name}' ({gid}): {len(ids)} documents x {len(qs)} questions "
-              f"[{store.backend}, parser {args.parser or 'auto'}]. Run: python3 open_multiples.py grid run {args.name}")
+              f"[{store.backend}, parser {args.parser or 'auto'}]. Run: python3 acretia.py grid run {args.name}")
         return
     if not args.name:
         raise SystemExit("grid: a grid NAME is required")
