@@ -1057,4 +1057,9 @@ def describe_sources(svc, job: dict, plan: dict, conn) -> list[dict]:
             out.append({"label": "Documents in this deal", "kind": "documents", "task": tid, "detail": f"{n} indexed documents", "available": n > 0})
         if needs & {"load_deck", "load_model", "load_deliverables", "prior_model"}:
             out.append({"label": "Decks and models already in this deal", "kind": "deliverables", "task": tid, "detail": "latest versions", "available": bool(job["deal_id"])})
+    seen: dict[str, int] = {}
+    for o in out:                                   # stable, unique ids the approve body can reference (`payload.selected`)
+        base = re.sub(r"[^a-z0-9]+", "-", f"{o['task']}-{o['label']}".lower()).strip("-")[:60]
+        seen[base] = seen.get(base, 0) + 1
+        o["id"] = base if seen[base] == 1 else f"{base}-{seen[base]}"
     return out
