@@ -20,7 +20,7 @@ need LibreOffice/poppler when they are absent, and the reason is printed.
   ≥ 90 % margin-to-margin; a `footer_rule`; a `page_number` whose text == slide index; no text shape
   above the title (no eyebrow).
 - A7 Every data slide (archetype `data=True`) has a source line containing "Source" (or the deck language's
-  localised label: Arabic "المصدر") and an as-of date (Arabic "حتى تاريخ" or an ISO date).
+  localised label: Arabic "المصدر") and an as-of date (Arabic "بتاريخ" or an ISO date).
 
 ## B. Spec and ghost deck (S3.1/S3.2) — adversarial
 - B1 `spec.validate` rejects, with the exact JSON path, each of: a top-level `x`, a nested
