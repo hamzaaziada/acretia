@@ -36,6 +36,9 @@ def route(ctx, method, path):
 class Base(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
+        from om.api import state as _state
+        cls._state, cls._saved = _state, _state.STATE
+        _state.STATE = None          # other suites leave a live app state behind; these tests use their own DealStore
         cls.tmp = tempfile.TemporaryDirectory()
         cls.conn = adb.connect(":memory:")
         cls.conn.executescript(TABLES)
@@ -53,6 +56,7 @@ class Base(unittest.TestCase):
 
     @classmethod
     def tearDownClass(cls):
+        cls._state.STATE = cls._saved
         cls.tmp.cleanup()
 
     def ctx(self, org="org_a", role="member", query=None, body=None):
