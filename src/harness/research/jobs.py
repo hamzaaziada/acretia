@@ -7,6 +7,11 @@ one org can never address another org's rows::
     result:{org}:{id}   ResearchResult JSON                         written once by the worker
     cancel:{org}:{id}   "1" when cancellation was requested
     ev:{org}:{id}:{n}   persisted event n (1-based);  evn:{org}:{id} is the counter
+    review:{org}:{id}   source-review decision {decision, approver|reason, at}; written by approve / reject only
+
+Source review (S6.1c, parity item 24): when a workflow reaches its review gate the job status becomes
+``awaiting_review`` and the planned sources are persisted as the ``source_review`` event. ``approve`` / ``reject``
+write the decision key (so it survives a worker crash: the redelivered run finds it and carries on).
 """
 from __future__ import annotations
 
@@ -19,10 +24,12 @@ import uuid
 from om.contracts import Job, JobStep
 from om.storage import SQLiteKV
 from .api import API_VERSION, ResearchRequest, ResearchResult, run_research
+from .workflows import review as _review
 
 QUEUE = "research"
 MAX_ATTEMPTS = 3
 _TERMINAL = ("succeeded", "failed", "cancelled")
+REVIEW_POLL_S = 0.1
 _kvs: dict[str, SQLiteKV] = {}
 _kv_lock = threading.Lock()
 
@@ -100,6 +107,42 @@ def cancel(job_id: str, *, org_id: str = "local") -> bool:
     return True
 
 
+def _decide(job_id, org_id, decision, who_key, who) -> bool:
+    kv = _kv()
+    row = _load(kv, job_id, org_id)                     # JobNotFound for an unknown job or another org's job
+    if row["job"]["status"] != "awaiting_review" or kv.get(f"review:{org_id}:{job_id}") is not None:
+        return False
+    rec = {"decision": decision, who_key: who, "at": _now()}
+    kv.set(f"review:{org_id}:{job_id}", json.dumps(rec, sort_keys=True))
+    if decision == "approved":
+        row["job"]["status"] = "running"
+    else:
+        kv.set(f"cancel:{org_id}:{job_id}", "1")        # the waiting (or redelivered) worker ends it as cancelled
+    row["review"] = rec
+    _save(kv, org_id, row)
+    _persist_event(kv, org_id, {"v": API_VERSION, "type": "source_review", "job_id": job_id, "ts": _now(),
+                                "data": {"status": decision, **{who_key: who}}})
+    return True
+
+
+def approve(job_id: str, org_id: str = "local", approver: str | None = None) -> bool:
+    """Approve the planned sources of a job in ``awaiting_review``; the job resumes. False if it is not waiting."""
+    return _decide(job_id, org_id, "approved", "approver", approver)
+
+
+def reject(job_id: str, reason: str | None = None, *, org_id: str = "local") -> bool:
+    """Reject the planned sources: the job ends ``cancelled``. False if it is not waiting."""
+    return _decide(job_id, org_id, "rejected", "reason", reason)
+
+
+def review_sources(job_id: str, *, org_id: str = "local") -> list | None:
+    """Planned sources of the latest ``source_review`` request, or None when the job never reached the gate."""
+    for e in reversed(events(job_id, org_id=org_id)):
+        if e["type"] == "source_review" and (e.get("data") or {}).get("status") == "awaiting_review":
+            return e["data"].get("sources")
+    return None
+
+
 def _persist_event(kv, org_id, ev: dict) -> dict:
     n = kv.incr(f"evn:{org_id}:{ev['job_id']}")
     ev = dict(ev, seq=n)
@@ -147,13 +190,37 @@ def _process(kv, lease, adapter, tools, evidence_dir) -> None:
         _save(kv, org, row)
         kv.ack(lease)
         return
-    row["job"].update(status="running", attempts=lease.attempts)
+    resuming = row["job"]["status"] == "awaiting_review"   # crashed while waiting: keep waiting (or finish approval)
+    row["job"].update(status=row["job"]["status"] if resuming else "running", attempts=lease.attempts)
     _save(kv, org, row)
+    cancel = _KVCancel(kv, org, job_id)
+    timeout = float(row["request"].get("options", {}).get("review_timeout_s", 86400))
+
+    def on_event(e):
+        ev = _persist_event(kv, org, e)
+        if e.get("type") == "source_review" and (e.get("data") or {}).get("status") == "awaiting_review":
+            cur = _load(kv, job_id, org)
+            if kv.get(f"review:{org}:{job_id}") is None and cur["job"]["status"] != "awaiting_review":
+                cur["job"]["status"] = "awaiting_review"
+                _save(kv, org, cur)
+        return ev
+
+    def review(sources) -> bool:
+        def fetch():
+            raw = kv.get(f"review:{org}:{job_id}")
+            return json.loads(raw)["decision"] if raw is not None else None
+        d = _review.poll_decision(fetch, cancel.is_set, timeout, REVIEW_POLL_S)
+        cur = _load(kv, job_id, org)
+        if d == "approved" and cur["job"]["status"] == "awaiting_review":
+            cur["job"]["status"] = "running"
+            _save(kv, org, cur)
+        return d == "approved"
     ev_dir = evidence_dir or os.environ.get("ACRETIA_EVIDENCE_DIR", "storage/evidence")
     res = run_research(ResearchRequest.from_dict(row["request"]), adapter=adapter, tools=tools,
-                       evidence_dir=ev_dir, job_id=job_id, cancel=_KVCancel(kv, org, job_id),
-                       on_event=lambda e: _persist_event(kv, org, e))
+                       evidence_dir=ev_dir, job_id=job_id, cancel=cancel,
+                       on_event=on_event, review=review)
     kv.set(f"result:{org}:{job_id}", res.to_json())
+    row = _load(kv, job_id, org)                        # approve/reject may have added a "review" record meanwhile
     row["job"].update(status=res.status, steps=[s.to_dict() for s in res.steps], tokens=res.tokens,
                       cost_usd=res.cost_usd, error=res.error)
     Job.from_dict(row["job"])

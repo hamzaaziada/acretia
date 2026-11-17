@@ -18,7 +18,7 @@ import math
 import os
 import re
 from dataclasses import dataclass, field
-from datetime import date, datetime, timezone
+from datetime import date, datetime, timedelta, timezone
 from pathlib import Path
 
 from om.contracts import Citation, ContractError, sha256_hex
@@ -29,6 +29,10 @@ from src.harness.router import ToolError, ToolRegistry
 TICKER_RE = re.compile(r"[A-Za-z0-9.\-]{1,12}")
 CONCEPT_RE = re.compile(r"(?:[A-Za-z][A-Za-z0-9-]*:)?[A-Za-z][A-Za-z0-9_]*")
 ANNUAL_FORMS = ("10-K", "20-F", "40-F")
+PERIODS = ("annual", "quarterly")
+QUARTER_DAYS = (80, 100)      # a discrete fiscal quarter
+YTD9_DAYS = (255, 290)        # nine months year to date (Q1-Q3), as filed on the Q3 10-Q
+MINUS = "\u2212"
 MAX_ROWS = 200
 MAX_CELLS = 500
 _DATE_RE = re.compile(r"\d{4}-\d{2}-\d{2}")
@@ -190,6 +194,276 @@ def _annual_rows(rows: list, as_of: str | None) -> list:
     return [best[k] for k in sorted(best)]
 
 
+# ------------------------------------------------------------------------------------------------ quarterly (10-Q)
+def _check_period(period) -> str:
+    if period not in PERIODS:
+        raise ToolError(f"period must be one of {PERIODS}, got {period!r}")
+    return period
+
+
+def _clean_row(r, as_of):
+    """(row, end, start) for a usable numeric fact row, else None."""
+    if not isinstance(r, dict):
+        return None
+    val, end = r.get("val"), _valid_date(r.get("end"))
+    if isinstance(val, bool) or not isinstance(val, (int, float)) or not math.isfinite(val) or not end:
+        return None
+    start = _valid_date(r.get("start")) if r.get("start") is not None else None
+    if r.get("start") is not None and not start:
+        return None
+    if as_of and (end > as_of or str(r.get("filed", "")) > as_of):
+        return None
+    return r, end, start
+
+
+def _newer(a, b) -> bool:
+    return (str(a.get("filed", "")), str(a.get("accn", ""))) > (str(b.get("filed", "")), str(b.get("accn", "")))
+
+
+def _days(a: str, b: str) -> int:
+    return (date.fromisoformat(b) - date.fromisoformat(a)).days
+
+
+def _quarter_series(rows: list, as_of: str | None):
+    """One concept/unit -> ([entry], [fiscal-year ends whose Q4 cannot be derived]).
+
+    entry = {"end", "start", "row", "derived": None | {"fy", "ytd", "value"}}. Q1-Q3 come from 10-Q rows (~90-day
+    durations, or balance-sheet instants). A fiscal Q4 flow is derived as FY minus 9M YTD, and only when both the 10-K
+    year and the 10-Q nine-month figure are tagged; a Q4 balance-sheet instant is the 10-K year-end value itself."""
+    disc, ytd = {}, {}
+    for r in rows or []:
+        c = _clean_row(r, as_of)
+        if not c or not str(r.get("form", "")).startswith("10-Q"):
+            continue
+        _, end, start = c
+        if start is None or QUARTER_DAYS[0] <= _days(start, end) <= QUARTER_DAYS[1]:
+            bucket, key = disc, end
+        elif YTD9_DAYS[0] <= _days(start, end) <= YTD9_DAYS[1]:
+            bucket, key = ytd, (end, start)
+        else:
+            continue
+        if key not in bucket or _newer(r, bucket[key]):
+            bucket[key] = r
+    entries = {e: {"end": e, "start": r.get("start"), "row": r, "derived": None} for e, r in disc.items()}
+    underivable = []
+    for fy in _annual_rows(rows, as_of):
+        end, start = fy["end"], fy.get("start")
+        if end in entries:
+            continue
+        if start is None:                                       # balance-sheet instant: Q4 = year end, tagged directly
+            entries[end] = {"end": end, "start": None, "row": fy, "derived": None}
+            continue
+        cands = [r for (yend, ystart), r in ytd.items()
+                 if abs(_days(ystart, start)) <= 7 and QUARTER_DAYS[0] <= _days(yend, end) <= QUARTER_DAYS[1]]
+        if not cands:
+            underivable.append(end)
+            continue
+        y = max(cands, key=lambda r: (str(r.get("filed", "")), str(r.get("accn", ""))))
+        value = round(fy["val"] - y["val"], 6)
+        q4_start = (date.fromisoformat(y["end"]) + timedelta(days=1)).isoformat()
+        entries[end] = {"end": end, "start": q4_start, "row": fy, "derived": {"fy": fy, "ytd": y, "value": value}}
+    return [entries[k] for k in sorted(entries)], underivable
+
+
+def _quarter_comparisons(ends: list) -> dict:
+    """Latest quarter, the prior quarter and the same quarter a year earlier (None when not in the data)."""
+    ends = sorted(ends)
+    if not ends:
+        return {"latest": None, "prior_quarter": None, "year_ago": None}
+    latest = ends[-1]
+    prior = next((e for e in reversed(ends[:-1]) if QUARTER_DAYS[0] <= _days(e, latest) <= QUARTER_DAYS[1] + 10), None)
+    yago = next((e for e in ends[:-1] if 350 <= _days(e, latest) <= 380), None)
+    return {"latest": latest, "prior_quarter": prior, "year_ago": yago}
+
+
+def _derived_label(base: str, fy_end: str, ytd_end: str) -> str:
+    return (f"{base} derived: FY {MINUS} 9M = {{{base}|FY ending {fy_end}}} - "
+            f"{{{base} 9M YTD|9M ending {ytd_end}}}")
+
+
+def _sec_facts_quarterly(tk, concepts, periods, cf, as_of) -> ToolResult:
+    cik = cf.get("cik")
+    if cik is None:
+        raise ToolError("company facts carry no CIK; cannot cite")
+    fallback_doc, facts_url = _cik_urls(cik)
+    figures, cits, missing, rows_out, derivations = [], [], [], [], []
+
+    def xbrl_fig(label, tax, name, unit, r, period):
+        end, accn, start = r["end"], r.get("accn") or "", r.get("start")
+        quote = (f"{tax}:{name} = {r['val']} {unit}, {start + ' to ' if start else ''}{end}, "
+                 f"{r.get('form', '')} filed {r.get('filed', '')}" + (f", accn {accn}" if accn else ""))
+        cit = _cit(doc_id=accn or fallback_doc, sha256_span_hash=_hash(
+            {"cik": cik, "concept": f"{tax}:{name}", "unit": unit, "val": r["val"], "start": start, "end": end,
+             "accn": accn, "form": r.get("form"), "filed": r.get("filed")}),
+            quote=quote, url=_filing_url(cik, accn) if accn else facts_url, as_of=end, xbrl_concept=f"{tax}:{name}")
+        fig, why = _figure(label, r["val"], unit, period, cit)
+        return fig, cit, why
+
+    for concept in concepts:
+        tax, name = _split_concept(concept)
+        node = ((cf.get("facts") or {}).get(tax) or {}).get(name)
+        if not node:
+            missing.append({"item": f"{tax}:{name}", "reason": "concept not in company facts"})
+            continue
+        got = False
+        for unit in sorted(node.get("units") or {}):
+            entries, bad = _quarter_series(node["units"][unit], as_of)
+            window = entries[-periods:]
+            floor = window[0]["end"] if window else None
+            for e in bad:
+                if floor is None or e >= floor:
+                    missing.append({"item": f"{tax}:{name}@{e}", "reason": "Q4 not derivable: FY minus 9M needs both "
+                                                                           "the 10-K and the 10-Q nine-month value tagged"})
+            for en in window:
+                end, d = en["end"], en["derived"]
+                base = f"{tk} {name}"
+                if d is None:
+                    fig, cit, why = xbrl_fig(base, tax, name, unit, en["row"], f"quarter ending {end}")
+                    if fig is None:
+                        missing.append({"item": f"{tax}:{name}@{end}", "reason": why})
+                        continue
+                    figures.append(fig)
+                    cits.append(cit)
+                    rows_out.append({"concept": f"{tax}:{name}", "unit": unit, "end": end, "val": en["row"]["val"],
+                                     "accn": en["row"].get("accn") or "", "derived": False})
+                    got = True
+                    continue
+                fy, y = d["fy"], d["ytd"]
+                fy_fig, fy_cit, w1 = xbrl_fig(base, tax, name, unit, fy, f"FY ending {fy['end']}")
+                y_fig, y_cit, w2 = xbrl_fig(f"{base} 9M YTD", tax, name, unit, y, f"9M ending {y['end']}")
+                if fy_fig is None or y_fig is None:
+                    missing.append({"item": f"{tax}:{name}@{end}", "reason": w1 or w2})
+                    continue
+                accn = fy.get("accn") or ""
+                quote = (f"derived: FY {MINUS} 9M: {tax}:{name} FY ending {fy['end']} = {fy['val']} {unit} less 9M ending "
+                         f"{y['end']} = {y['val']} {unit} gives {d['value']} {unit}, quarter ending {end}")
+                cit = _cit(doc_id=accn or fallback_doc, sha256_span_hash=_hash(
+                    {"derived": "fy-9m", "concept": f"{tax}:{name}", "unit": unit, "end": end,
+                     "inputs": [fy_cit.sha256_span_hash, y_cit.sha256_span_hash]}),
+                    quote=quote, url=_filing_url(cik, accn) if accn else facts_url, as_of=end)
+                fig, why = _figure(_derived_label(base, fy["end"], y["end"]), d["value"], unit, f"quarter ending {end}", cit)
+                if fig is None:
+                    missing.append({"item": f"{tax}:{name}@{end}", "reason": why})
+                    continue
+                figures.extend([fy_fig, y_fig, fig])
+                cits.extend([cit, fy_cit, y_cit])
+                derivations.append({"figure": fig.label, "period": fig.period, "formula": f"FY {MINUS} 9M",
+                                    "inputs": [fy_cit.to_dict(), y_cit.to_dict()]})
+                rows_out.append({"concept": f"{tax}:{name}", "unit": unit, "end": end, "val": d["value"],
+                                 "accn": accn, "derived": True})
+                got = True
+        if not got:
+            missing.append({"item": f"{tax}:{name}", "reason": "no quarterly value in the requested window"})
+    ends = sorted({r["end"] for r in rows_out})
+    return ToolResult({"ticker": tk, "cik": cik, "period": "quarterly", "rows": rows_out, "derivations": derivations,
+                       "comparisons": _quarter_comparisons(ends), "missing": missing},
+                      figures, _dedupe(cits), facts_url)
+
+
+_Q_FLOW = ("revenue", "gross_profit", "ebit", "net_income", "cfo", "capex")
+_Q_STOCK = (("assets", "total_assets"), ("cash", "cash"))
+
+
+def _usd_unit(node: dict):
+    units = [u for u in sorted(node.get("units") or {}) if "/" not in u and re.fullmatch(r"[A-Z]{3}", u)]
+    return ("USD" if "USD" in units else units[0]) if units else None
+
+
+def _sec_statements_quarterly(tk, quarters, cf, as_of) -> ToolResult:
+    from om.concepts import DURATION, INSTANT
+    cik = cf.get("cik")
+    if cik is None:
+        raise ToolError("company facts carry no CIK; cannot cite")
+    fallback_doc, facts_url = _cik_urls(cik)
+    chains = {k: DURATION[k] for k in _Q_FLOW}
+    chains.update({k: INSTANT[c] for k, c in _Q_STOCK})
+    per_key, bad_by_key, currency = {}, {}, "USD"
+    for key, chain in chains.items():
+        by_end, bad = {}, set()
+        for tax, name in chain:                                  # first concept with a value for that quarter wins
+            node = ((cf.get("facts") or {}).get(tax) or {}).get(name)
+            unit = _usd_unit(node) if node else None
+            if not unit:
+                continue
+            ents, b = _quarter_series(node["units"][unit], as_of)
+            for en in ents:
+                by_end.setdefault(en["end"], dict(en, concept=f"{tax}:{name}", unit=unit))
+            bad.update(b)
+            currency = unit
+        per_key[key], bad_by_key[key] = by_end, bad
+    ends = sorted({e for d in per_key.values() for e in d})[-quarters:]
+    labels = dict(HEADLINE)
+    data = {k: [] for k in chains}
+    filings, qmeta = [], []
+    figures, cits, missing, derivations = [], [], [], []
+
+    def cit_for(key, r, concept, end, value, extra):
+        accn = r.get("accn") or ""
+        return _cit(doc_id=accn or fallback_doc, sha256_span_hash=_hash(
+            {"ticker": tk, "line": key, "end": end, "val": value, "accn": accn, "extra": extra, "q": True}),
+            quote=extra.get("quote") if isinstance(extra, dict) and extra.get("quote") else
+            f"{key} = {value} {currency} millions, quarter ending {end}",
+            url=_filing_url(cik, accn) if accn else facts_url, as_of=end)
+
+    for end in ends:
+        meta = {"end": end, "derived": []}
+        accn0 = None
+        for key in chains:
+            en = per_key[key].get(end)
+            if en is None:
+                data[key].append(None)
+                if end in bad_by_key[key]:
+                    missing.append({"item": f"{key}@{end}", "reason": "Q4 not derivable: FY minus 9M needs both tagged"})
+                else:
+                    missing.append({"item": f"{key}@{end}", "reason": "line not tagged in the filings"})
+                continue
+            accn0 = accn0 or en["row"].get("accn")
+            d, label = en["derived"], f"{tk} {labels[key]}"
+            if d is None:
+                v = round(en["row"]["val"] / 1e6, 6)
+                cit = cit_for(key, en["row"], en["concept"], end, v, None)
+                fig, why = _figure(label, v, f"{currency} millions", f"quarter ending {end}", cit)
+                if fig is None:
+                    data[key].append(None)
+                    missing.append({"item": f"{key}@{end}", "reason": why})
+                    continue
+                figures.append(fig)
+                cits.append(cit)
+                data[key].append(v)
+                continue
+            fy, y = d["fy"], d["ytd"]
+            fy_v, y_v = round(fy["val"] / 1e6, 6), round(y["val"] / 1e6, 6)
+            v = round(d["value"] / 1e6, 6)
+            fy_cit = cit_for(key, fy, en["concept"], fy["end"], fy_v,
+                             {"quote": f"{key} = {fy_v} {currency} millions, FY ending {fy['end']}"})
+            y_cit = cit_for(key, y, en["concept"], y["end"], y_v,
+                            {"quote": f"{key} = {y_v} {currency} millions, 9M ending {y['end']}"})
+            fy_fig, w1 = _figure(label, fy_v, f"{currency} millions", f"FY ending {fy['end']}", fy_cit)
+            y_fig, w2 = _figure(f"{label} 9M YTD", y_v, f"{currency} millions", f"9M ending {y['end']}", y_cit)
+            quote = (f"derived: FY {MINUS} 9M: {key} FY ending {fy['end']} = {fy_v} less 9M ending {y['end']} = {y_v} "
+                     f"gives {v} {currency} millions, quarter ending {end}")
+            cit = cit_for(key, fy, en["concept"], end, v, {"quote": quote, "inputs": [fy_cit.sha256_span_hash,
+                                                                                      y_cit.sha256_span_hash]})
+            fig, w3 = (None, w1 or w2) if fy_fig is None or y_fig is None else _figure(
+                _derived_label(label, fy["end"], y["end"]), v, f"{currency} millions", f"quarter ending {end}", cit)
+            if fig is None:
+                data[key].append(None)
+                missing.append({"item": f"{key}@{end}", "reason": w3})
+                continue
+            figures.extend([fy_fig, y_fig, fig])
+            cits.extend([cit, fy_cit, y_cit])
+            data[key].append(v)
+            meta["derived"].append(key)
+            derivations.append({"figure": fig.label, "period": fig.period, "formula": f"FY {MINUS} 9M",
+                                "inputs": [fy_cit.to_dict(), y_cit.to_dict()]})
+        filings.append({"accn": accn0, "url": _filing_url(cik, accn0) if accn0 else facts_url})
+        qmeta.append(meta)
+    st = {"cik": cik, "currency": currency, "years": ends, "period": "quarterly", "data": data, "filings": filings}
+    return ToolResult({"ticker": tk, "period": "quarterly", "statements": st, "quarters": qmeta,
+                       "comparisons": _quarter_comparisons(ends), "derivations": derivations, "missing": missing},
+                      figures, _dedupe(cits), facts_url)
+
+
 def _split_concept(concept: str) -> tuple[str, str]:
     if ":" in concept:
         tax, name = concept.split(":", 1)
@@ -197,13 +471,17 @@ def _split_concept(concept: str) -> tuple[str, str]:
     return "us-gaap", concept
 
 
-def sec_facts(ticker: str, concepts: list, periods: int = 5, *, sec=None, as_of=None) -> ToolResult:
+def sec_facts(ticker: str, concepts: list, periods: int = 5, *, sec=None, as_of=None, period: str = "annual") -> ToolResult:
+    """``period="quarterly"``: 10-Q quarters (~90 days); Q4 is derived as FY minus 9M only when both are tagged."""
     tk = _check_ticker(ticker)
-    periods = _check_int("periods", periods, 1, 20)
+    period = _check_period(period)
+    periods = _check_int("periods", periods, 1, 40 if period == "quarterly" else 20)
     if not isinstance(concepts, list) or not concepts or not all(isinstance(c, str) and CONCEPT_RE.fullmatch(c)
                                                                  for c in concepts):
         raise ToolError("concepts must be a non-empty list of XBRL concept names like 'us-gaap:Revenues'")
     cf = _sec(sec).company_facts(tk)
+    if period == "quarterly":
+        return _sec_facts_quarterly(tk, concepts, periods, cf, as_of)
     cik = cf.get("cik")
     if cik is None:
         raise ToolError("company facts carry no CIK; cannot cite")
@@ -286,9 +564,14 @@ def _statement_figure(st, tk, key, label, i):
     return fig, cit, None
 
 
-def sec_statements(ticker: str, years: int = 5, *, sec=None, as_of=None) -> ToolResult:
+def sec_statements(ticker: str, years: int = 5, *, sec=None, as_of=None, period: str = "annual") -> ToolResult:
+    """``period="quarterly"``: headline lines per quarter from 10-Q facts (``years`` = years of quarters, 4 per year);
+    ``data["comparisons"]`` names the latest quarter, the prior quarter and the same quarter a year earlier."""
     tk = _check_ticker(ticker)
+    period = _check_period(period)
     years = _check_int("years", years, 1, 15)
+    if period == "quarterly":
+        return _sec_statements_quarterly(tk, years * 4, _sec(sec).company_facts(tk), as_of)
     st = _clip_statements(_sec(sec).financial_statements(tk, years), as_of)
     figures, cits, missing, derivations = [], [], [], []
     for i in range(len(st.get("years", []))):
@@ -350,13 +633,28 @@ RATIOS = {
 }
 
 
+def _ratio_expr(name, refs):
+    """Verifiable ratio expression over ``{label|period}`` references (no function calls; see verify._eval_expr)."""
+    r = [f"{{{lab}|{per}}}" for lab, per in refs]
+    if name == "revenue_growth":
+        return f"({r[0]} - {r[1]}) / {r[1]}"
+    if name == "debt_to_equity":
+        return f"({r[0]} + {r[1]}) / {r[2]}"
+    return f"{r[0]} / {r[1]}"
+
+
 def ratios(ticker: str, years: int = 3, *, sec=None, as_of=None) -> ToolResult:
+    """Derived ratios. Each ratio figure is ``units="ratio"``, its label carries the arithmetic over ``{label|period}``
+    references, and its input lines are returned as cited figures too, so ``verify_figure`` recomputes the ratio from
+    verified inputs (no unit scale is read from the ratio's own quote)."""
     from src.harness.connectors import fintk
     tk = _check_ticker(ticker)
     years = _check_int("years", years, 1, 15)
     st = _clip_statements(_sec(sec).financial_statements(tk, years), as_of)
     metrics = fintk.ratios(st) if st.get("years") else {"years": [], "metrics": {}}
-    figures, cits, missing, derivations = [], [], [], []
+    cur = st.get("currency") or "USD"
+    labels = dict(HEADLINE)
+    figures, cits, missing, derivations, inputs_seen = [], [], [], [], {}
     for i in range(len(st.get("years", []))):
         end = str(st["years"][i])
         for name, (formula, inputs) in RATIOS.items():
@@ -376,19 +674,37 @@ def ratios(ticker: str, years: int = 3, *, sec=None, as_of=None) -> ToolResult:
             if why or value is None or not math.isfinite(value):
                 missing.append({"item": f"{name}@{end}", "reason": why or "not computable from reported inputs"})
                 continue
+            if name == "revenue_growth" and picked[1][2] <= 0:
+                missing.append({"item": f"{name}@{end}", "reason": "prior-year revenue is not positive"})
+                continue
             ins = [_stmt_citation(st, tk, k, j, v) for k, j, v in picked]
-            lbl = f"derived: {name} = {formula}"
-            used = ", ".join(f"{k}[{st['years'][j]}]={v}" for k, j, v in picked)
+            in_figs, refs = [], []
+            for (k, j, v), c in zip(picked, ins):
+                lab = f"{tk} {labels.get(k, k)}"
+                per = f"FY ending {st['years'][j]}"
+                f_in, w = _figure(lab, v, f"{cur} millions", per, c)
+                if f_in is None:
+                    why = w
+                    break
+                in_figs.append(f_in)
+                refs.append((lab, per))
+            if why:
+                missing.append({"item": f"{name}@{end}", "reason": why})
+                continue
+            lbl = f"{tk} derived: {name} = {_ratio_expr(name, refs)}"
             cit = _stmt_citation(st, tk, name, i, value, extra={"formula": formula, "inputs": [c.sha256_span_hash for c in ins]},
-                                 quote=f"derived: {name} = {formula}; {used}; = {value}")
-            fig, why2 = _figure(f"{tk} {lbl}", value, "ratio", f"FY ending {end}", cit)
+                                 quote=f"derived: {name} = {formula} = {value:.6g}")
+            fig, why2 = _figure(lbl, value, "ratio", f"FY ending {end}", cit)
             if fig is None:
                 missing.append({"item": f"{name}@{end}", "reason": why2})
                 continue
+            for f_in in in_figs:                             # the pool the verifier recomputes from
+                inputs_seen.setdefault((f_in.label, f_in.period), f_in)
             figures.append(fig)
             cits.extend([cit] + ins)
             derivations.append({"figure": fig.label, "period": fig.period, "formula": formula,
                                 "inputs": [c.to_dict() for c in ins]})
+    figures.extend(inputs_seen.values())
     cik = st.get("cik")
     src = _cik_urls(cik)[1] if cik is not None else f"statements:{tk}"
     return ToolResult({"ticker": tk, "years": st.get("years", []), "metrics": metrics["metrics"],
@@ -616,13 +932,15 @@ def build_registry(*, evidence=None, sec=None, web=None, grid_db=None, excel_roo
 
     tickers = {"type": "string"}
     tools = [
-        ("sec_facts", lambda ticker, concepts, periods=5: sec_facts(ticker, concepts, periods, sec=sec, as_of=as_of),
+        ("sec_facts", lambda ticker, concepts, periods=5, period="annual": sec_facts(
+             ticker, concepts, periods, sec=sec, as_of=as_of, period=period),
          _obj(["ticker", "concepts"], ticker=tickers, concepts={"type": "array", "items": {"type": "string"}},
-              periods={"type": "integer"}),
-         "Annual XBRL values (us-gaap:Revenues, ...) from SEC company facts, one cited figure per fiscal year."),
-        ("sec_statements", lambda ticker, years=5: sec_statements(ticker, years, sec=sec, as_of=as_of),
-         _obj(["ticker"], ticker=tickers, years={"type": "integer"}),
-         "Annual 3-statement data in USD millions plus cited headline figures."),
+              periods={"type": "integer"}, period={"type": "string", "enum": list(PERIODS)}),
+         "XBRL values (us-gaap:Revenues, ...) from SEC company facts, one cited figure per fiscal year or, with "
+         "period=quarterly, per quarter (Q4 derived as FY minus 9M only when both are tagged)."),
+        ("sec_statements", lambda ticker, years=5, period="annual": sec_statements(ticker, years, sec=sec, as_of=as_of, period=period),
+         _obj(["ticker"], ticker=tickers, years={"type": "integer"}, period={"type": "string", "enum": list(PERIODS)}),
+         "3-statement data in USD millions plus cited headline figures; period=quarterly gives 10-Q quarters."),
         ("sec_filings", lambda ticker, form="10-K", n=3: sec_filings(ticker, form, n, sec=sec, as_of=as_of),
          _obj(["ticker"], ticker=tickers, form={"type": "string"}, n={"type": "integer"}),
          "Recent SEC filings (form, filing date, accession, url)."),

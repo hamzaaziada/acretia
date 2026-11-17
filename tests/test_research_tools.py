@@ -127,13 +127,15 @@ class SecTools(Base):
         r = T.ratios("TEST", 3, sec=FakeSec()).to_dict()
         gm = [f for f in r["figures"] if "gross_margin" in f["label"]]
         self.assertTrue(gm)
-        self.assertTrue(gm[0]["label"].startswith("TEST derived: gross_margin = gross_profit / revenue"))
+        self.assertTrue(gm[0]["label"].startswith("TEST derived: gross_margin = {TEST Gross profit|"))
+        self.assertEqual(gm[0]["units"], "ratio")
         self.assertAlmostEqual(gm[0]["value"], 0.45, places=6)
         der = [d for d in r["data"]["derivations"] if d["figure"] == gm[0]["label"] and d["period"] == gm[0]["period"]][0]
         self.assertEqual(len(der["inputs"]), 2)
         input_hashes = {c["sha256_span_hash"] for c in der["inputs"]}
         self.assertTrue(input_hashes <= {c["sha256_span_hash"] for c in r["citations"]})
         self.assertIn("gross_profit", der["inputs"][0]["quote"] + der["inputs"][1]["quote"])
+        self.assertNotRegex(gm[0]["citation"]["quote"].lower(), r"million|billion|thousand|usd|\$|%")
         self.assertIn(gm[0]["citation"]["sha256_span_hash"], {c["sha256_span_hash"] for c in r["citations"]})
         growth = [f for f in r["figures"] if "revenue_growth" in f["label"]]
         self.assertEqual(len(growth), 1)                                      # 2 years in fixture: only 2024 has a prior
@@ -146,6 +148,192 @@ class SecTools(Base):
         self.assertFalse([f for f in r["figures"] if "gross_margin" in f["label"]])
         self.assertTrue([m for m in r["data"]["missing"] if m["item"].startswith("gross_margin")])
         self.assertTrue([f for f in r["figures"] if "net_margin" in f["label"]])
+
+
+
+def qfacts():
+    return load("companyfacts_testco_quarterly.json")
+
+
+def resolver_for(result, rows=()):
+    """A SourceResolver holding every citation quote of ``result`` as a url snapshot (and optional XBRL rows)."""
+    from src.harness.research.verify import SourceResolver
+    res, by_url = SourceResolver(), {}
+    for c in result["citations"]:
+        by_url.setdefault(c["url"], []).append(c["quote"])
+    for f in result["figures"]:
+        by_url.setdefault(f["citation"]["url"], []).append(f["citation"]["quote"])
+    for url, quotes in by_url.items():
+        res.add_url(url, "\n".join(dict.fromkeys(quotes)))
+    for doc, concept, period, val in rows:
+        res.add_xbrl(doc, concept, period, val)
+    return res
+
+
+class RatioVerification(Base):
+    """The unitless ratio quote must not be rescaled by the 'USD millions' of its inputs (S6.1c)."""
+
+    def test_ratio_figures_pass_verify_figure_with_inputs_registered(self):
+        from src.harness.research.verify import verify_figure
+        r = T.ratios("TEST", 3, sec=FakeSec()).to_dict()
+        res = resolver_for(r)
+        ratio_figs = [f for f in r["figures"] if f["units"] == "ratio"]
+        self.assertEqual(len(ratio_figs), 11)                      # 6 metrics x 2 years minus growth in the first year
+        for f in ratio_figs:
+            v = verify_figure(f, res, figures=r["figures"])
+            self.assertTrue(v.ok, f"{f['label']} {f['period']}: {v.reason}")
+            self.assertEqual(v.method, "derived")
+            self.assertNotRegex(f["citation"]["quote"].lower(), r"million|billion|thousand|usd|\$|%")
+        inputs = [f for f in r["figures"] if f["units"] != "ratio"]
+        self.assertTrue(inputs and all(verify_figure(f, res).ok for f in inputs))
+
+    def test_every_ratio_cites_its_input_figures(self):
+        r = T.ratios("TEST", 3, sec=FakeSec()).to_dict()
+        hashes = {c["sha256_span_hash"] for c in r["citations"]}
+        for d in r["data"]["derivations"]:
+            self.assertTrue(d["inputs"] and {c["sha256_span_hash"] for c in d["inputs"]} <= hashes)
+
+    def test_tampered_ratio_fails(self):
+        from src.harness.research.verify import verify_figure
+        r = T.ratios("TEST", 3, sec=FakeSec()).to_dict()
+        res = resolver_for(r)
+        f = copy.deepcopy([x for x in r["figures"] if "gross_margin" in x["label"]][0])
+        f["value"] = 0.55
+        self.assertFalse(verify_figure(f, res, figures=r["figures"]).ok)
+
+    def test_unverifiable_input_fails_the_ratio(self):
+        from src.harness.research.verify import SourceResolver, verify_figure
+        r = T.ratios("TEST", 3, sec=FakeSec()).to_dict()
+        f = [x for x in r["figures"] if "gross_margin" in x["label"]][0]
+        v = verify_figure(f, SourceResolver(), figures=r["figures"])
+        self.assertFalse(v.ok)
+        self.assertIn("unverified", v.reason)
+
+    def test_registry_ratios_and_negative_prior_revenue(self):
+        cf = load("companyfacts_testco.json")
+        for row in cf["facts"]["us-gaap"]["Revenues"]["units"]["USD"]:
+            if row["end"].startswith("2023"):
+                row["val"] = -1000000000.0
+        r = T.ratios("TEST", 3, sec=FakeSec(cf)).to_dict()
+        self.assertFalse([f for f in r["figures"] if "revenue_growth" in f["label"]])
+        self.assertTrue([m for m in r["data"]["missing"] if m["item"].startswith("revenue_growth")])
+
+
+class QuarterlyTools(Base):
+    def facts(self, concepts, periods=8, **kw):
+        return T.sec_facts("TEST", concepts, periods, sec=FakeSec(qfacts()), period="quarterly", **kw).to_dict()
+
+    def test_period_validated(self):
+        with self.assertRaises(ToolError):
+            T.sec_facts("TEST", ["Revenues"], 5, sec=FakeSec(qfacts()), period="monthly")
+        with self.assertRaises(ToolError):
+            T.sec_statements("TEST", 2, sec=FakeSec(qfacts()), period="weekly")
+
+    def test_annual_default_unchanged(self):
+        a = T.sec_facts("TEST", ["us-gaap:Revenues"], 5, sec=FakeSec(qfacts())).to_dict()
+        self.assertEqual([f["period"] for f in a["figures"]], ["FY ending 2023-12-31", "FY ending 2024-12-31"])
+
+    def test_quarters_use_10q_rows_with_90_day_durations(self):
+        r = self.facts(["us-gaap:Revenues"])
+        q = {f["period"]: f["value"] for f in r["figures"] if f["period"].startswith("quarter")}
+        self.assertEqual(q["quarter ending 2024-03-31"], 250e6)
+        self.assertEqual(q["quarter ending 2024-09-30"], 280e6)
+        self.assertEqual(sorted(q), sorted(set(q)))
+        for f in r["figures"]:
+            if f["period"].startswith("quarter") and "derived" not in f["label"]:
+                self.assertIn("10-Q", f["citation"]["quote"])
+                self.assertNotIn("2024-01-01 to 2024-09-30", f["citation"]["quote"])      # the 9M YTD is not a quarter
+        self.assertNotIn("quarter ending 2024-12-31", [f["period"] for f in r["figures"] if f["label"].endswith("9M YTD")])
+
+    def test_q4_is_fy_minus_9m_with_both_citations(self):
+        r = self.facts(["us-gaap:Revenues"])
+        q4 = [f for f in r["figures"] if f["period"] == "quarter ending 2024-12-31"]
+        self.assertEqual(len(q4), 1)
+        self.assertAlmostEqual(q4[0]["value"], 300e6, delta=1)
+        self.assertIn("derived: FY \u2212 9M", q4[0]["label"])
+        self.assertIn("derived: FY \u2212 9M", q4[0]["citation"]["quote"])
+        der = [d for d in r["data"]["derivations"] if d["period"] == "quarter ending 2024-12-31"][0]
+        quotes = " | ".join(c["quote"] for c in der["inputs"])
+        self.assertIn("10-K", quotes)
+        self.assertIn("10-Q", quotes)
+        self.assertIn("2024-01-01 to 2024-12-31", quotes)
+        self.assertIn("2024-01-01 to 2024-09-30", quotes)
+        hashes = {c["sha256_span_hash"] for c in r["citations"]}
+        self.assertTrue({c["sha256_span_hash"] for c in der["inputs"]} <= hashes)
+        SourcedFigure.from_dict(q4[0])
+
+    def test_q4_not_derived_when_9m_untagged(self):
+        r = self.facts(["us-gaap:GrossProfit"])
+        self.assertNotIn("quarter ending 2024-12-31", [f["period"] for f in r["figures"]])
+        self.assertIn("quarter ending 2023-12-31", [f["period"] for f in r["figures"]])        # 2023 has both
+        self.assertTrue([m for m in r["data"]["missing"] if m["item"] == "us-gaap:GrossProfit@2024-12-31"
+                         and "not derivable" in m["reason"]])
+
+    def test_q4_not_derived_when_fy_untagged(self):
+        cf = qfacts()
+        cf["facts"]["us-gaap"]["Revenues"]["units"]["USD"] = [
+            r for r in cf["facts"]["us-gaap"]["Revenues"]["units"]["USD"] if r["form"] != "10-K"]
+        r = T.sec_facts("TEST", ["Revenues"], 8, sec=FakeSec(cf), period="quarterly").to_dict()
+        self.assertFalse([f for f in r["figures"] if f["period"].endswith("12-31")])
+
+    def test_instants_use_year_end_for_q4_directly(self):
+        r = self.facts(["us-gaap:Assets"])
+        q4 = [f for f in r["figures"] if f["period"] == "quarter ending 2024-12-31"][0]
+        self.assertEqual(q4["value"], 1074.525e6)
+        self.assertNotIn("derived", q4["label"])
+
+    def test_quarterly_derived_figures_verify(self):
+        from src.harness.research.verify import verify_figure
+        r = self.facts(["us-gaap:Revenues"])
+        rows = [(f["citation"]["doc_id"], "us-gaap:Revenues", f["period"], f["value"]) for f in r["figures"]
+                if f["citation"].get("xbrl_concept")]
+        res = resolver_for(r, rows)
+        q4 = [f for f in r["figures"] if f["period"] == "quarter ending 2024-12-31"][0]
+        v = verify_figure(q4, res, figures=r["figures"])
+        self.assertTrue(v.ok, v.reason)
+        bad = copy.deepcopy(q4)
+        bad["value"] += 30e6
+        self.assertFalse(verify_figure(bad, res, figures=r["figures"]).ok)
+
+    def test_as_of_hides_later_quarters(self):
+        r = self.facts(["us-gaap:Revenues"], as_of="2024-08-15")
+        self.assertEqual(max(f["period"] for f in r["figures"] if f["period"].startswith("quarter")),
+                         "quarter ending 2024-06-30")
+
+    def test_statements_quarterly_shape_and_comparisons(self):
+        r = T.sec_statements("TEST", 2, sec=FakeSec(qfacts()), period="quarterly").to_dict()
+        st = r["data"]["statements"]
+        self.assertEqual(st["years"][-1], "2024-12-31")
+        self.assertEqual(len(st["years"]), 8)
+        self.assertEqual(st["data"]["revenue"][-4:], [250.0, 270.0, 280.0, 300.0])
+        self.assertEqual(r["data"]["comparisons"], {"latest": "2024-12-31", "prior_quarter": "2024-09-30",
+                                                    "year_ago": "2023-12-31"})
+        self.assertIn("revenue", r["data"]["quarters"][-1]["derived"])
+        self.assertNotIn("assets", r["data"]["quarters"][-1]["derived"])
+        rev = [f for f in r["figures"] if f["period"] == "quarter ending 2024-12-31" and f["label"].startswith("TEST Revenue")]
+        self.assertEqual(len(rev), 1)
+        self.assertIn("derived: FY \u2212 9M", rev[0]["label"])
+        self.assertEqual(rev[0]["units"], "USD millions")
+        self.assertIsNone(st["data"]["gross_profit"][-1])                             # 9M untagged: no invented Q4
+        self.assertTrue([m for m in r["data"]["missing"] if m["item"] == "gross_profit@2024-12-31"
+                         and "not derivable" in m["reason"]])
+
+    def test_statements_quarterly_figures_verify(self):
+        from src.harness.research.verify import verify_figure
+        r = T.sec_statements("TEST", 2, sec=FakeSec(qfacts()), period="quarterly").to_dict()
+        res = resolver_for(r)
+        bad = [(f["label"], f["period"], verify_figure(f, res, figures=r["figures"]).reason) for f in r["figures"]
+               if not verify_figure(f, res, figures=r["figures"]).ok]
+        self.assertEqual(bad, [])
+
+    def test_registry_passes_period(self):
+        reg = T.build_registry(sec=FakeSec(qfacts()))
+        out = reg.call("sec_statements", {"ticker": "TEST", "years": 1, "period": "quarterly"})
+        self.assertEqual(out["data"]["period"], "quarterly")
+        self.assertEqual(len(out["data"]["statements"]["years"]), 4)
+        with self.assertRaises(ToolError):
+            reg.call("sec_facts", {"ticker": "TEST", "concepts": ["Revenues"], "period": "weekly"})
+
 
 
 class WebTools(Base):

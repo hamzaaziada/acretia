@@ -6,9 +6,10 @@ The gate lists the planned sources (tools, document ids, URLs), emits a ``source
   chain so another process can approve). The wait polls the cancel flag, so a cancel always wins.
 ``request.options.source_review = false`` skips the gate. ``options.review_timeout_s`` (default 86400) bounds the wait.
 
-Jobs mode: ``jobs.status()`` keeps saying ``running`` while the gate waits, because ``awaiting_review`` is not in
-``om.contracts.STATUS`` and ``jobs.py`` is outside this packet. The wait is visible as the ``source_review`` event with
-``data.status == "awaiting_review"`` and as the in-flight ``review`` step; ``pending()`` lists waiting jobs.
+Jobs mode (S6.1c): ``jobs.py`` passes a persisted ``review=`` callback that waits through :func:`poll_decision`;
+``jobs.status()`` then says ``awaiting_review`` and ``jobs.approve`` / ``jobs.reject`` decide (the decision lives in the
+job KV, so it survives a crash). The in-memory ``approve`` / ``reject`` below stay the path for direct ``run_research``.
+The wait is also visible as the ``source_review`` event with ``data.status == "awaiting_review"``.
 """
 from __future__ import annotations
 
@@ -47,6 +48,20 @@ def _decide(job_id, decision, evidence_dir) -> bool:
 def pending() -> dict:
     with _LOCK:
         return {k: list(v) for k, v in _PENDING.items()}
+
+
+def poll_decision(fetch, cancelled, timeout: float, poll: float = POLL_S) -> str:
+    """Shared wait loop: ``fetch() -> "approved" | "rejected" | None``; cancel wins; returns "timeout" past ``timeout``."""
+    deadline = time.monotonic() + timeout
+    while True:
+        if cancelled():
+            return "cancelled"
+        d = fetch()
+        if d in ("approved", "rejected"):
+            return d
+        if time.monotonic() > deadline:
+            return "timeout"
+        time.sleep(poll)
 
 
 def _urls(obj, out):
@@ -97,20 +112,14 @@ def await_review(ctx, sources) -> str:
         _DECISIONS.pop(job_id, None)
     flag = _flag(ev_dir, job_id)
     flag.unlink(missing_ok=True)
-    deadline = time.monotonic() + timeout
+    def fetch():
+        with _LOCK:
+            d = _DECISIONS.get(job_id)
+        if d is None and flag.exists():
+            d = flag.read_text(encoding="utf-8").strip() or None
+        return d
     try:
-        while True:
-            if ctx.cancelled():
-                return "cancelled"
-            with _LOCK:
-                d = _DECISIONS.get(job_id)
-            if d is None and flag.exists():
-                d = flag.read_text(encoding="utf-8").strip() or None
-            if d in ("approved", "rejected"):
-                return d
-            if time.monotonic() > deadline:
-                return "timeout"
-            time.sleep(POLL_S)
+        return poll_decision(fetch, ctx.cancelled, timeout)
     finally:
         with _LOCK:
             _PENDING.pop(job_id, None)

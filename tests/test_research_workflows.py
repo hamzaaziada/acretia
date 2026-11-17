@@ -497,5 +497,35 @@ class Determinism(Base):
             self.assertEqual(a.to_dict()["slide_specs"], b.to_dict()["slide_specs"])
 
 
+class TitleLint(unittest.TestCase):
+    """S6.1c: an en dash is allowed only between digits (numeric ranges); em dashes and dash-like en dashes are not."""
+
+    def lint(self, t):
+        from om.contracts import action_title_lint
+        return action_title_lint(t, "title")
+
+    def test_numeric_range_en_dash_allowed(self):
+        for t in ("Revenue grew steadily over 2024\u20132026 on pricing", "Margins rose across the FY2024\u201326 filings",
+                  "Margins stayed between 45\u201350 percent through the cycle"):
+            self.assertEqual(self.lint(t), t)
+
+    def test_other_dashes_rejected(self):
+        from om.contracts import ContractError
+        for t in ("Revenue grew 12% \u2013 pricing led the way", "Revenue grew 12%\u2014pricing led the way",
+                  "Revenue grew over 2024 \u2013 2026 on pricing", "Revenue grew\u2013pricing led the way",
+                  "Revenue grew in 2024\u2013 on pricing", "Revenue grew in \u20132026 on pricing",
+                  "Revenue grew 2024\u2013Q2 on pricing", "Revenue grew 2024\u2013\u20132026 on pricing",
+                  "Revenue grew over 2024\u20132026 \u2014 on pricing"):
+            with self.assertRaises(ContractError, msg=t):
+                self.lint(t)
+
+    def test_hyphen_and_other_rules_unchanged(self):
+        from om.contracts import ContractError
+        self.assertEqual(self.lint("Revenue grew 2024-2026 on pricing"), "Revenue grew 2024-2026 on pricing")
+        for t in ("Revenue by segment", "Revenue grew on pricing.", "Revenue grew on pricing!"):
+            with self.assertRaises(ContractError):
+                self.lint(t)
+
+
 if __name__ == "__main__":
     unittest.main()

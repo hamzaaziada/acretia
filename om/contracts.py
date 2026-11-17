@@ -236,7 +236,7 @@ def action_title_lint(x, p):
     """Action title: a one-sentence claim. Rules (all deterministic):
 
     * <= 15 words and <= 110 characters, no leading/trailing space, single line;
-    * no trailing period, no ``!``, no em/en dash, no emoji or pictographs;
+    * no trailing period, no ``!``, no em dash, an en dash only between digits ("2024\u20132026"), no emoji or pictographs;
     * >= 4 words and at least one verb-ish word after the first word (auxiliary/lexicon verb, inflected form of one,
       or a word ending -ed/-ing/-ize/-ise/-ify) so a bare noun phrase such as "Revenue by segment" is rejected.
     """
@@ -252,8 +252,10 @@ def action_title_lint(x, p):
         _err(p, "title must not end with a period")
     if "!" in x:
         _err(p, "title must not contain '!'")
-    if "\u2014" in x or "\u2013" in x:
-        _err(p, "title must not contain em/en dashes")
+    if "\u2014" in x:
+        _err(p, "title must not contain em dashes")
+    if "\u2013" in x and re.search(r"(?<!\d)\u2013|\u2013(?!\d)", x):
+        _err(p, "title may use an en dash only between digits (2024\u20132026)")
     if _has_emoji(x):
         _err(p, "title must not contain emoji")
     if len(words) < TITLE_MIN_WORDS:
@@ -288,7 +290,7 @@ NODE_REF = string(pattern=f"{_SHEET}!{_LOCAL}")                             # Sh
 SHEET_REF = string(pattern=f"{_SHEET}!{_LOCAL}(?::{_LOCAL})?")              # Sheet!A1 or Sheet!A1:B9
 NAME = string(pattern=r"[A-Za-z_][A-Za-z0-9_.]*")
 ID = string(pattern=r"[^\s]+")
-STATUS = ("queued", "running", "succeeded", "failed", "cancelled")
+STATUS = ("queued", "running", "awaiting_review", "succeeded", "failed", "cancelled")
 SEVERITIES = ("critical", "high", "medium", "low", "info")
 MODEL_TYPES = ("three_statement", "dcf", "lbo", "merger", "comps")
 PATCH_OPS = ("move", "resize", "set_text", "set_font_size", "set_style", "delete", "reorder")
