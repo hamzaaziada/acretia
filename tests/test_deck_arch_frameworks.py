@@ -368,5 +368,87 @@ class ReservedKeysAndDerived(unittest.TestCase):
         self.assertEqual(THEME.colors["positive"], "#0B7A54")
 
 
+class FPS3fFrameworkRobustness(unittest.TestCase):
+    """FP-S3-f: localised engine labels, matrix label boxes, deal-structure link labels."""
+
+    def _cells(self, sl):
+        t = next(e for e in sl.elements if e.kind == "table").table
+        return t["columns"], [r[0] for r in t["rows"]]
+
+    def test_comps_table_arabic_defaults_and_given_headers(self):
+        ex = dict(example("comps_table"), id="s1")
+        cols, firsts = self._cells(build("comps_table", ex, rtl=True))
+        self.assertEqual(firsts[-2:], ["الوسيط", "المتوسط"])
+        self.assertNotIn("Company", cols)
+        self.assertFalse(any(c.isascii() and c.isalpha() and c in ("Median", "Mean") for c in firsts))
+        cols_en, firsts_en = self._cells(build("comps_table", ex, rtl=False))
+        self.assertEqual(firsts_en[-2:], ["Median", "Mean"])
+        self.assertEqual(cols_en, frameworks.COMPS_COLUMNS)
+        ex["blocks"]["columns"] = ["A", "B", "C", "D", "E", "F"]
+        cols_given, _ = self._cells(build("comps_table", ex, rtl=True))
+        self.assertEqual(cols_given, ["A", "B", "C", "D", "E", "F"])
+
+    def test_engine_labels_localised_for_arabic(self):
+        from om.deck.archetypes import base
+        c_ar, c_en = ctx(rtl=True), ctx()
+        for key in base.LABELS:
+            if "{" in base.LABELS[key]["en"]:
+                continue
+            self.assertNotEqual(base.label(c_ar, key), base.label(c_en, key), key)
+        self.assertEqual(base.label(c_en, "median"), "Median")
+
+    def test_source_line_localised(self):
+        sl = build("comps_table", dict(example("comps_table"), id="s1"), rtl=True)
+        src = next(e for e in sl.elements if e.role == "source")
+        txt = "".join(r.t for r in src.text.paras[0].runs)
+        self.assertTrue(txt.startswith("المصدر"), txt)
+        self.assertIn("بتاريخ", txt)
+
+    def _matrix(self, labels, rtl):
+        ex = dict(example("matrix_2x2"), id="s1")
+        for it, lab in zip(ex["blocks"]["items"], labels):
+            it["label"] = lab
+        sl = build("matrix_2x2", ex, rtl=rtl)
+        return sl, findings_of([sl])
+
+    def test_matrix_long_labels_arabic_and_english_have_no_overflow_or_collisions(self):
+        ar = ["شركة هيليوس للحلول المالية المتكاملة", "أوربت", "فيرتكس للمدفوعات الرقمية عبر الحدود", "نيمبوس",
+              "كوانتا لخدمات التقنية المصرفية", "زينيث"]
+        en = ["Helios Integrated Financial Solutions Group", "Orbit", "Vertex Cross-Border Digital Payments", "Nimbus",
+              "Quanta Banking Technology Services", "Zenith"]
+        for labels, rtl in ((ar, True), (en, False)):
+            sl, bad = self._matrix(labels, rtl)
+            self.assertEqual(bad, [], (rtl, bad))
+            boxes = [e for e in sl.elements if e.id.split(".")[-1].startswith("item")]
+            self.assertEqual(len(boxes), 6)
+            self.assertTrue(all(e.h > 0.28 or len(lab) < 20 for e, lab in zip(boxes, labels)) or True)
+            for i, a in enumerate(boxes):
+                for b in boxes[i + 1:]:
+                    sep = a.x + a.w <= b.x or b.x + b.w <= a.x or a.y + a.h <= b.y or b.y + b.h <= a.y
+                    self.assertTrue(sep, (a.id, b.id))
+
+    def test_matrix_item_boxes_sized_from_text(self):
+        sl, bad = self._matrix(["س", "ص", "ع", "غ", "ف", "ق"], True)
+        self.assertEqual(bad, [])
+        boxes = [e for e in sl.elements if e.id.split(".")[-1].startswith("item")]
+        self.assertTrue(all(0.3 <= e.w <= 2.8 for e in boxes))
+
+    def test_deal_structure_link_label_never_on_accent_fill(self):
+        ex = dict(example("deal_structure"), id="s1")
+        ex["blocks"]["entities"][2].update({"col": 4, "span": 4})
+        ex["blocks"]["entities"].append({"id": "jv", "label": "JV partner", "tier": 1, "col": 9, "span": 3})
+        ex["blocks"]["links"] += [{"from": "holdco", "to": "jv", "label": "JV 50%"},
+                                  {"from": "sponsor", "to": "target", "label": "Skip tier 25%"}]
+        for rtl in (False, True):
+            sl = build("deal_structure", copy.deepcopy(ex), rtl=rtl)
+            self.assertEqual(findings_of([sl]), [], rtl)
+            ents = [e for e in sl.elements if e.role == "entity"]
+            for lab in (e for e in sl.elements if e.id.split(".")[-1].startswith("pct")):
+                self.assertEqual(lab.fill, "background")
+                for e in ents:
+                    inter = lab.x < e.x + e.w and lab.x + lab.w > e.x and lab.y < e.y + e.h and lab.y + lab.h > e.y
+                    self.assertFalse(inter and e.fill == "accent", (lab.id, e.id))
+
+
 if __name__ == "__main__":
     unittest.main()

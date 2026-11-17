@@ -349,5 +349,22 @@ class Learning(unittest.TestCase):
         self.assertTrue(all("icon_system" in library.STYLES[s].kinds for s in only))
 
 
+class FPS3fBoldTypographic(unittest.TestCase):
+    def test_no_numeral_machinery_and_three_distinct_compositions(self):
+        from om.deck.visuals import procedural
+        src = Path(procedural.__file__).read_text()
+        self.assertNotIn("_SEG", src)
+        sigs = set()
+        for variant in range(3):
+            c = procedural.build("bold_typographic", seed=variant)
+            self.assertNotIn("<text", c.svg())
+            sigs.add(tuple(sorted({kind for kind, *_ in c.items})) + (len(c.items),))
+        self.assertGreaterEqual(len(sigs), 3)
+
+    def test_procedural_does_not_import_numpy(self):
+        from om.deck.visuals import procedural
+        self.assertNotIn("numpy", Path(procedural.__file__).read_text().replace("no numpy", ""))
+
+
 if __name__ == "__main__":
     unittest.main()

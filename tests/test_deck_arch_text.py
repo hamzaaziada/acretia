@@ -339,5 +339,41 @@ class ReservedKeysAndDerived(unittest.TestCase):
             self.assertEqual(bad, [], (layout, bad))
 
 
+class FPS3fTextRobustness(unittest.TestCase):
+    def _gantt(self):
+        ex = dict(copy.deepcopy(text_mod.EXAMPLES["gantt"]), id="s1")
+        b = ex["blocks"]
+        m = len(b["months"])
+        b["today"] = m - 0.5
+        b["workstreams"][0]["bars"] = [{"start": m - 3, "end": m - 1, "label": "Final cutover and hypercare",
+                                        "highlight": True}]
+        b["workstreams"][1]["milestones"] = [{"month": m - 1, "label": "Go-live sign-off and handover to operations"}]
+        b["workstreams"][2]["milestones"] = [{"month": m - 1, "label": "End"}]
+        return ex
+
+    def test_gantt_last_month_bars_and_labels_stay_inside(self):
+        for rtl in (False, True):
+            sl = archetypes.get("gantt").build(self._gantt(), ctx(1, rtl))
+            bad = [f for f in validate(render([sl], THEME, title="g"), theme=THEME).findings
+                   if f["severity"] in ("critical", "major")]
+            self.assertEqual(bad, [], (rtl, bad))
+            for e in sl.elements:
+                self.assertGreaterEqual(e.x, -1e-6, e.id)
+                self.assertLessEqual(e.x + e.w, CANVAS_W + 1e-6, e.id)
+
+    def test_kpi_row_arabic_keeps_four_type_sizes(self):
+        ex = {"as_of": "2026-09-30", "sources": ["بيانات الشركة"], "id": "s1", "title": AR_TITLE, "blocks": {
+            "subtitle": "المؤشرات الرئيسية، بالمليون دولار",
+            "kpis": [{"label": "إجمالي الإيرادات السنوية", "value": "412", "context": "نمو مدفوع بالتسعير",
+                      "change": {"text": "+8%", "direction": "up"}},
+                     {"label": "هامش الربح التشغيلي", "value": "27%", "context": "تحسن بفضل خفض التكاليف"},
+                     {"label": "صافي الدين إلى الأرباح", "value": "2.1x", "context": "ضمن حدود التعهدات"}],
+            "so_what": "الأداء يدعم الاستحواذ [1]"}}
+        sl = archetypes.get("kpi_row").build(ex, ctx(1, True))
+        rep = validate(render([sl], THEME, title="k"), theme=THEME)
+        self.assertEqual([f for f in rep.findings if f["rule"] == "type_sizes"], [])
+        self.assertEqual([f for f in rep.findings if f["severity"] == "critical"], [])
+
+
 if __name__ == "__main__":
     unittest.main()

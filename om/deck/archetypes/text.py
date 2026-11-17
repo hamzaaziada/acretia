@@ -13,6 +13,7 @@ from om.deck.archetypes import BuildContext, register
 from om.deck.archetypes import base
 from om.deck.archetypes.core import (FitFailure, area, art, cols, hline, need, para, rect, row_cols, short_footer,
                                      tx, vline)
+from om.deck.metrics import measure, text_width
 from om.deck.model import Element, Para, Run
 from om.deck.theme import CANVAS_H, CANVAS_W, MARGIN_X, SIZES, grid_w, grid_x
 
@@ -83,7 +84,7 @@ def build_exec_summary(slide: dict, ctx: BuildContext):
                           TITLE, font="major", valign="m"))
     if so:
         px, pw = cols(9, 11)
-        paras = [Para([Run(so.get("heading", "So what"), True, "accent")], space_after=6),
+        paras = [Para([Run(so.get("heading", base.label(ctx, "so_what")), True, "accent")], space_after=6),
                  Para(base.figure_runs(so["text"]), space_after=0)]
         els.append(tx(ctx, meta, "callout", "so_what", px, y, pw, h, paras, BODY, inset=0.2, fill="panel"))
     return base.solved(slide, ctx, "exec_summary", "text", els, meta)
@@ -143,22 +144,44 @@ def build_kpi_row(slide: dict, ctx: BuildContext):
     n = len(kp)
     ch = min(3.4, h - ctx.gap - 0.7) if b.get("so_what") else min(3.4, h)
     ins = 0.2 if n < 5 else 0.12
-    for i, (k, (cx, cw)) in enumerate(zip(kp, row_cols(n))):
-        els.append(rect(ctx, "panel", i + 1, cx, y, cw, ch, "panel"))
-        els.append(tx(ctx, meta, "label", i + 1, cx, y, cw, 0.7, [_t(k["label"], b=True)], BODY, valign="m", inset=ins))
-        els.append(tx(ctx, meta, "kpi", i + 1, cx, round(y + 0.7, 2), cw, 1.2,
-                      [Para([Run(k["value"], True, "accent" if hi == i else None)], space_after=0)], STAT, floor=STAT,
-                      font="major", valign="m", inset=ins))
-        chg = k.get("change")
-        if chg:
-            fill, col = _CHANGE[chg.get("direction", "flat")]
-            bw = round(min(1.7, cw - 2 * ins), 2)
-            els.append(tx(ctx, meta, "decor", f"badge{i + 1}", round(cx + ins, 2), round(y + 1.95, 2), bw, 0.38,
-                          [Para([Run(chg["text"], True, col)], align="c", space_after=0)], BODY, floor=BODY,
-                          valign="m", inset=0.04, fill=fill))
-        if k.get("context"):
-            els.append(tx(ctx, meta, "body", i + 1, cx, round(y + 2.4, 2), cw, round(ch - 2.4, 2),
-                          [_t(k["context"])], BODY, inset=ins))
+    def cards(lh: float, strict: bool) -> tuple[list[Element], dict]:
+        """All cards with a label band of height lh. strict: label and context keep the full body size (no shrink)."""
+        out: list[Element] = []
+        m: dict = {}
+        fl = BODY if strict else None
+        for i, (k, (cx, cw)) in enumerate(zip(kp, row_cols(n))):
+            out.append(rect(ctx, "panel", i + 1, cx, y, cw, ch, "panel"))
+            out.append(tx(ctx, m, "label", i + 1, cx, y, cw, lh, [_t(k["label"], b=True)], BODY, floor=fl, valign="m",
+                          inset=ins))
+            out.append(tx(ctx, m, "kpi", i + 1, cx, round(y + lh, 2), cw, 1.1,
+                          [Para([Run(k["value"], True, "accent" if hi == i else None)], space_after=0)], STAT,
+                          floor=STAT, font="major", valign="m", inset=ins))
+            chg = k.get("change")
+            if chg:
+                fill, col = _CHANGE[chg.get("direction", "flat")]
+                bw = round(min(1.7, cw - 2 * ins), 2)
+                out.append(tx(ctx, m, "decor", f"badge{i + 1}", round(cx + ins, 2), round(y + 1.15 + lh, 2), bw, 0.38,
+                              [Para([Run(chg["text"], True, col)], align="c", space_after=0)], BODY, floor=BODY,
+                              valign="m", inset=0.04, fill=fill))
+            if k.get("context"):
+                top = (1.6 if chg else 1.15) + lh
+                out.append(tx(ctx, m, "body", i + 1, cx, round(y + top, 2), cw, round(ch - top, 2),
+                              [_t(k["context"])], BODY, floor=fl, inset=ins))
+        return out, m
+
+    # Label band: the shortest one (0.7, 1.0, 1.3 in) at which every label and context keeps the full body size. A
+    # per-card shrink would add a 5th type size; only when nothing fits does it fall back to shrinking (old behaviour).
+    for lh in (0.7, 1.0, 1.3):
+        try:
+            card_els, cm = cards(lh, True)
+            break
+        except FitFailure:
+            continue
+    else:
+        card_els, cm = cards(0.7, False)
+    els += card_els
+    if "fit" in cm:
+        meta["fit"] = cm["fit"]
     if b.get("so_what"):
         sy = round(y + ch + ctx.gap, 2)
         els.append(tx(ctx, meta, "callout", "so_what", grid_x(0), sy, grid_x(12) - grid_x(0), round(y + h - sy, 2),
@@ -185,7 +208,7 @@ def build_stat_hero(slide: dict, ctx: BuildContext):
                           [Para(base.figure_runs(so), space_after=0)], BODY, valign="m", inset=0.2, fill="key_message"))
     elif so:
         els.append(tx(ctx, meta, "callout", "so_what", grid_x(7), y, grid_w(5), h,
-                      [Para([Run("So what", True, "accent")], space_after=6), Para(base.figure_runs(so))],
+                      [Para([Run(base.label(ctx, "so_what"), True, "accent")], space_after=6), Para(base.figure_runs(so))],
                       BODY, inset=0.25, fill="panel"))
     top, avail = y, h
     spans = [(grid_x(0), grid_w(7))] * n if side else row_cols(n)
@@ -240,7 +263,7 @@ def build_recommendation(slide: dict, ctx: BuildContext):
                       inset=0.2, fill="panel"))
         oy = round(y + hh + bh, 2)
         els.append(tx(ctx, meta, "callout", f"owner{i + 1}", cx, oy, cw, oh,
-                      [_lead(b.get("owner_label", "Owner"), p["owner"]), _lead(b.get("date_label", "Date"), p["date"])],
+                      [_lead(b.get("owner_label", base.label(ctx, "owner")), p["owner"]), _lead(b.get("date_label", base.label(ctx, "date")), p["date"])],
                       BODY, valign="m", inset=0.2, fill="panel"))
         els.append(hline(ctx, "rule", i + 1, cx, oy, cw))
     return base.solved(slide, ctx, "recommendation", "columns", els, meta)
@@ -259,10 +282,10 @@ def build_takeaway_box(slide: dict, ctx: BuildContext):
                   inset=0.25, fill="accent"))
     by = round(y + dh + ctx.gap, 2)
     bh = round(y + h - by, 2)
-    for i, (key, head, dflt) in enumerate((("rationale", "rationale_heading", "Rationale"),
-                                           ("risks", "risks_heading", "Risks and mitigations"))):
+    for i, (key, head, dflt) in enumerate((("rationale", "rationale_heading", "rationale"),
+                                           ("risks", "risks_heading", "risks"))):
         cx, cw = cols(6 * i, 6 * i + 5)
-        paras = [Para([Run(b.get(head, dflt), True)], space_after=6)] + _bullets(b[key])
+        paras = [Para([Run(b.get(head, base.label(ctx, dflt)), True)], space_after=6)] + _bullets(b[key])
         els.append(tx(ctx, meta, "body", key, cx, by, cw, bh, paras, BODY, inset=0.2, fill="panel"))
     return base.solved(slide, ctx, "takeaway_box", "text", els, meta)
 
@@ -293,7 +316,7 @@ def build_two_column_compare(slide: dict, ctx: BuildContext):
             py, ph = round(by + 0.8, 2), round(bh - 0.8, 2)
         els.append(tx(ctx, meta, "body", key, cx, py, cw, ph, _bullets(side["points"]), BODY, inset=0.2))
     els.append(tx(ctx, meta, "callout", "verdict", grid_x(0), round(y + h - vh, 2), grid_x(12) - grid_x(0), vh,
-                  [_lead(b.get("verdict_label", "Verdict"), b["verdict"])], BODY, valign="m", inset=0.2,
+                  [_lead(b.get("verdict_label", base.label(ctx, "verdict")), b["verdict"])], BODY, valign="m", inset=0.2,
                   fill="key_message"))
     return base.solved(slide, ctx, "two_column_compare", "compare", els, meta)
 
@@ -354,7 +377,7 @@ def build_process_flow(slide: dict, ctx: BuildContext):
         els.append(tx(ctx, meta, "label", i + 1, cx, hy, cw, 0.9, [Para([Run(s["name"], True, "background")],
                       space_after=0)], BODY, valign="m", inset=0.12, fill="accent" if hi == i else "secondary"))
         els.append(tx(ctx, meta, "body", i + 1, cx, oy, cw, round(min(2.4, y + h - oy), 2),
-                      [_lead(b.get("output_label", "Output"), s["output"])], BODY, inset=0.12, fill="panel"))
+                      [_lead(b.get("output_label", base.label(ctx, "output")), s["output"])], BODY, inset=0.12, fill="panel"))
         if i:
             px, pw = spans[i - 1]
             els.append(hline(ctx, "connector", i, round(px + pw, 2), round(hy + 0.45, 2), round(cx - px - pw, 2),
@@ -400,7 +423,8 @@ def build_gantt(slide: dict, ctx: BuildContext):
         for k, bar in enumerate(w["bars"]):
             if not (0 <= bar["start"] <= bar["end"] < m):
                 raise ValueError(f"gantt: bar {bar} is outside the {m} months")
-            bx, bw = round(x0 + bar["start"] * mw, 2), round((bar["end"] + 1 - bar["start"]) * mw, 2)
+            bx = round(x0 + bar["start"] * mw, 2)
+            bw = round(min((bar["end"] + 1 - bar["start"]) * mw, xr - bx), 2)      # clamp to the chart area
             lab = bar.get("label") if bar.get("label") and bw >= 1.2 else None
             hl = bar.get("highlight")
             els.append(tx(ctx, meta, "decor", f"bar{i + 1}_{k + 1}", bx, round(ry + rh * 0.12, 2), bw, bar_h,
@@ -409,18 +433,25 @@ def build_gantt(slide: dict, ctx: BuildContext):
                        if lab else rect(ctx, "decor", f"bar{i + 1}_{k + 1}", bx, round(ry + rh * 0.12, 2), bw, bar_h,
                                         "accent" if hl else "mute_bar"))
         for k, mi in enumerate(w.get("milestones", [])):
-            mx = round(x0 + mi["month"] * mw - ms / 2, 2)
+            mx = round(min(max(x0 + mi["month"] * mw - ms / 2, x0), xr - ms), 2)
             my = round(ry + rh * 0.58, 2)
             els.append(rect(ctx, "decor", f"ms{i + 1}_{k + 1}", mx, my, ms, ms, "secondary"))
-            left = mx + ms + 0.06 + 1.5 > xr
-            lx = round(mx - 0.06 - 1.5, 2) if left else round(mx + ms + 0.06, 2)
-            els.append(tx(ctx, meta, "decor", f"mt{i + 1}_{k + 1}", lx, round(my - 0.03, 2), 1.5, 0.24,
+            # End label: sized from the text; to the right of the marker, or to its left near the right edge.
+            room_r, room_l = round(xr - (mx + ms + 0.06), 2), round(mx - 0.06 - x0, 2)
+            want = round(text_width(mi["label"], LABEL) / 0.95 + 0.12, 2)
+            left = want > room_r and room_l > room_r
+            lw = round(max(min(want, room_l if left else room_r, 3.2), 0.6), 2)
+            lines = measure(mi["label"], LABEL, lw - 0.02).lines
+            lh_ = round(0.24 if lines == 1 else 0.12 + 0.2 * lines, 2)
+            lx = round(mx - 0.06 - lw, 2) if left else round(mx + ms + 0.06, 2)
+            els.append(tx(ctx, meta, "decor", f"mt{i + 1}_{k + 1}", lx, round(my - 0.03 - (lh_ - 0.24) / 2, 2), lw, lh_,
                           [Para([Run(mi["label"])], align="r" if left else "l", space_after=0)], LABEL, valign="m"))
     if b.get("today") is not None:
-        tdx = round(x0 + b["today"] * mw, 2)
+        tdx = round(min(max(x0 + b["today"] * mw, x0), xr), 2)
         els.append(vline(ctx, "decor", "today", tdx, round(y + 0.3, 2), round(y + h - y - 0.3, 2), "accent", 1.5))
-        els.append(tx(ctx, meta, "decor", "today_label", round(tdx - 0.5, 2), round(y + 0.3, 2), 1.0, 0.3,
-                      [Para([Run(b.get("today_label", "Today"), True, "accent")], align="c", space_after=0)], LABEL,
+        tlx = round(min(max(tdx - 0.5, MARGIN_X), CANVAS_W - MARGIN_X - 1.0), 2)     # keep the label on the slide
+        els.append(tx(ctx, meta, "decor", "today_label", tlx, round(y + 0.3, 2), 1.0, 0.3,
+                      [Para([Run(b.get("today_label", base.label(ctx, "today")), True, "accent")], align="c", space_after=0)], LABEL,
                       valign="m"))
     return base.solved(slide, ctx, "gantt", "timeline", els, meta)
 
@@ -506,7 +537,7 @@ def build_appendix_divider(slide: dict, ctx: BuildContext):
     els: list[Element] = [pic] if pic else []
     els.append(rect(ctx, "decor", "bar", grid_x(0), 1.9, 0.9, 0.08, "accent"))
     els.append(tx(ctx, meta, "divider", None, grid_x(0), 2.2, w, 1.5,
-                  [Para([Run(slide.get("title", "Appendix"), True)], space_after=0)], SIZES["divider"], font="major"))
+                  [Para([Run(slide.get("title", base.label(ctx, "appendix")), True)], space_after=0)], SIZES["divider"], font="major"))
     if b.get("contents"):
         els.append(tx(ctx, meta, "divider", "contents", grid_x(0), 3.9, w, 2.6,
                       [Para([Run(c, False, "muted")], space_after=4) for c in b["contents"]], BODY))

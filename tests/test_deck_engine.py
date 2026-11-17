@@ -570,5 +570,47 @@ class TakeawayProvenanceAndSolve(NoNetwork):
         self.assertNotIn("mock", src)
 
 
+class FPS3fProvenanceAndSizes(unittest.TestCase):
+    def test_year_with_trailing_punctuation_is_a_year(self):
+        for t in ("by 2030, we expect", "in 2027.", "(2026)", "until 2031; then", "FY ends 1999:"):
+            self.assertEqual(provenance.tokens(t), [], t)
+        self.assertTrue(provenance.tokens("2030m"))
+        self.assertTrue(provenance.tokens("$2030"))
+        self.assertTrue(provenance.tokens("1,234, up"))
+
+    def test_every_example_keeps_four_type_sizes_in_ltr_and_arabic(self):
+        import re
+        import zlib
+        from om.deck import spec as specmod
+        words = ["الإيرادات", "السوق", "النمو", "الأرباح", "التمويل", "المخاطر", "القيمة", "العملاء", "الشركة"]
+        skip = {"direction", "mode", "id", "type", "from", "to", "kind", "format", "key", "style", "color", "align",
+                "value_format", "axis_format", "bindings_format", "archetype", "tone", "status", "shape", "icon",
+                "unit", "bindings", "pattern", "position", "side", "fill", "token"}
+        rx = re.compile(r"(?<![\w$.\-])[A-Za-z]{2,}(?![\w%.\-])")
+
+        def conv(n, k=None):
+            if isinstance(n, str):
+                return n if k in skip else rx.sub(lambda m: words[zlib.crc32(m.group(0).encode()) % len(words)], n)
+            if isinstance(n, list):
+                return [conv(x, k) for x in n]
+            if isinstance(n, dict):
+                return {a: conv(v, a) for a, v in n.items()}
+            return n
+
+        with tempfile.TemporaryDirectory() as tmp:
+            for aid, ex in sorted(archetypes.examples().items()):
+                for lang in ("en", "ar"):
+                    body = copy.deepcopy(ex) if lang == "en" else conv(copy.deepcopy(ex))
+                    sl = {"id": "e1", "archetype": aid, "blocks": {}, "title": "Example", **body}
+                    slides = [sl] if aid == "cover" else [
+                        {"id": "c0", "archetype": "cover", "title": "Examples", "blocks": {"client": "Acme",
+                         "date": "2026-09-30"}, "as_of": "2026-09-30"}, sl]
+                    d = {"deck_id": "ex", "title": "Examples", "lang": lang, "as_of": "2026-09-30", "slides": slides}
+                    with self.subTest(archetype=aid, lang=lang):
+                        r = engine.build(d, out=os.path.join(tmp, "x.pptx"), seed=1, critic=False)
+                        self.assertEqual([f for f in r.findings if f["severity"] == "critical"], [])
+                        self.assertEqual([f for f in r.findings if f["rule"] == "type_sizes"], [])
+
+
 if __name__ == "__main__":
     unittest.main()

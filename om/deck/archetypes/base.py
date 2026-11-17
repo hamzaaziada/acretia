@@ -25,6 +25,38 @@ _FIGURE = re.compile(
 )
 _LEAD = re.compile(r"^([^:\n]{1,40}:)(\s|$)")
 
+# Engine-generated labels (never spec text): English default and Arabic, looked up by `label(ctx, key)`.
+LABELS: dict[str, dict[str, str]] = {
+    "source": {"en": "Source", "ar": "المصدر"}, "as_of": {"en": "as of", "ar": "بتاريخ"},
+    "so_what": {"en": "So what", "ar": "الخلاصة"}, "today": {"en": "Today", "ar": "اليوم"},
+    "owner": {"en": "Owner", "ar": "المسؤول"}, "date": {"en": "Date", "ar": "التاريخ"},
+    "rationale": {"en": "Rationale", "ar": "المبررات"},
+    "risks": {"en": "Risks and mitigations", "ar": "المخاطر وسبل التخفيف"},
+    "verdict": {"en": "Verdict", "ar": "الحكم"}, "output": {"en": "Output", "ar": "المخرجات"},
+    "criterion": {"en": "Criterion", "ar": "المعيار"}, "appendix": {"en": "Appendix", "ar": "الملحق"},
+    "low": {"en": "Low", "ar": "منخفض"}, "high": {"en": "High", "ar": "مرتفع"},
+    "likelihood": {"en": "Likelihood", "ar": "الاحتمال"}, "impact": {"en": "Impact", "ar": "الأثر"},
+    "median": {"en": "Median", "ar": "الوسيط"}, "mean": {"en": "Mean", "ar": "المتوسط"},
+    "company": {"en": "Company", "ar": "الشركة"}, "ev": {"en": "EV ($bn)", "ar": "القيمة (مليار $)"},
+    "ev_ebitda": {"en": "EV/EBITDA NTM", "ar": "القيمة/EBITDA مستقبلاً"},
+    "pe": {"en": "P/E NTM", "ar": "مكرر الربح مستقبلاً"},
+    "growth": {"en": "Revenue growth", "ar": "نمو الإيرادات"}, "margin": {"en": "EBITDA margin", "ar": "هامش EBITDA"},
+    "capability": {"en": "Capability, full ball = fully met", "ar": "القدرة، الدائرة الكاملة = مستوفاة"},
+    "na": {"en": "n.a.", "ar": "غ/م"}, "kpi": {"en": "KPI", "ar": "المؤشر"}, "change": {"en": "Change", "ar": "التغير"},
+    "value": {"en": "Value", "ar": "القيمة"}, "share": {"en": "Share", "ar": "الحصة"},
+    "current_price": {"en": "Current share price", "ar": "سعر السهم الحالي"},
+    "implied": {"en": "Implied value per share", "ar": "القيمة الضمنية للسهم"},
+    "implied_vs": {"en": "Implied value per share, {up}% vs current {price}",
+                   "ar": "القيمة الضمنية للسهم، {up}% عن {price}"},
+}
+
+
+def label(ctx: "BuildContext", key: str, **fmt) -> str:
+    """Engine-generated label for `ctx.lang` (English default; Arabic when `lang == "ar"`). Spec-given labels win upstream."""
+    row = LABELS[key]
+    text = row["ar"] if getattr(ctx, "lang", "en") == "ar" else row["en"]
+    return text.format(**fmt) if fmt else text
+
 
 def figure_runs(text: str, *, color: str | None = None) -> list[Run]:
     """Bold the lead-in label and key figures; leave the rest regular."""
@@ -107,17 +139,18 @@ def has_subtitle(slide: dict) -> bool:
     return bool(_subtitle_text(slide))
 
 
-def _source_text(slide: dict) -> str:
-    """`Source: A; as of D`, or with a `sources` list `Source: [1] A; [2] B; as of D` (citations, #19)."""
+def _source_text(slide: dict, ctx: "BuildContext | None" = None) -> str:
+    """`Source: A; as of D`, or with a `sources` list `Source: [1] A; [2] B; as of D` (citations, #19). Localised."""
     srcs, as_of = slide.get("sources"), slide.get("as_of")
+    word = label(ctx, "source") if ctx is not None else "Source"
     parts = []
     if isinstance(srcs, (list, tuple)) and srcs:
-        parts.append("Source: " + "; ".join(f"[{i}] {str(t).rstrip('.')}" for i, t in enumerate(srcs, 1)))
+        parts.append(f"{word}: " + "; ".join(f"[{i}] {str(t).rstrip('.')}" for i, t in enumerate(srcs, 1)))
     elif slide.get("source"):
         src = slide["source"]
-        parts.append(src if src.lower().startswith("source") else f"Source: {src}")
+        parts.append(src if src.lower().startswith(("source", word.lower())) else f"{word}: {src}")
     if as_of:
-        parts.append(f"as of {as_of}")
+        parts.append(f"{label(ctx, 'as_of') if ctx is not None else 'as of'} {as_of}")
     return "; ".join(parts)
 
 
@@ -147,7 +180,7 @@ def frame(slide: dict, ctx: "BuildContext", *, mode: str = "content", meta: dict
     if sub:
         els.append(text_el(ctx, "subtitle", None, MARGIN_X, G["subtitle_y"], FULL_W, 0.35,
                            [Para(subtitle_runs(sub), space_after=0)], SIZES["body"]))
-    src = _source_text(slide)
+    src = _source_text(slide, ctx)
     if src:
         paras, size = fitted([Para([Run(src)], space_after=0)], FULL_W, 0.4, size=SIZES["note"], floor=SIZES["note"],
                              role="source", block_id="source", meta=meta)

@@ -318,5 +318,22 @@ class DeckRenderTests(unittest.TestCase):
             self.assertTrue(os.path.getsize(os.path.join(d, "shapes.pdf")) > 1000)
 
 
+class FPS3fFlatTheme(unittest.TestCase):
+    def test_theme_part_has_no_gradient_shadow_or_3d(self):
+        import zipfile
+        from om.deck.render import render
+        from om.deck.theme import Theme
+        data = render([], Theme.house(), title="t")
+        z = zipfile.ZipFile(io.BytesIO(data))
+        themes = [n for n in z.namelist() if n.startswith("ppt/theme/") and n.endswith(".xml")]
+        self.assertTrue(themes)
+        for n in themes:
+            xml = z.read(n).decode("utf-8")
+            for bad in ("gradFill", "outerShdw", "scene3d", "sp3d", "innerShdw"):
+                self.assertNotIn(bad, xml, (n, bad))
+            self.assertIn("fmtScheme", xml)
+            self.assertIn("effectStyleLst", xml)
+
+
 if __name__ == "__main__":
     unittest.main()

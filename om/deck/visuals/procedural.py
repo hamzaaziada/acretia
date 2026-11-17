@@ -605,34 +605,51 @@ def iconographic_system(c: Canvas, r: random.Random, p):
 
 
 # --------------------------------------------------------------------------- bold_typographic
-_SEG = {0: "abcdef", 1: "bc", 2: "abdeg", 3: "abcdg", 4: "bcfg", 5: "acdfg", 6: "acdefg", 7: "abc", 8: "abcdefg", 9: "abcdfg"}
+def _half_disc(c: Canvas, cx, cy, r, col, up=True):
+    """Half disc resting on the line y = cy (flat side down when `up`)."""
+    sgn = -1 if up else 1
+    c.poly([(cx + r * math.cos(math.pi * k / 24), cy + sgn * r * math.sin(math.pi * k / 24)) for k in range(25)], col)
 
 
 def bold_typographic(c: Canvas, r: random.Random, p):
+    """Numeral-free, letter-free bold forms (slabs, discs, steps, wedges) in the poster-type spirit: heavy geometry, one
+    accent, a plinth of equal blocks below. Nothing here can be read as a figure or a word on a finance slide."""
     v = c.variant % 3
-    nd = (2, 3, 2)[v]
-    dh = c.bh * (.66 if v != 2 else .72)
-    dw = min(dh * .56, c.bw * .86 / nd / 1.15)
-    t = c.bh * .1
-    gap = dw * (.2 if v != 2 else .5)
-    tw = dw * nd + gap * (nd - 1)
-    x0 = c.x0 + (c.bw - tw) / 2
-    y0 = c.y0 + c.bh * .04
-    hot = (r.randrange(nd), r.choice("abcdefg"))
-    digits = [r.randrange(10) for _ in range(nd)]
-    for i in range(nd):
-        x = x0 + i * (dw + gap)
-        seg = {"a": (x, y0, dw, t), "d": (x, y0 + dh - t, dw, t), "g": (x, y0 + dh / 2 - t / 2, dw, t),
-               "f": (x, y0, t, dh / 2), "b": (x + dw - t, y0, t, dh / 2), "e": (x, y0 + dh / 2, t, dh / 2), "c": (x + dw - t, y0 + dh / 2, t, dh / 2)}
-        for lit in (False, True):                              # ghosts first so lit segments keep clean corners
-            for k, box in seg.items():
-                if (k in _SEG[digits[i]]) == lit:
-                    c.rect(*box, p["accent"] if (i, k) == hot and lit else p["secondary"] if lit else p["panel"])
-    nb = r.randint(5, 7)                                       # plinth: equal blocks spanning the digits
-    bg_ = tw * .018
-    bwid = (tw - bg_ * (nb - 1)) / nb
+    w, h = c.bw * .8, c.bh * .66
+    x0, y0 = c.x0 + (c.bw - w) / 2, c.y0 + c.bh * .04
+    base_y = y0 + h
+    sec, acc, pan = p["secondary"], p["accent"], p["panel"]
+    if v == 0:                                                 # slabs of unequal height, each capped by a floating diamond
+        n = r.randint(3, 4)
+        gap = w * .04
+        sw = (w - gap * (n - 1)) / n
+        hot = r.randrange(n)
+        for i in range(n):
+            hh = h * (.5 + .5 * ((i * 5 + r.randint(0, 2)) % 4) / 3)
+            x = x0 + i * (sw + gap)
+            c.rect(x, base_y - hh, sw, hh, acc if i == hot else sec if i % 2 == 0 else pan)
+            dx, dy, d = x + sw / 2, base_y - hh - sw * .38, sw * .3
+            c.poly([(dx, dy - d), (dx + d, dy), (dx, dy + d), (dx - d, dy)], acc if i == hot else p["mute_bar"])
+    elif v == 1:                                               # wedges and a half disc locked into one mass
+        mid = x0 + w / 2
+        c.poly([(x0, base_y), (mid, base_y), (mid, y0 + h * .12)], sec)
+        c.poly([(mid, base_y), (x0 + w, base_y), (mid, y0 + h * .5)], pan)
+        _half_disc(c, x0 + w * .78, y0 + h * .5, w * .16, acc)
+        c.rect(x0 + w * .06, y0 + h * .02, w * .1, h * .3, p["mute_bar"])
+    else:                                                      # staircase of blocks with a disc on the top step
+        n = r.randint(4, 5)
+        sw = w / n
+        for i in range(n):
+            hh = h * (.3 + .55 * i / (n - 1))
+            c.rect(x0 + i * sw, base_y - hh, sw * .94, hh, sec)
+            if i == n - 1:
+                c.ellipse(x0 + i * sw + sw * .47, base_y - hh - sw * .45, sw * .42, sw * .42, acc)
+        c.rect(x0, base_y - h * .1, w, h * .1, pan)
+    nb = r.randint(5, 7)                                       # plinth: equal blocks spanning the form
+    bg_ = w * .018
+    bwid = (w - bg_ * (nb - 1)) / nb
     for i in range(nb):
-        c.rect(x0 + i * (bwid + bg_), y0 + dh + c.bh * .06, bwid, c.bh * .05, (p["mute_bar"], p["light"], p["secondary"])[(i + v) % 3])
+        c.rect(x0 + i * (bwid + bg_), base_y + c.bh * .06, bwid, c.bh * .05, (p["mute_bar"], p["light"], sec)[(i + v) % 3])
 
 
 GENERATORS = {f.__name__: f for f in (editorial_illustration, isometric_system, line_art_schematic, data_art, duotone_hero,
@@ -662,12 +679,24 @@ def _fit_once(c: Canvas) -> bool:
 
 
 def _centroid(c: Canvas):
-    import numpy as np
-    im = np.asarray(c.raster(1)).astype(int)
-    bg = np.array([int(c.bg[i:i + 2], 16) for i in (1, 3, 5)])
-    m = np.abs(im - bg).sum(2) > 24
-    ys, xs = np.nonzero(m)
-    return (xs.mean() / c.w, ys.mean() / c.h) if len(xs) else (.5, .5)
+    """Centroid (fractions of w, h) of pixels that differ from the background; Pillow + pure Python, no numpy."""
+    from PIL import Image, ImageChops
+    im = c.raster(1).convert("RGB")
+    bg = tuple(int(c.bg[i:i + 2], 16) for i in (1, 3, 5))
+    r, g, b = ImageChops.difference(im, Image.new("RGB", im.size, bg)).split()
+    total = ImageChops.add(ImageChops.add(r, g), b)            # saturates at 255, far above the 24 threshold
+    mask = total.point(lambda v: 255 if v > 24 else 0)
+    w, h = mask.size
+    data = mask.tobytes()
+    n = sx = sy = 0
+    for y in range(h):
+        row = data[y * w:(y + 1) * w]
+        k = row.count(255)
+        if k:
+            n += k
+            sy += y * k
+            sx += sum(i for i, v in enumerate(row) if v)
+    return (sx / n / c.w, sy / n / c.h) if n else (.5, .5)
 
 
 def _balance(c: Canvas):

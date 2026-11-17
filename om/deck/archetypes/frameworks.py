@@ -14,7 +14,7 @@ import statistics
 
 from om.deck.archetypes import BuildContext, register
 from om.deck.archetypes import base
-from om.deck.metrics import measure, text_width
+from om.deck.metrics import measure, para_height, text_width
 from om.deck.model import Element, Para, Run
 from om.deck.theme import grid_w, grid_x
 
@@ -168,7 +168,7 @@ def _axes(ctx, meta, els, mc0, mspan, my, mh, xname, yname, xlevels, ylevels):
     by = round(my + mh + 0.05, 2)
     els.append(_txt(ctx, meta, "label", "xlow", mx, by, grid_w(1), LABEL_H, [Run(xlevels[0])], bid="x low"))
     els.append(_txt(ctx, meta, "label", "xname", grid_x(mc0 + 1), by, grid_w(mspan - 2), LABEL_H,
-                    [Run(xname + " →", b=True)], align="c", bid="x axis"))
+                    [Run(xname + (" ←" if ctx.rtl else " →"), b=True)], align="c", bid="x axis"))
     els.append(_txt(ctx, meta, "label", "xhigh", grid_x(mc0 + mspan - 1), by, grid_w(1), LABEL_H,
                     [Run(xlevels[1])], align="r", bid="x high"))
 
@@ -188,8 +188,8 @@ def build_comparison_table(slide: dict, ctx: BuildContext):
     if not 0 <= b["highlight"] < n or len(b["verdict"]) != n or any(len(r["values"]) != n for r in b["rows"]):
         raise ValueError("comparison_table: highlight, verdict and every row need one value per option")
     body = _strip(ctx, meta, els, b, box)
-    rows = [[r["criterion"], *r["values"]] for r in b["rows"]] + [[b.get("verdict_label", "Verdict"), *b["verdict"]]]
-    cols = [b.get("criterion_header", "Criterion"), *b["options"]]
+    rows = [[r["criterion"], *r["values"]] for r in b["rows"]] + [[b.get("verdict_label", base.label(ctx, "verdict")), *b["verdict"]]]
+    cols = [b.get("criterion_header", base.label(ctx, "criterion")), *b["options"]]
     g = _table(ctx, meta, els, "table", box[0], box[1], box[2], body, cols, rows, bold_rows=[len(rows) - 1],
                highlight=b["highlight"] + 1, bindings=b.get("bindings"), bindings_format=b.get("bindings_format"))
     hx, hw = g["xs"][b["highlight"] + 1], g["cws"][b["highlight"] + 1]
@@ -199,7 +199,15 @@ def build_comparison_table(slide: dict, ctx: BuildContext):
 
 
 # ---------------------------------------------------------------- comps_table
-COMPS_COLUMNS = ["Company", "EV ($bn)", "EV/EBITDA NTM", "P/E NTM", "Revenue growth", "EBITDA margin"]
+COMPS_COLUMNS = ["Company", "EV ($bn)", "EV/EBITDA NTM", "P/E NTM", "Revenue growth", "EBITDA margin"]   # English defaults
+_COMPS_LABELS = ["company", *["ev", "ev_ebitda", "pe", "growth", "margin"]]
+
+
+def comps_columns(ctx: BuildContext, given: list | None = None) -> list[str]:
+    """Column headers: the spec's `columns` as given, else the engine defaults localised for `ctx.lang`."""
+    if given:
+        return [str(c) for c in given]
+    return [base.label(ctx, k) for k in _COMPS_LABELS]
 _COMPS_KEYS = ["ev", "ev_ebitda", "pe", "growth", "margin"]
 
 
@@ -213,9 +221,10 @@ def comps_stats(rows: list[dict]) -> dict:
     return out
 
 
-def _comps_row(label: str, r: dict) -> list[str]:
-    return [label, _fmt_money(r.get("ev")), _fmt_x(r.get("ev_ebitda")), _fmt_x(r.get("pe")),
-            _fmt_pct(r.get("growth")), _fmt_pct(r.get("margin"))]
+def _comps_row(label: str, r: dict, na: str = "n.a.") -> list[str]:
+    row = [label, _fmt_money(r.get("ev")), _fmt_x(r.get("ev_ebitda")), _fmt_x(r.get("pe")),
+           _fmt_pct(r.get("growth")), _fmt_pct(r.get("margin"))]
+    return [na if c == "n.a." else c for c in row]
 
 
 _NUM_OPT = {"type": ["number", "null"]}
@@ -227,6 +236,7 @@ _COMP_STATS = {"type": "object", "additionalProperties": False,
     "rows": {"type": "array", "minItems": 3, "maxItems": 12, "items": {
         "type": "object", "additionalProperties": False, "required": ["company"],
         "properties": {"company": {"type": "string"}, **{k: _NUM_OPT for k in _COMPS_KEYS}}}},
+    "columns": {"type": "array", "items": {"type": "string"}, "minItems": 6, "maxItems": 6},
     "compute_stats": {"type": "boolean"}, "median": _COMP_STATS, "mean": _COMP_STATS, "dense": {"type": "boolean"},
 }, ["subtitle", "rows", "takeaway"]))
 def build_comps_table(slide: dict, ctx: BuildContext):
@@ -240,10 +250,11 @@ def build_comps_table(slide: dict, ctx: BuildContext):
             v = (stats[kind] or {}).get(k)
             if v is not None:
                 base.declare(meta, v, *[f"blocks.rows[{i}].{k}" for i in range(len(b["rows"]))])
-    rows = [_comps_row(r["company"], r) for r in b["rows"]]
-    rows += [_comps_row("Median", stats["median"]), _comps_row("Mean", stats["mean"])]
+    na = base.label(ctx, "na")
+    rows = [_comps_row(r["company"], r, na) for r in b["rows"]]
+    rows += [_comps_row(base.label(ctx, "median"), stats["median"], na), _comps_row(base.label(ctx, "mean"), stats["mean"], na)]
     sizes = (14, 12, 10) if (b.get("dense") or ctx.dense) else (14, 12)
-    _table(ctx, meta, els, "table", box[0], box[1], box[2], body, COMPS_COLUMNS, rows,
+    _table(ctx, meta, els, "table", box[0], box[1], box[2], body, comps_columns(ctx, b.get("columns")), rows,
            aligns=["l"] + ["r"] * 5, bold_rows=[len(rows) - 2, len(rows) - 1], highlight=2, sizes=sizes,
            max_row=0.42, bindings=b.get("bindings"), bindings_format=b.get("bindings_format"))
     return _finish(slide, ctx, "comps_table", "table", els, meta)
@@ -272,7 +283,7 @@ def build_sensitivity_table(slide: dict, ctx: BuildContext):
     g = _table(ctx, meta, els, "table", box[0], top, box[2], body - LABEL_H, cols, rows,
                aligns=["l"] + ["r"] * len(cv), sizes=(14, 12), max_row=0.5, bindings=b.get("bindings"), bindings_format=b.get("bindings_format"))
     x0, x1 = g["xs"][1], g["xs"][-1]
-    els.append(_txt(ctx, meta, "decor", "collabel", x0, box[1], x1 - x0, LABEL_H, [Run(b["col_label"] + " →", b=True)],
+    els.append(_txt(ctx, meta, "decor", "collabel", x0, box[1], x1 - x0, LABEL_H, [Run(b["col_label"] + (" ←" if ctx.rtl else " →"), b=True)],
                     align="c", bid="column axis"))
     rh = g["row_h"]
     els.append(_decor(ctx, "base", g["xs"][bj + 1], top + (bi + 1) * rh, g["cws"][bj + 1], rh, line=("accent", 2.25)))
@@ -298,36 +309,74 @@ def build_matrix_2x2(slide: dict, ctx: BuildContext):
     mx, mw = grid_x(1), grid_w(8)
     qw, qh = grid_w(4), round((mh - 0.2) / 2, 2)
     xa, ya = b["x_axis"], b["y_axis"]
-    _axes(ctx, meta, els, 1, 8, my, mh, xa["label"], ya["label"], (xa.get("low", "Low"), xa.get("high", "High")),
-          (ya.get("low", "Low"), ya.get("high", "High")))
+    _axes(ctx, meta, els, 1, 8, my, mh, xa["label"], ya["label"], (xa.get("low", base.label(ctx, "low")), xa.get("high", base.label(ctx, "high"))),
+          (ya.get("low", base.label(ctx, "low")), ya.get("high", base.label(ctx, "high"))))
     # quadrant order: top-left, top-right, bottom-left, bottom-right
     pos = [(grid_x(1), my), (grid_x(5), my), (grid_x(1), my + qh + 0.2), (grid_x(5), my + qh + 0.2)]
     for i, (qx, qy) in enumerate(pos):
         els.append(_txt(ctx, meta, "quadrant", i + 1, qx, qy, qw, qh, [Run(b["quadrants"][i], b=True)], valign="t",
                         fill="panel" if i == b["target"] else None, line=("mute_bar", 0.75), inset=0.1,
                         bid=f"quadrant {i + 1}"))
+    # Item labels: boxes sized from measured text (dot included), wrapped at a sane max width, then placed so they stay
+    # inside the matrix and clear of quadrant names and of each other (LTR geometry; the whole slide is mirrored later).
+    left, right_edge = mx, mx + 2 * qw + 0.2
+    top, bottom = my, my + 2 * qh + 0.2
+    max_w = round(min(2.7, qw - 0.15), 2)
     placed: list[tuple[float, float, float, float]] = []
+    for i, qname in enumerate(b["quadrants"]):       # quadrant names are obstacles too
+        qx, qy = pos[i]
+        placed.append((qx, qy, min(text_width(qname, 12, bold=True) + 0.3, qw), 0.42))
+
+    def _hit(bx_, by_, bw_, bh_, pad=0.04):
+        return any(bx_ < ox + ow + pad and bx_ + bw_ > ox - pad and by_ < oy + oh + pad and by_ + bh_ > oy - pad
+                   for ox, oy, ow, oh in placed)
+
     for i, it in enumerate(b["items"]):
-        label = it["label"]
-        bw = round(text_width(label, 12, bold=bool(it.get("highlight"))) + 0.45, 2)
-        px = mx + it["xv"] * (qw * 2 + 0.2)
-        py = my + (1 - it["yv"]) * (qh * 2 + 0.2)
-        qy = my if it["yv"] >= 0.5 else my + qh + 0.2
-        py = min(max(py, qy + 0.42), qy + qh - 0.2)
-        right = px + bw > mx + 2 * qw + 0.2 - 0.05
-        bx = px - bw + 0.3 if right else px - 0.15
-        by = py - 0.14
-        for _ in range(6):
-            if any(bx < ox + ow and bx + bw > ox and by < oy + oh and by + 0.28 > oy for ox, oy, ow, oh in placed):
-                by += 0.3
-        by = min(by, qy + qh - 0.3)
-        placed.append((bx, by, bw, 0.28))
-        hi = bool(it.get("highlight"))
+        label, hi = it["label"], bool(it.get("highlight"))
         dot = Run("●", color="accent" if hi else "secondary")
         lab = Run(label, b=hi)
+        px = mx + it["xv"] * (qw * 2 + 0.2)
+        right = px + min(text_width(label, 12, bold=hi) + 0.5, max_w) - 0.15 > right_edge - 0.05
         runs = [lab, Run(" "), dot] if right else [dot, Run(" "), lab]
-        els.append(_txt(ctx, meta, "decor", f"item{i + 1}", bx, by, bw, 0.28, runs, align="r" if right else "l",
-                        bid=f"item {i + 1}"))
+        para_ = Para(runs, align="r" if right else "l", space_after=0)
+        flat = "".join(r.t for r in runs)
+        h1 = para_height([para_], 1000.0, 12)         # fit_text's metric ...
+
+        def _lines(w_):                              # ... and the validator's (whole-string, shaped) metric
+            return max(measure(flat, 12, w_ - 0.04, bold=bb, rtl=ctx.rtl).lines for bb in (False, hi))
+
+        bw = round(min(text_width(flat, 12, bold=hi) / 0.95 + 0.1, max_w), 2)
+        while (para_height([para_], bw, 12) > h1 + 1e-6 or _lines(bw) > 1) and bw < max_w:
+            bw = round(min(bw + 0.08, max_w), 2)
+        bh = round(max(para_height([para_], bw, 12), _lines(bw) * 0.2) + 0.1, 2)
+        py = my + (1 - it["yv"]) * (qh * 2 + 0.2)
+        py = min(max(py, top + 0.42), bottom - 0.2)
+        bx = px - bw + 0.3 if right else px - 0.15
+        bx = min(max(bx, left), right_edge - bw)
+        by0 = min(max(py - bh / 2, top + 0.42), bottom - bh)
+        alt = min(max(px - bw + 0.3 if not right else px - 0.15, left), right_edge - bw)    # the other side of the dot
+        best = (bx, by0, 1e9)
+        found = False
+        for k in range(0, 20):                        # 0, +0.3, -0.3, +0.6, ... first free slot, either side
+            dy = 0.0 if k == 0 else (0.3 if k % 2 else -0.3) * ((k + 1) // 2)
+            by = min(max(by0 + dy, top + 0.42), bottom - bh)
+            for cx_ in (bx, alt):
+                if not _hit(cx_, by, bw, bh):
+                    best, found = (cx_, by, 0), True
+                    break
+            if found:
+                break
+            if best[2] >= 1e9:
+                best = (bx, by, abs(dy))
+        flipped = best[0] != bx and best[2] == 0
+        bx = best[0]
+        if flipped:                                   # dot stays at the data point: rebuild the runs for the other side
+            right = not right
+            runs = [lab, Run(" "), dot] if right else [dot, Run(" "), lab]
+        by = best[1]
+        placed.append((bx, by, bw, bh))
+        els.append(_txt(ctx, meta, "decor", f"item{i + 1}", bx, by, bw, bh, runs, align="r" if right else "l",
+                        valign="m", bid=f"item {i + 1}"))
     tx = grid_x(9)
     els.append(_txt(ctx, meta, "callout", None, tx, my, grid_w(3), round(mh, 2), base.figure_runs(b["takeaway"]),
                     size=14, floor=12, fill="panel", inset=0.2, valign="m", bid="takeaway"))
@@ -403,11 +452,11 @@ def build_tombstones(slide: dict, ctx: BuildContext):
 
 
 # ---------------------------------------------------------------- harvey_table
-def harvey_chart(v: float, hi: bool = False) -> dict:
+def harvey_chart(v: float, hi: bool = False, ctx: BuildContext | None = None) -> dict:
     """Native pie spec for a harvey ball filled to fraction v (0, 0.25, 0.5, 0.75, 1)."""
     v = float(v)
-    return {"type": "pie", "categories": ["Met", "Gap"], "labels": False, "legend": False,
-            "series": [{"name": "Coverage", "values": [v, round(1 - v, 4)],
+    return {"type": "pie", "categories": ["مستوفاة", "فجوة"] if ctx is not None and ctx.lang == "ar" else ["Met", "Gap"], "labels": False, "legend": False,
+            "series": [{"name": "التغطية" if ctx is not None and ctx.lang == "ar" else "Coverage", "values": [v, round(1 - v, 4)],
                         "point_colors": {"0": "accent" if hi else "text", "1": "mute_bar"}}]}
 
 
@@ -425,7 +474,7 @@ def build_harvey_table(slide: dict, ctx: BuildContext):
         raise ValueError("harvey_table: every capability needs one value per peer")
     hi = b.get("highlight")
     body = _strip(ctx, meta, els, b, box)
-    cols = [b.get("header_key", "Capability, full ball = fully met"), *b["peers"]]
+    cols = [b.get("header_key", base.label(ctx, "capability")), *b["peers"]]
     rows = [[c["name"]] + [""] * n for c in b["capabilities"]]
     g = _table(ctx, meta, els, "table", box[0], box[1], box[2], body, cols, rows, aligns=["l"] + ["c"] * n,
                highlight=None if hi is None else hi + 1, max_row=0.5)
@@ -435,7 +484,7 @@ def build_harvey_table(slide: dict, ctx: BuildContext):
             cx = g["xs"][c + 1] + g["cws"][c + 1] / 2
             cy = g["y"] + (r + 1.5) * g["row_h"]
             els.append(_decor(ctx, f"ball{r + 1}_{c + 1}", cx - d / 2, cy - d / 2, d, d, kind="chart",
-                              chart=harvey_chart(v, hi == c)))
+                              chart=harvey_chart(v, hi == c, ctx)))
     return _finish(slide, ctx, "harvey_table", "table", els, meta)
 
 
@@ -460,8 +509,8 @@ def build_risk_heatmap(slide: dict, ctx: BuildContext):
     x, y, w, h = box
     my = y + LABEL_H
     mh = round(body - 2 * LABEL_H - 0.05, 2)
-    _axes(ctx, meta, els, 1, 6, my, mh, b.get("likelihood_label", "Likelihood"), b.get("impact_label", "Impact"),
-          ("Low", "High"), ("Low", "High"))
+    _axes(ctx, meta, els, 1, 6, my, mh, b.get("likelihood_label", base.label(ctx, "likelihood")), b.get("impact_label", base.label(ctx, "impact")),
+          (base.label(ctx, "low"), base.label(ctx, "high")), (base.label(ctx, "low"), base.label(ctx, "high")))
     mx, mw = grid_x(1), grid_w(6)
     g = 0.06
     cw, ch = (mw - 4 * g) / 5, (mh - 4 * g) / 5
@@ -537,17 +586,40 @@ def build_deal_structure(slide: dict, ctx: BuildContext):
         except KeyError as ex:
             raise ValueError(f"deal_structure: link refers to unknown entity {ex}") from None
         a, z = px + pw / 2, cx + cw / 2
-        y0, y2 = py + ph, cy
-        ym = round(y0 + (y2 - y0) / 2, 2)
-        segs = [(a, y0, 0.0, ym - y0)]
-        if abs(a - z) > 0.01:
-            segs.append((min(a, z), ym, abs(a - z), 0.0))
-        segs.append((z, ym, 0.0, y2 - ym))
-        for s, (sx, sy, sw, sh) in enumerate(segs):
-            els.append(Element(base.eid(ctx, "connector", f"{k + 1}_{s + 1}"), "line", "connector", round(sx, 2),
-                               round(sy, 2), round(sw, 2), round(sh, 2), line=("text", 1.0)))
-        els.append(_txt(ctx, meta, "decor", f"pct{k + 1}", z + 0.08, ym + (y2 - ym) / 2 - 0.13, 0.9, 0.26,
-                        [Run(ln["label"], b=True)], bid=f"link {k + 1}"))
+        lw = round(min(max(text_width(ln["label"], 12, bold=True) + 0.2, 0.5), 2.4), 2)
+        lh = 0.26
+        if abs(py - cy) < 0.01:                       # same tier: join the facing sides at mid-height
+            lo, hi_ = (geo[ln["from"]], geo[ln["to"]]) if px <= cx else (geo[ln["to"]], geo[ln["from"]])
+            gx0, gx1 = lo[0] + lo[2], hi_[0]
+            my_ = round(py + ph / 2, 2)
+            if gx1 - gx0 > 0.01:
+                els.append(Element(base.eid(ctx, "connector", f"{k + 1}_1"), "line", "connector", round(gx0, 2),
+                                   my_, round(gx1 - gx0, 2), 0.0, line=("text", 1.0)))
+            mid = (gx0 + gx1) / 2
+            cands = [(mid - lw / 2, py + ph + 0.05), (mid - lw / 2, py - lh - 0.05)]
+        else:
+            y0, y2 = py + ph, cy
+            ym = round(y0 + (y2 - y0) / 2, 2)
+            segs = [(a, y0, 0.0, ym - y0)]
+            if abs(a - z) > 0.01:
+                segs.append((min(a, z), ym, abs(a - z), 0.0))
+            segs.append((z, ym, 0.0, y2 - ym))
+            for s_, (sx, sy, sw, sh) in enumerate(segs):
+                els.append(Element(base.eid(ctx, "connector", f"{k + 1}_{s_ + 1}"), "line", "connector", round(sx, 2),
+                                   round(sy, 2), round(sw, 2), round(sh, 2), line=("text", 1.0)))
+            lo_y, hi_y = (y0, y2) if y2 >= y0 else (y2 + ph, py)
+            cands = []
+            for ly in (ym + (y2 - ym) / 2 - lh / 2, y2 - lh - 0.03, ym + 0.03, y0 + 0.03):
+                cands += [(z + 0.08, ly), (z - 0.08 - lw, ly)]
+        boxes = [g for g in geo.values()]
+
+        def _free(lx_, ly_):                         # clear of every entity box (accent or panel) and inside the box
+            return all(lx_ >= bx_ + bw_ + 0.02 or lx_ + lw <= bx_ - 0.02 or ly_ >= by_ + bh_ + 0.02 or ly_ + lh <= by_ - 0.02
+                       for bx_, by_, bw_, bh_ in boxes) and ly_ >= y - 0.05
+        lx, ly = next(((cx_, cy_) for cx_, cy_ in cands if _free(cx_, cy_)), cands[0])
+        # a `background` plate keeps the label legible (>= 4.5:1) wherever it lands, never on an accent/dark fill
+        els.append(_txt(ctx, meta, "decor", f"pct{k + 1}", lx, ly, lw, lh, [Run(ln["label"], b=True)],
+                        fill="background", align="c", bid=f"link {k + 1}"))
     return _finish(slide, ctx, "deal_structure", "diagram", els, meta)
 
 
@@ -618,7 +690,7 @@ def build_scorecard(slide: dict, ctx: BuildContext):
         base.declare(meta, abs(z_ - a_) if k["format"] == "pct" else (abs((z_ - a_) / abs(a_)) * 100 if a_ else 0.0),
                      f"blocks.kpis[{len(rows)}].values[-2]", f"blocks.kpis[{len(rows)}].values[-1]")
         rows.append([k["name"]] + [_KPI_FMT[k["format"]](v) for v in k["values"]] + [txt])
-    g = _table(ctx, meta, els, "table", box[0], box[1], box[2], body, ["KPI", *b["periods"], "Change"], rows,
+    g = _table(ctx, meta, els, "table", box[0], box[1], box[2], body, [base.label(ctx, "kpi"), *b["periods"], base.label(ctx, "change")], rows,
                aligns=["l"] + ["r"] * (n + 1), highlight=n, max_row=0.5, bindings=b.get("bindings"), bindings_format=b.get("bindings_format"))
     bx = 0.42
     for r, (k, d) in enumerate(zip(b["kpis"], dirs)):

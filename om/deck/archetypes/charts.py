@@ -84,8 +84,8 @@ def _fmt(v: float, nf: str, signed: bool = False) -> str:
     return (MINUS if v < 0 else "") + body
 
 
-def _takeaway_runs(text: str) -> list[Run]:
-    t = text if base._LEAD.match(text) else f"So what: {text}"
+def _takeaway_runs(text: str, ctx: BuildContext | None = None) -> list[Run]:
+    t = text if base._LEAD.match(text) else f"{base.label(ctx, 'so_what') if ctx else 'So what'}: {text}"
     return base.figure_runs(t)
 
 
@@ -120,7 +120,7 @@ def _panel(ctx: BuildContext, meta: dict, x_col: int, span: int, y: float, h: fl
     rem = round(y + h - cy, 2)
     if rem < 1.1:
         raise core.FitFailure(f"side panel leaves {rem} in for the takeaway; cut a stat or key row")
-    els.append(core.tx(ctx, meta, "callout", "takeaway", x, cy, w, rem, [Para(_takeaway_runs(takeaway), space_after=0)],
+    els.append(core.tx(ctx, meta, "callout", "takeaway", x, cy, w, rem, [Para(_takeaway_runs(takeaway, ctx), space_after=0)],
                        BODY, valign="m", inset=0.2, fill="panel"))
     return els
 
@@ -185,7 +185,7 @@ def build_ranked_bar(slide: dict, ctx: BuildContext):
     lo = min(0.0, min(i["value"] for i in items))
     spec = {"type": "bar", "categories": [i["label"] for i in items], "number_format": nf, "labels": True,
             "highlight": keys, "axis_min": lo, "axis_max": _headroom([i["value"] for i in items]),
-            "series": [{"name": b.get("series_name", "Value"), "values": [i["value"] for i in items]}]}
+            "series": [{"name": b.get("series_name", base.label(ctx, "value")), "values": [i["value"] for i in items]}]}
     els.append(_chart_el(ctx, None, grid_x(0), y, grid_w(9), h, spec, _binding(b, [b])))
     els += _panel(ctx, meta, 9, 3, y, h, b["takeaway"], stats=[b["stat"]])
     return _finish(slide, ctx, "ranked_bar", "bar", els, meta)
@@ -224,7 +224,7 @@ def build_waterfall(slide: dict, ctx: BuildContext):
         base.declare(meta, abs(delta / first * 100), "blocks.steps[0].value", "blocks.steps[-1].value")
     spec = {"type": "waterfall", "categories": [s["label"] for s in steps], "totals": totals, "number_format": nf,
             "labels": True, "labels_above": True, "axis_min": 0,
-            "series": [{"name": b.get("series_name", "Value"), "values": [s["value"] for s in steps]}]}
+            "series": [{"name": b.get("series_name", base.label(ctx, "value")), "values": [s["value"] for s in steps]}]}
     peak, run = 0.0, 0.0
     for i, s in enumerate(steps):
         run = s["value"] if i in totals else run + s["value"]
@@ -409,21 +409,22 @@ def build_scatter_quadrant(slide: dict, ctx: BuildContext):
         "type": "object", "additionalProperties": False, "required": ["label", "low", "high"],
         "properties": {"label": {"type": "string", "maxLength": 28}, "low": _NUM, "high": _NUM,
                        "key": {"type": "boolean"}}}},
-    "current_price": _NUM, "implied": _NUM, "number_format": _NF, "prefix": {"type": "string", "maxLength": 3}},
-    ["methods", "current_price"]))
+    "current_price": _NUM, "implied": _NUM, "number_format": _NF, "prefix": {"type": "string", "maxLength": 3},
+    "reference_label": {"type": "string", "maxLength": 40}},
+    ["methods"]))
 def build_football_field(slide: dict, ctx: BuildContext):
-    b, meta, els, y, h = _begin(slide, ctx, "football_field", "methods", "current_price")
+    b, meta, els, y, h = _begin(slide, ctx, "football_field", "methods")
     ms = b["methods"]
     for m in ms:
         if m["high"] < m["low"]:
             raise ValueError(f"football_field: {m['label']!r} has high below low")
-    price = b["current_price"]
+    price = b.get("current_price")      # optional: without it there is no reference line
     pre, nf = b.get("prefix", ""), b.get("number_format", "0")
     implied = b.get("implied")
     if implied is None:
         implied = statistics.fmean((m["low"] + m["high"]) / 2 for m in ms)
-    lo_v = min(min(m["low"] for m in ms), price)
-    hi_v = max(max(m["high"] for m in ms), price)
+    lo_v = min([m["low"] for m in ms] + ([price] if price is not None else []))
+    hi_v = max([m["high"] for m in ms] + ([price] if price is not None else []))
     step = 10 ** math.floor(math.log10(max(hi_v - lo_v, 1e-9)))
     amin = math.floor(lo_v * 0.92 / step) * step
     amax = math.ceil(hi_v * 1.06 / step) * step
@@ -439,17 +440,22 @@ def build_football_field(slide: dict, ctx: BuildContext):
                        {"name": "High", "values": [m["high"] for m in ms], "point_colors": colors}]}
     els.append(_chart_el(ctx, None, grid_x(0), y, cw, h, spec, _binding(b, [b])))
     plot = _Plot(grid_x(0), y, cw, h, layout, amin, amax)
-    px = plot.val_x(price)
-    ptop, pbot = plot.fy(0), plot.fy(1)
-    lbl = f"Current {pre}{fmt_number(price, nf)}"
-    bx, bw = _grid_box(ctx, px, 2, 0, 8, anchor=px)
-    els.append(core.tx(ctx, meta, "callout", "price", bx, y, bw, 0.4, [core.para(lbl, b=False)], BODY, valign="m"))
-    els.append(core.vline(ctx, "marker", "price", px, y + 0.4, round(pbot - (y + 0.4), 2), "text", 1.5))
-    up = (implied / price - 1) * 100 if price else 0.0
     base.declare(meta, implied, *[f"blocks.methods[{i}].{k}" for i in range(len(ms)) for k in ("low", "high")])
-    base.declare(meta, abs(up), "blocks.current_price", "blocks.methods")
-    stat = {"value": f"{pre}{fmt_number(implied, nf)}",
-            "label": f"Implied value per share, {_fmt(up, '0.0', True)}% vs current {pre}{fmt_number(price, nf)}"}
+    if price is not None:
+        px = plot.val_x(price)
+        ptop, pbot = plot.fy(0), plot.fy(1)
+        ref = b.get("reference_label")
+        lbl = f"{ref} {pre}{fmt_number(price, nf)}" if ref else \
+            f"{base.label(ctx, 'current_price')} {pre}{fmt_number(price, nf)}"
+        bx, bw = _grid_box(ctx, px, 3, 0, 8, anchor=px)
+        els.append(core.tx(ctx, meta, "callout", "price", bx, y, bw, 0.4, [core.para(lbl, b=False)], BODY, valign="m"))
+        els.append(core.vline(ctx, "marker", "price", px, y + 0.4, round(pbot - (y + 0.4), 2), "text", 1.5))
+        up = (implied / price - 1) * 100 if price else 0.0
+        base.declare(meta, abs(up), "blocks.current_price", "blocks.methods")
+        stat = {"value": f"{pre}{fmt_number(implied, nf)}",
+                "label": base.label(ctx, "implied_vs", up=_fmt(up, "0.0", True), price=f"{pre}{fmt_number(price, nf)}")}
+    else:
+        stat = {"value": f"{pre}{fmt_number(implied, nf)}", "label": base.label(ctx, "implied")}
     els += _panel(ctx, meta, 9, 3, y, h, b["takeaway"], stats=[stat])
     return _finish(slide, ctx, "football_field", "football_field", els, meta)
 
@@ -484,7 +490,7 @@ def build_small_multiples(slide: dict, ctx: BuildContext):
         els.append(_chart_el(ctx, i + 1, x, y + title_h, w, chart_h, spec, _binding({"binding": p.get("binding")}
                                                                                   if p.get("binding") else {})))
     els.append(core.tx(ctx, meta, "callout", "takeaway", grid_x(0), round(y + h - take_h, 2), grid_w(12), take_h,
-                       [Para(_takeaway_runs(b["takeaway"]), space_after=0)], BODY, valign="m", inset=0.15, fill="panel"))
+                       [Para(_takeaway_runs(b["takeaway"], ctx), space_after=0)], BODY, valign="m", inset=0.15, fill="panel"))
     return _finish(slide, ctx, "small_multiples", "small_multiples", els, meta)
 
 
@@ -536,7 +542,7 @@ def build_doughnut_split(slide: dict, ctx: BuildContext):
     layout = [round((cw - diam) / 2 / cw, 4), round((h - diam) / 2 / h, 4), round(diam / cw, 4), round(diam / h, 4)]
     spec = {"type": "doughnut", "categories": [s["label"] for s in sl], "number_format": b.get("number_format", "0"),
             "labels": False, "plot_layout": layout, "hole": 62,
-            "series": [{"name": "Share", "values": [s["value"] for s in sl], "point_colors": tokens}]}
+            "series": [{"name": base.label(ctx, "share"), "values": [s["value"] for s in sl], "point_colors": tokens}]}
     els.append(_chart_el(ctx, None, grid_x(0), y, cw, h, spec, _binding(b, [b])))
     els.append(core.tx(ctx, meta, "stat", "centre", grid_x(2), round(y + h / 2 - 0.45, 2), grid_w(2), 0.9,
                        [Para([Run(b["centre"], b=True, color="accent")], align="c", space_after=0)], SIZES["stat"],
@@ -558,7 +564,7 @@ def build_column_kpi(slide: dict, ctx: BuildContext):
         raise ValueError("column_kpi: one value per category")
     spec = {"type": "column", "categories": cats, "number_format": b.get("number_format", "0"), "labels": True,
             "highlight": [len(vals) - 1], "axis_min": 0, "axis_max": _headroom(vals),
-            "series": [{"name": b.get("series_name", "Value"), "values": vals}]}
+            "series": [{"name": b.get("series_name", base.label(ctx, "value")), "values": vals}]}
     els.append(_chart_el(ctx, None, grid_x(0), y, grid_w(8), h, spec, _binding(b, [b])))
     els += _panel(ctx, meta, 8, 4, y, h, b["takeaway"], stats=b["stats"])
     return _finish(slide, ctx, "column_kpi", "column", els, meta)

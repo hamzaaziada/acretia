@@ -312,5 +312,36 @@ class ReservedKeysAndDerived(unittest.TestCase):
             self.assertLessEqual(max(marks, default=0), len(ex.get("sources", [])), aid)
 
 
+class FPS3fFootballField(unittest.TestCase):
+    def _ff(self, **blocks):
+        ex = copy.deepcopy(charts.EXAMPLES["football_field"])
+        ex["id"] = "s1"
+        for k, v in blocks.items():
+            if v is None:
+                ex["blocks"].pop(k, None)
+            else:
+                ex["blocks"][k] = v
+        return ex
+
+    def _texts(self, sl):
+        return ["".join(r.t for p in e.text.paras for r in p.runs) for e in sl.elements if e.text]
+
+    def test_default_label_localised_and_custom_label(self):
+        sl = archetypes.get("football_field").build(self._ff(), ctx(1))
+        self.assertTrue(any(t.startswith("Current share price") for t in self._texts(sl)))
+        sl = archetypes.get("football_field").build(self._ff(), ctx(1, rtl=True))
+        self.assertTrue(any(t.startswith("سعر السهم الحالي") for t in self._texts(sl)))
+        sl = archetypes.get("football_field").build(self._ff(reference_label="Offer price"), ctx(1))
+        texts = self._texts(sl)
+        self.assertTrue(any(t.startswith("Offer price") for t in texts))
+        self.assertFalse(any("Current" in t for t in texts))
+
+    def test_no_reference_line(self):
+        sl = archetypes.get("football_field").build(self._ff(current_price=None), ctx(1))
+        self.assertFalse([e for e in sl.elements if e.role == "marker"])
+        self.assertFalse([e for e in sl.elements if e.id.endswith("callout.price")])
+        self.assertEqual([f for f in findings(render([sl], THEME, title="t")) if f["severity"] == "critical"], [])
+
+
 if __name__ == "__main__":
     unittest.main()

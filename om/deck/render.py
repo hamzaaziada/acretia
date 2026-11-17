@@ -104,7 +104,39 @@ def _patch_theme(prs, theme: Theme) -> None:
         etree.SubElement(f, f"{{{_NS_A}}}latin").set("typeface", theme.fonts[role])
         etree.SubElement(f, f"{{{_NS_A}}}ea").set("typeface", "")
         etree.SubElement(f, f"{{{_NS_A}}}cs").set("typeface", theme.fonts.get(f"{role}_cs", theme.fonts[role]))
+    _flatten_fmt_scheme(root)
     part._blob = etree.tostring(root, xml_declaration=True, encoding="UTF-8", standalone=True)
+
+
+def _flatten_fmt_scheme(root) -> None:
+    """Flat fmtScheme: solid fills, plain lines, empty effect styles. No gradFill, outerShdw, scene3d or sp3d anywhere
+    in the theme (the deck is flat by design; shapes that reference style indexes inherit nothing decorative)."""
+    fmt = root.find(f".//{{{_NS_A}}}fmtScheme")
+    if fmt is None:
+        return
+    for ch in list(fmt):
+        fmt.remove(ch)
+    fmt.set("name", "Flat")
+    A = f"{{{_NS_A}}}"
+
+    def solid(parent):
+        sf = etree.SubElement(parent, A + "solidFill")
+        etree.SubElement(sf, A + "schemeClr").set("val", "phClr")
+
+    fills = etree.SubElement(fmt, A + "fillStyleLst")
+    for _ in range(3):
+        solid(fills)
+    lines = etree.SubElement(fmt, A + "lnStyleLst")
+    for w in (9525, 12700, 19050):
+        ln = etree.SubElement(lines, A + "ln", w=str(w), cap="flat", cmpd="sng", algn="ctr")
+        solid(ln)
+        etree.SubElement(ln, A + "prstDash").set("val", "solid")
+    eff = etree.SubElement(fmt, A + "effectStyleLst")
+    for _ in range(3):
+        etree.SubElement(etree.SubElement(eff, A + "effectStyle"), A + "effectLst")
+    bg = etree.SubElement(fmt, A + "bgFillStyleLst")
+    for _ in range(3):
+        solid(bg)
 
 
 def _open(template: str | None):

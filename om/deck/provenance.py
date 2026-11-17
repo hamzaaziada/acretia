@@ -60,7 +60,7 @@ def tokens(text: str, *, strict_skip: bool = True) -> list[dict]:
     text = _DATES.sub(" ", text)
     out = []
     for m in _TOK.finditer(text):
-        num, unit, cur = m.group("num"), m.group("unit"), m.group("cur")
+        num, unit, cur = m.group("num").rstrip(","), m.group("unit"), m.group("cur")   # "by 2030, ..." is a year
         after = text[m.end():m.end() + 2]
         if not unit and (after[:1].isalpha() or re.match(r"-[A-Za-z]", after)):
             continue                                   # 3rd, 10-K, 3-statement
