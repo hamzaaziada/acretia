@@ -39,11 +39,14 @@ One row per active claim. Claim a packet before you touch its files, commit the 
 | FP-S4-D LBO + merger | worker (session C) | claude/busy-knuth-i3ewp5 | 2026-11-17 | om/lbo.py, om/merger.py, tests/test_lbo_merger_fix.py |
 | FP-S4-E comps + market | worker (session C) | claude/busy-knuth-i3ewp5 | 2026-11-17 | om/comps.py, om/market.py, tests/test_comps_fix.py |
 | FP-S4-F validator 3-column rows | worker (session C) | claude/busy-knuth-i3ewp5 | 2026-11-17 | om/validate_xlsx.py, tests/test_validate_fix.py |
-| S2-rr S2 specialist re-review | reviewer (session A) | claude/dreamy-ramanujan-k8p2xt | 2026-11-17 | docs/reviews/s2-specialist.md |
 | S6-gate verify_s6.py | gate-writer (session A) | claude/dreamy-ramanujan-k8p2xt | 2026-11-17 | scripts/verify_s6.py, tests/fixtures/s6gate/** |
 | S7.5b Docker/compose/deploy | worker (session A) | claude/dreamy-ramanujan-k8p2xt | 2026-11-17 | Dockerfile, .dockerignore, docker-compose.yml, deploy/**, DEPLOY.md, scripts/verify_s7_deploy.py |
 | S7.4a security review | reviewer (session A) | claude/dreamy-ramanujan-k8p2xt | 2026-11-17 | SECURITY_REPORT.md, docs/reviews/security-*.md |
 | S6.1d quarterly recap + park/re-enqueue review | worker (session A) | claude/dreamy-ramanujan-k8p2xt | 2026-11-17 | src/harness/research/workflows/steps.py, src/harness/research/workflows/catalog.py, src/harness/research/jobs.py, tests/test_research_workflows.py, tests/test_research_api.py |
+| FP-S2e1 grid query isolation | worker (session A) | claude/dreamy-ramanujan-k8p2xt | 2026-11-17 | src/harness/mcp/grid_server.py, src/harness/mcp/grid_worker.py, tests/test_mcp.py |
+| FP-S2e2 adapter/ledger/PII residuals | worker (session A) | claude/dreamy-ramanujan-k8p2xt | 2026-11-17 | src/harness/adapter.py, src/harness/ledger.py, om/pii.py, tests/test_adapter.py |
+| FP-S2e3 evidence wiring + lease fence | worker (session A) | claude/dreamy-ramanujan-k8p2xt | 2026-11-17 | src/harness/evidence.py, om/storage.py, src/harness/research/api.py, src/harness/mcp/server.py, tests/test_evidence.py, tests/test_storage.py, tests/test_evidence_wiring.py |
+| FP-S2e4 crawler residuals | worker (session A) | claude/dreamy-ramanujan-k8p2xt | 2026-11-17 | src/harness/connectors/web.py, tests/test_connectors_harness.py |
 
 ## Log
 - 2026-11-16: created; no active claims.
@@ -96,3 +99,4 @@ One row per active claim. Claim a packet before you touch its files, commit the 
 - 2026-11-16: session A: S6 gate-writer claimed.
 - 2026-11-16: session A: S7.5b and S7.4a claimed.
 - 2026-11-16: session A: S6.1c done; S6.1d claimed.
+- 2026-11-16: session A: S2 re-review PASS WITH FIXES 7/10; FP-S2e1-4 claimed.
