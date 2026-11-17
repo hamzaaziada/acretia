@@ -2,7 +2,7 @@ import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { Badge, Button, EmptyState, IconExternal, IconPlay, PageHeader, Panel, SkeletonRows, Skeleton, Stat, TabPanel, Table, Tabs } from '../ds';
 import type { Column, TabItem } from '../ds';
 import { api } from '../api/client';
-import { items, useOrgEvents, useResource } from '../api/hooks';
+import { items, normalizeDeal, useOrgEvents, useResource } from '../api/hooks';
 import type { DealDetail, Job, Page } from '../api/types';
 import { useI18n } from '../i18n';
 import { DocumentsTab } from '../features/Documents';
@@ -20,9 +20,9 @@ export default function Deal() {
   const [sp, setSp] = useSearchParams();
   const { t } = useI18n();
   const nav = useNavigate();
-  const res = useResource<DealDetail>((signal) => api.get<DealDetail>(`/deals/${id}`, { signal }), [id]);
+  const res = useResource<DealDetail | null>(async (signal) => (id ? normalizeDeal(await api.get<DealDetail>(`/deals/${id}`, { signal })) : null), [id]);
   const delivs = useResource<DeliverableRowData[]>(
-    async (signal) => items(await api.get<Page<DeliverableRowData> | DeliverableRowData[]>(`/deals/${id}/deliverables`, { signal })).map((d) => ({ ...d, deal_id: id })),
+    async (signal) => (id ? items(await api.get<Page<DeliverableRowData> | DeliverableRowData[]>(`/deals/${id}/deliverables`, { signal })).map((d) => ({ ...d, deal_id: id })) : []),
     [id],
   );
   const tabParam = sp.get('tab') as TabId | null;
@@ -213,7 +213,8 @@ function Activity({ deal }: { deal: DealDetail }) {
           <span className="acr-timeline__dot" aria-hidden="true" />
           <div>
             <div>
-              <strong>{a.actor ?? t('deal.activity.system')}</strong> <span className="acr-muted">{a.summary ?? a.action}</span>
+              <strong>{a.actor ?? t('deal.activity.system')}</strong> <span className="acr-muted">{a.title ?? a.summary ?? a.action}</span>
+              {a.status && <span className="acr-faint"> · {a.status}</span>}
               {a.target && <span className="acr-mono acr-faint"> {a.target}</span>}
             </div>
             <time className="acr-faint acr-num" dateTime={a.at}>

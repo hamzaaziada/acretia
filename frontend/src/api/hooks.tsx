@@ -146,8 +146,13 @@ export function useMe(): AuthValue {
 
 /* ---------- deals ---------- */
 
+/** The API identifies a deal by `deal_id`; the UI keys everything on `id`. Never build a deal route from anything that is not a non-empty id. */
+export function normalizeDeal<T extends { id?: string; deal_id?: string }>(raw: T): T & { id: string } {
+  return { ...raw, id: raw.deal_id ?? raw.id ?? '' };
+}
+
 export function useDeals() {
-  return useResource<Deal[]>(async (signal) => items(await api.get<Page<Deal> | Deal[]>('/deals', { query: { limit: 200 }, signal })), []);
+  return useResource<Deal[]>(async (signal) => items(await api.get<Page<Deal> | Deal[]>('/deals', { query: { limit: 200 }, signal })).map(normalizeDeal), []);
 }
 
 /* ---------- job stream ---------- */

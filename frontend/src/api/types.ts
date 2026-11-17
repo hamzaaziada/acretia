@@ -59,7 +59,9 @@ export interface DealCounts {
 }
 
 export interface Deal {
+  /** The server names the deal id `deal_id`; `normalizeDeal` mirrors it into `id` so routes never get `undefined`. */
   id: string;
+  deal_id?: string;
   name: string;
   target?: string | null;
   sector?: string | null;
@@ -227,9 +229,14 @@ export interface Citation {
 
 export interface ActivityRow {
   id?: string;
+  /** Server rows: `{at, type, title, status, ref, actor}`. */
+  type?: string;
+  title?: string;
+  status?: string;
+  ref?: string;
   at: string;
   actor?: string | null;
-  action: string;
+  action?: string;
   target?: string | null;
   summary?: string | null;
 }
